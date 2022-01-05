@@ -45,7 +45,7 @@ library DisputeTree {
     }
 
     function addNewChild(
-        mapping(uint256 => DisputeTree) storage tree,
+        mapping(uint256 => DisputeNode) storage tree,
         uint256 _parentKey,
         bool _isLeftChild,
         uint256 _expireAfterBlock,
@@ -118,7 +118,7 @@ library DisputeTree {
             assert(parentNode.parent > 0);
 
             (uint128 stepLower, uint128 stepUpper) = decodeNodeKey(_parentKey);
-            (, uint128 childStepLower) = decodeNodeKey(_leafKey);
+            (uint128 childStepLower,) = decodeNodeKey(_leafKey);
             uint256 _siblingKey;
             if (stepLower == childStepLower) {
                 _siblingKey = encodeNodeKey(middle(stepLower, stepUpper), stepUpper);
