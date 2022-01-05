@@ -81,7 +81,7 @@ library DisputeTree {
         DisputeNode storage node = tree[_rootKey];
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
-            uint128 _stepMid = _stepLower + (_stepUpper - _stepLower) / 2;
+            uint128 _stepMid = middle(_stepLower, _stepUpper);
             if (tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0) {
                 //find left child,
                 _stepUpper = _stepMid;
