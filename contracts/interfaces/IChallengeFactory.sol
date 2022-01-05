@@ -6,9 +6,11 @@ import "../interfaces/IExecutor.sol";
 import "../interfaces/IStateCommitChain.sol";
 
 interface IChallengeFactory {
-    function stakingManager() public view returns (IStakingManager);
+    function stakingManager() external view returns (IStakingManager);
 
-    function executor() public view returns (IExecutor);
+    function executor() external view returns (IExecutor);
 
-    function scc() public view returns (IStateCommitChain);
+    function scc() external view returns (IStateCommitChain);
+
+    function isChallengeContract(address _addr) external view returns (bool);
 }
