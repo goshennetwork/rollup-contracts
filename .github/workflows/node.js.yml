@@ -17,7 +17,6 @@ jobs:
     strategy:
       matrix:
         node-version: [12.x, 14.x, 16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v2
@@ -26,6 +25,23 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+    - name: Install prerequisites
+      shell: bash
+      run: sudo apt-get -y update ; sudo apt-get -y install gcc-arm-linux-gnueabihf
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+    - name: Show installed version information (Rust, cargo, GCC,...)
+      shell: bash
+      run: |
+          gcc --version || true
+          rustup -V
+          rustup toolchain list
+          rustup default
+          cargo -V
+          rustc -V
+    - run: cargo install --git https://github.com/gakonst/foundry --bin forge --locked 
     - run: npm install --global yarn && yarn
     - run: yarn format-lint
     - run: yarn build
