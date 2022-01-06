@@ -52,7 +52,7 @@ contract StakingManager is IStakingManager {
     function finalizeWithdrawal() external override {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
-        require(scc.isBlockComfirmed(senderStake.needConfirmedBlock), "have not confirmed");
+        require(scc.isBlockConfirmed(senderStake.needConfirmedBlock), "have not confirmed");
         senderStake.state = StakingState.UNSTAKED;
         token.transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
@@ -88,7 +88,7 @@ contract StakingManager is IStakingManager {
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
+        require(scc.isBlockConfirmed(_earliestChallengeBlock), "block not confirmed yet");
         (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
         require(_root != proposerStake.earliestChallengeState, "unused challenge");
         token.transfer(msg.sender, price);
@@ -100,7 +100,7 @@ contract StakingManager is IStakingManager {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
+        require(scc.isBlockConfirmed(_earliestChallengeBlock), "block not confirmed yet");
         (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
         require(_root == proposerStake.earliestChallengeState, "useful challenge");
         token.transfer(DAOAddress, price);

@@ -51,6 +51,7 @@ library DisputeTree {
         address _challenger
     ) internal returns (uint256) {
         DisputeNode storage parent = tree[_parentKey];
+        require(parent.parent != 0, "parent not exist");
         require(parent.midStateRoot != 0, "parent mid state not proven");
         (uint128 stepLower, uint128 stepUpper) = decodeNodeKey(_parentKey);
         require(stepUpper > stepLower + 1, "one step have no child");
@@ -59,13 +60,13 @@ library DisputeTree {
         } else {
             stepLower = middle(stepLower, stepUpper);
         }
-        uint256 _addr = encodeNodeKey(stepLower, stepUpper);
-        DisputeNode storage node = tree[_addr];
+        uint256 _childKey = encodeNodeKey(stepLower, stepUpper);
+        DisputeNode storage node = tree[_childKey];
         require(node.parent == 0, "already init");
         node.parent = _parentKey;
         node.challenger = _challenger;
         node.expireAfterBlock = _expireAfterBlock;
-        return _addr;
+        return _childKey;
     }
 
     function isChildNode(uint256 _parentKey, uint256 _childKey) internal view returns (bool) {
@@ -74,15 +75,25 @@ library DisputeTree {
         return _parentKey != _childKey && childLower >= parentLower && childUpper <= parentUpper;
     }
 
+    //now get whether only one branch,
     function getFirstLeafNode(mapping(uint256 => DisputeNode) storage tree, uint256 _rootKey)
         internal
         view
-        returns (uint256)
+        returns (uint256, bool)
     {
+        bool _oneBranch = true;
         DisputeNode storage node = tree[_rootKey];
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
             uint128 _stepMid = middle(_stepLower, _stepUpper);
+            //now check branch.
+            if (
+                tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0 &&
+                tree[encodeNodeKey(_stepMid, _stepUpper)].parent != 0
+            ) {
+                _oneBranch = false;
+            }
+
             if (tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0) {
                 //find left child,
                 _stepUpper = _stepMid;
@@ -96,10 +107,10 @@ library DisputeTree {
             }
 
             // no child
-            return encodeNodeKey(_stepLower, _stepUpper);
+            return (encodeNodeKey(_stepLower, _stepUpper), _oneBranch);
         }
         //find one step, one step is surely leaf.
-        return encodeNodeKey(_stepLower, _stepUpper);
+        return (encodeNodeKey(_stepLower, _stepUpper), _oneBranch);
     }
 
     function removeSelfBranch(mapping(uint256 => DisputeNode) storage tree, uint256 _leafKey) internal {
