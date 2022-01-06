@@ -89,7 +89,7 @@ contract StakingManager is IStakingManager {
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
         require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (bytes32 _root, , ) = scc.getBlockInfo(_earliestChallengeBlock);
+        (, bytes32 _root, , ) = scc.getBlockInfo(_earliestChallengeBlock);
         require(_root != proposerStake.earliestChallengeState, "unused challenge");
         token.transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
@@ -101,7 +101,7 @@ contract StakingManager is IStakingManager {
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
         require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (bytes32 _root, , ) = scc.getBlockInfo(_earliestChallengeBlock);
+        (, bytes32 _root, , ) = scc.getBlockInfo(_earliestChallengeBlock);
         require(_root == proposerStake.earliestChallengeState, "useful challenge");
         token.transfer(DAOAddress, price);
         proposerStake.state = StakingState.UNSTAKED;
