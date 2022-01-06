@@ -5,6 +5,7 @@ interface IStateTransition {
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
 
     function generateStartState(
+        uint256 blockNumber,
         bytes32 parentHash,
         bytes32 txhash,
         bytes32 coinbase,
