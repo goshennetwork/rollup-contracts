@@ -20,7 +20,6 @@ library DisputeTree {
     function decodeNodeKey(uint256 nodeKey) internal pure returns (uint128 stepLower, uint128 stepUpper) {
         stepLower = uint128(nodeKey);
         stepUpper = uint128(nodeKey >> 128);
-        return;
     }
 
     function searchNodeWithMidStep(
@@ -63,7 +62,9 @@ library DisputeTree {
         uint256 _addr = encodeNodeKey(stepLower, stepUpper);
         DisputeNode storage node = tree[_addr];
         require(node.parent == 0, "already init");
-        node = DisputeNode({ parent: _parentKey, challenger: _challenger, expireAfterBlock: _expireAfterBlock });
+        node.parent = _parentKey;
+        node.challenger = _challenger;
+        node.expireAfterBlock = _expireAfterBlock;
         return _addr;
     }
 
