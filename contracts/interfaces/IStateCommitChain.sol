@@ -10,9 +10,11 @@ interface IStateCommitChain {
         external
         view
         returns (
+            bytes32 blockHash,
             bytes32 root,
             address proposer,
-            uint256 timestamp
+            uint256 timestamp,
+            uint256 comfirmedAfterBlock
         );
 
     function rollbackBlockBefore(uint256 fraultBlock) external;
