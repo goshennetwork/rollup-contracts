@@ -1,11 +1,8 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import { IAddressResolver } from "../interfaces/IAddressResolver.sol";
-import { IExecutor } from "../interfaces/IExecutor.sol";
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
-import "../interfaces/IStakingManager.sol";
 import { DisputeTree } from "./DisputeTree.sol";
 import { IERC20 } from "@openzeppelin/interfaces/IERC20.sol";
 
@@ -27,17 +24,14 @@ contract Challenge is IChallenge {
     WithdrawStatus withdrawStatus;
 
     IChallengeFactory factory;
-    IStakingManager public stakingManger;
-    IStateCommitChain public scc;
-    //run the one step
-    IExecutor public executor;
     //fixme: flows need more evaluation.
     uint256 constant MinChallengerDeposit = 0.01 ether;
     //fixme: evaluate timeout more legitimate. The dispute solver can delay the challenge by provide step ((1<<256) -1),and choose deadline to repond, and responsible challenger respond in next block ,so the system judge will delay 256*(timeout+1)+timeout,if timeout is 100 this roughly 4.5 Days!
     uint256 proposerTimeLimit;
+    //amount challenge get from dispute proposer.
+    uint256 rewardAmount;
 
     function create(
-        IAddressResolver _addressResolver,
         uint256 _blockN,
         address _proposer,
         bytes32 _systemStartState,
@@ -46,10 +40,6 @@ contract Challenge is IChallenge {
         uint256 _proposerTimeLimit
     ) external override {
         factory = IChallengeFactory(msg.sender);
-        stakingManger = IStakingManager(_addressResolver.stakingManager());
-        executor = IExecutor(_addressResolver.executor());
-        scc = IStateCommitChain(_addressResolver.scc());
-
         systemInfo.blockNumber = _blockN;
         systemInfo.proposer = _proposer;
         systemInfo.systemStartState = _systemStartState;
@@ -59,10 +49,6 @@ contract Challenge is IChallenge {
         expireAfterBlock = block.number + proposerTimeLimit;
         state = State.Started;
         emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
-    }
-
-    function getHeadLeafNode() public view returns (uint256) {
-        return disputeTree.getFirstLeafNode();
     }
 
     function initialize(
@@ -98,10 +84,8 @@ contract Challenge is IChallenge {
     }
 
     function revealMidStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots) external override {
-        require(
-            state == State.Running && msg.sender == proposer && block.number < interactiveDeadline(),
-            "wrong context"
-        );
+        _requireInsideProofWindow(systemInfo.blockNumber);
+        require(state == State.Running && msg.sender == systemInfo.proposer, "wrong context");
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
 
         for (uint256 i = 0; i < _stateRoots.length; i++) {
@@ -111,7 +95,6 @@ contract Challenge is IChallenge {
             require(block.number <= node.expireAfterBlock, "time out");
             require(node.midStateRoot == 0 && stateRoot != 0);
             node.midStateRoot = stateRoot;
-            node.expireAfterBlock = uint256(-1);
         }
         emit MidStateRevealed(_nodeKeys, _stateRoots);
     }
@@ -131,6 +114,7 @@ contract Challenge is IChallenge {
             (uint128 stepLower, uint128 stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
             require(nextNode.parent > 0 && stepUpper > stepLower + 1, "one step don't need to prove");
             require(block.number > nextNode.expireAfterBlock, "report mid state not timeout");
+            require(nextNode.midStateRoot == 0, "mid state root is revealed");
         }
         _challengeSuccess();
         emit ProposerTimeout(_nodeKey);
@@ -146,12 +130,12 @@ contract Challenge is IChallenge {
         uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
         if (_lastSelect == 0) {
             //first select, need deposit.
-            stakingManger.token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
+            factory.stakingManager().token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
         } else {
             //can only select last's child node
             require(DisputeTree.isChildNode(_lastSelect, _childKey));
         }
-        challengerLastAgree[msg.sender] = _childKey;
+        lastSelectedNodeKey[msg.sender] = _childKey;
 
         emit DisputeBranchSelected(_childKey, _expireAfterBlock);
     }
@@ -165,8 +149,8 @@ contract Challenge is IChallenge {
         bytes32 _startState = _stepLower == 0
             ? systemInfo.systemStartState
             : disputeTree[DisputeTree.searchNodeWithMidStep(0, systemInfo.endStep, _stepLower)].midStateRoot;
-        bytes32 _endState = _stepUpper == endStep
-            ? systemEndState
+        bytes32 _endState = _stepUpper == systemInfo.endStep
+            ? systemInfo.systemEndState
             : disputeTree[DisputeTree.searchNodeWithMidStep(0, systemInfo.endStep, _stepUpper)].midStateRoot;
         bytes32 executedRoot = factory.executor().executeNextStep(_startState);
         require(executedRoot != _endState, "state transition is right");
@@ -176,11 +160,11 @@ contract Challenge is IChallenge {
 
     function claimProposerWin() external override {
         //challenged block confirmed
-        _requirePassProofWindow();
+        _requirePassProofWindow(systemInfo.blockNumber);
         require(state != State.Finished, "wrong context");
         _setWinner(false);
         withdrawStatus = WithdrawStatus.Over;
-        IERC20 token = factory.stakingManger().token();
+        IERC20 token = factory.stakingManager().token();
         uint256 _amount = token.balanceOf(address(this));
         token.transfer(systemInfo.proposer, _amount);
         emit ProposerWin(systemInfo.proposer, _amount);
@@ -189,16 +173,19 @@ contract Challenge is IChallenge {
     function claimChallengerWin() external override {
         require(state == State.Finished && isChallengerWin, "wrong context");
         if (withdrawStatus == WithdrawStatus.UnClaimed) {
+            uint256 _before = factory.stakingManager().token().balanceOf(address(this));
             //if not claimed claim
             factory.stakingManager().claim(systemInfo.proposer);
+            uint256 _now = factory.stakingManager().token().balanceOf(address(this));
+            rewardAmount = _now - _before;
             withdrawStatus = WithdrawStatus.Over;
         }
         if (systemInfo.endStep == 0) {
             //not initial.
-            IERC20 token = factory.stakingManger().token();
+            IERC20 token = factory.stakingManager().token();
             uint256 _amount = token.balanceOf(address(this));
             //transfer to creator.
-            token().transfer(creator, _amount);
+            token.transfer(creator, _amount);
             return;
         }
 
@@ -209,30 +196,29 @@ contract Challenge is IChallenge {
             _divideTheCake(_nodeKey);
         } else {
             //more than one branch
-            IERC20 token = factory.stakingManger().token();
+            IERC20 token = factory.stakingManager().token();
             uint256 _amount = token.balanceOf(address(this));
             //transfer to DAO
-            token().transfer(factory.dao(), _amount);
+            token.transfer(factory.dao(), _amount);
         }
     }
 
     //divide the cake at specific branch provided lowest node address.
     function _divideTheCake(uint256 _lowestNodeKey) internal {
         require(lastSelectedNodeKey[msg.sender] != 0, "you can't eat cake");
-        IERC20 token = factory.stakingManger().token();
-        uint256 _cake = token.balanceOf(address(this));
+        IERC20 token = factory.stakingManager().token();
+        require(rewardAmount > 0, "no cake");
         uint256 _canWithdraw;
-        require(_cake > 0, "no cake");
         uint256 _correctNodeAddr = _lowestNodeKey;
         uint256 _amount = 0;
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
         while (_correctNodeAddr != 0) {
-            //first pay back,and record the amount of gainer.
+            //pay back challenger's deposit
             address _gainer = disputeTree[_correctNodeAddr].challenger;
-            uint256 _eat = MinChallengerDeposit;
-            _cake -= _eat;
             if (_gainer == msg.sender) {
-                _canWithdraw += _eat;
+                //only pay back once,because challenger can select different nodes in one branch.
+                _canWithdraw += MinChallengerDeposit;
+                break;
             }
             _amount++;
             if (_correctNodeAddr == disputeTree[_correctNodeAddr].parent) {
@@ -243,10 +229,9 @@ contract Challenge is IChallenge {
         }
 
         if (_amount == 1) {
-            //only root node.
+            //only root node.pay all reward to it.
             if (msg.sender == disputeTree[_rootKey].challenger) {
-                _canWithdraw += _cake;
-                _cake = 0;
+                _canWithdraw += rewardAmount;
             }
         } else {
             //Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer get 5/15,second gainer get 4/15,
@@ -258,7 +243,7 @@ contract Challenge is IChallenge {
                 //first pay back,and record the amount of gainer.
                 address _gainer = disputeTree[_correctNodeAddr].challenger;
                 if (msg.sender == _gainer) {
-                    _canWithdraw += (_amount * _cake) / _pieces;
+                    _canWithdraw += (_amount * rewardAmount) / _pieces;
                 }
                 _amount--;
                 _correctNodeAddr = disputeTree[_correctNodeAddr].parent;
@@ -281,10 +266,10 @@ contract Challenge is IChallenge {
     }
 
     function _requireInsideProofWindow(uint256 _blockN) internal view {
-        require(!scc.isBlockConfirmed(_blockN), "block confirmed");
+        require(!factory.scc().isBlockConfirmed(_blockN), "block confirmed");
     }
 
     function _requirePassProofWindow(uint256 _blockN) internal view {
-        require(scc.isBlockConfirmed(_blockN), "block not confirmed");
+        require(factory.scc().isBlockConfirmed(_blockN), "block not confirmed");
     }
 }

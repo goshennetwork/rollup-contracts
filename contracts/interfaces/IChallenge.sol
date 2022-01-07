@@ -34,7 +34,6 @@ interface IChallenge {
 
     /**
      * @dev Create challenge by challengeFactory.guarantee the info provided true.
-     * @param _addressResolver Address resolver contract.
      * @param _blockN Challenged l2 block number.
      * @param _proposer Proposer of challenged block.
      * @param _systemStartState System initial state of program, calculated by executor.
@@ -43,7 +42,6 @@ interface IChallenge {
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
      */
     function create(
-        IAddressResolver _addressResolver,
         uint256 _blockN,
         address _proposer,
         bytes32 _systemStartState,
@@ -59,9 +57,6 @@ interface IChallenge {
         bytes32 _endSystemState,
         uint256 expireAfterBlock
     );
-
-    /// everyone can check specific challenge is running.
-    function challengeRunning() view returns (bool);
 
     event ChallengeInitialized(uint128 _systemEndStep, bytes32 _midSystemState);
 
