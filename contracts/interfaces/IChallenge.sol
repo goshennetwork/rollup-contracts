@@ -1,7 +1,5 @@
 pragma solidity ^0.8.0;
 
-import "./IAddressResolver.sol";
-
 interface IChallenge {
     //the info of rv32 system info.
     struct SystemInfo {
@@ -96,7 +94,7 @@ interface IChallenge {
      */
     function proposerTimeout(uint256 _nodeKey) external;
 
-    event DisputeBranchSelected(uint256 nodeKey, uint256 expireAfterBlock);
+    event DisputeBranchSelected(address indexed challenger, uint256 nodeKey, uint256 expireAfterBlock);
 
     /**
      * @dev Anyone has deposited in this challengeGame can select one branch in dispute tree.which means selected dispute

@@ -87,20 +87,19 @@ library DisputeTree {
         while (_stepUpper - _stepLower > 1) {
             uint128 _stepMid = middle(_stepLower, _stepUpper);
             //now check branch.
-            if (
-                tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0 &&
-                tree[encodeNodeKey(_stepMid, _stepUpper)].parent != 0
-            ) {
+            bool _leftChildExist = tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0;
+            bool _rightChildExist = tree[encodeNodeKey(_stepMid, _stepUpper)].parent != 0;
+            if (_leftChildExist && _rightChildExist) {
                 _oneBranch = false;
             }
 
-            if (tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0) {
+            if (_leftChildExist) {
                 //find left child,
                 _stepUpper = _stepMid;
                 continue;
             }
             //not left,maybe right
-            if (tree[encodeNodeKey(_stepMid, _stepUpper)].parent != 0) {
+            if (_rightChildExist) {
                 //find right child,
                 _stepLower = _stepMid;
                 continue;

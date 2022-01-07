@@ -14,7 +14,7 @@ interface IStateCommitChain {
             bytes32 root,
             address proposer,
             uint256 timestamp,
-            uint256 comfirmedAfterBlock
+            uint256 confirmedAfterBlock
         );
 
     function rollbackBlockBefore(uint256 fraultBlock) external;

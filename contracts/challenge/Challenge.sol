@@ -1,9 +1,8 @@
 pragma solidity ^0.8.0;
-pragma abicoder v2;
 
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
-import { DisputeTree } from "./DisputeTree.sol";
+import "./DisputeTree.sol";
 import { IERC20 } from "@openzeppelin/interfaces/IERC20.sol";
 
 contract Challenge is IChallenge {
@@ -30,6 +29,16 @@ contract Challenge is IChallenge {
     uint256 proposerTimeLimit;
     //amount challenge get from dispute proposer.
     uint256 rewardAmount;
+
+    modifier beforeBlockConfirmed() {
+        require(!factory.scc().isBlockConfirmed(systemInfo.blockNumber), "block confirmed");
+        _;
+    }
+
+    modifier afterBlockConfirmed() {
+        require(factory.scc().isBlockConfirmed(systemInfo.blockNumber), "block not confirmed");
+        _;
+    }
 
     function create(
         uint256 _blockN,
@@ -83,8 +92,11 @@ contract Challenge is IChallenge {
         emit ChallengeInitialized(_endStep, _midSystemState);
     }
 
-    function revealMidStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots) external override {
-        _requireInsideProofWindow(systemInfo.blockNumber);
+    function revealMidStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots)
+        external
+        override
+        beforeBlockConfirmed
+    {
         require(state == State.Running && msg.sender == systemInfo.proposer, "wrong context");
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
 
@@ -99,9 +111,7 @@ contract Challenge is IChallenge {
         emit MidStateRevealed(_nodeKeys, _stateRoots);
     }
 
-    function proposerTimeout(uint256 _nodeKey) external override {
-        //should inside fraud proof window.
-        _requireInsideProofWindow(systemInfo.blockNumber);
+    function proposerTimeout(uint256 _nodeKey) external override beforeBlockConfirmed {
         if (state == State.Finished) {
             //challenge game finished, just return.
             return;
@@ -120,10 +130,7 @@ contract Challenge is IChallenge {
         emit ProposerTimeout(_nodeKey);
     }
 
-    function selectDisputeBranch(uint256 _parentNodeKey, bool _isLeft) external override {
-        //should inside fraud proof window.
-        _requireInsideProofWindow(systemInfo.blockNumber);
-
+    function selectDisputeBranch(uint256 _parentNodeKey, bool _isLeft) external override beforeBlockConfirmed {
         require(state == State.Running, "not running");
         uint256 _expireAfterBlock = block.number + proposerTimeLimit;
         uint256 _childKey = disputeTree.addNewChild(_parentNodeKey, _isLeft, _expireAfterBlock, msg.sender);
@@ -137,12 +144,10 @@ contract Challenge is IChallenge {
         }
         lastSelectedNodeKey[msg.sender] = _childKey;
 
-        emit DisputeBranchSelected(_childKey, _expireAfterBlock);
+        emit DisputeBranchSelected(msg.sender, _childKey, _expireAfterBlock);
     }
 
-    function execOneStepTransition(uint256 _leafNodeKey) external {
-        //inside window
-        _requireInsideProofWindow(systemInfo.blockNumber);
+    function execOneStepTransition(uint256 _leafNodeKey) external beforeBlockConfirmed {
         require(state == State.Running, "wrong context");
         (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_leafNodeKey);
         require(disputeTree[_leafNodeKey].parent != 0 && _stepUpper == 1 + _stepLower, "not one step node");
@@ -158,9 +163,7 @@ contract Challenge is IChallenge {
         emit OneStepTransition(_stepLower, _endState, executedRoot);
     }
 
-    function claimProposerWin() external override {
-        //challenged block confirmed
-        _requirePassProofWindow(systemInfo.blockNumber);
+    function claimProposerWin() external override afterBlockConfirmed {
         require(state != State.Finished, "wrong context");
         _setWinner(false);
         withdrawStatus = WithdrawStatus.Over;
@@ -263,13 +266,5 @@ contract Challenge is IChallenge {
         state = State.Finished;
         withdrawStatus = WithdrawStatus.UnClaimed;
         isChallengerWin = isChallengerWin;
-    }
-
-    function _requireInsideProofWindow(uint256 _blockN) internal view {
-        require(!factory.scc().isBlockConfirmed(_blockN), "block confirmed");
-    }
-
-    function _requirePassProofWindow(uint256 _blockN) internal view {
-        require(factory.scc().isBlockConfirmed(_blockN), "block not confirmed");
     }
 }
