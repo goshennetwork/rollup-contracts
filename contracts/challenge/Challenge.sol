@@ -8,35 +8,37 @@ import { IERC20 } from "@openzeppelin/interfaces/IERC20.sol";
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
+    IChallengeFactory factory;
+    //fixme: flows need more evaluation.
+    uint256 constant MinChallengerDeposit = 0.01 ether;
+
     //so the last step and 0 step's state is not in node's state root.
     mapping(uint256 => DisputeTree.DisputeNode) public disputeTree;
     //record every challenger last select node key in disputeTree.
     mapping(address => uint256) lastSelectedNodeKey;
     SystemInfo systemInfo;
+    State state;
+    WithdrawStatus withdrawStatus;
     // who start challenge.
     address creator;
     //at which l1 block number, the game timeout.
     uint256 expireAfterBlock;
-    //after game finished, recognize which roles win the game.
-    bool isChallengerWin;
-    State state;
-    WithdrawStatus withdrawStatus;
-
-    IChallengeFactory factory;
-    //fixme: flows need more evaluation.
-    uint256 constant MinChallengerDeposit = 0.01 ether;
     //fixme: evaluate timeout more legitimate. The dispute solver can delay the challenge by provide step ((1<<256) -1),and choose deadline to repond, and responsible challenger respond in next block ,so the system judge will delay 256*(timeout+1)+timeout,if timeout is 100 this roughly 4.5 Days!
     uint256 proposerTimeLimit;
+    //record whether the challenged block can process.
+    uint256 confirmedBlock;
     //amount challenge get from dispute proposer.
     uint256 rewardAmount;
+    //after game finished, recognize which roles win the game.
+    bool isChallengerWin;
 
     modifier beforeBlockConfirmed() {
-        require(!factory.scc().isBlockConfirmed(systemInfo.blockNumber), "block confirmed");
+        require(block.number <= confirmedBlock, "block confirmed");
         _;
     }
 
     modifier afterBlockConfirmed() {
-        require(factory.scc().isBlockConfirmed(systemInfo.blockNumber), "block not confirmed");
+        require(block.number > confirmedBlock, "block not confirmed");
         _;
     }
 
@@ -54,8 +56,9 @@ contract Challenge is IChallenge {
         systemInfo.systemStartState = _systemStartState;
         systemInfo.systemEndState = _systemEndState;
         creator = _creator;
-        proposerTimeLimit = _proposerTimeLimit;
         expireAfterBlock = block.number + proposerTimeLimit;
+        proposerTimeLimit = _proposerTimeLimit;
+        (, , , , confirmedBlock) = factory.scc().getBlockInfo(_blockN);
         state = State.Started;
         emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
