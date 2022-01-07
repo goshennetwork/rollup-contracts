@@ -218,13 +218,13 @@ contract Challenge is IChallenge {
         uint256 _correctNodeAddr = _lowestNodeKey;
         uint256 _amount = 0;
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
+        bool haveDeposited;
         while (_correctNodeAddr != 0) {
             //pay back challenger's deposit
             address _gainer = disputeTree[_correctNodeAddr].challenger;
             if (_gainer == msg.sender) {
                 //only pay back once,because challenger can select different nodes in one branch.
-                _canWithdraw += MinChallengerDeposit;
-                break;
+                haveDeposited=true;
             }
             _amount++;
             if (_correctNodeAddr == disputeTree[_correctNodeAddr].parent) {
@@ -233,7 +233,9 @@ contract Challenge is IChallenge {
             }
             _correctNodeAddr = disputeTree[_correctNodeAddr].parent;
         }
-
+        if (haveDeposited){//pay back
+            _canWithdraw+=MinChallengerDeposit;
+        }
         if (_amount == 1) {
             //only root node.pay all reward to it.
             if (msg.sender == disputeTree[_rootKey].challenger) {
