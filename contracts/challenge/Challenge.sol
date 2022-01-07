@@ -224,7 +224,7 @@ contract Challenge is IChallenge {
             address _gainer = disputeTree[_correctNodeAddr].challenger;
             if (_gainer == msg.sender) {
                 //only pay back once,because challenger can select different nodes in one branch.
-                haveDeposited=true;
+                haveDeposited = true;
             }
             _amount++;
             if (_correctNodeAddr == disputeTree[_correctNodeAddr].parent) {
@@ -233,8 +233,9 @@ contract Challenge is IChallenge {
             }
             _correctNodeAddr = disputeTree[_correctNodeAddr].parent;
         }
-        if (haveDeposited){//pay back
-            _canWithdraw+=MinChallengerDeposit;
+        if (haveDeposited) {
+            //pay back
+            _canWithdraw += MinChallengerDeposit;
         }
         if (_amount == 1) {
             //only root node.pay all reward to it.
