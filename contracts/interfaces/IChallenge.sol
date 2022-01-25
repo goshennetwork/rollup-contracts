@@ -21,9 +21,8 @@ interface IChallenge {
         // one step find out and challenger win, or proposer win, game over.
         Finished
     }
-    //whether someone can withdraw in challenge game.
-    enum WithdrawStatus {
-        Uninitialized,
+    //challenger whether need to claim dispute proposer's staking.
+    enum ClaimStatus {
         //when game finished and challenger win, they have to claim the payback.
         UnClaimed,
         //claim over.
@@ -94,7 +93,7 @@ interface IChallenge {
      */
     function proposerTimeout(uint256 _nodeKey) external;
 
-    event DisputeBranchSelected(address indexed challenger, uint256 nodeKey, uint256 expireAfterBlock);
+    event DisputeBranchSelected(address indexed challenger, uint256[] nodeKey, uint256 expireAfterBlock);
 
     /**
      * @dev Anyone has deposited in this challengeGame can select one branch in dispute tree.which means selected dispute
@@ -102,11 +101,11 @@ interface IChallenge {
      * @param _parentNodeKey The parent node key in disputeTree.When we select a dispute branch, it must derived from exist larger disputeNode, we call it parent node
      * i.e. A node present 0->4 stateTransition, B node present 0->2 stateTransition,0->2 is driven by 0->4,so A is parent node.
      * @param _isLeft Select whether left or right bisection child of parent node.i.e. parent node present 0->4 transition, left child is
-     * 0->2, left child is 2->4.
+     * 0->2, right child is 2->4.
      * @notice Revert if chose more than one branch; or parent node not exist;or has no provided mid state;
      * or one step node is the parent.
      */
-    function selectDisputeBranch(uint256 _parentNodeKey, bool _isLeft) external;
+    function selectDisputeBranch(uint256[] calldata _parentNodeKey, bool[] calldata _isLeft) external;
 
     event OneStepTransition(uint256 startStep, bytes32 revealedRoot, bytes32 executedRoot);
 
@@ -123,7 +122,7 @@ interface IChallenge {
     event ProposerWin(address _winner, uint256 _amount);
 
     /**
-     * @dev The only way can proposer win.This allows unfinished challenge game over if challenged block is confirmed, which means in challenge period.
+     * @dev The only way can proposer win.This allows unfinished challenge game over after passing the challenge time.
      */
     function claimProposerWin() external;
 

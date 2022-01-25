@@ -18,7 +18,7 @@ contract Challenge is IChallenge {
     mapping(address => uint256) lastSelectedNodeKey;
     SystemInfo systemInfo;
     State state;
-    WithdrawStatus withdrawStatus;
+    ClaimStatus claimStatus;
     // who start challenge.
     address creator;
     //at which l1 block number, the game timeout.
@@ -29,8 +29,27 @@ contract Challenge is IChallenge {
     uint256 confirmedBlock;
     //amount challenge get from dispute proposer.
     uint256 rewardAmount;
-    //after game finished, recognize which roles win the game.
-    bool isChallengerWin;
+
+    /** challenge game have 3 stage now:
+     * stage1: game started by challenger, proposer need to init game info.
+     * stage2: now proposer and multi challengers have to work together to find out one step and challenger prove this one step is wrong.
+     * stage3: challenge game over.Now challenger have to claim out the payback(proposer get reward immediately when game over, but challenger have to wait to claim).
+     * note: in stage1&stage2, proposer can make challenge game "stuck"(not participate in time).
+     */
+    modifier stage1() {
+        require(state == State.Started, "only started stage");
+        _;
+    }
+
+    modifier stage2() {
+        require(state == State.Running, "only running stage");
+        _;
+    }
+
+    modifier stage3() {
+        require(state == State.Finished, "only finished stage");
+        _;
+    }
 
     modifier beforeBlockConfirmed() {
         require(block.number <= confirmedBlock, "block confirmed");
@@ -59,6 +78,7 @@ contract Challenge is IChallenge {
         expireAfterBlock = block.number + proposerTimeLimit;
         proposerTimeLimit = _proposerTimeLimit;
         (, , , , confirmedBlock) = factory.scc().getBlockInfo(_blockN);
+        //started
         state = State.Started;
         emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
@@ -67,15 +87,12 @@ contract Challenge is IChallenge {
         address _sender,
         uint128 _endStep,
         bytes32 _midSystemState
-    ) external override {
+    ) external override stage1 {
         //only challengeFactory.
         require(msg.sender == address(factory), "only challenge factory can initialize");
         //in start period.
         require(
-            block.number <= expireAfterBlock &&
-                state == State.Started &&
-                _sender == systemInfo.proposer &&
-                _endStep > 1, //larger than 1
+            block.number <= expireAfterBlock && _sender == systemInfo.proposer && _endStep > 1, //larger than 1
             "wrong context"
         );
         require(_midSystemState != 0, "0 system state root is illegal");
@@ -99,16 +116,20 @@ contract Challenge is IChallenge {
         external
         override
         beforeBlockConfirmed
+        stage2
     {
-        require(state == State.Running && msg.sender == systemInfo.proposer, "wrong context");
+        require(msg.sender == systemInfo.proposer, "only proposer");
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
 
         for (uint256 i = 0; i < _stateRoots.length; i++) {
             bytes32 stateRoot = _stateRoots[i];
             DisputeTree.DisputeNode storage node = disputeTree[_nodeKeys[i]];
-            // 不需要提前检查节点是否存在，允许proposer提前披露状态
-            require(block.number <= node.expireAfterBlock, "time out");
-            require(node.midStateRoot == 0 && stateRoot != 0);
+            // 不需要提前检查节点是否存在，允许proposer提前披露状态。减少交互次数
+            if (node.parent != 0) {
+                //not exist
+                require(block.number <= node.expireAfterBlock, "time out");
+            }
+            require(node.midStateRoot == 0 && stateRoot != 0, "wrong state root");
             node.midStateRoot = stateRoot;
         }
         emit MidStateRevealed(_nodeKeys, _stateRoots);
@@ -133,25 +154,34 @@ contract Challenge is IChallenge {
         emit ProposerTimeout(_nodeKey);
     }
 
-    function selectDisputeBranch(uint256 _parentNodeKey, bool _isLeft) external override beforeBlockConfirmed {
-        require(state == State.Running, "not running");
+    function selectDisputeBranch(uint256[] calldata _parentNodeKeys, bool[] calldata _isLefts)
+        external
+        override
+        beforeBlockConfirmed
+        stage2
+    {
+        require(_parentNodeKeys.length > 0 && _parentNodeKeys.length == _isLefts.length, "inconsistent length");
+        uint256[] memory _childKeys = new uint256[](_parentNodeKeys.length);
         uint256 _expireAfterBlock = block.number + proposerTimeLimit;
-        uint256 _childKey = disputeTree.addNewChild(_parentNodeKey, _isLeft, _expireAfterBlock, msg.sender);
-        uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
-        if (_lastSelect == 0) {
-            //first select, need deposit.
-            factory.stakingManager().token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
-        } else {
-            //can only select last's child node
-            require(DisputeTree.isChildNode(_lastSelect, _childKey));
+        for (uint256 i = 0; i < _parentNodeKeys.length; i++) {
+            uint256 _parentNodeKey = _parentNodeKeys[i];
+            bool _isLeft = _isLefts[i];
+            uint256 _childKey = disputeTree.addNewChild(_parentNodeKey, _isLeft, _expireAfterBlock, msg.sender);
+            uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
+            if (_lastSelect == 0) {
+                //first select, need deposit.
+                factory.stakingManager().token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
+            } else {
+                //can only select last's child node
+                require(DisputeTree.isChildNode(_lastSelect, _childKey));
+            }
+            lastSelectedNodeKey[msg.sender] = _childKey;
+            _childKeys[i] = _childKey;
         }
-        lastSelectedNodeKey[msg.sender] = _childKey;
-
-        emit DisputeBranchSelected(msg.sender, _childKey, _expireAfterBlock);
+        emit DisputeBranchSelected(msg.sender, _childKeys, _expireAfterBlock);
     }
 
-    function execOneStepTransition(uint256 _leafNodeKey) external beforeBlockConfirmed {
-        require(state == State.Running, "wrong context");
+    function execOneStepTransition(uint256 _leafNodeKey) external beforeBlockConfirmed stage2 {
         (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_leafNodeKey);
         require(disputeTree[_leafNodeKey].parent != 0 && _stepUpper == 1 + _stepLower, "not one step node");
         bytes32 _startState = _stepLower == 0
@@ -166,25 +196,25 @@ contract Challenge is IChallenge {
         emit OneStepTransition(_stepLower, _endState, executedRoot);
     }
 
-    function claimProposerWin() external override afterBlockConfirmed {
-        require(state != State.Finished, "wrong context");
-        _setWinner(false);
-        withdrawStatus = WithdrawStatus.Over;
+    function claimProposerWin() external override afterBlockConfirmed stage2 {
+        _proposerSuccess();
         IERC20 token = factory.stakingManager().token();
         uint256 _amount = token.balanceOf(address(this));
+        //todo: maybe burn some amount
         token.transfer(systemInfo.proposer, _amount);
         emit ProposerWin(systemInfo.proposer, _amount);
     }
 
-    function claimChallengerWin() external override {
-        require(state == State.Finished && isChallengerWin, "wrong context");
-        if (withdrawStatus == WithdrawStatus.UnClaimed) {
+    //if unclaimed, claim and
+    function claimChallengerWin() external override stage3 {
+        if (claimStatus == ClaimStatus.UnClaimed) {
+            //if not claimed, then claim
             uint256 _before = factory.stakingManager().token().balanceOf(address(this));
-            //if not claimed claim
             factory.stakingManager().claim(systemInfo.proposer);
             uint256 _now = factory.stakingManager().token().balanceOf(address(this));
             rewardAmount = _now - _before;
-            withdrawStatus = WithdrawStatus.Over;
+            //claim over
+            claimStatus = ClaimStatus.Over;
         }
         if (systemInfo.endStep == 0) {
             //not initial.
@@ -262,15 +292,22 @@ contract Challenge is IChallenge {
         lastSelectedNodeKey[msg.sender] = 0;
     }
 
+    //finish game and rollback the dispute l2 block & slash the dispute proposer.
     function _challengeSuccess() internal {
         _setWinner(true);
         factory.scc().rollbackBlockBefore(systemInfo.blockNumber);
         factory.stakingManager().slash(systemInfo.blockNumber, systemInfo.systemEndState, systemInfo.proposer);
     }
 
+    function _proposerSuccess() internal {
+        _setWinner(false);
+    }
+
     function _setWinner(bool isChallengerWin) internal {
         state = State.Finished;
-        withdrawStatus = WithdrawStatus.UnClaimed;
-        isChallengerWin = isChallengerWin;
+        if (!isChallengerWin) {
+            //only challenger need to claim
+            claimStatus = ClaimStatus.Over;
+        }
     }
 }
