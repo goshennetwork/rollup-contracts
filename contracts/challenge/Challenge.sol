@@ -66,6 +66,7 @@ contract Challenge is IChallenge {
         address _proposer,
         bytes32 _systemStartState,
         bytes32 _systemEndState,
+        bytes32 _outputRoot,
         address _creator,
         uint256 _proposerTimeLimit
     ) external override {
@@ -74,27 +75,24 @@ contract Challenge is IChallenge {
         systemInfo.proposer = _proposer;
         systemInfo.systemStartState = _systemStartState;
         systemInfo.systemEndState = _systemEndState;
+        systemInfo.outputRoot = _outputRoot;
         creator = _creator;
         expireAfterBlock = block.number + proposerTimeLimit;
         proposerTimeLimit = _proposerTimeLimit;
         (, , , , confirmedBlock) = factory.scc().getBlockInfo(_blockN);
         //started
         state = State.Started;
-        emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
+        //emit by challengeFactory
+        //emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
 
-    function initialize(
-        address _sender,
-        uint128 _endStep,
-        bytes32 _midSystemState
-    ) external override stage1 {
-        //only challengeFactory.
-        require(msg.sender == address(factory), "only challenge factory can initialize");
+    function initialize(uint128 _endStep, bytes32 _midSystemState) external override stage1 {
         //in start period.
         require(
-            block.number <= expireAfterBlock && _sender == systemInfo.proposer && _endStep > 1, //larger than 1
+            block.number <= expireAfterBlock && msg.sender == systemInfo.proposer && _endStep > 1, //larger than 1
             "wrong context"
         );
+        factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.outputRoot);
         require(_midSystemState != 0, "0 system state root is illegal");
 
         systemInfo.endStep = _endStep;
