@@ -75,7 +75,9 @@ library DisputeTree {
         return _parentKey != _childKey && childLower >= parentLower && childUpper <= parentUpper;
     }
 
-    //now get whether only one branch,
+    /**
+     * @dev Get the lowest branch in the disputeNode tree
+     */
     function getFirstLeafNode(mapping(uint256 => DisputeNode) storage tree, uint256 _rootKey)
         internal
         view
