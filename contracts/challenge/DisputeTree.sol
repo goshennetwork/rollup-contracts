@@ -62,7 +62,7 @@ library DisputeTree {
         }
         uint256 _childKey = encodeNodeKey(stepLower, stepUpper);
         DisputeNode storage node = tree[_childKey];
-        require(node.parent == 0, "already init");
+        require(node.parent == 0, "child already exist");
         node.parent = _parentKey;
         node.challenger = _challenger;
         node.expireAfterBlock = _expireAfterBlock;

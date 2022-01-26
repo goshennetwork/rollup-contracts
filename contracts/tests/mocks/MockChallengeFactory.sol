@@ -4,43 +4,37 @@ import "../../interfaces/IChallengeFactory.sol";
 import "../../interfaces/IStakingManager.sol";
 import "../../interfaces/IStateTransition.sol";
 import "../../interfaces/IStateCommitChain.sol";
+import "../../interfaces/IChallenge.sol";
+import "../../challenge/Challenge.sol";
 
-//
 contract MockChallengeFactory is IChallengeFactory {
-    IStakingManager iStakingManager;
-    IStateTransition iExecutor;
-    IStateCommitChain iScc;
+    IStakingManager public override stakingManager;
+    IStateTransition public override executor;
+    IStateCommitChain public override scc;
 
-    //
     function init(
         address _sm,
-        address _iexector,
-        address _iscc
+        address _executor,
+        address _scc
     ) external {
-        require(address(iStakingManager == 0), "already init");
-        iStakingManager = IStakingManager(_sm);
-        iExecutor = IStateTransition(_iexector);
-        iScc = IStateCommitChain(_iscc);
+        require(address(stakingManager) == address(0), "already init");
+        stakingManager = IStakingManager(_sm);
+        executor = IStateTransition(_executor);
+        scc = IStateCommitChain(_scc);
     }
 
-    //
-    function stakingManager() external view override returns (IStakingManager) {
-        return iStakingManager;
-    }
-
-    function executor() external view override returns (IStateTransition) {
-        return iExecutor;
-    }
-
-    function scc() external view override returns (IStateCommitChain) {
-        return iScc;
-    }
-
-    function dao() external view returns (address) {
+    function dao() external view override returns (address) {
         return address(0xdead6666);
     }
 
     function isChallengeContract(address _addr) external view override returns (bool) {
         return true;
+    }
+
+    function newChallengeWithProposer(address _creator, address _proposer) external returns (IChallenge) {
+        bytes32 _ff = bytes32(uint256(0xff));
+        IChallenge _c = new Challenge();
+        _c.create(1, _proposer, _ff, _ff, _ff, _creator, 50);
+        return _c;
     }
 }

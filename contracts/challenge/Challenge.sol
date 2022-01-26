@@ -127,7 +127,7 @@ contract Challenge is IChallenge {
                 //not exist
                 require(block.number <= node.expireAfterBlock, "time out");
             }
-            require(node.midStateRoot == 0 && stateRoot != 0, "wrong state root");
+            require(node.midStateRoot == 0 && stateRoot != 0, "dup new state or zero new state");
             node.midStateRoot = stateRoot;
         }
         emit MidStateRevealed(_nodeKeys, _stateRoots);
@@ -171,7 +171,7 @@ contract Challenge is IChallenge {
                 factory.stakingManager().token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
             } else {
                 //can only select last's child node
-                require(DisputeTree.isChildNode(_lastSelect, _childKey));
+                require(DisputeTree.isChildNode(_lastSelect, _childKey), "you can only select one branch");
             }
             lastSelectedNodeKey[msg.sender] = _childKey;
             _childKeys[i] = _childKey;

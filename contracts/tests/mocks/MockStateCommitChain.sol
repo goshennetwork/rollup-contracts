@@ -22,7 +22,7 @@ contract MockStateCommitChain is IStateCommitChain {
             uint256 confirmedAfterBlock
         )
     {
-        return (bytes32(uint256(0x3112ddaad)), bytes32(uint256(0xd3d33d3d)), address(0), 0, 0);
+        return (bytes32(uint256(0x3112ddaad)), bytes32(uint256(0xd3d33d3d)), address(0), 0, 10000);
     }
 
     function rollbackBlockBefore(uint256 fraultBlock) external override {}
