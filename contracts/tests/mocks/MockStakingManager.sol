@@ -3,15 +3,10 @@ import "../../interfaces/IStakingManager.sol";
 import "@openzeppelin/interfaces/IERC20.sol";
 
 contract MockStakingManager is IStakingManager {
-    IERC20 ierc20;
+    IERC20 public override token;
 
     constructor(address _erc20) {
-        ierc20 = IERC20(_erc20);
-    }
-
-    /// The token address used for staking.
-    function token() external view override returns (IERC20) {
-        return ierc20;
+        token = IERC20(_erc20);
     }
 
     /// Proposer call this function to add collateral, then he can publish block state root.
@@ -38,7 +33,9 @@ contract MockStakingManager is IStakingManager {
     /// claim slashed collateral. Can only be called by Challenge contract.
     /// @notice revert if 1. new block root not confirmed; 2. the new comfirmed block root
     /// is the same as this proposer's.
-    function claim(address _proposer) external override {}
+    function claim(address _proposer) external override {
+        token.transfer(msg.sender, 0.1 ether);
+    }
 
     /// Claim slashed collateral to governance. Can be called by anybody.
     /// @notice revert if 1. new block root not confirmed; 2. the new comfirmed block root

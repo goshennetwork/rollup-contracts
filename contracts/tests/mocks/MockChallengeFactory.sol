@@ -34,6 +34,7 @@ contract MockChallengeFactory is IChallengeFactory {
     function newChallengeWithProposer(address _creator, address _proposer) external returns (IChallenge) {
         bytes32 _ff = bytes32(uint256(0xff));
         IChallenge _c = new Challenge();
+        stakingManager.token().transferFrom(_creator, address(_c), _c.minChallengerDeposit());
         _c.create(1, _proposer, _ff, _ff, _ff, _creator, 50);
         return _c;
     }
