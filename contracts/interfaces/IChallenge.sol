@@ -30,6 +30,8 @@ interface IChallenge {
         Over
     }
 
+    function minChallengerDeposit() external view returns (uint256);
+
     /**
      * @dev Create challenge by challengeFactory.guarantee the info provided true.
      * @param _blockN Challenged l2 block number.
@@ -126,5 +128,5 @@ interface IChallenge {
     /**
      * @dev Challenger can get reward by this way if there exist only one branch.Otherwise, now just transfer to DAO.
      */
-    function claimChallengerWin() external;
+    function claimChallengerWin(address _challenger) external;
 }

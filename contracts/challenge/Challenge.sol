@@ -10,7 +10,7 @@ contract Challenge is IChallenge {
 
     IChallengeFactory factory;
     //fixme: flows need more evaluation.
-    uint256 constant MinChallengerDeposit = 0.01 ether;
+    uint256 public constant override minChallengerDeposit = 0.01 ether;
 
     //so the last step and 0 step's state is not in node's state root.
     mapping(uint256 => DisputeTree.DisputeNode) public disputeTree;
@@ -61,6 +61,7 @@ contract Challenge is IChallenge {
         _;
     }
 
+    //when create, creator should deposit at this contract.
     function create(
         uint256 _blockN,
         address _proposer,
@@ -168,7 +169,7 @@ contract Challenge is IChallenge {
             uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
             if (_lastSelect == 0) {
                 //first select, need deposit.
-                factory.stakingManager().token().transferFrom(msg.sender, address(this), MinChallengerDeposit);
+                factory.stakingManager().token().transferFrom(msg.sender, address(this), minChallengerDeposit);
             } else {
                 //can only select last's child node
                 require(DisputeTree.isChildNode(_lastSelect, _childKey), "you can only select one branch");
@@ -204,7 +205,7 @@ contract Challenge is IChallenge {
     }
 
     //if unclaimed, claim and
-    function claimChallengerWin() external override stage3 {
+    function claimChallengerWin(address _challenger) external override stage3 {
         if (claimStatus == ClaimStatus.UnClaimed) {
             //if not claimed, then claim
             uint256 _before = factory.stakingManager().token().balanceOf(address(this));
@@ -227,7 +228,7 @@ contract Challenge is IChallenge {
             DisputeTree.encodeNodeKey(0, systemInfo.endStep)
         );
         if (oneBranch) {
-            _divideTheCake(_nodeKey);
+            _divideTheCake(_nodeKey, _challenger);
         } else {
             //more than one branch
             IERC20 token = factory.stakingManager().token();
@@ -238,8 +239,8 @@ contract Challenge is IChallenge {
     }
 
     //divide the cake at specific branch provided lowest node address.
-    function _divideTheCake(uint256 _lowestNodeKey) internal {
-        require(lastSelectedNodeKey[msg.sender] != 0, "you can't eat cake");
+    function _divideTheCake(uint256 _lowestNodeKey, address _challenger) internal {
+        require(lastSelectedNodeKey[_challenger] != 0, "you can't eat cake");
         IERC20 token = factory.stakingManager().token();
         require(rewardAmount > 0, "no cake");
         uint256 _canWithdraw;
@@ -248,26 +249,27 @@ contract Challenge is IChallenge {
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
         bool haveDeposited;
         while (_correctNodeAddr != 0) {
+            DisputeTree.DisputeNode storage node = disputeTree[_correctNodeAddr];
             //pay back challenger's deposit
-            address _gainer = disputeTree[_correctNodeAddr].challenger;
-            if (_gainer == msg.sender) {
+            address _gainer = node.challenger;
+            if (_gainer == _challenger) {
                 //only pay back once,because challenger can select different nodes in one branch.
                 haveDeposited = true;
             }
             _amount++;
-            if (_correctNodeAddr == disputeTree[_correctNodeAddr].parent) {
+            if (_correctNodeAddr == node.parent) {
                 //reach the root;
                 break;
             }
-            _correctNodeAddr = disputeTree[_correctNodeAddr].parent;
+            _correctNodeAddr = node.parent;
         }
         if (haveDeposited) {
             //pay back
-            _canWithdraw += MinChallengerDeposit;
+            _canWithdraw += minChallengerDeposit;
         }
         if (_amount == 1) {
             //only root node.pay all reward to it.
-            if (msg.sender == disputeTree[_rootKey].challenger) {
+            if (_challenger == disputeTree[_rootKey].challenger) {
                 _canWithdraw += rewardAmount;
             }
         } else {
@@ -276,18 +278,22 @@ contract Challenge is IChallenge {
             //todo: so maybe we should pay back the gas cost to gainer, and then divide the cake.
             uint256 _pieces = ((1 + _amount) * _amount) / 2;
             _correctNodeAddr = _lowestNodeKey;
-            for (_correctNodeAddr != 0; ; ) {
+            while (_correctNodeAddr != 0) {
+                DisputeTree.DisputeNode storage node = disputeTree[_correctNodeAddr];
                 //first pay back,and record the amount of gainer.
-                address _gainer = disputeTree[_correctNodeAddr].challenger;
-                if (msg.sender == _gainer) {
+                if (_challenger == node.challenger) {
                     _canWithdraw += (_amount * rewardAmount) / _pieces;
                 }
                 _amount--;
-                _correctNodeAddr = disputeTree[_correctNodeAddr].parent;
+                if (node.parent == _correctNodeAddr) {
+                    //reach the root
+                    break;
+                }
+                _correctNodeAddr = node.parent;
             }
         }
-        token.transfer(msg.sender, _canWithdraw);
-        lastSelectedNodeKey[msg.sender] = 0;
+        token.transfer(_challenger, _canWithdraw);
+        lastSelectedNodeKey[_challenger] = 0;
     }
 
     //finish game and rollback the dispute l2 block & slash the dispute proposer.

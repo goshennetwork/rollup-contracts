@@ -73,7 +73,7 @@ contract StakingManager is IStakingManager {
         }
         require(
             proposerStake.earliestChallengeBlock == 0 || _blockHeight < proposerStake.earliestChallengeBlock,
-            "should be smaller than last lash"
+            "should be smaller than last slash"
         );
         proposerStake.earliestChallengeBlock = _blockHeight;
         proposerStake.earliestChallengeState = _stateRoot;
