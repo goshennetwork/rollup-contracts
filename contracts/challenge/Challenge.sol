@@ -126,8 +126,10 @@ contract Challenge is IChallenge {
         for (uint256 i = 0; i < _stateRoots.length; i++) {
             bytes32 stateRoot = _stateRoots[i];
             DisputeTree.DisputeNode storage node = disputeTree[_nodeKeys[i]];
+            //there is no need to check node existence(if there is , make sure not timeout), so proposer can reveal mid state in advance
+            //to speed up the process
             if (node.parent != 0) {
-                //not exist
+                //exist
                 require(block.number <= node.expireAfterBlock, "time out");
             }
             require(node.midStateRoot == 0 && stateRoot != 0, "wrong state root");
