@@ -61,7 +61,7 @@ contract Challenge is IChallenge {
         _;
     }
 
-    //when create, creator should deposit at this contract.
+    //when create, factory should let challenger deposit at this contract.
     function create(
         uint256 _blockN,
         address _proposer,

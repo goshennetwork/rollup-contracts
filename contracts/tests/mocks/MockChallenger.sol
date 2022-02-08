@@ -2,9 +2,12 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IChallenge.sol";
 import "@openzeppelin/interfaces/IERC20.sol";
+import "../../interfaces/IStakingManager.sol";
+
 
 contract MockChallenger {
     IChallenge challenge;
+    IStakingManager sm;
 
     function setChallenge(IChallenge _c) external {
         challenge = _c;
@@ -25,4 +28,5 @@ contract MockChallenger {
     ) external {
         _token.approve(_spender, _amount);
     }
+
 }
