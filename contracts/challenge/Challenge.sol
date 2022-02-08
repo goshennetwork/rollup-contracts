@@ -66,7 +66,6 @@ contract Challenge is IChallenge {
         uint256 _blockN,
         address _proposer,
         bytes32 _systemStartState,
-        bytes32 _systemEndState,
         bytes32 _outputRoot,
         address _creator,
         uint256 _proposerTimeLimit
@@ -75,7 +74,6 @@ contract Challenge is IChallenge {
         systemInfo.blockNumber = _blockN;
         systemInfo.proposer = _proposer;
         systemInfo.systemStartState = _systemStartState;
-        systemInfo.systemEndState = _systemEndState;
         systemInfo.outputRoot = _outputRoot;
         creator = _creator;
         expireAfterBlock = block.number + proposerTimeLimit;
@@ -87,12 +85,13 @@ contract Challenge is IChallenge {
         //emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
 
-    function initialize(uint128 _endStep, bytes32 _midSystemState) external override stage1 {
+    function initialize(uint128 _endStep, bytes32 _systemEndState,bytes32 _midSystemState) external override stage1 {
         //in start period.
         require(
             block.number <= expireAfterBlock && msg.sender == systemInfo.proposer && _endStep > 1, //larger than 1
             "wrong context"
         );
+        systemInfo.systemEndState=_systemEndState;
         factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.outputRoot);
         require(_midSystemState != 0, "0 system state root is illegal");
 
@@ -204,7 +203,6 @@ contract Challenge is IChallenge {
         emit ProposerWin(systemInfo.proposer, _amount);
     }
 
-    //if unclaimed, claim and
     function claimChallengerWin(address _challenger) external override stage3 {
         if (claimStatus == ClaimStatus.UnClaimed) {
             //if not claimed, then claim
@@ -300,7 +298,7 @@ contract Challenge is IChallenge {
     function _challengeSuccess() internal {
         _setWinner(true);
         factory.scc().rollbackBlockBefore(systemInfo.blockNumber);
-        factory.stakingManager().slash(systemInfo.blockNumber, systemInfo.systemEndState, systemInfo.proposer);
+        factory.stakingManager().slash(systemInfo.blockNumber, systemInfo.outputRoot, systemInfo.proposer);
     }
 
     function _proposerSuccess() internal {
