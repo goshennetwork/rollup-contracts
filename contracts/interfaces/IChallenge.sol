@@ -37,7 +37,6 @@ interface IChallenge {
      * @param _blockN Challenged l2 block number.
      * @param _proposer Proposer of challenged block.
      * @param _systemStartState System initial state of program, calculated by executor.
-     * @param _systemEndState System end state.Which is sequenced by proposer.
      * @param _outputRoot When program over, output the block root.
      * @param _creator Challenger who start challenge.
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
@@ -46,7 +45,6 @@ interface IChallenge {
         uint256 _blockN,
         address _proposer,
         bytes32 _systemStartState,
-        bytes32 _systemEndState,
         bytes32 _outputRoot,
         address _creator,
         uint256 _proposerTimeLimit
@@ -65,9 +63,10 @@ interface IChallenge {
     /**
      * @dev Initialize challenge info, provide endStep and mid system state of program.
      * @param _endStep End step index of system state of program,must larger than 1.
+     * @param _systemEndState End system state, 0 is illegal, and end state must be "correct"(the program is halt, and the output is consistent with outputRoot).
      * @param _midSystemState Mid state root of system,0 is illegal.
      */
-    function initialize(uint128 _endStep, bytes32 _midSystemState) external;
+    function initialize(uint128 _endStep, bytes32 _systemEndState,bytes32 _midSystemState) external;
 
     event MidStateRevealed(uint256[] nodeKeys, bytes32[] stateRoots);
 
