@@ -151,6 +151,13 @@ contract StakingManagerTest {
         sm.claim(address(p1));
     }
 
+    function testClaimToDao()public{
+        p1.deposit();
+        sm.slash(1,MockStateCommitChain(address(sm.scc())).root(),address(p1));
+        vm.roll(1);
+        sm.claimToGovernance(address(p1));
+    }
+
 
 
 

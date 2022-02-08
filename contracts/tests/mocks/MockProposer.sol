@@ -13,7 +13,7 @@ contract MockProposer {
     }
 
     function initialize(uint128 _endStep, bytes32 _midSystemState) external {
-        challenge.initialize(_endStep, _midSystemState);
+        challenge.initialize(_endStep, bytes32(uint256(0x6666)),_midSystemState);
     }
 
     function revealMidStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots) external {
