@@ -126,7 +126,6 @@ contract Challenge is IChallenge {
         for (uint256 i = 0; i < _stateRoots.length; i++) {
             bytes32 stateRoot = _stateRoots[i];
             DisputeTree.DisputeNode storage node = disputeTree[_nodeKeys[i]];
-            // 不需要提前检查节点是否存在，允许proposer提前披露状态。减少交互次数
             if (node.parent != 0) {
                 //not exist
                 require(block.number <= node.expireAfterBlock, "time out");
