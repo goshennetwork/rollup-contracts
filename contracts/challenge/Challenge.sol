@@ -85,13 +85,17 @@ contract Challenge is IChallenge {
         //emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
 
-    function initialize(uint128 _endStep, bytes32 _systemEndState,bytes32 _midSystemState) external override stage1 {
+    function initialize(
+        uint128 _endStep,
+        bytes32 _systemEndState,
+        bytes32 _midSystemState
+    ) external override stage1 {
         //in start period.
         require(
             block.number <= expireAfterBlock && msg.sender == systemInfo.proposer && _endStep > 1, //larger than 1
             "wrong context"
         );
-        systemInfo.systemEndState=_systemEndState;
+        systemInfo.systemEndState = _systemEndState;
         factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.outputRoot);
         require(_midSystemState != 0, "0 system state root is illegal");
 

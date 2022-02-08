@@ -66,7 +66,11 @@ interface IChallenge {
      * @param _systemEndState End system state, 0 is illegal, and end state must be "correct"(the program is halt, and the output is consistent with outputRoot).
      * @param _midSystemState Mid state root of system,0 is illegal.
      */
-    function initialize(uint128 _endStep, bytes32 _systemEndState,bytes32 _midSystemState) external;
+    function initialize(
+        uint128 _endStep,
+        bytes32 _systemEndState,
+        bytes32 _midSystemState
+    ) external;
 
     event MidStateRevealed(uint256[] nodeKeys, bytes32[] stateRoots);
 
