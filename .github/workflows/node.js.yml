@@ -45,3 +45,4 @@ jobs:
     - run: npm install --global yarn && yarn
     - run: yarn format-lint
     - run: yarn build
+    - run: yarn test

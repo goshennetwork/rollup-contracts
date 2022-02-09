@@ -124,13 +124,24 @@ library RLPReader {
             out := byte(0, mload(ptr))
         }
 
-        require(out == 0 || out == 1, "Lib_RLPReader: Invalid RLP boolean value, must be 0 or 1");
-
-        return out != 0;
+        require(out == 0x80 || out == 1, "Invalid RLP boolean value");
+        return out == 1;
     }
 
     function readBool(bytes memory rawRlp) internal pure returns (bool) {
         return readBool(BytesSlice.fromBytes(rawRlp));
+    }
+
+    /**
+     * Like readAddress, but if the length is 1, and value is (false)"80", return empty address
+     */
+    function readOptionAddress(Slice memory rawRlp) internal pure returns (address) {
+        if (rawRlp.len == 1 && readBool(rawRlp) == false) {
+            return address(0);
+        }
+        require(rawRlp.len == 21, "Invalid RLP address value.");
+
+        return address(uint160(readUint256(rawRlp)));
     }
 
     function readAddress(Slice memory rawRlp) internal pure returns (address) {
@@ -181,7 +192,7 @@ library RLPReader {
             require(rawRlp.len > lenOfStrLen, "Invalid RLP long string length.");
             uint256 strLen;
             assembly {
-                // Pick out the string length. note: rlp的标准要求整数采用大端编码，且必须移除前缀0,因此这里没有做这个检查
+                // Pick out the string length. note: rlp的标准要求整数采用大端编码，且必须移除前缀0,因此这里没有做这个检查.
                 strLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfStrLen)))
             }
             require(rawRlp.len > lenOfStrLen + strLen, "Invalid RLP long string.");
@@ -200,7 +211,7 @@ library RLPReader {
 
             uint256 listLen;
             assembly {
-                // Pick out the list length. note: 同上
+                // Pick out the list length. note: 同上.
                 listLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfListLen)))
             }
 

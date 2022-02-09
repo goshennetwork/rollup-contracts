@@ -33,7 +33,11 @@ library BytesSlice {
     /**
      * Set memory at dest, the equivalent golang code is `copy(mem[dest:], src[:len])`
      */
-    function memset(uint256 dest, bytes32 src, uint256 len) internal pure {
+    function memset(
+        uint256 dest,
+        bytes32 src,
+        uint256 len
+    ) internal pure {
         uint256 mask = 256**(32 - len) - 1;
         uint256 srcval = uint256(src);
         assembly {
@@ -130,5 +134,13 @@ library BytesSlice {
         }
 
         return flattened;
+    }
+
+    function equal(bytes memory left, bytes memory right) internal pure returns (bool) {
+        return keccak(fromBytes(left)) == keccak(fromBytes(right));
+    }
+
+    function equal(string memory left, string memory right) internal pure returns (bool) {
+        return equal(bytes(left), bytes(right));
     }
 }

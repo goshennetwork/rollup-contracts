@@ -9,7 +9,10 @@ library RLPWriter {
     function writeBytes(bytes memory _in) internal pure returns (bytes memory) {
         bytes memory encoded;
 
-        if (_in.length == 1 && uint8(_in[0]) < 128) {
+        if (_in.length == 0) {
+            encoded = new bytes(1);
+            encoded[0] = 0x80;
+        } else if (_in.length == 1 && uint8(_in[0]) < 128) {
             encoded = _in;
         } else {
             encoded = abi.encodePacked(_writeLength(_in.length, 128), _in);
