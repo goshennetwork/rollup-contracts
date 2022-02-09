@@ -219,8 +219,7 @@ library BytesSlice {
     }
 
     function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24) {
-        require(_start + 3 >= _start, "toUint24_overflow");
-        require(_bytes.length >= _start + 3, "toUint24_outOfBounds");
+        require(_bytes.length >= _start + 3, "oob");
         uint24 tempUint;
 
         assembly {
@@ -231,8 +230,7 @@ library BytesSlice {
     }
 
     function toUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
-        require(_start + 1 >= _start, "toUint8_overflow");
-        require(_bytes.length >= _start + 1, "toUint8_outOfBounds");
+        require(_bytes.length >= _start + 1, "oob");
         uint8 tempUint;
 
         assembly {
@@ -243,8 +241,7 @@ library BytesSlice {
     }
 
     function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
-        require(_start + 20 >= _start, "toAddress_overflow");
-        require(_bytes.length >= _start + 20, "toAddress_outOfBounds");
+        require(_bytes.length >= _start + 20, "oob");
         address tempAddress;
 
         assembly {
@@ -252,5 +249,19 @@ library BytesSlice {
         }
 
         return tempAddress;
+    }
+
+    function genRevertHex(bytes memory _reason) internal pure returns (bytes memory) {
+        bytes memory reason = toNibbles(_reason);
+        for (uint256 i = 0; i < reason.length; i++) {
+            if (reason[i] < bytes1(uint8(10))) {
+                reason[i] = bytes1(uint8(reason[i]) + uint8(0x30));
+            } else {
+                reason[i] = bytes1(uint8(reason[i]) + uint8(0x61 - 10));
+            }
+        }
+
+        // func id of Error(string)
+        return abi.encodeWithSelector(0x08c379a0, string(reason));
     }
 }
