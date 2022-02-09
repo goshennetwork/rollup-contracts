@@ -20,7 +20,7 @@ library RLPReader {
      * @return Decoded RLP list items.
      */
     function readList(Slice memory rawRlp) internal pure returns (Slice[] memory) {
-        (uint256 listOffset, , RLPItemType itemType) = decodeKind(rawRlp);
+        (uint256 listOffset, uint256 listLength, RLPItemType itemType) = decodeKind(rawRlp);
 
         require(itemType == RLPItemType.LIST_ITEM, "Invalid RLP list value.");
 
@@ -32,9 +32,9 @@ library RLPReader {
 
         uint256 itemCount = 0;
         uint256 offset = listOffset;
+        require(listOffset + listLength == rawRlp.len, "Provided RLP List not consistent");
         while (offset < rawRlp.len) {
-            require(itemCount < MAX_LIST_LENGTH, "Provided RLP list exceeds max list length.");
-
+            require(itemCount < MAX_LIST_LENGTH, "Provided RLP list exceeds max list length");
             (uint256 itemOffset, uint256 itemLength, ) = decodeKind(
                 Slice({ len: rawRlp.len - offset, ptr: rawRlp.ptr + offset })
             );
