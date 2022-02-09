@@ -22,6 +22,10 @@ library BytesSlice {
         }
 
         // Copy remaining bytes
+        if (len == 0) {
+            //have no remaining
+            return;
+        }
         uint256 mask = 256**(32 - len) - 1;
         assembly {
             let srcpart := and(mload(src), not(mask))
@@ -38,6 +42,9 @@ library BytesSlice {
         bytes32 src,
         uint256 len
     ) internal pure {
+        if (len == 0) {
+            return;
+        }
         uint256 mask = 256**(32 - len) - 1;
         uint256 srcval = uint256(src);
         assembly {
