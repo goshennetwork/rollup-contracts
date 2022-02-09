@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "forge build --root ./",
+    "test": "forge test --root ./",
     "format": "prettier --write 'contracts/**/*.sol'",
     "format-lint": "prettier --list-different 'contracts/**/*.sol'",
     "solhint": "solhint 'contracts/**/*.sol'"
