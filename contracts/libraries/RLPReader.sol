@@ -144,6 +144,10 @@ library RLPReader {
         return address(uint160(readUint256(rawRlp)));
     }
 
+    function readOptionAddress(bytes memory rawRlp) internal pure returns (address) {
+        return readOptionAddress(BytesSlice.fromBytes(rawRlp));
+    }
+
     function readAddress(Slice memory rawRlp) internal pure returns (address) {
         require(rawRlp.len == 21, "Invalid RLP address value.");
 
