@@ -58,8 +58,9 @@ library MerkleTrie {
         bytes32 _root
     ) internal returns (bytes32 _updatedRoot) {
         // Special case when inserting the very first node.
+        bytes memory key = BytesSlice.toNibbles(_key);
         if (_root == KECCAK256_RLP_NULL_BYTES) {
-            bytes memory dat = _makeLeafNode(BytesSlice.toNibbles(_key), _value).encoded;
+            bytes memory dat = _makeLeafNode(key, _value).encoded;
             bytes32 ret = keccak256(dat);
             _hashdb[ret] = dat;
             return ret;
@@ -67,12 +68,12 @@ library MerkleTrie {
 
         (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, ) = _walkNodePath(
             _hashdb,
-            _key,
+            key,
             _root
         );
-        TrieNode[] memory newPath = _getNewPath(_hashdb, proof, pathLength, _key, keyRemainder, _value);
+        TrieNode[] memory newPath = _getNewPath(_hashdb, proof, pathLength, key, keyRemainder, _value);
 
-        _updatedRoot = _getUpdatedTrieRoot(_hashdb, newPath, _key);
+        _updatedRoot = _getUpdatedTrieRoot(_hashdb, newPath, key);
     }
 
     function getRawNode(bytes memory encoded) private pure returns (TrieNode memory) {
@@ -109,9 +110,10 @@ library MerkleTrie {
         bytes memory _key,
         bytes32 _root
     ) internal view returns (bool _exists, bytes memory _value) {
+        bytes memory key = BytesSlice.toNibbles(_key);
         (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) = _walkNodePath(
             _hashdb,
-            _key,
+            key,
             _root
         );
 
@@ -126,7 +128,7 @@ library MerkleTrie {
 
     /**
      * @notice Walks through a proof using a provided key.
-     * @param _key Key to use for the walk.
+     * @param key Key to use for the walk. hex form
      * @param _root Known root of the trie.
      * @return _proof The proof
      * @return _pathLength Length of the final path
@@ -135,7 +137,7 @@ library MerkleTrie {
      */
     function _walkNodePath(
         mapping(bytes32 => bytes) storage _hashdb,
-        bytes memory _key,
+        bytes memory key,
         bytes32 _root
     )
         private
@@ -148,7 +150,6 @@ library MerkleTrie {
         )
     {
         uint256 pathLength = 0;
-        bytes memory key = BytesSlice.toNibbles(_key);
         _proof = new TrieNode[](key.length + 1);
 
         bytes32 currentNodeID = _root;
@@ -202,11 +203,11 @@ library MerkleTrie {
                     continue;
                 }
             } else if (currentNode.decoded.length == LEAF_OR_EXTENSION_NODE_LENGTH) {
+                bytes memory keyRemainder = BytesSlice.slice(key, currentKeyIndex).toBytes();
                 bytes memory path = _getNodePath(currentNode);
                 uint8 prefix = uint8(path[0]);
                 uint8 offset = 2 - (prefix % 2);
                 bytes memory pathRemainder = BytesSlice.slice(path, offset).toBytes();
-                bytes memory keyRemainder = BytesSlice.slice(key, currentKeyIndex).toBytes();
                 uint256 sharedNibbleLength = _getSharedNibbleLength(pathRemainder, keyRemainder);
 
                 if (prefix == PREFIX_LEAF_EVEN || prefix == PREFIX_LEAF_ODD) {
@@ -242,8 +243,9 @@ library MerkleTrie {
         }
 
         // If our node ID is NULL, then we're at a dead end.
+        _keyRemainder = BytesSlice.slice(key, currentKeyIndex).toBytes();
         bool isFinalNode = currentNodeID == bytes32(RLP_NULL);
-        return (_proof, pathLength, BytesSlice.slice(key, currentKeyIndex).toBytes(), isFinalNode);
+        return (_proof, pathLength, _keyRemainder, isFinalNode);
     }
 
     /**
@@ -252,7 +254,7 @@ library MerkleTrie {
      * @param _pathLength Length of the path. Necessary because the provided path may include
      *  additional nodes (e.g., it comes directly from a proof) and we can't resize in-memory
      *  arrays without costly duplication.
-     * @param _key Full original key.
+     * @param key Full original key. hex form
      * @param _keyRemainder Portion of the initial key that must be inserted into the trie.
      * @param _value Value to insert at the given key.
      * @return _newPath A new path with the inserted k/v pair and extra supporting nodes.
@@ -261,7 +263,7 @@ library MerkleTrie {
         mapping(bytes32 => bytes) storage _hashdb,
         TrieNode[] memory _path,
         uint256 _pathLength,
-        bytes memory _key,
+        bytes memory key,
         bytes memory _keyRemainder,
         bytes memory _value
     ) private returns (TrieNode[] memory _newPath) {
@@ -293,14 +295,11 @@ library MerkleTrie {
                 }
             }
 
+
+            bytes memory keyLeft = BytesSlice.slice(key, l).toBytes();
+            bytes memory lastNodeKey = _getNodeKey(lastNode);
             if (
-                _getSharedNibbleLength(
-                    _getNodeKey(lastNode),
-                    BytesSlice.slice(BytesSlice.toNibbles(_key), l).toBytes()
-                ) ==
-                _getNodeKey(lastNode).length &&
-                keyRemainder.length == 0
-            ) {
+                _getSharedNibbleLength(lastNodeKey, keyLeft) == lastNodeKey.length && keyRemainder.length == 0 ) {
                 matchLeaf = true;
             }
         }
@@ -327,6 +326,7 @@ library MerkleTrie {
                 totalNewNodes += 1;
             }
         } else {
+            mapping(bytes32 => bytes) storage hashdb = _hashdb; // to avoid stack too deep
             // Our last node is either an extension node or a leaf node with a different key.
             bytes memory lastNodeKey = _getNodeKey(lastNode);
             uint256 sharedNibbleLength = _getSharedNibbleLength(lastNodeKey, keyRemainder);
@@ -335,7 +335,7 @@ library MerkleTrie {
                 // We've got some shared nibbles between the last node and our key remainder.
                 // We'll need to insert an extension node that covers these shared nibbles.
                 bytes memory nextNodeKey = BytesSlice.slice(lastNodeKey, 0, sharedNibbleLength).toBytes();
-                newNodes[totalNewNodes] = _makeExtensionNode(nextNodeKey, _getNodeHash(_hashdb, _value), true);
+                newNodes[totalNewNodes] = _makeExtensionNode(nextNodeKey, _getNodeHash(hashdb, _value), true);
                 totalNewNodes += 1;
 
                 // Cut down the keys since we've just covered these shared nibbles.
@@ -362,12 +362,12 @@ library MerkleTrie {
                     // We're dealing with a leaf node.
                     // We'll modify the key and insert the old leaf node into the branch index.
                     TrieNode memory modifiedLastNode = _makeLeafNode(lastNodeKey, _getNodeValue(lastNode));
-                    newBranch = _editBranchIndex(newBranch, branchKey, _getNodeHash(_hashdb, modifiedLastNode.encoded));
+                    newBranch = _editBranchIndex(newBranch, branchKey, _getNodeHash(hashdb, modifiedLastNode.encoded));
                 } else if (lastNodeKey.length != 0) {
                     // We're dealing with a shrinking extension node.
                     // We need to modify the node to decrease the size of the key.
                     TrieNode memory modifiedLastNode = _makeExtensionNode(lastNodeKey, _getNodeValue(lastNode), false);
-                    newBranch = _editBranchIndex(newBranch, branchKey, _getNodeHash(_hashdb, modifiedLastNode.encoded));
+                    newBranch = _editBranchIndex(newBranch, branchKey, _getNodeHash(hashdb, modifiedLastNode.encoded));
                 } else {
                     // We're dealing with an unnecessary extension node.
                     // We're going to delete the node entirely.
@@ -405,15 +405,14 @@ library MerkleTrie {
     /**
      * @notice Computes the trie root from a given path.
      * @param _nodes Path to some k/v pair.
-     * @param _key Key for the k/v pair.
+     * @param key Key for the k/v pair. hex form
      * @return _updatedRoot Root hash for the updated trie.
      */
     function _getUpdatedTrieRoot(
         mapping(bytes32 => bytes) storage _hashdb,
         TrieNode[] memory _nodes,
-        bytes memory _key
+        bytes memory key
     ) private returns (bytes32 _updatedRoot) {
-        bytes memory key = BytesSlice.toNibbles(_key);
 
         // Some variables to keep track of during iteration.
         TrieNode memory currentNode;
