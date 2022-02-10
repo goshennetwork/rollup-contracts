@@ -212,7 +212,7 @@ library BytesSlice {
             ret := mload(add(_bytes, 32))
         }
         if (_bytes.length < 32) {
-            uint256 mask ;
+            uint256 mask;
             unchecked {
                 mask = 256**(32 - _bytes.length) - 1;
             }
