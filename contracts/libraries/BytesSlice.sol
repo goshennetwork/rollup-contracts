@@ -111,6 +111,10 @@ library BytesSlice {
         return result;
     }
 
+    /**
+     * Concatenate a variable number of bytes. note: you can also use built-in function `bytes.concat`
+     * if the list size is static.
+     */
     function concat(bytes[] memory _list) internal pure returns (bytes memory) {
         if (_list.length == 0) {
             return new bytes(0);
@@ -203,15 +207,20 @@ library BytesSlice {
     }
 
     function toBytes32(bytes memory _bytes) internal pure returns (bytes32) {
-        if (_bytes.length < 32) {
-            bytes32 ret;
-            assembly {
-                ret := mload(add(_bytes, 32))
-            }
-            return ret;
+        bytes32 ret;
+        assembly {
+            ret := mload(add(_bytes, 32))
         }
-
-        return abi.decode(_bytes, (bytes32)); // will truncate if input length > 32 bytes
+        if (_bytes.length < 32) {
+            uint256 mask ;
+            unchecked {
+                mask = 256**(32 - _bytes.length) - 1;
+            }
+            assembly {
+                ret := and(ret, not(mask))
+            }
+        }
+        return ret;
     }
 
     function toUint256(bytes memory _bytes) internal pure returns (uint256) {
