@@ -273,4 +273,14 @@ library BytesSlice {
         // func id of Error(string)
         return abi.encodeWithSelector(0x08c379a0, string(reason));
     }
+
+    function bytes4ToBytes(bytes4 data) internal pure returns (bytes memory) {
+        return bytes.concat(data);
+    }
+
+    function bytesToBytes4(bytes memory dat) internal pure returns (bytes4) {
+        require(dat.length == 4, "wrong length value");
+        bytes32 data = toBytes32(dat);
+        return bytes4(data);
+    }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../libraries/MerkleTrie.sol";
 import "../libraries/BytesSlice.sol";
+import "../libraries/BytesEndian.sol";
 
 library Memory {
     function writeMemory(
@@ -10,9 +11,50 @@ library Memory {
         bytes32 root,
         uint32 ptr,
         uint32 value
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
+        return writeMemoryBytes4(hashdb, root, ptr, bytes4(value));
+    }
+
+    function writeMemoryBytes4(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr,
+        bytes4 value
+    ) internal returns (bytes32) {
         require(ptr & 3 == 0, "non-aligned mem ptr");
-        return MerkleTrie.update(hashdb, uint32ToBytes(ptr), uint32ToBytes(value), root);
+        return MerkleTrie.update(hashdb, uint32ToBytes(ptr), BytesSlice.bytes4ToBytes(value), root);
+    }
+
+    function writeMemoryByte(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr,
+        bytes1 value
+    ) internal returns (bytes32) {
+        uint32 offset = (ptr & 3);
+        ptr = ptr - offset;
+        bytes4 data = readMemoryBytes4(hashdb, root, ptr);
+        uint32 shift = 8 * offset;
+        bytes4 mask = ~(bytes4(hex"ff") >> shift);
+        data = data & mask;
+        data = data | (bytes4(value) >> shift);
+        return writeMemoryBytes4(hashdb, root, ptr, data);
+    }
+
+    function writeMemoryBytes2(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr,
+        bytes2 value
+    ) internal returns (bytes32) {
+        uint32 offset = (ptr & 3);
+        ptr = ptr - offset;
+        bytes4 data = readMemoryBytes4(hashdb, root, ptr);
+        uint32 shift = 8 * offset;
+        bytes4 mask = ~(bytes4(hex"ffff") >> shift);
+        data = data & mask;
+        data = data | (bytes4(value) >> shift);
+        return writeMemoryBytes4(hashdb, root, ptr, data);
     }
 
     function writeMemoryBytes32(
@@ -20,44 +62,71 @@ library Memory {
         bytes32 root,
         uint32 ptr,
         bytes32 val
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
         for (uint32 i = 0; i < 32; i += 4) {
-            root = writeMemory(hashdb, root, ptr + i, uint32(bytes4(val)));
-            val = bytes32(uint256(val) << 32);
+            root = writeMemoryBytes4(hashdb, root, ptr + i, bytes4(val));
+            val <<= 32;
         }
         return root;
+    }
+
+    function readMemoryBytes2(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr
+    ) internal view returns (bytes2) {
+        uint32 offset = (ptr & 3);
+        require(offset != 3, "data cross 4byte boundry");
+        bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
+        return bytes1(data << (offset * 16));
+    }
+
+    function readMemoryByte(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr
+    ) internal view returns (bytes1) {
+        uint32 offset = (ptr & 3);
+        bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
+        return bytes1(data << (offset * 8));
+    }
+
+    function readMemoryBytes4(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 ptr
+    ) internal view returns (bytes4) {
+        require(ptr & 3 == 0, "non-aligned mem ptr");
+        (bool exists, bytes memory value) = MerkleTrie.get(hashdb, uint32ToBytes(ptr), root);
+        return exists ? BytesSlice.bytesToBytes4(value) : bytes4(0);
     }
 
     function readMemory(
         mapping(bytes32 => bytes) storage hashdb,
         bytes32 root,
-        uint32 addr
-    ) public view returns (uint32) {
-        require(addr & 3 == 0, "non-aligned mem ptr");
-        (bool exists, bytes memory value) = MerkleTrie.get(hashdb, uint32ToBytes(addr), root);
-        return exists ? bytesToUint32(value) : 0;
+        uint32 ptr
+    ) internal view returns (uint32) {
+        bytes4 result = readMemoryBytes4(hashdb, root, ptr);
+        return BytesEndian.bytes4ToUint32(result);
     }
 
     function readMemoryBytes32(
         mapping(bytes32 => bytes) storage hashdb,
         bytes32 root,
-        uint32 addr
-    ) public view returns (bytes32) {
+        uint32 ptr
+    ) internal view returns (bytes32) {
         uint256 ret = 0;
-        for (uint32 i = 0; i < 32; i += 4) {
-            ret <<= 32;
-            ret |= uint256(readMemory(hashdb, root, addr + i));
+        ptr += 28;
+        for (uint32 i = 0; i < 8; i += 1) {
+            ret >>= 32;
+            ret |= uint256(readMemory(hashdb, root, ptr));
+            ptr -= 4;
         }
         return bytes32(ret);
     }
 
+    // note: we use big endian encoding to store memory in trie.
     function uint32ToBytes(uint32 data) internal pure returns (bytes memory) {
         return bytes.concat(bytes4(data));
-    }
-
-    function bytesToUint32(bytes memory dat) internal pure returns (uint32) {
-        require(dat.length == 4, "wrong length value");
-        bytes32 data = BytesSlice.toBytes32(dat);
-        return uint32(bytes4(data));
     }
 }
