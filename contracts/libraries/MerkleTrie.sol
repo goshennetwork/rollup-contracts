@@ -45,10 +45,9 @@ library MerkleTrie {
 
     /**
      * @notice Updates a Merkle trie and returns a new root hash.
-     * @param _key Key of the node to update, as a hex string.
+     * @param _key Key of the node to update.
      * @param _value Value of the node to update, as a hex string.
-     * @param _root Known root of the Merkle trie. Used to verify that the
-     * included proof is correctly constructed.
+     * @param _root Known root of the Merkle trie.
      * @return _updatedRoot Root hash of the newly constructed trie.
      */
     function update(
@@ -66,11 +65,7 @@ library MerkleTrie {
             return ret;
         }
 
-        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, ) = _walkNodePath(
-            _hashdb,
-            key,
-            _root
-        );
+        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, ) = _walkNodePath(_hashdb, key, _root);
         TrieNode[] memory newPath = _getNewPath(_hashdb, proof, pathLength, key, keyRemainder, _value);
 
         _updatedRoot = _getUpdatedTrieRoot(_hashdb, newPath, key);
@@ -295,11 +290,9 @@ library MerkleTrie {
                 }
             }
 
-
             bytes memory keyLeft = BytesSlice.slice(key, l).toBytes();
             bytes memory lastNodeKey = _getNodeKey(lastNode);
-            if (
-                _getSharedNibbleLength(lastNodeKey, keyLeft) == lastNodeKey.length && keyRemainder.length == 0 ) {
+            if (_getSharedNibbleLength(lastNodeKey, keyLeft) == lastNodeKey.length && keyRemainder.length == 0) {
                 matchLeaf = true;
             }
         }
@@ -413,7 +406,6 @@ library MerkleTrie {
         TrieNode[] memory _nodes,
         bytes memory key
     ) private returns (bytes32 _updatedRoot) {
-
         // Some variables to keep track of during iteration.
         TrieNode memory currentNode;
         NodeType currentNodeType;
@@ -457,7 +449,9 @@ library MerkleTrie {
 
         // Current node should be the root at this point.
         // Simply return the hash of its encoding.
-        return keccak256(currentNode.encoded);
+        bytes32 rootHash = keccak256(currentNode.encoded);
+        _hashdb[rootHash] = currentNode.encoded; // root node always hashed.
+        return rootHash;
     }
 
     /**
