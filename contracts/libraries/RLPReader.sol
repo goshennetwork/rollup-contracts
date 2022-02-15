@@ -20,7 +20,7 @@ library RLPReader {
      * @return Decoded RLP list items.
      */
     function readList(Slice memory rawRlp) internal pure returns (Slice[] memory) {
-        (uint256 listOffset, , RLPItemType itemType) = decodeKind(rawRlp);
+        (uint256 listOffset, uint256 listLength, RLPItemType itemType) = decodeKind(rawRlp);
 
         require(itemType == RLPItemType.LIST_ITEM, "Invalid RLP list value.");
 
@@ -32,6 +32,7 @@ library RLPReader {
 
         uint256 itemCount = 0;
         uint256 offset = listOffset;
+        require(listOffset + listLength == rawRlp.len, "Provided RLP List not consistent");
         while (offset < rawRlp.len) {
             require(itemCount < MAX_LIST_LENGTH, "Provided RLP list exceeds max list length");
             (uint256 itemOffset, uint256 itemLength, ) = decodeKind(
@@ -183,12 +184,11 @@ library RLPReader {
 
         if (prefix <= 0x7f) {
             // Single byte.
-            require(rawRlp.len == 1, "Invalid RLP byte.");
             return (0, 1, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xb7) {
             // Short string.
             uint256 strLen = prefix - 0x80;
-            require(rawRlp.len == strLen + 1, "Invalid RLP short string.");
+            require(rawRlp.len > strLen, "Invalid RLP short string.");
             return (1, strLen, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xbf) {
             // Long string.
@@ -199,13 +199,13 @@ library RLPReader {
                 // Pick out the string length. note: rlp的标准要求整数采用大端编码，且必须移除前缀0,因此这里没有做这个检查.
                 strLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfStrLen)))
             }
-            require(rawRlp.len == 1 + lenOfStrLen + strLen, "Invalid RLP long string.");
+            require(rawRlp.len > lenOfStrLen + strLen, "Invalid RLP long string.");
 
             return (1 + lenOfStrLen, strLen, RLPItemType.DATA_ITEM);
         } else if (prefix <= 0xf7) {
             // Short list.
             uint256 listLen = prefix - 0xc0;
-            require(rawRlp.len == 1 + listLen, "Invalid RLP short list.");
+            require(rawRlp.len > listLen, "Invalid RLP short list.");
 
             return (1, listLen, RLPItemType.LIST_ITEM);
         } else {
@@ -219,7 +219,7 @@ library RLPReader {
                 listLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfListLen)))
             }
 
-            require(rawRlp.len == 1 + lenOfListLen + listLen, "Invalid RLP long list.");
+            require(rawRlp.len > lenOfListLen + listLen, "Invalid RLP long list.");
 
             return (1 + lenOfListLen, listLen, RLPItemType.LIST_ITEM);
         }
