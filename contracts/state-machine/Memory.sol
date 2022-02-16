@@ -115,14 +115,14 @@ library Memory {
         bytes32 root,
         uint32 ptr
     ) internal view returns (bytes32) {
-        uint256 ret = 0;
-        ptr += 28;
+        bytes32 ret = 0;
+        ptr += 32;
         for (uint32 i = 0; i < 8; i += 1) {
-            ret >>= 32;
-            ret |= uint256(readMemory(hashdb, root, ptr));
             ptr -= 4;
+            ret >>= 32;
+            ret |= bytes32(readMemoryBytes4(hashdb, root, ptr));
         }
-        return bytes32(ret);
+        return ret;
     }
 
     // note: we use big endian encoding to store memory in trie.
