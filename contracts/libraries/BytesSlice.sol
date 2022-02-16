@@ -111,6 +111,10 @@ library BytesSlice {
         return result;
     }
 
+    /**
+     * Concatenate a variable number of bytes. note: you can also use built-in function `bytes.concat`
+     * if the list size is static.
+     */
     function concat(bytes[] memory _list) internal pure returns (bytes memory) {
         if (_list.length == 0) {
             return new bytes(0);
@@ -149,5 +153,124 @@ library BytesSlice {
 
     function equal(string memory left, string memory right) internal pure returns (bool) {
         return equal(bytes(left), bytes(right));
+    }
+
+    function slice(
+        bytes memory buff,
+        uint256 start,
+        uint256 length
+    ) internal pure returns (Slice memory) {
+        return slice(fromBytes(buff), start, length);
+    }
+
+    function slice(
+        Slice memory buff,
+        uint256 start,
+        uint256 length
+    ) internal pure returns (Slice memory) {
+        require(buff.len >= start + length, "oob");
+        return Slice({ ptr: buff.ptr + start, len: length });
+    }
+
+    function slice(bytes memory buff, uint256 start) internal pure returns (Slice memory) {
+        return slice(buff, start, buff.length - start);
+    }
+
+    function toNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
+        bytes memory nibbles = new bytes(_bytes.length * 2);
+
+        for (uint256 i = 0; i < _bytes.length; i++) {
+            nibbles[i * 2] = _bytes[i] >> 4;
+            nibbles[i * 2 + 1] = bytes1(uint8(_bytes[i]) % 16);
+        }
+
+        return nibbles;
+    }
+
+    function fromNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
+        bytes memory ret = new bytes(_bytes.length / 2);
+
+        for (uint256 i = 0; i < ret.length; i++) {
+            ret[i] = (_bytes[i * 2] << 4) | (_bytes[i * 2 + 1]);
+        }
+
+        return ret;
+    }
+
+    function toBytes32PadLeft(bytes memory _bytes) internal pure returns (bytes32) {
+        bytes32 ret;
+        uint256 len = _bytes.length <= 32 ? _bytes.length : 32;
+        assembly {
+            ret := shr(mul(sub(32, len), 8), mload(add(_bytes, 32)))
+        }
+        return ret;
+    }
+
+    function toBytes32(bytes memory _bytes) internal pure returns (bytes32) {
+        bytes32 ret;
+        assembly {
+            ret := mload(add(_bytes, 32))
+        }
+        if (_bytes.length < 32) {
+            uint256 mask;
+            unchecked {
+                mask = 256**(32 - _bytes.length) - 1;
+            }
+            assembly {
+                ret := and(ret, not(mask))
+            }
+        }
+        return ret;
+    }
+
+    function toUint256(bytes memory _bytes) internal pure returns (uint256) {
+        return uint256(toBytes32(_bytes));
+    }
+
+    function toUint24(bytes memory _bytes, uint256 _start) internal pure returns (uint24) {
+        require(_bytes.length >= _start + 3, "oob");
+        uint24 tempUint;
+
+        assembly {
+            tempUint := mload(add(add(_bytes, 0x3), _start))
+        }
+
+        return tempUint;
+    }
+
+    function toUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
+        require(_bytes.length >= _start + 1, "oob");
+        uint8 tempUint;
+
+        assembly {
+            tempUint := mload(add(add(_bytes, 0x1), _start))
+        }
+
+        return tempUint;
+    }
+
+    function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
+        require(_bytes.length >= _start + 20, "oob");
+        address tempAddress;
+
+        assembly {
+            tempAddress := div(mload(add(add(_bytes, 0x20), _start)), 0x1000000000000000000000000)
+        }
+
+        return tempAddress;
+    }
+
+    function genRevertHex(bytes memory _reason) internal pure returns (bytes memory) {
+        bytes memory reason = toNibbles(_reason);
+        for (uint256 i = 0; i < reason.length; i++) {
+            if (reason[i] < bytes1(uint8(10))) {
+                reason[i] = bytes1(uint8(reason[i]) + uint8(0x30));
+            } else {
+                reason[i] = bytes1(uint8(reason[i]) + uint8(0x61 - 10));
+            }
+        }
+
+        // func id of Error(string)
+        return abi.encodeWithSelector(0x08c379a0, string(reason));
     }
 }

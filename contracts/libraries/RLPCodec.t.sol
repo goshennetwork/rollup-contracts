@@ -6,25 +6,25 @@ import "./RLPWriter.sol";
 import "./BytesSlice.sol";
 
 contract RLPCodecTest {
-    function testReadWriteUint(uint256 val) public {
+    function testReadWriteUint(uint256 val) public pure {
         bytes memory rlp = RLPWriter.writeUint(val);
         uint256 decoded = RLPReader.readUint256(rlp);
         require(decoded == val);
     }
 
-    function checkWriteUint(uint256 val, bytes memory encoded) internal {
+    function checkWriteUint(uint256 val, bytes memory encoded) internal pure {
         require(BytesSlice.equal(RLPWriter.writeUint(val), encoded));
         uint256 decoded = RLPReader.readUint256(encoded);
         require(decoded == val);
     }
 
-    function checkBool(bool val, bytes memory encoded) internal {
+    function checkBool(bool val, bytes memory encoded) internal pure {
         require(BytesSlice.equal(RLPWriter.writeBool(val), encoded));
         bool decoded = RLPReader.readBool(encoded);
         require(decoded == val);
     }
 
-    function testWrite() public {
+    function testWrite() public pure {
         checkWriteUint(0, hex"80");
         checkWriteUint(1, hex"01");
         checkWriteUint(0, hex"80");
@@ -67,7 +67,7 @@ contract RLPCodecTest {
         );
     }
 
-    function testWriteList() public {
+    function testWriteList() public pure {
         bytes[] memory list = new bytes[](15);
         list[0] = "aaa";
         list[1] = "bbb";
@@ -96,7 +96,7 @@ contract RLPCodecTest {
         );
     }
 
-    function checkWriteBytes(bytes memory val, bytes memory encoded) internal {
+    function checkWriteBytes(bytes memory val, bytes memory encoded) internal pure {
         require(BytesSlice.equal(RLPWriter.writeBytes(val), encoded));
         bytes memory decoded = RLPReader.readBytes(encoded);
         require(BytesSlice.equal(decoded, val));
