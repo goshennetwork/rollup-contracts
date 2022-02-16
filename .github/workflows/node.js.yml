@@ -32,7 +32,7 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
           toolchain: stable
-    - run: curl -L https://github.com/gakonst/foundry/releases/download/nightly-31e4a9d3a3f33e1865a2d1169a0538bc96eee797/foundry_nightly_linux_amd64.tar.gz | tar zxvf
+    - run: curl -L https://github.com/gakonst/foundry/releases/download/nightly-31e4a9d3a3f33e1865a2d1169a0538bc96eee797/foundry_nightly_linux_amd64.tar.gz | tar zxv
     - run: export PATH:$PATH:.
     - run: npm install --global yarn && yarn
     - run: yarn format-lint
