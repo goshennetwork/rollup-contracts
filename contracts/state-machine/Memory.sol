@@ -12,7 +12,7 @@ library Memory {
         uint32 ptr,
         uint32 value
     ) internal returns (bytes32) {
-        return writeMemoryBytes4(hashdb, root, ptr, bytes4(value));
+        return writeMemoryBytes4(hashdb, root, ptr, BytesEndian.uint32ToLEBytes(value));
     }
 
     function writeMemoryBytes4(
