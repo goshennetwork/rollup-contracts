@@ -2,7 +2,7 @@ module github.com/ontology-layer-2/rollup-contracts
 
 go 1.16
 
-replace github.com/ethereum/go-ethereum => /Users/wuff/git/go-ethereum
+//replace github.com/ethereum/go-ethereum => /Users/wuff/git/go-ethereum
 
 require (
 	github.com/ontology-layer-2/go-ethereum contract_fixed_trie
