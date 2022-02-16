@@ -30,5 +30,8 @@ jobs:
     - run: yarn format-lint
     - run: yarn build
     - run: yarn test
+    - name: Install prerequisites
+            shell: bash
+            run: sudo snap install go --classic
     - run: go test -v
 
