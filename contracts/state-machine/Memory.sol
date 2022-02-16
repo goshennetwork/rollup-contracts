@@ -78,7 +78,7 @@ library Memory {
         uint32 offset = (ptr & 3);
         require(offset != 3, "data cross 4byte boundry");
         bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
-        return bytes1(data << (offset * 16));
+        return bytes2(data << (offset * 8));
     }
 
     function readMemoryByte(

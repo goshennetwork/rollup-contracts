@@ -14,7 +14,7 @@ contract MachineState {
         uint32 ptr,
         uint32 value
     ) public returns (bytes32) {
-        return hashdb.writeMemoryBytes4(root, ptr, bytes4(value));
+        return hashdb.writeMemory(root, ptr, value);
     }
 
     function writeMemoryBytes4(
