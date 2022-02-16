@@ -260,18 +260,23 @@ library BytesSlice {
         return tempAddress;
     }
 
-    function genRevertHex(bytes memory _reason) internal pure returns (bytes memory) {
-        bytes memory reason = toNibbles(_reason);
-        for (uint256 i = 0; i < reason.length; i++) {
-            if (reason[i] < bytes1(uint8(10))) {
-                reason[i] = bytes1(uint8(reason[i]) + uint8(0x30));
+    function toHex(bytes memory value) internal pure returns (string memory) {
+        bytes memory hexVal = toNibbles(value);
+        for (uint256 i = 0; i < hexVal.length; i++) {
+            if (hexVal[i] < bytes1(uint8(10))) {
+                hexVal[i] = bytes1(uint8(hexVal[i]) + uint8(0x30));
             } else {
-                reason[i] = bytes1(uint8(reason[i]) + uint8(0x61 - 10));
+                hexVal[i] = bytes1(uint8(hexVal[i]) + uint8(0x61 - 10));
             }
         }
 
+        return string(hexVal);
+    }
+
+    function genRevertHex(bytes memory _reason) internal pure returns (bytes memory) {
+        string memory reason = toHex(_reason);
         // func id of Error(string)
-        return abi.encodeWithSelector(0x08c379a0, string(reason));
+        return abi.encodeWithSelector(0x08c379a0, reason);
     }
 
     function bytes4ToBytes(bytes4 data) internal pure returns (bytes memory) {
