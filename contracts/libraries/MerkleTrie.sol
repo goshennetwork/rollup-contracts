@@ -512,7 +512,7 @@ library MerkleTrie {
     }
 
     /**
-     * @notice Gets the path for a node.
+     * @notice Gets the value for a node.
      * @param _node Node to get a value for.
      * @return _value Node value, as hex bytes.
      */

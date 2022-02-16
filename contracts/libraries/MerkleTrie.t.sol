@@ -37,7 +37,7 @@ contract MerkleTrieTest {
     }
 
     function testGetSet() public {
-        string[2][4] memory kvs = [["0", "a"], ["1", "b"], ["02", "cccccc"], ["00000000000003", "d"]];
+        string[2][4] memory kvs = [[hex"00", ""], [hex"01", ""], ["02", "cccccc"], ["00000000000003", "d"]];
         for (uint256 i = 0; i < kvs.length; i++) {
             bytes memory k = bytes(kvs[i][0]);
             bytes memory v = bytes(kvs[i][1]);
