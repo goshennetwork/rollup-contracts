@@ -105,6 +105,9 @@ library MerkleTrie {
         bytes memory _key,
         bytes32 _root
     ) internal view returns (bool _exists, bytes memory _value) {
+        if (_root == KECCAK256_RLP_NULL_BYTES) {
+            return (false, bytes(""));
+        }
         bytes memory key = BytesSlice.toNibbles(_key);
         (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) = _walkNodePath(
             _hashdb,

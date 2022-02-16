@@ -70,7 +70,7 @@ library Instruction {
         f3 = uint8(inst >> (7 + 5)) & 0x07;
         rs1 = uint8(inst >> (7 + 5 + 3)) & 0x1f;
         imm = inst >> (7 + 5 + 3 + 5);
-        imm = uint32(int32(inst << 20) >> 20); // sign extension;
+        imm = uint32(int32(imm << 20) >> 20); // sign extension;
         return (op, rd, f3, rs1, imm);
     }
 
@@ -114,8 +114,8 @@ library Instruction {
         (op, imm1, f3, rs1, rs2, imm2) = decodeRType(inst);
         uint32 bit11 = (imm1 & 1);
         uint32 imm04 = imm1 - bit11;
-        uint32 bit12 = imm2 >> 6;
-        imm = ((bit12 << 12) + (bit11 << 11) + (imm2 & 0x3f)) << (5 + imm04);
+        uint32 bit12 = (imm2 >> 6) & 1;
+        imm = (bit12 << 12) + (bit11 << 11) + ((imm2 & 0x3f) << 5) + imm04;
         imm = uint32(int32(imm << 20) >> 20);
     }
 

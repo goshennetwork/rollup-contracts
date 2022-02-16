@@ -7,10 +7,10 @@ import "./Register.sol";
 import "../MemoryLayout.sol";
 
 contract Interpretor {
-    MachineState internal mstate;
+    MachineState public mstate;
 
     constructor(address state) {
-        mstate = MachineState(mstate);
+        mstate = MachineState(state);
     }
 
     //WARNNING: this is only for testing RV32I system.
@@ -29,10 +29,10 @@ contract Interpretor {
         uint32 nextPC = currPC + 4;
         if (op == Instruction.OP_R_TYPE) {
             (, uint8 rd, uint8 fn3, uint32 vrs1, uint32 vrs2, uint8 fn7) = Instruction.decodeRType(inst);
-            uint256 fn = uint256(fn3) << (8 + uint256(fn7));
+            uint256 fn = (uint256(fn3) << 8) + uint256(fn7);
             vrs1 = mstate.readRegister(root, vrs1); // reuse register id as value to avoid stack too deep error
             vrs2 = mstate.readRegister(root, vrs2);
-            if (fn == (0 + 0) << 8) {
+            if (fn == (0 << 8) + 0) {
                 unchecked {
                     vrs1 += vrs2;
                 }
@@ -140,7 +140,9 @@ contract Interpretor {
             (, uint8 rd, uint8 fn3, uint8 rs1, uint32 imm) = Instruction.decodeIType(inst);
             uint32 vrs1 = mstate.readRegister(root, rs1);
             if (fn3 == 0) {
-                vrs1 += imm; // addi
+                unchecked {
+                    vrs1 += imm; // addi
+                }
             } else if (fn3 == 2) {
                 vrs1 = (int32(vrs1) < int32(imm)) ? 1 : 0; // slti
             } else if (fn3 == 3) {
@@ -205,7 +207,9 @@ contract Interpretor {
                 (_fn3 == 6 && vrs1 < vrs2) ||
                 (_fn3 == 7 && vrs1 >= vrs2)
             ) {
-                nextPC = vpc + uint32(_offset);
+                unchecked {
+                    nextPC = vpc + uint32(_offset);
+                }
             }
         } else if (op == Instruction.OP_U_LUI_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
