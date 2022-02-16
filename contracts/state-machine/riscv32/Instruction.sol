@@ -27,9 +27,7 @@ library Instruction {
         return uint8(inst) & 0x7f;
     }
 
-    /**
-     * R-type: [7]funct7 + [5]rs2 + [5]rs1 + [3]func3 + [5]rd + [7]opcode
-     */
+    // R-type: [7]funct7 + [5]rs2 + [5]rs1 + [3]func3 + [5]rd + [7]opcode
     function decodeRType(uint32 inst)
         internal
         pure
@@ -51,9 +49,7 @@ library Instruction {
         return (op, rd, f3, rs1, rs2, f7);
     }
 
-    /**
-     * I-type: [12]immediate[11:0] + [5]rs1 + [3]funct3 + [5]rd + [7]opcode
-     */
+    // I-type: [12]immediate[11:0] + [5]rs1 + [3]funct3 + [5]rd + [7]opcode
     function decodeIType(uint32 inst)
         internal
         pure
@@ -74,9 +70,7 @@ library Instruction {
         return (op, rd, f3, rs1, imm);
     }
 
-    /**
-     * S-type: [7]imm[11:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[0:4] + [7]opcode
-     */
+    // S-type: [7]imm[11:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[0:4] + [7]opcode
     function decodeSType(uint32 inst)
         internal
         pure
@@ -95,9 +89,7 @@ library Instruction {
         imm = uint32(int32(imm << 20) >> 20);
     }
 
-    /**
-     * B-type: imm[12]imm[10:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[4:1]imm[11] + [7]opcode
-     */
+    // B-type: imm[12]imm[10:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[4:1]imm[11] + [7]opcode
     function decodeBType(uint32 inst)
         internal
         pure
@@ -119,9 +111,7 @@ library Instruction {
         imm = uint32(int32(imm << 20) >> 20);
     }
 
-    /**
-     * U-type: [20]imm[31:12] + [5]rd + [7]opcpde
-     */
+    // U-type: [20]imm[31:12] + [5]rd + [7]opcpde
     function decodeUType(uint32 inst)
         internal
         pure
@@ -136,9 +126,7 @@ library Instruction {
         imm = (inst >> 12) << 12;
     }
 
-    /**
-     * J-type: [1]imm[20] + [10]imm[10:1] + [1]imm[11] + [8]imm[19:12] + [5]rd + [7]opcode
-     */
+    // J-type: [1]imm[20] + [10]imm[10:1] + [1]imm[11] + [8]imm[19:12] + [5]rd + [7]opcode
     function decodeJType(uint32 inst)
         internal
         pure
