@@ -37,8 +37,8 @@ func IsSolcInstalled() bool {
 
 var emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
-var contractPath = "./contracts/merkle/MerkleTemp.sol"
-var contractName = "./contracts/merkle/MerkleTemp.sol:MerkleTemp"
+var contractPath = "./contracts/libraries/MerkleTrie.t.sol"
+var contractName = "./contracts/libraries/MerkleTrie.t.sol:MockMerkleTrie"
 var code, cAbi = func() ([]byte, *abi.ABI) {
 	if !IsSolcInstalled() {
 		panic("solc not exist")
@@ -58,8 +58,8 @@ var code, cAbi = func() ([]byte, *abi.ABI) {
 
 var address = common.BytesToAddress([]byte("merkleContract"))
 var sender = vm.AccountRef(common.BytesToAddress([]byte("test")))
-var updateFunc = cAbi.Methods["update"]
-var getFunc = cAbi.Methods["get"]
+var updateFunc = cAbi.Methods["checkUpdate"]
+var getFunc = cAbi.Methods["checkGet"]
 var insertTrieNodeFunc = cAbi.Methods["insertTrieNode"]
 
 type GetOutPut struct {
