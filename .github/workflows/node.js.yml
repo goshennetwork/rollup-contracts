@@ -30,3 +30,5 @@ jobs:
     - run: yarn format-lint
     - run: yarn build
     - run: yarn test
+    - run: go test -v
+
