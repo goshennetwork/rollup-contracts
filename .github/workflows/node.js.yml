@@ -25,23 +25,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - name: Install prerequisites
-      shell: bash
-      run: sudo apt-get -y update ; sudo apt-get -y install gcc-arm-linux-gnueabihf
-    - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-          toolchain: stable
-    - name: Show installed version information (Rust, cargo, GCC,...)
-      shell: bash
-      run: |
-          gcc --version || true
-          rustup -V
-          rustup toolchain list
-          rustup default
-          cargo -V
-          rustc -V
-    - run: cargo install --git https://github.com/gakonst/foundry --bin forge --locked 
+    - run: sudo curl -L https://github.com/gakonst/foundry/releases/download/nightly-31e4a9d3a3f33e1865a2d1169a0538bc96eee797/foundry_nightly_linux_amd64.tar.gz | sudo tar zxv -C /bin
     - run: npm install --global yarn && yarn
     - run: yarn format-lint
     - run: yarn build
