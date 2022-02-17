@@ -1,5 +1,5 @@
-
-m https://github.com/Seklfreak/Robyul2
+#!/bin/bash
+# code from https://github.com/Seklfreak/Robyul2
 # we redirect some golang pkg e.g golang.org/x/sys in go.mod
 # so we need to change to empty repo to install goimports
 which goimports || cd /tmp/; go get -v golang.org/x/tools/cmd/goimports; cd -

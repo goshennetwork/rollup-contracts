@@ -1,4 +1,5 @@
-et -ex
+#!/usr/bin/env bash
+set -ex
 
 VERSION=$(git describe --always --tags --long)
 
