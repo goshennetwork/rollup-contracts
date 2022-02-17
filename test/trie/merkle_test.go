@@ -79,7 +79,7 @@ func newCase() *testCase {
 	var (
 		vmenv = runtime.NewEnv(cfg)
 	)
-	if rules := cfg.ChainConfig.Rules(vmenv.Context.BlockNumber); rules.IsBerlin {
+	if rules := cfg.ChainConfig.Rules(vmenv.Context.BlockNumber, true); rules.IsBerlin {
 		cfg.State.PrepareAccessList(cfg.Origin, &address, vm.ActivePrecompiles(rules), nil)
 	}
 	vmenv.StateDB.CreateAccount(address)
