@@ -183,7 +183,7 @@ contract Interpretor {
             uint32 vrs1 = mstate.readRegister(root, rs1);
             bytes4 vrs2 = mstate.readRegisterBytes4(root, rs2);
             unchecked {
-                vrs1 += uint32(imm);
+                vrs1 += imm;
             }
             if (fn3 == 0) {
                 root = mstate.writeMemoryByte(root, vrs1, bytes1(vrs2));
@@ -210,7 +210,7 @@ contract Interpretor {
                 (_fn3 == 7 && vrs1 >= vrs2)
             ) {
                 unchecked {
-                    nextPC = vpc + uint32(_offset);
+                    nextPC = vpc + _offset;
                 }
             }
         } else if (op == Instruction.OP_U_LUI_TYPE) {
@@ -218,12 +218,12 @@ contract Interpretor {
             root = mstate.writeRegister(root, rd, imm); // LUI rd imm
         } else if (op == Instruction.OP_U_AUIPC_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
-            root = mstate.writeRegister(root, rd, currPC + uint32(imm)); // auipc rd imm
+            root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
         } else if (op == Instruction.OP_J_JAL_TYPE) {
             // JAL rd imm : rd = pc + 4, pc = pc + imm
             (, uint8 rd, uint32 imm) = Instruction.decodeJType(inst);
             root = mstate.writeRegister(root, rd, nextPC);
-            nextPC = currPC + uint32(imm);
+            nextPC = currPC + imm;
         } else {
             nextPC = MemoryLayout.HaltMagic; // invalid opcode for RV32I
         }
