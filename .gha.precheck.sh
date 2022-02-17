@@ -5,7 +5,7 @@ VERSION=$(git describe --always --tags --long)
 
 if [ $RUNNER_OS == 'Linux' ]; then
   echo "linux sys"
-  GOPRIVATE=github.com/ontology-layer-2 go get github.com/ethereum/go-ethereum@contract_fixed_trie
+  GOPRIVATE=github.com/ontology-layer-2 go get github.com/ethereum/go-ethereum@v1.10.3
   bash ./.gha.gofmt.sh
   bash ./.gha.gotest.sh
 elif [ $RUNNER_OS == 'osx' ]; then
