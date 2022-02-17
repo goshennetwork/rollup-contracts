@@ -5,7 +5,7 @@ VERSION=$(git describe --always --tags --long)
 
 if [ $RUNNER_OS == 'Linux' ]; then
   echo "linux sys"
-  GOPRIVATE=github.com/ontology-layer-2 go get github.com/ontology-layer-2/go-ethereum@8283586
+  GOPRIVATE=github.com/ontology-layer-2 go get github.com/ontology-layer-2/go-ethereum@master
   go mod tidy
   bash ./.gha.gofmt.sh
   bash ./.gha.gotest.sh
