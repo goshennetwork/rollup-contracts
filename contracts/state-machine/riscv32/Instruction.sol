@@ -141,7 +141,7 @@ library Instruction {
         uint32 imm12_19 = (inst >> 12) & 0xff;
         uint32 bit11 = (inst >> 20) & 1;
         uint32 imm1_10 = (inst >> 21) & 0x03ff;
-        uint32 imm20_31 = uint32(int32(inst) >> 31)<<20;
+        uint32 imm20_31 = uint32(int32(inst) >> 31) << 20;
         imm = imm20_31 | (imm12_19 << 12) | (bit11 << 11) | (imm1_10 << 1);
     }
 }
