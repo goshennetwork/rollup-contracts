@@ -18,7 +18,7 @@ jobs:
 
       - name: Inject insteadOf configuration for l2 private repo
         run: |
-          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+          git config --global url."https://${{ secrets.ROLLUP_ACCESS_TOKEN }}:x-oauth-basic@github.com/ontology-layer-2".insteadOf "https://github.com/ontology-layer-2"
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
