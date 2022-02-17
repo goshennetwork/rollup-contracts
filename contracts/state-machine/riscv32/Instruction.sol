@@ -108,7 +108,7 @@ library Instruction {
         uint32 imm04 = imm1 - bit11;
         uint32 bit12 = (imm2 >> 6) & 1;
         imm = (bit12 << 12) + (bit11 << 11) + ((imm2 & 0x3f) << 5) + imm04;
-        imm = uint32(int32(imm << 20) >> 20);
+        imm = uint32(int32(imm << 19) >> 19);
     }
 
     // U-type: [20]imm[31:12] + [5]rd + [7]opcpde
@@ -143,6 +143,6 @@ library Instruction {
         uint32 imm1_10 = (inst >> 21) & 0x03ff;
         uint32 bit20 = inst >> 31;
         imm = (bit20 << 20) + (imm12_19 << 12) + (bit11 << 11) + (imm1_10 << 1);
-        imm = uint32(int32(imm << 20) >> 20);
+        imm = uint32(int32(imm << 11) >> 11);
     }
 }

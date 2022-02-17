@@ -158,7 +158,9 @@ contract Interpretor {
                 if (imm >> 5 != 0) {
                     nextPC = MemoryLayout.HaltMagic;
                 }
-                vrs1 <<= imm & 0x1f;
+                unchecked {
+                    vrs1 <<= imm & 0x1f;
+                }
             } else if (fn3 == 5) {
                 //srli/srai
                 uint32 shift = imm & 0x1f;
