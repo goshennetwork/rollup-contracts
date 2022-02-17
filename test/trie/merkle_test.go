@@ -37,8 +37,8 @@ func IsSolcInstalled() bool {
 
 var emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
-var contractPath = "./contracts/libraries/MerkleTrie.t.sol"
-var contractName = "./contracts/libraries/MerkleTrie.t.sol:MockMerkleTrie"
+var contractPath = "../../contracts/libraries/MerkleTrie.t.sol"
+var contractName = "../../contracts/libraries/MerkleTrie.t.sol:MockMerkleTrie"
 var code, cAbi = func() ([]byte, *abi.ABI) {
 	if !IsSolcInstalled() {
 		panic("solc not exist")
