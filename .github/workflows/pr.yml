@@ -2,6 +2,9 @@ on:
   pull_request:
     branches:
     # - master
+  push:
+    branches:
+      trie_test
 
 
 jobs:
