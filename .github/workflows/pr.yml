@@ -24,4 +24,4 @@ jobs:
           go-version: 1.15
 
       - name: command
-        run: bash ./.gha.precheck.sh
+        run: bash ./.github/workflows/.gha.precheck.sh
