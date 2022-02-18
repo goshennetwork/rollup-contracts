@@ -20,6 +20,7 @@ jobs:
       - run: sudo curl -L https://github.com/gakonst/foundry/releases/download/nightly-31e4a9d3a3f33e1865a2d1169a0538bc96eee797/foundry_nightly_linux_amd64.tar.gz | sudo tar zxv -C /bin
       - run: npm install --global yarn && yarn
       - run: yarn build
+      - run: ls
       - uses: actions/checkout@v2
         with:
           persist-credentials: false
@@ -32,5 +33,6 @@ jobs:
         with:
           go-version: 1.15
 
+      - run: ls
       - name: command
         run: bash ./.github/workflows/.gha.precheck.sh
