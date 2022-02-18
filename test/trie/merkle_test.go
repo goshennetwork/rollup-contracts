@@ -229,7 +229,6 @@ func TestGet(t *testing.T) {
 
 }
 
-
 //rebuild a new trie from existing trie node
 func TestReplication(t *testing.T) {
 	trieCase := newCase()
