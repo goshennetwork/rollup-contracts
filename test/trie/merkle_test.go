@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -26,19 +25,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func IsSolcInstalled() bool {
-	output, err := exec.Command("solc", "--version").Output()
-	if err != nil {
-		return false
-	}
-
-	return len(output) > 0
-}
-
 var emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
-var contractPath = "../../contracts/libraries/MerkleTrie.t.sol"
-var contractName = "../../contracts/libraries/MerkleTrie.t.sol:MockMerkleTrie"
 var code, cAbi = func() ([]byte, *abi.ABI) {
 	ars, err := hardhat.GetArtifact("MockMerkleTrie", "out")
 	if err != nil {
@@ -70,12 +58,7 @@ type testCase struct {
 func newCase() *testCase {
 	cfg := defaultsConfig()
 	cfg.State, _ = state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
-	var (
-		vmenv = runtime.NewEnv(cfg)
-	)
-	if rules := cfg.ChainConfig.Rules(vmenv.Context.BlockNumber, true); rules.IsBerlin {
-		cfg.State.PrepareAccessList(cfg.Origin, &address, vm.ActivePrecompiles(rules), nil)
-	}
+	vmenv := runtime.NewEnv(cfg)
 	vmenv.StateDB.CreateAccount(address)
 	// set the receiver's (the executing contract) code for execution.
 	vmenv.StateDB.SetCode(address, code)
@@ -386,7 +369,6 @@ func defaultsConfig() (cfg *runtime.Config) {
 			IstanbulBlock:       new(big.Int),
 			MuirGlacierBlock:    new(big.Int),
 			BerlinBlock:         new(big.Int),
-			LondonBlock:         new(big.Int),
 		}
 	}
 
@@ -412,9 +394,6 @@ func defaultsConfig() (cfg *runtime.Config) {
 		cfg.GetHashFn = func(n uint64) common.Hash {
 			return common.BytesToHash(crypto.Keccak256([]byte(new(big.Int).SetUint64(n).String())))
 		}
-	}
-	if cfg.BaseFee == nil {
-		cfg.BaseFee = big.NewInt(params.InitialBaseFee)
 	}
 	return
 }
