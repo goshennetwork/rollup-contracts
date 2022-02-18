@@ -27,6 +27,40 @@ contract MockMerkleTrie {
     function getRaw(bytes memory _key) external view returns (bytes memory) {
         return _rawdb[keccak256(_key)];
     }
+
+    function rawUpdate(
+        bytes memory _key,
+        bytes memory _value,
+        bytes32 _root
+    ) external {
+        _hashdb.update(_key, _value, _root);
+    }
+
+    function rawGet(bytes memory _key, bytes32 _root) external returns (bytes memory) {
+        (bool _exist, bytes memory _data) = _hashdb.get(_key, root);
+        require(_exist, "not exist");
+        return _data;
+    }
+
+    function checkUpdate(
+        bytes memory _key,
+        bytes memory _value,
+        bytes32 _root,
+        bytes32 _expectRoot
+    ) external {
+        bytes32 _getRoot = _hashdb.update(_key, _value, _root);
+        require(_getRoot == _expectRoot, "not equal");
+    }
+
+    function checkGet(bytes memory _key, bytes32 _root) external returns (bytes memory) {
+        (bool exist, bytes memory _res) = _hashdb.get(_key, _root);
+        require(exist, "not exist");
+        return _res;
+    }
+
+    function insertTrieNode(bytes calldata anything) external {
+        _hashdb[keccak256(anything)] = anything;
+    }
 }
 
 contract MerkleTrieTest {
