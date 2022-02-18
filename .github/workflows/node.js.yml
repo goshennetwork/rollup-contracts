@@ -28,6 +28,7 @@ jobs:
       - run: npm install --global yarn && yarn
       - run: yarn format-lint
       - run: yarn build
+      - run: ls
       - run: yarn test
   go_test_job:
     needs: nodeJob
