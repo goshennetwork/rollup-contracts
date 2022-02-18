@@ -215,8 +215,7 @@ contract Interpretor {
             }
         } else if (op == Instruction.OP_U_LUI_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
-            root = mstate.writeRegister(root, rd, imm);
-            // LUI rd imm
+            root = mstate.writeRegister(root, rd, imm); // LUI rd imm
         } else if (op == Instruction.OP_U_AUIPC_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
             root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
