@@ -44,6 +44,7 @@ var code, cAbi = func() ([]byte, *abi.ABI) {
 	if err != nil {
 		panic(err)
 	}
+
 	abi1, err := abi.NewABI(ars.Abi)
 	if err != nil {
 		panic(err)
