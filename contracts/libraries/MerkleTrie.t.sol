@@ -28,6 +28,20 @@ contract MockMerkleTrie {
         return _rawdb[keccak256(_key)];
     }
 
+    function rawUpdate(
+        bytes memory _key,
+        bytes memory _value,
+        bytes32 _root
+    ) external {
+        _hashdb.update(_key, _value, _root);
+    }
+
+    function rawGet(bytes memory _key, bytes32 _root) external returns (bytes memory) {
+        (bool _exist, bytes memory _data) = _hashdb.get(_key, root);
+        require(_exist, "not exist");
+        return _data;
+    }
+
     function checkUpdate(
         bytes memory _key,
         bytes memory _value,
