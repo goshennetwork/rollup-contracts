@@ -50,7 +50,7 @@ library Register {
     //pc
     uint32 internal constant REG_PC = 32; //x32
     //the process num of pc
-    uint32 internal constant REG_Counter = 33; //x33
+    uint32 internal constant REG_COUNTER = 33; //x33
 
     function readRegisterBytes4(
         mapping(bytes32 => bytes) storage hashdb,

@@ -220,8 +220,8 @@ contract Interpretor {
 
         root = mstate.writeRegister(root, Register.REG_PC, nextPC);
         //instruction step success, increment step num
-        uint32 _num = mstate.readRegister(root, Register.REG_Counter);
-        root = mstate.writeRegister(root, Register.REG_Counter, _num + 1);
+        uint32 _num = mstate.readRegister(root, Register.REG_COUNTER);
+        root = mstate.writeRegister(root, Register.REG_COUNTER, _num + 1);
         return (root, nextPC == MemoryLayout.HaltMagic);
     }
 }
