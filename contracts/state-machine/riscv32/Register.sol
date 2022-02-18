@@ -49,7 +49,7 @@ library Register {
     uint32 internal constant REG_T6 = 31; //x31
     //pc
     uint32 internal constant REG_PC = 32; //x32
-    //the process num of pc
+    // the amount of executed instructions.
     uint32 internal constant REG_COUNTER = 33; //x33
 
     function readRegisterBytes4(
