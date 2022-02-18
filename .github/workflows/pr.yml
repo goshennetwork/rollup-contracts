@@ -1,0 +1,36 @@
+on:
+  pull_request:
+    branches:
+    # - master
+
+jobs:
+
+  build:
+    runs-on: ubuntu-18.04
+    env:
+      GOPRIVATE: github.com/ontology-layer-2
+      GH_ACCESS_TOKEN: ${{ secrets.ROLLUP_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+                - name: Use Node.js ${{ matrix.node-version }}
+                uses: actions/setup-node@v2
+                with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: 'npm'
+                  - run: sudo curl -L https://github.com/gakonst/foundry/releases/download/nightly-31e4a9d3a3f33e1865a2d1169a0538bc96eee797/foundry_nightly_linux_amd64.tar.gz | sudo tar zxv -C /bin
+                  - run: npm install --global yarn && yarn
+                  - run: yarn build
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Inject insteadOf configuration for l2 private repo
+        run: |
+          git config --global url."https://${{ secrets.ROLLUP_ACCESS_TOKEN }}:x-oauth-basic@github.com/ontology-layer-2".insteadOf "https://github.com/ontology-layer-2"
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+
+      - name: command
+        run: bash ./.github/workflows/.gha.precheck.sh
