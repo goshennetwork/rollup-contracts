@@ -27,7 +27,18 @@ import (
 
 var emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
-var code, cAbi = func() ([]byte, *abi.ABI) {
+//testCase is a single test object, it hold the trie info and evm storage db info.
+type testCase struct {
+	cAbi     *abi.ABI
+	vm       *vm.EVM
+	trie     *trie.Trie
+	db       *trie.Database
+	contract common.Address
+	sender   vm.AccountRef
+}
+
+func newCase() *testCase {
+	//get contract artifact
 	ars, err := hardhat.GetArtifact("MockMerkleTrie", "out")
 	if err != nil {
 		panic(err)
@@ -37,37 +48,21 @@ var code, cAbi = func() ([]byte, *abi.ABI) {
 	if err != nil {
 		panic(err)
 	}
-	return common.FromHex(ars.DeployedBytecode.String()), abi1
-}()
-
-var address = common.BytesToAddress([]byte("merkleContract"))
-var sender = vm.AccountRef(common.BytesToAddress([]byte("test")))
-var rawUpdateFunc = cAbi.Methods["rawUpdate"]
-var rawGetFunc = cAbi.Methods["rawGet"]
-var checkUpdateFunc = cAbi.Methods["checkUpdate"]
-var checkGetFunc = cAbi.Methods["checkGet"]
-var insertTrieNodeFunc = cAbi.Methods["insertTrieNode"]
-
-//testCase is a single test object, it hold the trie info and evm storage db info.
-type testCase struct {
-	vm   *vm.EVM
-	trie *trie.Trie
-	db   *trie.Database
-}
-
-func newCase() *testCase {
+	//setup evm
 	cfg := defaultsConfig()
 	cfg.State, _ = state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
 	vmenv := runtime.NewEnv(cfg)
-	vmenv.StateDB.CreateAccount(address)
+	contractAddr := common.BytesToAddress([]byte("merkleContract"))
+	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
+	vmenv.StateDB.CreateAccount(contractAddr)
 	// set the receiver's (the executing contract) code for execution.
-	vmenv.StateDB.SetCode(address, code)
+	vmenv.StateDB.SetCode(contractAddr, ars.DeployedBytecode)
 	db := trie.NewDatabase(memorydb.New())
 	emptyTrie, err := trie.New(common.Hash{}, db)
 	if err != nil {
 		panic(err)
 	}
-	return &testCase{vmenv, emptyTrie, db}
+	return &testCase{abi1, vmenv, emptyTrie, db, contractAddr, sender}
 }
 
 //copyTrie create a new EVm trie with old golang trie db
@@ -84,8 +79,8 @@ func (this *testCase) checkUpdateString(key, value string) error {
 
 func (this *testCase) update(key, value []byte, root common.Hash) error {
 	//function rawUpdate( bytes memory _key,bytes memory _value,bytes32 _root)external
-	input := rawUpdateFunc.MustEncodeIDAndInput(key, value, root)
-	ret, _, err := this.vm.Call(sender, address, input, defaultsConfig().GasLimit, new(big.Int))
+	input := this.cAbi.Methods["rawUpdate"].MustEncodeIDAndInput(key, value, root)
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -95,8 +90,8 @@ func (this *testCase) update(key, value []byte, root common.Hash) error {
 
 func (this *testCase) get(key []byte, root common.Hash) error {
 	//function rawGet(bytes memory _key,bytes32 _root)external returns (bytes memory)
-	input := rawGetFunc.MustEncodeIDAndInput(key, root)
-	ret, _, err := this.vm.Call(sender, address, input, defaultsConfig().GasLimit, new(big.Int))
+	input := this.cAbi.Methods["rawGet"].MustEncodeIDAndInput(key, root)
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -116,11 +111,11 @@ func (this *testCase) checkUpdate(key, value []byte) error {
 	this.trie.Update(key, value)
 	this.trie.Commit(nil)
 	fmt.Printf("updated: key: 0x%x, value: 0x%x, newRoot: %s\n", key, value, this.trie.Hash())
-	input, err := checkUpdateFunc.EncodeIDAndInput(key, value, startRoot, this.trie.Hash())
+	input, err := this.cAbi.Methods["checkUpdate"].EncodeIDAndInput(key, value, startRoot, this.trie.Hash())
 	if err != nil {
 		return errors.Wrap(err, "checkUpdate input")
 	}
-	ret, _, err := this.vm.Call(sender, address, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -130,17 +125,18 @@ func (this *testCase) checkUpdate(key, value []byte) error {
 
 func (this *testCase) checkGet(key []byte) error {
 	//function checkGet(bytes memory _key, bytes32 _root) external override returns (bytes memory);
-	input, err := checkGetFunc.EncodeIDAndInput(key, this.trie.Hash())
+	fn := this.cAbi.Methods["checkGet"]
+	input, err := fn.EncodeIDAndInput(key, this.trie.Hash())
 	if err != nil {
 		return errors.Wrap(err, "checkGet input")
 	}
-	ret, _, err := this.vm.Call(sender, address, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
 	}
 
-	m, err := checkGetFunc.Outputs.Decode(ret)
+	m, err := fn.Outputs.Decode(ret)
 	if err != nil {
 		return err
 	}
@@ -153,11 +149,11 @@ func (this *testCase) checkGet(key []byte) error {
 
 func (this *testCase) insertTrieNode(encoded []byte) error {
 	//function insertTrieNode(bytes calldata anything)external;
-	input, err := insertTrieNodeFunc.EncodeIDAndInput(encoded)
+	input, err := this.cAbi.Methods["insertTrieNode"].EncodeIDAndInput(encoded)
 	if err != nil {
 		return err
 	}
-	ret, _, err := this.vm.Call(sender, address, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -193,8 +189,8 @@ func TestMissingRoot(t *testing.T) {
 	if err == nil {
 		t.Fatal("get for invalid root")
 	}
-
-	err = trieCase.get([]byte(""), emptyRoot)
+	//common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421") is empty tree root
+	err = trieCase.get([]byte(""), common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"))
 	if err == nil {
 		t.Fatal("get for invalid root")
 	}
