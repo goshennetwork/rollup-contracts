@@ -79,24 +79,19 @@ contract Interpretor {
                 } else {
                     nextPC = MemoryLayout.HaltMagic; // invalid
                 }
-            } else if (fn3 == 1) {
-                //csrrw control status register read & write
+            } else if (fn3 == 1) {//csrrw control status register read & write
                 nextPC = MemoryLayout.HaltMagic;
-            } else if (fn3 == 2) {
-                //csrrs control status register read & set bit
+            } else if (fn3 == 2) {//csrrs control status register read & set bit
                 nextPC = MemoryLayout.HaltMagic;
-            } else if (fn3 == 3) {
-                //csrrc control status register read & clear bit
+            } else if (fn3 == 3) {//csrrc control status register read & clear bit
                 nextPC = MemoryLayout.HaltMagic;
             } else if (fn3 == 5) {
                 //the flow 3 instruction rs1 means zimm
                 //csrrwi control status register read & write immediate
                 nextPC = MemoryLayout.HaltMagic;
-            } else if (fn3 == 6) {
-                //csrrsi control status register read & set bit immediate
+            } else if (fn3 == 6) {//csrrsi control status register read & set bit immediate
                 nextPC = MemoryLayout.HaltMagic;
-            } else if (fn3 == 7) {
-                //csrrci control sttus register read & clear bit immediate
+            } else if (fn3 == 7) {//csrrci control sttus register read & clear bit immediate
                 nextPC = MemoryLayout.HaltMagic;
             } else {
                 nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
@@ -153,23 +148,19 @@ contract Interpretor {
                 vrs1 |= imm; // ori
             } else if (fn3 == 7) {
                 vrs1 &= imm; // andi
-            } else if (fn3 == 1) {
-                // slli shift left logical immediate
+            } else if (fn3 == 1) {// slli shift left logical immediate
                 if (imm >> 5 != 0) {
                     nextPC = MemoryLayout.HaltMagic;
                 }
                 unchecked {
                     vrs1 <<= imm & 0x1f;
                 }
-            } else if (fn3 == 5) {
-                //srli/srai
+            } else if (fn3 == 5) {//srli/srai
                 uint32 shift = imm & 0x1f;
                 uint32 imm7 = imm >> 5;
-                if (imm7 == 0) {
-                    // srli shift right logical immediate
+                if (imm7 == 0) {// srli shift right logical immediate
                     vrs1 >>= shift;
-                } else if (imm7 == 32) {
-                    // srai shift right arithmetic immediate
+                } else if (imm7 == 32) {// srai shift right arithmetic immediate
                     vrs1 = uint32(int32(vrs1) >> shift);
                 } else {
                     nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
@@ -219,8 +210,7 @@ contract Interpretor {
         } else if (op == Instruction.OP_U_AUIPC_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
             root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
-        } else if (op == Instruction.OP_J_JAL_TYPE) {
-            // JAL rd imm : rd = pc + 4, pc = pc + imm
+        } else if (op == Instruction.OP_J_JAL_TYPE) {// JAL rd imm : rd = pc + 4, pc = pc + imm
             (, uint8 rd, uint32 imm) = Instruction.decodeJType(inst);
             root = mstate.writeRegister(root, rd, nextPC);
             nextPC = currPC + imm;
