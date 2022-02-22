@@ -54,7 +54,7 @@ library Register {
         mapping(bytes32 => bytes) storage hashdb,
         bytes32 root,
         uint32 regid
-    ) public view returns (bytes4) {
+    ) internal view returns (bytes4) {
         if (regid == REG_X0) {
             return bytes4(0);
         }
@@ -66,7 +66,7 @@ library Register {
         mapping(bytes32 => bytes) storage hashdb,
         bytes32 root,
         uint32 regid
-    ) public view returns (uint32) {
+    ) internal view returns (uint32) {
         bytes4 result = readRegisterBytes4(hashdb, root, regid);
         return BytesEndian.bytes4ToUint32(result);
     }
