@@ -77,7 +77,14 @@ contract InterpretorTest {
         require(checkMemState(e), raw);
     }
 
+    function initRegister() public {
+        for (uint32 i = 0; i < 33; i++) {
+            root = mstate.writeRegister(root, i, 0);
+        }
+    }
+
     function testExecInst() public {
+        initRegister();
         checkInstruction("li      a0,1", 0x00100513, ExpectReg(Register.REG_A0, 0 + 1)); //a0=0+1
         checkInstruction("li      a1,1", 0x00100593, ExpectReg(Register.REG_A1, 0 + 1)); //a1=0+1
         checkInstruction("add     a0,a0,a1", 0x00b50533, ExpectReg(Register.REG_A0, 1 + 1)); //a0=1+1
@@ -226,6 +233,7 @@ contract InterpretorTest {
         checkInstruction("li      a2,1", 0x00100613, ExpectReg(Register.REG_A2, 1));
         resetPC();
         checkInstruction("beq     a1,a2,12", 0x00c58663, ExpectReg(Register.REG_PC, 12)); //a1 == a2 ? pc+12:pc +4
+        checkInstruction("beq     a1,a2,-4", 0xfec58ee3, ExpectReg(Register.REG_PC, 8)); //12-4
 
         //bne
         checkInstruction("li      a1,1", 0x00100593, ExpectReg(Register.REG_A1, 1));
