@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 interface IStakingManager {
     //proposer deposit for staking.
