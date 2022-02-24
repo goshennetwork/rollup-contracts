@@ -9,6 +9,10 @@ contract MachineState {
     using Register for mapping(bytes32 => bytes);
     mapping(bytes32 => bytes) hashdb;
 
+    function insertTrieNode(bytes calldata _node) public {
+        hashdb[keccak256(_node)] = _node;
+    }
+
     function writeMemory(
         bytes32 root,
         uint32 ptr,
