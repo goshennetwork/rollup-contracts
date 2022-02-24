@@ -163,10 +163,10 @@ func (this *testCase) writeRegister(k, v uint32) (ret []byte, err error) {
 	vv := make([]byte, 4)
 	//register value is little endian
 	binary.LittleEndian.PutUint32(vv[:], v)
-	this.ramTrie.Update([]byte{uint8(k)}, vv)
+	if k != 0 { //x0 do not write to db
+		this.ramTrie.Update([]byte{uint8(k)}, vv)
+	}
 	ret, _, err = this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
-	//r, _ := this.ramAbi.Methods["writeRegister"].Outputs.Decode(ret)
-	//fmt.Println(r)
 	return
 }
 
