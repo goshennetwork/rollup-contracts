@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IStakingManager.sol";
-import "@openzeppelin/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/IStateCommitChain.sol";
 import "../interfaces/IChallengeFactory.sol";
 
