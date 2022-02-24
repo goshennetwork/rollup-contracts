@@ -63,8 +63,9 @@ func writeToMap(d []byte, offset uint32, m map[uint32]uint32) {
 		panic("not align 4")
 	}
 	i := 0
-	for ; i < len(d)-4; i++ {
+	for i < len(d)-4 {
 		m[offset] = binary.LittleEndian.Uint32(d[i : i+4])
+		i += 4
 		offset += 4
 	} //last 4 byte
 	m[offset] = binary.LittleEndian.Uint32(d[i:])
