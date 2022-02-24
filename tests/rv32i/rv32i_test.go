@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -26,15 +27,11 @@ func TestRV32I(t *testing.T) {
 	}
 	for _, f := range tests {
 		fmt.Println(f)
-		image, entry := GetImageWithEntrypoint(f)
-		if len(image)&3 != 0 {
-			panic("wrong image")
+		image, entry, err := getProgramImage(f)
+		if err != nil {
+			t.Fatal(err)
 		}
-		m := make(map[uint32]uint32)
-		for i := uint32(0); i < uint32(len(image)); i += 4 {
-			m[i] = binary.LittleEndian.Uint32(image[i : i+4])
-		}
-		ret, err := start(m, entry)
+		ret, err := start(image, entry)
 		if err != nil {
 			t.Log(err)
 			r, _ := web3.DecodeRevert(ret)
@@ -42,6 +39,20 @@ func TestRV32I(t *testing.T) {
 		}
 	}
 
+}
+
+func TestEvm(t *testing.T) {
+	image, entry, err := getProgramImage("./riscv")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(entry)
+	ret, err := start(image, entry)
+	if err != nil {
+		t.Log(err)
+		r, _ := web3.DecodeRevert(ret)
+		t.Fatalf("revert: %s", r)
+	}
 }
 
 func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
@@ -57,7 +68,10 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 		}
 	}
 	fmt.Println("start...")
-	return this.start(entrypoint)
+	now := time.Now()
+	r, err := this.start(entrypoint)
+	fmt.Println("run time: ", time.Since(now))
+	return r, err
 }
 
 type testCase struct {
@@ -72,6 +86,7 @@ type testCase struct {
 	ramAddr common.Address
 	ramTrie *trie.Trie
 	sender  vm.AccountRef
+	mdb     *trie.Database
 }
 
 func newCase() *testCase {
@@ -98,7 +113,8 @@ func newCase() *testCase {
 	ramAddr := common.BytesToAddress([]byte("MachineState"))
 	vmevm := tests.NewEVMWithCode(map[common.Address][]byte{ramAddr: ramA.DeployedBytecode})
 	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
-	trie, err := trie.New(common.Hash{}, trie.NewDatabase(memorydb.New()))
+	mdb := trie.NewDatabase(memorydb.New())
+	trie, err := trie.New(common.Hash{}, mdb)
 	if err != nil {
 		panic(err)
 	}
@@ -114,21 +130,33 @@ func newCase() *testCase {
 	if err != nil {
 		panic(err)
 	}
-	return &testCase{vmevm, rvAbi, rvAddr, ramAbi, ramAddr, trie, sender}
-}
-
-func (this *testCase) newInterpretor() {
+	return &testCase{vmevm, rvAbi, rvAddr, ramAbi, ramAddr, trie, sender, mdb}
 }
 
 //copy ram to evm
 func (this *testCase) copyRam(ram map[uint32]uint32) ([]byte, error) {
 	for k, v := range ram {
-		ret, err := this.writeMemory(k, v)
-		if err != nil {
-			return ret, err
-		}
+		//key is big endian
+		kk, vv := make([]byte, 4), make([]byte, 4)
+		binary.BigEndian.PutUint32(kk[:], k)
+		//v is little endian
+		binary.LittleEndian.PutUint32(vv[:], v)
+		this.ramTrie.Update(kk, vv)
 	}
-	return nil, nil
+	if _, err := this.ramTrie.Commit(nil); err != nil {
+		panic(err)
+	}
+	err := this.mdb.Commit(this.ramTrie.Hash(), false, func(hash common.Hash) {
+		node, err := this.mdb.Node(hash)
+		if err != nil {
+			panic(err)
+		}
+		_, err = this.insertTrieNode(node)
+		if err != nil {
+			panic(err)
+		}
+	})
+	return nil, err
 }
 
 func (this *testCase) writeMemory(k, v uint32) (ret []byte, err error) {
@@ -145,6 +173,13 @@ func (this *testCase) writeMemory(k, v uint32) (ret []byte, err error) {
 	//v is little endian
 	binary.LittleEndian.PutUint32(vv[:], v)
 	this.ramTrie.Update(kk, vv)
+	ret, _, err = this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
+	return
+}
+
+func (this *testCase) insertTrieNode(data []byte) (ret []byte, err error) {
+	//function insertTrieNode(bytes calldata _node)public
+	input := this.ramAbi.Methods["insertTrieNode"].MustEncodeIDAndInput(data)
 	ret, _, err = this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
 	return
 }

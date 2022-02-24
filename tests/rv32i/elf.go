@@ -2,9 +2,9 @@ package rv32i
 
 import (
 	"debug/elf"
+	"encoding/binary"
 	"fmt"
 	"io/ioutil"
-	"sort"
 )
 
 func filterFileSymbol(f string, want func(string) bool) []elf.Symbol {
@@ -29,31 +29,8 @@ func filterSymbol(symbols []elf.Symbol, want func(string) bool) []elf.Symbol {
 	return s
 }
 
-func GetImageWithEntrypoint(s string) ([]byte, uint32) {
-	m, en, err := getProgramImage(s)
-	if err != nil {
-		panic(err)
-	}
-	//change map to slice
-	addrs := make([]uint32, len(m))
-	i := 0
-	for addr, _ := range m {
-		addrs[i] = addr
-		i += 1
-	}
-	sort.Slice(addrs, func(i, j int) bool { //sort addr
-		return addrs[i] < addrs[j]
-	})
-	maxaddr := addrs[len(addrs)-1]
-	file := make([]byte, maxaddr+1)
-	for _, addr := range addrs {
-		file[addr] = m[addr]
-	}
-	return file, en
-}
-
-func getProgramImage(s string) (map[uint32]byte, uint32, error) {
-	fileimage := make(map[uint32]byte)
+func getProgramImage(s string) (map[uint32]uint32, uint32, error) {
+	fileimage := make(map[uint32]uint32)
 	file, err := elf.Open(s)
 	if err != nil {
 		return nil, 0, err
@@ -81,11 +58,16 @@ func getProgramImage(s string) (map[uint32]byte, uint32, error) {
 }
 
 //write to memory map
-func writeToMap(d []byte, offset uint32, m map[uint32]byte) {
-	for i := 0; i < len(d); i++ {
-		m[offset] = d[i]
-		offset++
+func writeToMap(d []byte, offset uint32, m map[uint32]uint32) {
+	if len(d)&3 != 0 {
+		panic("not align 4")
 	}
+	i := 0
+	for ; i < len(d)-4; i++ {
+		m[offset] = binary.LittleEndian.Uint32(d[i : i+4])
+		offset += 4
+	} //last 4 byte
+	m[offset] = binary.LittleEndian.Uint32(d[i:])
 }
 func checkForRiscv32(f *elf.File) error {
 	if len(f.Progs) == 0 {
