@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "../../libraries/BytesEndian.sol";
 import "../../libraries/MerkleTrie.sol";
 import "../../libraries/BytesSlice.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 library Register {
     uint32 internal constant REGISTER_NUM = 33;
@@ -56,9 +55,10 @@ library Register {
         bytes32 root,
         uint32 regid
     ) internal view returns (bytes4) {
+        if (regid == REG_X0) {
+            return bytes4(0);
+        }
         (bool exists, bytes memory value) = MerkleTrie.get(hashdb, genRegisterKey(regid), root);
-        bytes memory info = abi.encodePacked(Strings.toString(regid), " regid not exist");
-        require(exists, string(info));
         return exists ? BytesSlice.bytesToBytes4(value) : bytes4(0);
     }
 
@@ -72,7 +72,7 @@ library Register {
     }
 
     function genRegisterKey(uint32 regid) private pure returns (bytes memory) {
-        return bytes.concat(bytes1(uint8(regid)));
+        return bytes.concat(bytes1(uint8(regid - 1)));
     }
 
     function writeRegister(
@@ -91,7 +91,7 @@ library Register {
         bytes4 value
     ) internal returns (bytes32) {
         if (regid == REG_X0) {
-            value = bytes4(0);
+            return root;
         }
         return MerkleTrie.update(hashdb, genRegisterKey(regid), BytesSlice.bytes4ToBytes(value), root);
     }
