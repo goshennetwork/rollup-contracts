@@ -162,7 +162,6 @@ func (this *testCase) copyRam(ram map[uint32]uint32) ([]byte, error) {
 }
 
 func (this *testCase) writeMemory(k, v uint32) (ret []byte, err error) {
-	defer func() { err = errors.Wrap(err, "write memory") }()
 	//function writeMemory(
 	//        bytes32 root,
 	//        uint32 ptr,
