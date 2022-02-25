@@ -16,6 +16,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/abi"
 	"github.com/laizy/web3/hardhat"
+	"github.com/mitchellh/mapstructure"
 	"github.com/ontology-layer-2/rollup-contracts/tests"
 	"github.com/pkg/errors"
 )
@@ -31,6 +32,8 @@ func TestRV32I(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		fmt.Println("entry: ", entry)
+		fmt.Println(image[entry])
 		ret, err := start(image, entry)
 		if err != nil {
 			t.Log(err)
@@ -39,20 +42,6 @@ func TestRV32I(t *testing.T) {
 		}
 	}
 
-}
-
-func TestEvm(t *testing.T) {
-	image, entry, err := getProgramImage("./riscv")
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(entry)
-	ret, err := start(image, entry)
-	if err != nil {
-		t.Log(err)
-		r, _ := web3.DecodeRevert(ret)
-		t.Fatalf("revert: %s", r)
-	}
 }
 
 func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
@@ -70,7 +59,20 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 	fmt.Println("start...")
 	now := time.Now()
 	r, err := this.start(entrypoint)
-	fmt.Println("run time: ", time.Since(now))
+	var i interface{}
+	var num uint32
+	var insn uint32
+	if err == nil {
+		i, _ = this.rvAbi.Methods["start"].Outputs.Decode(r)
+		if err := mapstructure.Decode(i.(map[string]interface{})["1"], &num); err != nil {
+			panic(err)
+		}
+		if err := mapstructure.Decode(i.(map[string]interface{})["2"], &insn); err != nil {
+			panic(err)
+		}
+	}
+	fmt.Printf(" consume %d time: %v, last insn: 0x%x\n", num, time.Since(now), insn)
+
 	return r, err
 }
 
