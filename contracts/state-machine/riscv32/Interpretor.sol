@@ -64,12 +64,12 @@ contract Interpretor {
             } else if (fn == (1 << 8) + 1) {
                 //mulh 把寄存器 x[rs2]乘到寄存器x[rs1]上，都视为2的补码，将乘积的高位写入x[rd]
                 unchecked {
-                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(int32(vrs2))) >> 32));
+                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(int32(vrs2)))) >> 32);
                 }
             } else if (fn == (2 << 8) + 1) {
                 //mulhsu 把寄存器 x[rs2]乘到寄存器 x[rs1]上，x[rs1]为2的补码，x[rs2]为无符号数，将乘积的高位写入x[rd]。
                 unchecked {
-                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(uint64(vrs2))) >> 32));
+                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(uint64(vrs2)))) >> 32);
                 }
             } else if (fn == (3 << 8) + 1) {
                 //mulhu 把寄存器x[rs2]乘到寄存器x[rs1]上，x[rs1]、x[rs2]均为无符号数，将乘积的高位写入x[rd]
