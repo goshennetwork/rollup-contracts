@@ -30,7 +30,8 @@ contract Interpretor {
         if (op == Instruction.OP_R_TYPE) {
             (, uint8 rd, uint8 fn3, uint32 vrs1, uint32 vrs2, uint8 fn7) = Instruction.decodeRType(inst);
             uint256 fn = (uint256(fn3) << 8) + uint256(fn7);
-            vrs1 = mstate.readRegister(root, vrs1); // reuse register id as value to avoid stack too deep error
+            vrs1 = mstate.readRegister(root, vrs1);
+            // reuse register id as value to avoid stack too deep error
             vrs2 = mstate.readRegister(root, vrs2);
             if (fn == (0 << 8) + 0) {
                 unchecked {
@@ -41,21 +42,58 @@ contract Interpretor {
                     vrs1 -= vrs2;
                 }
             } else if (fn == 1 << 8) {
-                vrs1 = vrs1 << (vrs2 & 0x1f); // sll shift left logical
+                vrs1 = vrs1 << (vrs2 & 0x1f);
+                // sll shift left logical
             } else if (fn == 2 << 8) {
-                vrs1 = int32(vrs1) < int32(vrs2) ? 1 : 0; // slt set less than
+                vrs1 = int32(vrs1) < int32(vrs2) ? 1 : 0;
+                // slt set less than
             } else if (fn == 3 << 8) {
-                vrs1 = (vrs1 < vrs2) ? 1 : 0; // sltu set less than unsigned
+                vrs1 = (vrs1 < vrs2) ? 1 : 0;
+                // sltu set less than unsigned
             } else if (fn == 4 << 8) {
-                vrs1 = vrs1 ^ vrs2; // xor
+                vrs1 = vrs1 ^ vrs2;
+                // xor
             } else if (fn == 5 << 8) {
-                vrs1 = vrs1 >> (vrs2 & 0x1f); // srl: shift right logical
+                vrs1 = vrs1 >> (vrs2 & 0x1f);
+                // srl: shift right logical
             } else if (fn == (5 << 8) + 32) {
-                vrs1 = uint32(int32(vrs1) >> (vrs2 & 0x1f)); // sra: shift arithmetic
+                vrs1 = uint32(int32(vrs1) >> (vrs2 & 0x1f));
+                // sra: shift arithmetic
             } else if (fn == 6 << 8) {
                 vrs1 = vrs1 | vrs2;
             } else if (fn == 7 << 8) {
                 vrs1 = vrs1 & vrs2;
+            } else if (fn == (0 << 8) + 1) {
+                //mul 把寄存器x[rs2]乘到寄存器x[rs1]上，乘积写入 x[rd]。忽略算术溢出
+                unchecked {
+                    vrs1 = vrs1 * vrs2;
+                }
+            } else if (fn == (1 << 8) + 1) {
+                //mulh 把寄存器 x[rs2]乘到寄存器x[rs1]上，都视为2的补码，将乘积的高位写入x[rd]
+                unchecked {
+                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(int32(vrs2))) >> 32));
+                }
+            } else if (fn == (2 << 8) + 1) {
+                //mulhsu 把寄存器 x[rs2]乘到寄存器 x[rs1]上，x[rs1]为2的补码，x[rs2]为无符号数，将乘积的高位写入x[rd]。
+                unchecked {
+                    vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(uint64(vrs2))) >> 32));
+                }
+            } else if (fn == (3 << 8) + 1) {
+                //mulhu 把寄存器x[rs2]乘到寄存器x[rs1]上，x[rs1]、x[rs2]均为无符号数，将乘积的高位写入x[rd]
+                unchecked {
+                    vrs1 = uint32((uint64(vrs1) * uint64(vrs2)) >> 32);
+                }
+            } else if (fn == (4 << 8) + 1) {
+                //div 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为二进制补码，把商写入x[rd],软件层面检查除数为0的情况
+                vrs1 = vrs2 == 0 ? uint32(1 << (32 - 1)) : uint32(int32(vrs1) / int32(vrs2));
+            } else if (fn == (5 << 8) + 1) {
+                //divu 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为无符号数，把商写入x[rd]
+                vrs1 = vrs2 == 0 ? uint32(1 << (32 - 1)) : vrs1 / vrs2;
+            } else if (fn == (6 << 8) + 1) {
+                //rem x[rs1]除以 x[rs2]，向0舍入，都视为2的补码，余数写入x[rd]
+                vrs1 = vrs2 == 0 ? vrs1 : uint32(int32(vrs1) % int32(vrs2));
+            } else if (fn == (7 << 8) + 1) {
+                vrs1 = vrs2 == 0 ? vrs1 : vrs1 % vrs2;
             } else {
                 nextPC = MemoryLayout.HaltMagic;
             }
@@ -77,7 +115,8 @@ contract Interpretor {
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
-                    nextPC = MemoryLayout.HaltMagic; // invalid
+                    nextPC = MemoryLayout.HaltMagic;
+                    // invalid
                 }
             } else if (fn3 == 1) {
                 //csrrw control status register read & write
@@ -99,7 +138,8 @@ contract Interpretor {
                 //csrrci control sttus register read & clear bit immediate
                 nextPC = MemoryLayout.HaltMagic;
             } else {
-                nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
+                nextPC = MemoryLayout.HaltMagic;
+                // invalid for RV32I
             }
         } else if (op == Instruction.OP_I_JALR_TYPE) {
             // JALR rd rs1 imm : rd = pc + 4, pc = rs1 + sext(imm), pc[0] = 0
@@ -110,7 +150,8 @@ contract Interpretor {
                 unchecked {
                     vrs1 += imm;
                 }
-                nextPC = vrs1 & (~uint32(1)); // reset lowest bit
+                nextPC = vrs1 & (~uint32(1));
+                // reset lowest bit
             } else {
                 nextPC = MemoryLayout.HaltMagic;
             }
@@ -121,19 +162,25 @@ contract Interpretor {
                 vrs1 += imm;
             }
             if (fn3 == 0) {
-                vrs1 = uint32(int32(int8(uint8(mstate.readMemoryByte(root, vrs1))))); // load byte and sign extension
+                vrs1 = uint32(int32(int8(uint8(mstate.readMemoryByte(root, vrs1)))));
+                // load byte and sign extension
             } else if (fn3 == 1) {
                 bytes2 half = mstate.readMemoryBytes2(root, vrs1);
-                vrs1 = uint32(int32(int16(BytesEndian.bytes2ToUint16(half)))); // load halfword and sign extension
+                vrs1 = uint32(int32(int16(BytesEndian.bytes2ToUint16(half))));
+                // load halfword and sign extension
             } else if (fn3 == 2) {
-                vrs1 = mstate.readMemory(root, vrs1); // load word
+                vrs1 = mstate.readMemory(root, vrs1);
+                // load word
             } else if (fn3 == 4) {
-                vrs1 = uint32(uint8(mstate.readMemoryByte(root, vrs1))); // load byte unsigned
+                vrs1 = uint32(uint8(mstate.readMemoryByte(root, vrs1)));
+                // load byte unsigned
             } else if (fn3 == 5) {
                 bytes2 half = mstate.readMemoryBytes2(root, vrs1);
-                vrs1 = uint32(BytesEndian.bytes2ToUint16(half)); // load halfword unsigned
+                vrs1 = uint32(BytesEndian.bytes2ToUint16(half));
+                // load halfword unsigned
             } else {
-                nextPC = MemoryLayout.HaltMagic; // invalid for rv32I
+                nextPC = MemoryLayout.HaltMagic;
+                // invalid for rv32I
             }
             root = mstate.writeRegister(root, rd, vrs1);
         } else if (op == Instruction.OP_I_CALC_TYPE) {
@@ -141,18 +188,24 @@ contract Interpretor {
             uint32 vrs1 = mstate.readRegister(root, rs1);
             if (fn3 == 0) {
                 unchecked {
-                    vrs1 += imm; // addi
+                    vrs1 += imm;
+                    // addi
                 }
             } else if (fn3 == 2) {
-                vrs1 = (int32(vrs1) < int32(imm)) ? 1 : 0; // slti
+                vrs1 = (int32(vrs1) < int32(imm)) ? 1 : 0;
+                // slti
             } else if (fn3 == 3) {
-                vrs1 = (vrs1 < imm) ? 1 : 0; // sltiu
+                vrs1 = (vrs1 < imm) ? 1 : 0;
+                // sltiu
             } else if (fn3 == 4) {
-                vrs1 ^= imm; // xori
+                vrs1 ^= imm;
+                // xori
             } else if (fn3 == 6) {
-                vrs1 |= imm; // ori
+                vrs1 |= imm;
+                // ori
             } else if (fn3 == 7) {
-                vrs1 &= imm; // andi
+                vrs1 &= imm;
+                // andi
             } else if (fn3 == 1) {
                 // slli shift left logical immediate
                 if (imm >> 5 != 0) {
@@ -172,10 +225,12 @@ contract Interpretor {
                     // srai shift right arithmetic immediate
                     vrs1 = uint32(int32(vrs1) >> shift);
                 } else {
-                    nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
+                    nextPC = MemoryLayout.HaltMagic;
+                    // invalid for RV32I
                 }
             } else {
-                nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
+                nextPC = MemoryLayout.HaltMagic;
+                // invalid for RV32I
             }
             root = mstate.writeRegister(root, rd, vrs1);
         } else if (op == Instruction.OP_S_TYPE) {
@@ -192,7 +247,8 @@ contract Interpretor {
             } else if (fn3 == 2) {
                 root = mstate.writeMemoryBytes4(root, vrs1, vrs2);
             } else {
-                nextPC = MemoryLayout.HaltMagic; // invalid for RV32I
+                nextPC = MemoryLayout.HaltMagic;
+                // invalid for RV32I
             }
         } else if (op == Instruction.OP_B_TYPE) {
             (, uint8 _fn3, uint8 _rs1, uint8 _rs2, uint32 _offset) = Instruction.decodeBType(inst);
@@ -215,17 +271,20 @@ contract Interpretor {
             }
         } else if (op == Instruction.OP_U_LUI_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
-            root = mstate.writeRegister(root, rd, imm); // LUI rd imm
+            root = mstate.writeRegister(root, rd, imm);
+            // LUI rd imm
         } else if (op == Instruction.OP_U_AUIPC_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
-            root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
+            root = mstate.writeRegister(root, rd, currPC + imm);
+            // auipc rd imm
         } else if (op == Instruction.OP_J_JAL_TYPE) {
             // JAL rd imm : rd = pc + 4, pc = pc + imm
             (, uint8 rd, uint32 imm) = Instruction.decodeJType(inst);
             root = mstate.writeRegister(root, rd, nextPC);
             nextPC = currPC + imm;
         } else {
-            nextPC = MemoryLayout.HaltMagic; // invalid opcode for RV32I
+            nextPC = MemoryLayout.HaltMagic;
+            // invalid opcode for RV32I
         }
 
         root = mstate.writeRegister(root, Register.REG_PC, nextPC);
