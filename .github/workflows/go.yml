@@ -34,5 +34,6 @@ jobs:
           go-version: 1.15
 
       - run: ls
+      - run: sudo apt-get update&&sudo apt install docker && docker pull rpirea/riscv32-unknown-elf:pulp
       - name: Go Fmt & Test
         run: bash ./.github/workflows/.gha.precheck.sh
