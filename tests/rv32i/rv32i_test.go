@@ -41,7 +41,24 @@ func TestRV32I(t *testing.T) {
 			t.Fatalf("revert: %s", r)
 		}
 	}
+}
 
+func TestHello(t *testing.T) {
+	runFile(t, "riscv-ia")
+}
+
+func runFile(t *testing.T, fileName string) {
+	image, entry, err := getProgramImage(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(entry)
+	ret, err := start(image, entry)
+	if err != nil {
+		t.Log(err)
+		r, _ := web3.DecodeRevert(ret)
+		t.Fatalf("revert: %s", r)
+	}
 }
 
 func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
@@ -60,10 +77,14 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 	now := time.Now()
 	r, err := this.start(entrypoint)
 	var i interface{}
+	var root common.Hash
 	var num uint32
 	var insn uint32
 	if err == nil {
 		i, _ = this.rvAbi.Methods["start"].Outputs.Decode(r)
+		if err := mapstructure.Decode(i.(map[string]interface{})["0"], &root); err != nil {
+			panic(err)
+		}
 		if err := mapstructure.Decode(i.(map[string]interface{})["1"], &num); err != nil {
 			panic(err)
 		}
@@ -72,7 +93,9 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 		}
 	}
 	fmt.Printf(" consume %d time: %v, last insn: 0x%x\n", num, time.Since(now), insn)
-
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, this.readMemory(root, 1200))
+	fmt.Println(string(b))
 	return r, err
 }
 
@@ -177,6 +200,25 @@ func (this *testCase) writeMemory(k, v uint32) (ret []byte, err error) {
 	this.ramTrie.Update(kk, vv)
 	ret, _, err = this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
 	return
+}
+
+func (this *testCase) readMemory(root common.Hash, k uint32) uint32 {
+	//function readMemory(bytes32 root, uint32 ptr) public view returns (uint32)
+	method := this.ramAbi.Methods["readMemory"]
+	input := method.MustEncodeIDAndInput(root, k)
+	ret, _, err := this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
+	if err != nil {
+		panic(err)
+	}
+	i, err := method.Outputs.Decode(ret)
+	if err != nil {
+		panic(err)
+	}
+	var out uint32
+	if err := mapstructure.Decode(i.(map[string]interface{})["0"], &out); err != nil {
+		panic(err)
+	}
+	return out
 }
 
 func (this *testCase) insertTrieNode(data []byte) (ret []byte, err error) {
