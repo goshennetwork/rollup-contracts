@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly-6547691c6123c1bdbed770fcd245f1e63092befe/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
+      - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly-d08a59ec16e07329c70f9a5ccf5dbb92baf367f3/foundry_nightly_linux_arm64.tar.gz" | sudo tar zxv -C /bin
       - run: npm install --global yarn && yarn
       - run: yarn build
       - run: ls
