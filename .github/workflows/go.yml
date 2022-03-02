@@ -34,6 +34,6 @@ jobs:
           go-version: 1.15
 
       - run: ls
-      - run: sudo apt-get update&&sudo apt-get install -y docker && docker pull maxxing/riscv32-toolchain:latest
+      - run: sudo apt-get update&&sudo apt-get install -y docker &&sudo docker pull maxxing/riscv32-toolchain:latest
       - name: Go Fmt & Test
         run: bash ./.github/workflows/.gha.precheck.sh
