@@ -78,19 +78,17 @@ contract Interpretor {
                 }
             } else if (fn == (4 << 8) + 1) {
                 //div 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为二进制补码，把商写入x[rd],软件层面检查除数为0的情况
-                if (vrs1 == (1 << 31) && vrs2 == (1 << 32) - 1) {
-                    //over flow set origin
-                    vrs1 = vrs1;
-                } else {
-                    vrs1 = vrs2 == 0 ? uint32(1 << (32 - 1)) : uint32(int32(vrs1) / int32(vrs2));
+                unchecked {//ignore overflow
+                    vrs1 = vrs2 == 0 ? uint32((1 << 32) - 1) : uint32(int32(vrs1) / int32(vrs2));
                 }
             } else if (fn == (5 << 8) + 1) {
                 //divu 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为无符号数，把商写入x[rd]
-                vrs1 = vrs2 == 0 ? uint32(1 << (32 - 1)) : vrs1 / vrs2;
+                vrs1 = vrs2 == 0 ? uint32((1 << 32) - 1) : vrs1 / vrs2;
             } else if (fn == (6 << 8) + 1) {
                 //rem x[rs1]除以 x[rs2]，向0舍入，都视为2的补码，余数写入x[rd]
                 vrs1 = vrs2 == 0 ? vrs1 : uint32(int32(vrs1) % int32(vrs2));
             } else if (fn == (7 << 8) + 1) {
+                //remu x[rs1]除以x[rs2]，向0舍入，都视为无符号数，余数写入x[rd]
                 vrs1 = vrs2 == 0 ? vrs1 : vrs1 % vrs2;
             } else {
                 nextPC = MemoryLayout.HaltMagic;
