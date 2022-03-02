@@ -43,9 +43,9 @@ func TestRV32I(t *testing.T) {
 	}
 }
 
-func TestHello(t *testing.T) {
-	runFile(t, "riscv-ia")
-}
+//func TestHello(t *testing.T) {
+//	runFile(t, "riscv-ia")
+//}
 
 func runFile(t *testing.T, fileName string) {
 	image, entry, err := getProgramImage(fileName)
