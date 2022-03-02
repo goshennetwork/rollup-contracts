@@ -60,15 +60,17 @@ func getProgramImage(s string) (map[uint32]uint32, uint32, error) {
 //write to memory map
 func writeToMap(d []byte, offset uint32, m map[uint32]uint32) {
 	if len(d)&3 != 0 {
-		panic("not align 4")
+		panic("data not align 4")
+	}
+	if offset&3 != 0 {
+		panic("addr not align 4")
 	}
 	i := 0
-	for i < len(d)-4 {
+	for i < len(d) {
 		m[offset] = binary.LittleEndian.Uint32(d[i : i+4])
 		i += 4
 		offset += 4
-	} //last 4 byte
-	m[offset] = binary.LittleEndian.Uint32(d[i:])
+	}
 }
 func checkForRiscv32(f *elf.File) error {
 	if len(f.Progs) == 0 {

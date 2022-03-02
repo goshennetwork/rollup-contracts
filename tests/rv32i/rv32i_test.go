@@ -52,6 +52,7 @@ func TestRV32M(t *testing.T) {
 	instructions := []string{"div", "divu", "mul", "mulh", "mulhsu", "mulhu", "rem", "remu"}
 	prefix := "./isa/rv32um-v-"
 	for _, f := range instructions {
+		fmt.Println(f)
 		image, entry, err := getProgramImage(prefix + f)
 		if err != nil {
 			t.Fatal(err)
