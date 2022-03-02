@@ -48,9 +48,6 @@ func getProgramImage(s string) (map[uint32]uint32, uint32, error) {
 		if ph.Type == elf.PT_LOAD {
 			data := make([]byte, ph.Memsz)
 			copy(data, ddd[ph.Off:ph.Off+ph.Filesz])
-			if err != nil {
-				return nil, 0, err
-			}
 			writeToMap(data, uint32(ph.Vaddr), fileimage)
 		}
 	}
