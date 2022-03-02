@@ -36,7 +36,30 @@ func TestRV32I(t *testing.T) {
 			t.Fatal(err)
 		}
 		fmt.Println("entry: ", entry)
-		fmt.Println(image[entry])
+		if image[entry] == 0 {
+			panic("wrong entry")
+		}
+		ret, err := start(image, entry)
+		if err != nil {
+			t.Log(err)
+			r, _ := web3.DecodeRevert(ret)
+			t.Fatalf("revert: %s", r)
+		}
+	}
+}
+
+func TestRV32M(t *testing.T) {
+	instructions := []string{"div", "divu", "mul", "mulh", "mulhsu", "mulhu", "rem", "remu"}
+	prefix := "./isa/rv32um-v-"
+	for _, f := range instructions {
+		image, entry, err := getProgramImage(prefix + f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println("entry: ", entry)
+		if image[entry] == 0 {
+			panic("wrong entry")
+		}
 		ret, err := start(image, entry)
 		if err != nil {
 			t.Log(err)
