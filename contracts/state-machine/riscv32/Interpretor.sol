@@ -5,6 +5,7 @@ import "./Instruction.sol";
 import "../MachineState.sol";
 import "./Register.sol";
 import "../MemoryLayout.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Interpretor {
     MachineState public mstate;
@@ -14,12 +15,28 @@ contract Interpretor {
     }
 
     //WARNNING: this is only for testing RV32I system.
-    function start(uint32 _entrypoint) public {
-        mstate.writeRegister(0, Register.REG_PC, _entrypoint);
-        bytes32 root = 0;
+    function start(bytes32 _root, uint32 _entrypoint)
+        public
+        returns (
+            bytes32,
+            uint32,
+            uint32
+        )
+    {
+        _root = mstate.writeRegister(_root, Register.REG_PC, _entrypoint);
+        uint32 _i;
+        uint32 inst;
         for (bool halted = false; !halted; ) {
-            (root, halted) = step(root);
+            _i++;
+            uint32 _pc = mstate.readRegister(_root, Register.REG_PC);
+            if (_pc & 3 != 0) {
+                bytes memory _b = abi.encodePacked("invalid pc, last inst is: ", Strings.toHexString(inst));
+                revert(string(_b));
+            }
+            inst = mstate.readMemory(_root, _pc);
+            (_root, halted) = step(_root);
         }
+        return (_root, _i, inst);
     }
 
     function step(bytes32 root) public returns (bytes32, bool) {
@@ -253,12 +270,16 @@ contract Interpretor {
             root = mstate.writeRegister(root, rd, imm); // LUI rd imm
         } else if (op == Instruction.OP_U_AUIPC_TYPE) {
             (, uint8 rd, uint32 imm) = Instruction.decodeUType(inst);
-            root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
+            unchecked {
+                root = mstate.writeRegister(root, rd, currPC + imm); // auipc rd imm
+            }
         } else if (op == Instruction.OP_J_JAL_TYPE) {
             // JAL rd imm : rd = pc + 4, pc = pc + imm
             (, uint8 rd, uint32 imm) = Instruction.decodeJType(inst);
             root = mstate.writeRegister(root, rd, nextPC);
-            nextPC = currPC + imm;
+            unchecked {
+                nextPC = currPC + imm;
+            }
         } else {
             nextPC = MemoryLayout.HaltMagic; // invalid opcode for RV32I
         }

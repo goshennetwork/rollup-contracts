@@ -21,7 +21,7 @@ library Memory {
         uint32 ptr,
         bytes4 value
     ) internal returns (bytes32) {
-        require(ptr & 3 == 0, "non-aligned mem ptr");
+        require(ptr & 3 == 0, "write non-aligned mem ptr");
         return MerkleTrie.update(hashdb, uint32ToBytes(ptr), BytesSlice.bytes4ToBytes(value), root);
     }
 
@@ -48,6 +48,7 @@ library Memory {
         bytes2 value
     ) internal returns (bytes32) {
         uint32 offset = (ptr & 3);
+        require(offset != 3, " write data cross 4byte boundry");
         ptr = ptr - offset;
         bytes4 data = readMemoryBytes4(hashdb, root, ptr);
         uint32 shift = 8 * offset;
@@ -76,7 +77,7 @@ library Memory {
         uint32 ptr
     ) internal view returns (bytes2) {
         uint32 offset = (ptr & 3);
-        require(offset != 3, "data cross 4byte boundry");
+        require(offset != 3, "read data cross 4byte boundry");
         bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
         return bytes2(data << (offset * 8));
     }

@@ -11,8 +11,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/core/vm/runtime"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -22,6 +20,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/abi"
 	"github.com/laizy/web3/hardhat"
+	"github.com/ontology-layer-2/rollup-contracts/tests"
 	"github.com/pkg/errors"
 )
 
@@ -49,14 +48,9 @@ func newCase() *testCase {
 		panic(err)
 	}
 	//setup evm
-	cfg := defaultsConfig()
-	cfg.State, _ = state.New(common.Hash{}, state.NewDatabase(rawdb.NewMemoryDatabase()), nil)
-	vmenv := runtime.NewEnv(cfg)
 	contractAddr := common.BytesToAddress([]byte("merkleContract"))
+	vmenv := tests.NewEVMWithCode(map[common.Address][]byte{contractAddr: ars.DeployedBytecode})
 	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
-	vmenv.StateDB.CreateAccount(contractAddr)
-	// set the receiver's (the executing contract) code for execution.
-	vmenv.StateDB.SetCode(contractAddr, ars.DeployedBytecode)
 	db := trie.NewDatabase(memorydb.New())
 	emptyTrie, err := trie.New(common.Hash{}, db)
 	if err != nil {
