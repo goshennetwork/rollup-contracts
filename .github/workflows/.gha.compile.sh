@@ -1,4 +1,4 @@
 #!/bin/bash
 mkdir rv
-git clone --recursive https://github.com/r1cs/riscv-tests.git@compiled
+git clone --branch compiled --recursive https://github.com/r1cs/riscv-tests.git
 cp -r ./riscv-tests/isa ./tests/rv32i/test_case
