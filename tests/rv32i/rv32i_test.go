@@ -22,9 +22,12 @@ import (
 )
 
 func TestRV32I(t *testing.T) {
-	tests, err := filepath.Glob("test_case/isa/rv32ui-v-*")
+	tests, err := filepath.Glob("./isa/rv32ui-v-*")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(tests) == 0 {
+		panic("no compiled file")
 	}
 	for _, f := range tests {
 		fmt.Println(f)
