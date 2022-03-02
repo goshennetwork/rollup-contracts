@@ -1,5 +1,4 @@
 name: Go CI
-image: gitlab/dind
 on:
   push:
     branches: [ master ]
