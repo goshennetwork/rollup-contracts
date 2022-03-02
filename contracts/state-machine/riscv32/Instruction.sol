@@ -107,8 +107,8 @@ library Instruction {
         uint32 bit11 = (imm1 & 1);
         uint32 imm04 = imm1 - bit11;
         uint32 bit12 = (imm2 >> 6) & 1;
-        uint32 imm10_5 = imm2 & 0x3f;
-        imm = (bit12 << 12) | (bit11 << 11) | (imm10_5 << 5) | imm04;
+        uint32 imm10_5 = (imm2 & 0x3f) << 5;
+        imm = (bit12 << 12) | (bit11 << 11) | imm10_5 | imm04;
         imm = uint32(int32(imm << 19) >> 19);
     }
 
