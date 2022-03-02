@@ -80,7 +80,7 @@ contract InterpretorTest {
 
     function initRegister() public {
         for (uint32 i = 0; (i < 33); i++) {
-            mstate.writeRegister(root, Register.REG_PC, i);
+            root = mstate.writeRegister(root, Register.REG_PC, i);
         }
     }
 
