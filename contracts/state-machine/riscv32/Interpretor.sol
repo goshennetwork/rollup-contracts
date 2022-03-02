@@ -78,7 +78,8 @@ contract Interpretor {
                 }
             } else if (fn == (4 << 8) + 1) {
                 //div 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为二进制补码，把商写入x[rd],软件层面检查除数为0的情况
-                unchecked {//ignore overflow
+                unchecked {
+                    //ignore overflow
                     vrs1 = vrs2 == 0 ? uint32((1 << 32) - 1) : uint32(int32(vrs1) / int32(vrs2));
                 }
             } else if (fn == (5 << 8) + 1) {
