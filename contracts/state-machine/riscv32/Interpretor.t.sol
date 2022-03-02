@@ -11,6 +11,7 @@ contract InterpretorTest {
     Interpretor exec;
     MachineState public mstate;
     bytes32 root;
+    int32 constant minInt = int32(uint32(1 << 31)); //min int
 
     function setUp() public {
         mstate = new MachineState();
@@ -75,6 +76,12 @@ contract InterpretorTest {
     ) internal {
         execInstruction(raw, inst);
         require(checkMemState(e), raw);
+    }
+
+    function initRegister() public {
+        for (uint32 i = 0; (i < 33); i++) {
+            mstate.writeRegister(root, Register.REG_PC, i);
+        }
     }
 
     function testExecInst() public {
@@ -264,5 +271,99 @@ contract InterpretorTest {
         resetPC();
         checkInstruction("jal     a1,12", 0x00c005ef, ExpectReg(Register.REG_A1, 4), ExpectReg(Register.REG_PC, 12)); //a1=0 + 4, pc=0 +12
         checkInstruction("jal     a1,12", 0x00c005ef, ExpectReg(Register.REG_A1, 16), ExpectReg(Register.REG_PC, 24)); //a1=12+4, pc=12+12
+
+        //mul
+        initRegister();
+        checkInstruction("lui     ra,0x8", 0x000080b7, ExpectReg(Register.REG_RA, 0x8_000));
+        checkInstruction("addi    ra,ra,-512", 0xe0008093, ExpectReg(Register.REG_RA, 0x7_e00)); //ra=0x7e00
+        checkInstruction("lui     sp,0xb6db7", 0xb6db7137, ExpectReg(Register.REG_SP, int32(uint32(0xb6_db7_000))));
+        checkInstruction("addi    sp,sp,-585", 0xdb710113, ExpectReg(Register.REG_SP, int32(uint32(0xb6_db6_db7)))); //sp=0xb6_db6_db7
+        checkInstruction("mul     a4,ra,sp", 0x02208733, ExpectReg(Register.REG_A4, 0x1200)); //a4=0x1_200 overflow
+
+        //mulh
+        initRegister();
+        checkInstruction("li      ra,1", 0x00100093, ExpectReg(Register.REG_RA, 1)); //ra=1
+        checkInstruction("li      sp,1", 0x00100113, ExpectReg(Register.REG_SP, 1)); //sp=1
+        checkInstruction("mulh    a4,ra,sp", 0x02209733, ExpectReg(Register.REG_A4, 0)); //a4=0 high 32 bit is zero
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("mulh    a4,ra,sp", 0x02209733, ExpectReg(Register.REG_A4, -1)); //a4=-1 high 32 bit is all 0xff_ff_ff_ff
+        checkInstruction("li      ra,-1", 0xfff00093, ExpectReg(Register.REG_RA, -1)); //sp=-1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("mulh    a4,ra,sp", 0x02209733, ExpectReg(Register.REG_A4, 0)); //a4=0
+        checkInstruction("lui     ra,0xff000", 0xff0000b7, ExpectReg(Register.REG_RA, int32(uint32(0xff_000_000)))); //ra=0xff_000_000
+        checkInstruction("lui     sp,0xff000", 0xff000137, ExpectReg(Register.REG_SP, int32(uint32(0xff_000_000)))); //sp=0xff_000_000
+        checkInstruction("mulh    a4,ra,sp", 0x02209733, ExpectReg(Register.REG_A4, 0x10_000)); //a4=0x10_000 high 32 bit
+
+        //mlhsu
+        initRegister();
+        checkInstruction("li      ra,1", 0x00100093, ExpectReg(Register.REG_RA, 1)); //ra=1
+        checkInstruction("li      sp,1", 0x00100113, ExpectReg(Register.REG_SP, 1)); //sp=1
+        checkInstruction("mulhsu  a4,ra,sp", 0x0220a733, ExpectReg(Register.REG_A4, 0)); //a4=0 high 32 bit is zero
+        checkInstruction("li      ra,-1", 0xfff00093, ExpectReg(Register.REG_RA, -1)); //sp=-1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("mulhsu  a4,ra,sp", 0x0220a733, ExpectReg(Register.REG_A4, -1)); //a4=0xff_ff_ff_ff
+        checkInstruction("lui     ra,0xff000", 0xff0000b7, ExpectReg(Register.REG_RA, int32(uint32(0xff_000_000)))); //ra=0xff_000_000
+        checkInstruction("lui     sp,0xff000", 0xff000137, ExpectReg(Register.REG_SP, int32(uint32(0xff_000_000)))); //sp=0xff_000_000
+        checkInstruction("mulhsu  a4,ra,sp", 0x0220a733, ExpectReg(Register.REG_A4, int32(uint32(0xff_010_000)))); //a4=0xff_010_000
+
+        //mulhu
+        initRegister();
+        checkInstruction("li      ra,1", 0x00100093, ExpectReg(Register.REG_RA, 1)); //ra=1
+        checkInstruction("li      sp,1", 0x00100113, ExpectReg(Register.REG_SP, 1)); //sp=1
+        checkInstruction("mulhu   a4,ra,sp", 0x0220b733, ExpectReg(Register.REG_A4, 0)); //a4=0 high 32 bit is zero
+        checkInstruction("lui     ra,0xff000", 0xff0000b7, ExpectReg(Register.REG_RA, int32(uint32(0xff_000_000)))); //ra=0xff_000_000
+        checkInstruction("lui     sp,0xff000", 0xff000137, ExpectReg(Register.REG_SP, int32(uint32(0xff_000_000)))); //sp=0xff_000_000
+        checkInstruction("mulhu   a4,ra,sp", 0x0220b733, ExpectReg(Register.REG_A4, int32(uint32(0xfe_010_000)))); //a4=0xfe_010_000
+        checkInstruction("li      ra,-1", 0xfff00093, ExpectReg(Register.REG_RA, -1)); //sp=-1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("mulhu   a4,ra,sp", 0x0220b733, ExpectReg(Register.REG_A4, -2)); //a4=-2, (2^32-1)*(2^32-1)=(2^32)*(2^32-2)+1
+
+        //div
+        initRegister();
+        checkInstruction("li      ra,-20", 0xfec00093, ExpectReg(Register.REG_RA, -20)); //ra=-20
+        checkInstruction("li      sp,6", 0x00600113, ExpectReg(Register.REG_SP, 6)); //sp=6
+        checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, -3)); //a4=-3
+        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
+        checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
+        checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, -1)); //a4=-1 all num/0=-1
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, int32(uint32(0x80_000_000)))); //a4=0x80_000_000 最小负数/-1 等于最小负数
+
+        //divu
+        initRegister();
+        checkInstruction("li      ra,-20", 0xfec00093, ExpectReg(Register.REG_RA, -20)); //ra=(2^32)-20
+        checkInstruction("li      sp,6", 0x00600113, ExpectReg(Register.REG_SP, 6)); //sp=6
+        checkInstruction("divu    a4,ra,sp", 0x0220d733, ExpectReg(Register.REG_A4, int32(uint32(0x2a_aaa_aa7)))); //a4=0x2a_aaa_aa7
+        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
+        checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
+        checkInstruction("divu    a4,ra,sp", 0x0220d733, ExpectReg(Register.REG_A4, -1)); //a4=-1 all num/0=-1
+
+        //rem
+        initRegister();
+        checkInstruction("li      ra,-20", 0xfec00093, ExpectReg(Register.REG_RA, -20)); //ra=-20
+        checkInstruction("li      sp,6", 0x00600113, ExpectReg(Register.REG_SP, 6)); //sp=6
+        checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, -2)); //a4=-2
+        checkInstruction("li      ra,20", 0x01400093, ExpectReg(Register.REG_RA, 20)); //ra=20
+        checkInstruction("li      sp,-6", 0xffa00113, ExpectReg(Register.REG_SP, -6)); //sp=-6
+        checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, 2)); //a4=2
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
+        checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, 0)); //a4=0
+        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
+        checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
+        checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, 0)); //a4=0 all num%0=0
+
+        //remu
+        initRegister();
+        checkInstruction("li      ra,-20", 0xfec00093, ExpectReg(Register.REG_RA, -20)); //ra=(2^32)-20
+        checkInstruction("li      sp,6", 0x00600113, ExpectReg(Register.REG_SP, 6)); //sp=6
+        checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, 2)); //a4=2
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=(2^32)-1
+        checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, minInt)); //
+        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
+        checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
+        checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, 0)); // all num%0=0
     }
 }
