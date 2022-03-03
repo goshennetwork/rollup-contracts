@@ -12,9 +12,9 @@ contract Interpretor {
     MachineState public mstate;
     bool testing;
 
-    constructor(address state, bool _testing) {
+    constructor(address state, bool TTesting) {
         mstate = MachineState(state);
-        testing = _testing;
+        testing = TTesting;
     }
 
     //WARNNING: this is only for testing RV32I system.
@@ -306,12 +306,13 @@ contract Interpretor {
             mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
             //get preimage len, a0 put hash addr in memory;write out length in a0.
-            uint32 _len = mstate.readMemory(_root, MemoryLayout.ImageSize);
-            mstate.writeRegister(_root, Register.REG_A0, _len);
+            bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
+            mstate.writeRegister(_root, Register.REG_A0, mstate.preimageLen(_hash));
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE) {
             //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage addr in a0.
+            bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
-            uint32 data = mstate.readMemory(_root, MemoryLayout.Image + va1);
+            uint32 data = mstate.preimagePos(_hash, va1);
             mstate.writeRegister(_root, Register.REG_A0, data);
         } else if (_systemNumer == Syscall.RUNTIME_PANIC) {
             //panic,a0 put the panic info start addr, a1 put length.

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./Memory.sol";
 import "./riscv32/Register.sol";
+import "../libraries/BytesSlice.sol";
 
 contract MachineState {
     using Memory for mapping(bytes32 => bytes);
@@ -11,6 +12,23 @@ contract MachineState {
 
     function insertTrieNode(bytes calldata _node) public {
         hashdb[keccak256(_node)] = _node;
+    }
+
+    function preimage(bytes32 _hash) public view returns (bytes memory _ret) {
+        _ret = hashdb[_hash];
+        require(_ret.length > 0, "no image");
+        return _ret;
+    }
+
+    function preimageLen(bytes32 _hash) public view returns (uint32) {
+        uint256 _len = preimage(_hash).length;
+        require(_len < uint32((1 << 32) - 1), "image too big");
+        return uint32(_len);
+    }
+
+    function preimagePos(bytes32 _hash, uint32 pos) public view returns (uint32) {
+        bytes memory _data = BytesSlice.toBytes(BytesSlice.slice(preimage(_hash), pos, 4));
+        return BytesEndian.bytes4ToUint32(bytes4(_data));
     }
 
     function writeMemory(
