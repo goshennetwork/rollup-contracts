@@ -311,12 +311,13 @@ contract Interpretor {
             _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
             //pub fn preimage_len(hash: *const u8) -> usize
-            //get preimage len, a0 put hash addr in memory;write out length in addr.
+            //get preimage len, a0 put hash addr in memory;write out length in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
-            _root = mstate.writeRegister(_root, Register.REG_A0, mstate.preimageLen(_hash));
+            (, uint32 len) = mstate.preimage(_hash);
+            _root = mstate.writeRegister(_root, Register.REG_A0, len);
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE) {
             //pub fn preimage_at(hash: *const u8, offset: usize) -> u32;
-            //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage addr in a0.
+            //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             uint32 data = mstate.preimagePos(_hash, va1);
