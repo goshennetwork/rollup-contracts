@@ -6,12 +6,15 @@ import "../MachineState.sol";
 import "./Register.sol";
 import "../MemoryLayout.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./Syscall.sol";
 
 contract Interpretor {
     MachineState public mstate;
+    bool testing;
 
-    constructor(address state) {
+    constructor(address state, bool _testing) {
         mstate = MachineState(state);
+        testing = _testing;
     }
 
     //WARNNING: this is only for testing RV32I system.
@@ -116,16 +119,21 @@ contract Interpretor {
             // fence: nop
         } else if (op == Instruction.OP_I_CSR_TYPE) {
             (, uint8 rd, uint8 fn3, uint8 rs1, uint32 csr) = Instruction.decodeIType(inst);
+            uint32 vrs1 = mstate.readRegister(root, rs1);
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
-                    // ecall
-                    // WARNNING: TESTING
-                    uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
-                    if (_a0 != 1) {
-                        revert("failed");
+                    if (!testing) {
+                        handleSyscall(root, vrs1);
+                    } else {
+                        // ecall
+                        // WARNNING: TESTING
+                        uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
+                        if (_a0 != 1) {
+                            revert("failed");
+                        }
+                        nextPC = MemoryLayout.HaltMagic;
                     }
-                    nextPC = MemoryLayout.HaltMagic;
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
@@ -286,5 +294,36 @@ contract Interpretor {
 
         root = mstate.writeRegister(root, Register.REG_PC, nextPC);
         return (root, nextPC == MemoryLayout.HaltMagic);
+    }
+
+    function handleSyscall(bytes32 _root, uint32 _systemNumer) internal {
+        uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
+        if (_systemNumer == Syscall.RUNTIME_INPUT) {
+            //get input hash, a0 put returned addr pos;write output in addr.
+            mstate.writeMemoryBytes32(_root, va0, mstate.readMemoryBytes32(_root, MemoryLayout.PreimageHash));
+        } else if (_systemNumer == Syscall.RUNTIME_RETURN) {
+            //return, the program is over, a0 put state addr in memory.
+            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+        } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
+            //get preimage len, a0 put hash addr in memory;write out length in a0.
+            uint32 _len = mstate.readMemory(_root, MemoryLayout.ImageSize);
+            mstate.writeRegister(_root, Register.REG_A0, _len);
+        } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE) {
+            //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage addr in a0.
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            uint32 data = mstate.readMemory(_root, MemoryLayout.Image + va1);
+            mstate.writeRegister(_root, Register.REG_A0, data);
+        } else if (_systemNumer == Syscall.RUNTIME_PANIC) {
+            //panic,a0 put the panic info start addr, a1 put length.
+
+            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+        } else if (_systemNumer == Syscall.RUNTIME_DEBUG) {
+            //debug,a0 put the debug info, a1 put the length.
+
+            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+        } else {
+            //invalid sys num
+            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+        }
     }
 }
