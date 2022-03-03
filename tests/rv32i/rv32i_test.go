@@ -172,10 +172,10 @@ func newCase() *testCase {
 	}
 	///constructor(address state,bool _testing)
 	type CCC struct {
-		State   common.Address
-		Testing bool
+		State    common.Address
+		TTesting bool
 	}
-	input, err := rvAbi.Constructor.Inputs.Encode(CCC{State: ramAddr, Testing: true})
+	input, err := rvAbi.Constructor.Inputs.Encode(CCC{State: ramAddr, TTesting: true})
 	if err != nil {
 		panic(err)
 	}
