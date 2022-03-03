@@ -125,7 +125,8 @@ contract Interpretor {
             (, uint8 rd, uint8 fn3, uint8 rs1, uint32 csr) = Instruction.decodeIType(inst);
             if (fn3 == 0) {
                 // environment call/break
-                if (csr == 0) {//only test can run into this filed
+                if (csr == 0) {
+                    //only test can run into this filed
                     // ecall
                     // WARNNING: TESTING
                     uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
