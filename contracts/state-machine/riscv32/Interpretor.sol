@@ -7,6 +7,7 @@ import "./Register.sol";
 import "../MemoryLayout.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./Syscall.sol";
+import "../../libraries/console.sol";
 
 contract Interpretor {
     MachineState public mstate;
@@ -301,9 +302,10 @@ contract Interpretor {
         uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
         if (_systemNumer == Syscall.RUNTIME_INPUT) {
             //get input hash, a0 put returned addr pos;write output in addr.
-            _root = mstate.writeMemoryBytes32(_root, va0, mstate.readMemoryBytes32(_root, MemoryLayout.PreimageHash));
+            _root = mstate.writeMemoryBytes32(_root, va0, mstate.readInput(_root));
         } else if (_systemNumer == Syscall.RUNTIME_RETURN) {
             //return, the program is over, a0 put state addr in memory.
+            _root = mstate.writeOutPut(_root, mstate.readMemoryBytes32(_root, va0));
             _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
             //get preimage len, a0 put hash addr in memory;write out length in a0.
@@ -317,10 +319,12 @@ contract Interpretor {
             _root = mstate.writeRegister(_root, Register.REG_A0, data);
         } else if (_systemNumer == Syscall.RUNTIME_PANIC) {
             //panic,a0 put the panic info start addr, a1 put length.
-            _nextPC = MemoryLayout.HaltMagic;
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            revert(mstate.readString(_root, va0, va1));
         } else if (_systemNumer == Syscall.RUNTIME_DEBUG) {
             //debug,a0 put the debug info, a1 put the length.
-            _nextPC = MemoryLayout.HaltMagic;
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            console.logString(mstate.readString(_root, va0, va1));
         } else {
             //invalid sys num
             _nextPC = MemoryLayout.HaltMagic;

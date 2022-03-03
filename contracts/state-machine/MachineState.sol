@@ -4,10 +4,12 @@ pragma solidity ^0.8.0;
 import "./Memory.sol";
 import "./riscv32/Register.sol";
 import "../libraries/BytesSlice.sol";
+import "./riscv32/Syscall.sol";
 
 contract MachineState {
     using Memory for mapping(bytes32 => bytes);
     using Register for mapping(bytes32 => bytes);
+    using Syscall for mapping(bytes32 => bytes);
     mapping(bytes32 => bytes) hashdb;
 
     function insertTrieNode(bytes calldata _node) public {
@@ -113,5 +115,29 @@ contract MachineState {
 
     function readRegister(bytes32 root, uint32 regid) public view returns (uint32) {
         return hashdb.readRegister(root, regid);
+    }
+
+    function readString(
+        bytes32 _root,
+        uint32 addr,
+        uint32 len
+    ) public view returns (string memory) {
+        return hashdb.readString(_root, addr, len);
+    }
+
+    function writeOutPut(bytes32 root, bytes32 hash) public returns (bytes32) {
+        return hashdb.writeOutput(root, hash);
+    }
+
+    function readOutPut(bytes32 root) public view returns (bytes32) {
+        return hashdb.readOutput(root);
+    }
+
+    function writeInput(bytes32 root, bytes32 hash) public returns (bytes32) {
+        return hashdb.writeInput(root, hash);
+    }
+
+    function readInput(bytes32 root) public view returns (bytes32) {
+        return hashdb.readInput(root);
     }
 }

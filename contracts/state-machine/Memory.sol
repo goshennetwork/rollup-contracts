@@ -126,6 +126,24 @@ library Memory {
         return ret;
     }
 
+    function readString(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 addr,
+        uint32 len
+    ) internal view returns (string memory) {
+        if (len == 0) {
+            //maybe should panic?
+            return "";
+        }
+        bytes memory msg;
+        for (uint32 offset = 0; offset < len; offset += 4) {
+            bytes4 piece = readMemoryBytes4(hashdb, root, addr + offset);
+            msg = abi.encodePacked(msg, piece);
+        }
+        return string(BytesSlice.toBytes(BytesSlice.slice(msg, 0, len)));
+    }
+
     // note: we use big endian encoding to store memory in trie.
     function uint32ToBytes(uint32 data) internal pure returns (bytes memory) {
         return bytes.concat(bytes4(data));
