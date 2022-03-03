@@ -301,27 +301,34 @@ contract Interpretor {
         uint32 _systemNumer = mstate.readRegister(_root, Register.REG_A7);
         uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
         if (_systemNumer == Syscall.RUNTIME_INPUT) {
+            //pub fn input(hash: *mut u8);
             //get input hash, a0 put returned addr pos;write output in addr.
             _root = mstate.writeMemoryBytes32(_root, va0, mstate.readInput(_root));
         } else if (_systemNumer == Syscall.RUNTIME_RETURN) {
+            //pub fn ret(hash: *const u8) -> !;
             //return, the program is over, a0 put state addr in memory.
             _root = mstate.writeOutPut(_root, mstate.readMemoryBytes32(_root, va0));
             _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
-            //get preimage len, a0 put hash addr in memory;write out length in a0.
+            //pub fn preimage_len(hash: *const u8) -> usize
+            //get preimage len, a0 put hash addr in memory;write out length in addr.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
             _root = mstate.writeRegister(_root, Register.REG_A0, mstate.preimageLen(_hash));
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE) {
+            //pub fn preimage_at(hash: *const u8, offset: usize) -> u32;
             //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage addr in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             uint32 data = mstate.preimagePos(_hash, va1);
             _root = mstate.writeRegister(_root, Register.REG_A0, data);
         } else if (_systemNumer == Syscall.RUNTIME_PANIC) {
-            //panic,a0 put the panic info start addr, a1 put length.
+            //pub fn panic(msg: *const u8, len: usize) -> !;
+            //panic,a0 put the panic info start addr, a1 put length.program halt
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             revert(mstate.readString(_root, va0, va1));
+            _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_DEBUG) {
+            //pub fn debug (msg: *const u8, len: usize);
             //debug,a0 put the debug info, a1 put the length.
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             console.logString(mstate.readString(_root, va0, va1));
