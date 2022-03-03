@@ -44,9 +44,13 @@ contract Interpretor {
 
     function step(bytes32 root) public returns (bytes32, bool) {
         uint32 currPC = mstate.readRegister(root, Register.REG_PC);
-        uint32 inst = mstate.readMemory(root, currPC);
-        uint8 op = Instruction.opcode(inst);
         uint32 nextPC = currPC + 4;
+        uint32 inst = mstate.readMemory(root, currPC);
+        if (inst == 115 && !testing) {
+            //0x73 ecall
+            return handleSyscall(root, nextPC);
+        }
+        uint8 op = Instruction.opcode(inst);
         if (op == Instruction.OP_R_TYPE) {
             (, uint8 rd, uint8 fn3, uint32 vrs1, uint32 vrs2, uint8 fn7) = Instruction.decodeRType(inst);
             uint256 fn = (uint256(fn3) << 8) + uint256(fn7);
@@ -119,21 +123,16 @@ contract Interpretor {
             // fence: nop
         } else if (op == Instruction.OP_I_CSR_TYPE) {
             (, uint8 rd, uint8 fn3, uint8 rs1, uint32 csr) = Instruction.decodeIType(inst);
-            uint32 vrs1 = mstate.readRegister(root, rs1);
             if (fn3 == 0) {
                 // environment call/break
-                if (csr == 0) {
-                    if (!testing) {
-                        handleSyscall(root, vrs1);
-                    } else {
-                        // ecall
-                        // WARNNING: TESTING
-                        uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
-                        if (_a0 != 1) {
-                            revert("failed");
-                        }
-                        nextPC = MemoryLayout.HaltMagic;
+                if (csr == 0) {//only test can run into this filed
+                    // ecall
+                    // WARNNING: TESTING
+                    uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
+                    if (_a0 != 1) {
+                        revert("failed");
                     }
+                    nextPC = MemoryLayout.HaltMagic;
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
@@ -296,35 +295,36 @@ contract Interpretor {
         return (root, nextPC == MemoryLayout.HaltMagic);
     }
 
-    function handleSyscall(bytes32 _root, uint32 _systemNumer) internal {
+    function handleSyscall(bytes32 _root, uint32 _nextPC) internal returns (bytes32, bool) {
+        uint32 _systemNumer = mstate.readRegister(_root, Register.REG_A7);
         uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
         if (_systemNumer == Syscall.RUNTIME_INPUT) {
             //get input hash, a0 put returned addr pos;write output in addr.
-            mstate.writeMemoryBytes32(_root, va0, mstate.readMemoryBytes32(_root, MemoryLayout.PreimageHash));
+            _root = mstate.writeMemoryBytes32(_root, va0, mstate.readMemoryBytes32(_root, MemoryLayout.PreimageHash));
         } else if (_systemNumer == Syscall.RUNTIME_RETURN) {
             //return, the program is over, a0 put state addr in memory.
-            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+            _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE_LEN) {
             //get preimage len, a0 put hash addr in memory;write out length in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
-            mstate.writeRegister(_root, Register.REG_A0, mstate.preimageLen(_hash));
+            _root = mstate.writeRegister(_root, Register.REG_A0, mstate.preimageLen(_hash));
         } else if (_systemNumer == Syscall.RUNTIME_PREIMAGE) {
             //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage addr in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             uint32 data = mstate.preimagePos(_hash, va1);
-            mstate.writeRegister(_root, Register.REG_A0, data);
+            _root = mstate.writeRegister(_root, Register.REG_A0, data);
         } else if (_systemNumer == Syscall.RUNTIME_PANIC) {
             //panic,a0 put the panic info start addr, a1 put length.
-
-            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+            _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == Syscall.RUNTIME_DEBUG) {
             //debug,a0 put the debug info, a1 put the length.
-
-            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+            _nextPC = MemoryLayout.HaltMagic;
         } else {
             //invalid sys num
-            mstate.writeRegister(_root, Register.REG_PC, MemoryLayout.HaltMagic);
+            _nextPC = MemoryLayout.HaltMagic;
         }
+        _root = mstate.writeRegister(_root, Register.REG_PC, _nextPC);
+        return (_root, _nextPC == MemoryLayout.HaltMagic);
     }
 }
