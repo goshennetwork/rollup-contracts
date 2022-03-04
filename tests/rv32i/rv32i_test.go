@@ -72,6 +72,7 @@ func TestRV32M(t *testing.T) {
 
 //func TestHello(t *testing.T) {
 //	runFile(t, "riscv-ia")
+//
 //}
 
 func runFile(t *testing.T, fileName string) {
