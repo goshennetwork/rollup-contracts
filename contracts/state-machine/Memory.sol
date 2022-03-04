@@ -133,10 +133,9 @@ library Memory {
         uint32 len
     ) internal view returns (string memory) {
         if (len == 0) {
-            //maybe should panic?
             return "";
         }
-        bytes memory msg;
+        bytes memory msg = new bytes((len / 32 + 1) * 32);
         uint256 ptr;
         assembly {
             ptr := add(msg, 32)
