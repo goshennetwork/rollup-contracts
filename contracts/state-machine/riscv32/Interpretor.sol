@@ -49,10 +49,6 @@ contract Interpretor {
         }
         uint32 nextPC = currPC + 4;
         uint32 inst = mstate.readMemory(root, currPC);
-        if (inst == 115) {
-            //0x73 ecall
-            return handleSyscall(root, nextPC);
-        }
         uint8 op = Instruction.opcode(inst);
         if (op == Instruction.OP_R_TYPE) {
             (, uint8 rd, uint8 fn3, uint32 vrs1, uint32 vrs2, uint8 fn7) = Instruction.decodeRType(inst);
@@ -129,7 +125,8 @@ contract Interpretor {
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
-                    //call already handled
+                    //call
+                    return handleSyscall(root, nextPC);
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
