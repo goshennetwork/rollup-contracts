@@ -69,8 +69,6 @@ contract MemoryTest {
             root = mem.writeMemoryBytes4(root, ptr + offset, bytes4("stri"));
         }
         root = mem.writeMemoryBytes2(root, ptr + 32, bytes2("st"));
-
-        root = mem.writeMemoryBytes4(root, ptr + 28, bytes4("stri"));
         require(
             keccak256(bytes(mem.readMemoryString(root, ptr, 34))) == keccak256("stristristristristristristristrist")
         );
