@@ -123,7 +123,7 @@ contract MachineState {
         return hashdb.readMemoryString(_root, addr, len);
     }
 
-    function writeOutPut(bytes32 root, bytes32 hash) public returns (bytes32) {
+    function writeOutput(bytes32 root, bytes32 hash) public returns (bytes32) {
         return hashdb.writeOutput(root, hash);
     }
 
