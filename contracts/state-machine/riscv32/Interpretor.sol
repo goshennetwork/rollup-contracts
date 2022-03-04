@@ -11,11 +11,9 @@ import "../../libraries/console.sol";
 
 contract Interpretor {
     MachineState public mstate;
-    bool testing;
 
-    constructor(address state, bool TTesting) {
+    constructor(address state) {
         mstate = MachineState(state);
-        testing = TTesting;
     }
 
     //WARNNING: this is only for testing RV32I system.
@@ -51,7 +49,7 @@ contract Interpretor {
         }
         uint32 nextPC = currPC + 4;
         uint32 inst = mstate.readMemory(root, currPC);
-        if (inst == 115 && !testing) {
+        if (inst == 115) {
             //0x73 ecall
             return handleSyscall(root, nextPC);
         }
@@ -131,14 +129,7 @@ contract Interpretor {
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
-                    //only test can run into this filed
-                    // ecall
-                    // WARNNING: TESTING
-                    uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
-                    if (_a0 != 1) {
-                        revert("failed");
-                    }
-                    nextPC = MemoryLayout.HaltMagic;
+                    //call already handled
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
