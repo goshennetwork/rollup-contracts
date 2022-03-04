@@ -126,6 +126,29 @@ library Memory {
         return ret;
     }
 
+    function readMemoryString(
+        mapping(bytes32 => bytes) storage hashdb,
+        bytes32 root,
+        uint32 addr,
+        uint32 len
+    ) internal view returns (string memory) {
+        if (len == 0) {
+            return "";
+        }
+        bytes memory msg = new bytes((len / 32 + 1) * 32);
+        uint256 ptr;
+        assembly {
+            ptr := add(msg, 32)
+        }
+        for (uint32 offset = 0; offset < len; offset += 32) {
+            bytes32 piece = readMemoryBytes32(hashdb, root, addr + offset);
+            assembly {
+                mstore(add(ptr, offset), piece)
+            }
+        }
+        return string(BytesSlice.toBytes(BytesSlice.slice(msg, 0, len)));
+    }
+
     // note: we use big endian encoding to store memory in trie.
     function uint32ToBytes(uint32 data) internal pure returns (bytes memory) {
         return bytes.concat(bytes4(data));

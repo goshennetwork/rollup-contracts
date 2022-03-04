@@ -6,6 +6,8 @@ import "../MachineState.sol";
 import "./Register.sol";
 import "../MemoryLayout.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./Syscall.sol";
+import "../../libraries/console.sol";
 
 contract Interpretor {
     MachineState public mstate;
@@ -41,9 +43,13 @@ contract Interpretor {
 
     function step(bytes32 root) public returns (bytes32, bool) {
         uint32 currPC = mstate.readRegister(root, Register.REG_PC);
+        if (currPC == MemoryLayout.HaltMagic) {
+            //already halt
+            return (root, true);
+        }
+        uint32 nextPC = currPC + 4;
         uint32 inst = mstate.readMemory(root, currPC);
         uint8 op = Instruction.opcode(inst);
-        uint32 nextPC = currPC + 4;
         if (op == Instruction.OP_R_TYPE) {
             (, uint8 rd, uint8 fn3, uint32 vrs1, uint32 vrs2, uint8 fn7) = Instruction.decodeRType(inst);
             uint256 fn = (uint256(fn3) << 8) + uint256(fn7);
@@ -119,13 +125,8 @@ contract Interpretor {
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
-                    // ecall
-                    // WARNNING: TESTING
-                    uint32 _a0 = mstate.readRegister(root, Register.REG_A0);
-                    if (_a0 != 1) {
-                        revert("failed");
-                    }
-                    nextPC = MemoryLayout.HaltMagic;
+                    //call
+                    return handleSyscall(root, nextPC);
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
@@ -286,5 +287,49 @@ contract Interpretor {
 
         root = mstate.writeRegister(root, Register.REG_PC, nextPC);
         return (root, nextPC == MemoryLayout.HaltMagic);
+    }
+
+    function handleSyscall(bytes32 _root, uint32 _nextPC) internal returns (bytes32, bool) {
+        uint32 _systemNumer = mstate.readRegister(_root, Register.REG_A7);
+        uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
+        if (_systemNumer == 0) {
+            //pub fn input(hash: *mut u8);
+            //get input hash, a0 put returned addr pos;write output in addr.
+            _root = mstate.writeMemoryBytes32(_root, va0, mstate.readInput(_root));
+        } else if (_systemNumer == 1) {
+            //pub fn ret(hash: *const u8) -> !;
+            //return, the program is over, a0 put state addr in memory.
+            _root = mstate.writeOutput(_root, mstate.readMemoryBytes32(_root, va0));
+            _nextPC = MemoryLayout.HaltMagic;
+        } else if (_systemNumer == 2) {
+            //pub fn preimage_len(hash: *const u8) -> usize
+            //get preimage len, a0 put hash addr in memory;write out length in a0.
+            bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
+            (, uint32 len) = mstate.preimage(_hash);
+            _root = mstate.writeRegister(_root, Register.REG_A0, len);
+        } else if (_systemNumer == 3) {
+            //pub fn preimage_at(hash: *const u8, offset: usize) -> u32;
+            //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage in a0.
+            bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            uint32 data = mstate.preimageAt(_hash, va1);
+            _root = mstate.writeRegister(_root, Register.REG_A0, data);
+        } else if (_systemNumer == 4) {
+            //pub fn panic(msg: *const u8, len: usize) -> !;
+            //panic,a0 put the panic info start addr, a1 put length.program halt
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            revert(mstate.readMemoryString(_root, va0, va1));
+            _nextPC = MemoryLayout.HaltMagic;
+        } else if (_systemNumer == 5) {
+            //pub fn debug (msg: *const u8, len: usize);
+            //debug,a0 put the debug info, a1 put the length.
+            uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
+            console.logString(mstate.readMemoryString(_root, va0, va1));
+        } else {
+            //invalid sys num
+            _nextPC = MemoryLayout.HaltMagic;
+        }
+        _root = mstate.writeRegister(_root, Register.REG_PC, _nextPC);
+        return (_root, _nextPC == MemoryLayout.HaltMagic);
     }
 }

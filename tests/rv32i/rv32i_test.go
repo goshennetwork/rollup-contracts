@@ -120,9 +120,6 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 		}
 	}
 	fmt.Printf(" consume %d time: %v, last insn: 0x%x\n", num, time.Since(now), insn)
-	b := make([]byte, 4)
-	binary.LittleEndian.PutUint32(b, this.readMemory(root, 1200))
-	fmt.Println(string(b))
 	return r, err
 }
 
@@ -170,7 +167,7 @@ func newCase() *testCase {
 	if err != nil {
 		panic(err)
 	}
-	//constructor(address state)
+	///constructor(address state,bool _testing)
 	type CCC struct {
 		State common.Address
 	}
