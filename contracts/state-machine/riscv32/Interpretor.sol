@@ -45,6 +45,10 @@ contract Interpretor {
 
     function step(bytes32 root) public returns (bytes32, bool) {
         uint32 currPC = mstate.readRegister(root, Register.REG_PC);
+        if (currPC == MemoryLayout.HaltMagic) {
+            //already halt
+            return (root, true);
+        }
         uint32 nextPC = currPC + 4;
         uint32 inst = mstate.readMemory(root, currPC);
         if (inst == 115 && !testing) {
@@ -307,7 +311,7 @@ contract Interpretor {
         } else if (_systemNumer == 1) {
             //pub fn ret(hash: *const u8) -> !;
             //return, the program is over, a0 put state addr in memory.
-            _root = mstate.writeOutPut(_root, mstate.readMemoryBytes32(_root, va0));
+            _root = mstate.writeOutput(_root, mstate.readMemoryBytes32(_root, va0));
             _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == 2) {
             //pub fn preimage_len(hash: *const u8) -> usize
