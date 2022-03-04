@@ -55,5 +55,24 @@ contract MemoryTest {
         ptr = 8;
         root = mem.writeMemoryBytes4(root, ptr, bytes4("hii"));
         require(keccak256(bytes(mem.readMemoryString(root, ptr, 3))) == keccak256("hii"));
+
+        ptr = 12;
+        root = mem.writeMemoryBytes4(root, ptr, bytes4("hell"));
+        require(keccak256(bytes(mem.readMemoryString(root, ptr, 4))) == keccak256("hell"));
+
+        ptr = 16;
+        root = mem.writeMemoryBytes4(root, ptr, bytes4(""));
+        require(keccak256(bytes(mem.readMemoryString(root, ptr, 0))) == keccak256(""));
+
+        ptr = 20;
+        for (uint32 offset = 0; offset < 32; offset += 4) {
+            root = mem.writeMemoryBytes4(root, ptr + offset, bytes4("stri"));
+        }
+        root = mem.writeMemoryBytes2(root, ptr + 32, bytes2("st"));
+
+        root = mem.writeMemoryBytes4(root, ptr + 28, bytes4("stri"));
+        require(
+            keccak256(bytes(mem.readMemoryString(root, ptr, 34))) == keccak256("stristristristristristristristrist")
+        );
     }
 }
