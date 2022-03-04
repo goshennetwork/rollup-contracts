@@ -42,4 +42,18 @@ contract MemoryTest {
         root = mem.writeMemoryBytes32(root, ptr, bytes32(hex"dead1234567879"));
         require(mem.readMemoryBytes32(root, ptr) == bytes32(hex"dead1234567879"));
     }
+
+    function testMemoryString() public {
+        uint32 ptr = 0;
+        root = mem.writeMemoryByte(root, ptr, bytes1("a"));
+        require(keccak256(bytes(mem.readMemoryString(root, ptr, 1))) == keccak256("a"));
+
+        ptr = 4;
+        root = mem.writeMemoryBytes2(root, ptr, bytes2("hi"));
+        require(keccak256(bytes(mem.readMemoryString(root, ptr, 2))) == keccak256("hi"));
+
+        ptr = 8;
+        root = mem.writeMemoryBytes4(root, ptr, bytes4("hii"));
+        require(keccak256(bytes(mem.readMemoryString(root, ptr, 3))) == keccak256("hii"));
+    }
 }
