@@ -126,7 +126,7 @@ library Memory {
         return ret;
     }
 
-    function readString(
+    function readMemoryString(
         mapping(bytes32 => bytes) storage hashdb,
         bytes32 root,
         uint32 addr,
@@ -137,9 +137,15 @@ library Memory {
             return "";
         }
         bytes memory msg;
-        for (uint32 offset = 0; offset < len; offset += 4) {
-            bytes4 piece = readMemoryBytes4(hashdb, root, addr + offset);
-            msg = abi.encodePacked(msg, piece);
+        uint256 ptr;
+        assembly {
+            ptr := add(msg, 32)
+        }
+        for (uint32 offset = 0; offset < len; offset += 32) {
+            bytes32 piece = readMemoryBytes32(hashdb, root, addr + offset);
+            assembly {
+                mstore(add(ptr, offset), piece)
+            }
         }
         return string(BytesSlice.toBytes(BytesSlice.slice(msg, 0, len)));
     }

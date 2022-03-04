@@ -7,7 +7,6 @@ library MemoryLayout {
     uint32 public constant InputHashPos = 0x30000000;
     uint32 public constant HasOuputMagicPos = 0x30000800;
     uint32 public constant OutputHashPos = 0x30000804;
-    uint32 public constant PreimageHash = 0x30001000;
     uint32 public constant RegStartPos = 0xc0000000;
     uint32 public constant RegZeroPos = RegStartPos;
     uint32 public constant RegLRPos = RegStartPos + 0x1f * 4;

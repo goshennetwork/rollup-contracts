@@ -5,13 +5,6 @@ import "../MemoryLayout.sol";
 import "../../libraries/MerkleTrie.sol";
 
 library Syscall {
-    uint32 constant RUNTIME_INPUT = 0;
-    uint32 constant RUNTIME_RETURN = 1;
-    uint32 constant RUNTIME_PREIMAGE_LEN = 2;
-    uint32 constant RUNTIME_PREIMAGE = 3;
-    uint32 constant RUNTIME_PANIC = 4;
-    uint32 constant RUNTIME_DEBUG = 5;
-
     uint32 constant OUTPUT = 0; //output key flag
     uint32 constant INPUT = 1; //input key flag
 

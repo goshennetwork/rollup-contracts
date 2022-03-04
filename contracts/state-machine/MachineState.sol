@@ -23,7 +23,7 @@ contract MachineState {
         return (_ret, uint32(_ret.length));
     }
 
-    function preimagePos(bytes32 _hash, uint32 pos) public view returns (uint32) {
+    function preimageAt(bytes32 _hash, uint32 pos) public view returns (uint32) {
         (bytes memory _ret, uint32 length) = preimage(_hash);
         bytes memory _data;
         uint32 len = length - pos >= 4 ? 4 : length - pos; //overflow safe
@@ -115,19 +115,19 @@ contract MachineState {
         return hashdb.readRegister(root, regid);
     }
 
-    function readString(
+    function readMemoryString(
         bytes32 _root,
         uint32 addr,
         uint32 len
     ) public view returns (string memory) {
-        return hashdb.readString(_root, addr, len);
+        return hashdb.readMemoryString(_root, addr, len);
     }
 
     function writeOutPut(bytes32 root, bytes32 hash) public returns (bytes32) {
         return hashdb.writeOutput(root, hash);
     }
 
-    function readOutPut(bytes32 root) public view returns (bytes32) {
+    function readOutput(bytes32 root) public view returns (bytes32) {
         return hashdb.readOutput(root);
     }
 
