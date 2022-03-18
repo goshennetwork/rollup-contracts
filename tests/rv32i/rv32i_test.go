@@ -70,6 +70,31 @@ func TestRV32M(t *testing.T) {
 	}
 }
 
+func TestRV32A(t *testing.T){
+
+	fs,err := filepath.Glob("./isa/rv32ua-v-*")
+	if err!=nil{
+		t.Fatal(err)
+	}
+	for _,f := range fs{
+		fmt.Println(f)
+		image, entry, err := getProgramImage(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println("entry: ", entry)
+		if image[entry] == 0 {
+			panic("wrong entry")
+		}
+		ret, err := start(image, entry)
+		if err != nil {
+			t.Log(err)
+			r, _ := web3.DecodeRevert(ret)
+			t.Fatalf("revert: %s", r)
+		}
+	}
+}
+
 //func TestHello(t *testing.T) {
 //	runFile(t, "riscv-ia")
 //}
