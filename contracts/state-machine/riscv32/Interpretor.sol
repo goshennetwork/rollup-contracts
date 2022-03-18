@@ -281,6 +281,60 @@ contract Interpretor {
             unchecked {
                 nextPC = currPC + imm;
             }
+        } else if (op == Instruction.OP_M_TYPE) {
+            (, uint8 rd, uint8 fn3, uint32 rs1, uint32 rs2, uint8 fn7) = Instruction.decodeRType(inst);
+            if (fn3 != 2) {
+                nextPC = MemoryLayout.HaltMagic;
+            }
+            uint32 vrs1 = mstate.readRegister(root, rs1);
+            uint32 t = mstate.readMemory(root, vrs1);
+            uint32 vrs2 = mstate.readRegister(rs2);
+            fn7 = fn7 >> 2;
+            uint32 result = t;
+            if (fn7 == 2 && rs2 == 0) {
+                //lr.w 从内存中地址为 x[rs1]中加载四个字节，符号位扩展后写入 x[rd]，并对这个内存字注册保留。
+                root = mstate.lr(root, vrs1);
+            } else if (fn7 == 3) {
+                //sc.w 内存地址 x[rs1]上存在加载保留，将 x[rs2]寄存器中的 4 字节数存入该地址。如果存入成功， 向寄存器 x[rd]中存入 0，否则存入一个非 0 的错误码
+                result = mstate.isReserved(vrs1) ? 0 : 1;
+                if (result == 0) {
+                    t = vrs2;
+                    root = mstate.sc(root, vrs1);
+                }
+            } else if (fn7 == 1) {
+                //amoswap.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 x[rs2]的值， 把 x[rd]设为 t
+                root = mstate.writeMemory(root, vrs1, vrs2);
+            } else if (fn7 == 0) {
+                //amoadd.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t+x[rs2]，把 x[rd] 设为符号位扩展的 t
+                unchecked {
+                    t = t + vrs2;
+                }
+            } else if (fn7 == 4) {
+                //amoxor.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]按位异 或的结果，把 x[rd]设为符号位扩展的 t。
+                t = t ^ vrs2;
+            } else if (fn7 == 12) {
+                //amoand.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]位与的 结果，把 x[rd]设为符号位扩展的 t
+                t = t & vrs2;
+            } else if (fn7 == 8) {
+                //amoor.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]位或的 结果，把 x[rd]设为符号位扩展的 t
+                t = t | vrs2;
+            } else if (fn7 == 16) {
+                //amomin.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较小 的一个（用二进制补码比较），把 x[rd]设为符号位扩展的 t
+                t = int32(t) <= int32(vrs2) ? t : vrs2;
+            } else if (fn7 == 20) {
+                //amomax.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较大的一个（用二进制补码比较），把 x[rd]设为符号位扩展的 t
+                t = int32(t) >= int32(vrs2) ? t : vrs2;
+            } else if (fn7 = 24) {
+                //amominu.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较小 的一个（用无符号比较），把 x[rd]设为符号位扩展的 t
+                t = t <= vrs2 ? t : vrs2;
+            } else if (fn7 == 28) {
+                //amomaxu.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中 较大的一个（用无符号比较），把 x[rd]设为 t
+                t = t >= vrs2 ? t : vrs2;
+            } else {
+                nextPC = MemoryLayout.HaltMagic;
+            }
+            root = mstate.writeMemory(root, vrs1, t);
+            root = mstate.writeRegister(root, rd, result);
         } else {
             nextPC = MemoryLayout.HaltMagic; // invalid opcode for RV32I
         }

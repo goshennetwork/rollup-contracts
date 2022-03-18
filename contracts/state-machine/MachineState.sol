@@ -138,4 +138,27 @@ contract MachineState {
     function readInput(bytes32 root) public view returns (bytes32) {
         return hashdb.readInput(root);
     }
+
+    function genReservedKey(uint32 addr) internal view returns (bytes memory) {
+        return bytes.concat(bytes5(addr));
+    }
+
+    function lr(bytes32 root, uint32 addr) internal returns (bytes32) {
+        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes1(1), root);
+    }
+
+    function sc(bytes32 root, uint32 addr) internal returns (bytes32) {
+        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes1(0), root);
+    }
+
+    function isReserved(bytes32 root, uint32 addr) internal view returns (bool) {
+        (bool exist, bytes memory value) = MerkleTrie.get(hashdb, genReservedKey(addr), root);
+        if (!exist) {
+            return false;
+        }
+        if (bytes1(value) == bytes(0)) {
+            return false;
+        }
+        return true;
+    }
 }
