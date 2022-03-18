@@ -70,13 +70,13 @@ func TestRV32M(t *testing.T) {
 	}
 }
 
-func TestRV32A(t *testing.T){
+func TestRV32A(t *testing.T) {
 
-	fs,err := filepath.Glob("./isa/rv32ua-v-*")
-	if err!=nil{
+	fs, err := filepath.Glob("./isa/rv32ua-v-*")
+	if err != nil {
 		t.Fatal(err)
 	}
-	for _,f := range fs{
+	for _, f := range fs {
 		fmt.Println(f)
 		image, entry, err := getProgramImage(f)
 		if err != nil {
