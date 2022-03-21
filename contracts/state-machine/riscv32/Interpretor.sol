@@ -335,7 +335,7 @@ contract Interpretor {
             bytes32 r = mstate.readMemoryBytes32(_root, mstate.readRegister(_root, Register.REG_A2));
             bytes32 s = mstate.readMemoryBytes32(_root, mstate.readRegister(_root, Register.REG_A3));
             uint32 v = mstate.readRegister(_root, Register.REG_A4);
-            address signer = ecrecover(hash, uint8(v), r, s);
+            address signer = ecrecover(hash, uint8(v + 27), r, s);
             _root = mstate.writeMemoryAddr(_root, va0, signer);
         } else {
             //invalid sys num
