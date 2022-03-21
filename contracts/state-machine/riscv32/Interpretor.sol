@@ -327,6 +327,16 @@ contract Interpretor {
             //debug,a0 put the debug info, a1 put the length.
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             console.logString(mstate.readMemoryString(_root, va0, va1));
+        } else if (_systemNumer == 6) {
+            /// hash, r, s: [u8;32], v: 0 or 1
+            /// result: [u8;20]
+            //pub fn ecrecover(result: *mut u8, hash: *const u8, r: *const u8, s: *const u8, v: u32)
+            bytes32 hash = mstate.readMemoryBytes32(_root, mstate.readRegister(_root, Register.REG_A1));
+            bytes32 r = mstate.readMemoryBytes32(_root, mstate.readRegister(_root, Register.REG_A2));
+            bytes32 s = mstate.readMemoryBytes32(_root, mstate.readRegister(_root, Register.REG_A3));
+            uint32 v = mstate.readRegister(_root, Register.REG_A4);
+            address signer = ecrecover(hash, uint8(v), r, s);
+            _root = mstate.writeMemoryAddr(_root, va0, signer);
         } else {
             //invalid sys num
             _nextPC = MemoryLayout.HaltMagic;
