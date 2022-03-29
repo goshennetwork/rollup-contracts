@@ -71,6 +71,19 @@ contract MachineState {
         return hashdb.writeMemoryBytes32(root, ptr, val);
     }
 
+    function writeMemoryAddr(
+        bytes32 root,
+        uint32 ptr,
+        address val
+    ) public returns (bytes32) {
+        bytes20 data = bytes20(val);
+        for (uint32 i; i < 20; i += 4) {
+            root = hashdb.writeMemoryBytes4(root, ptr + i, bytes4(data));
+            data <<= 32;
+        }
+        return root;
+    }
+
     function readMemoryBytes2(bytes32 root, uint32 ptr) public view returns (bytes2) {
         return hashdb.readMemoryBytes2(root, ptr);
     }
@@ -137,5 +150,25 @@ contract MachineState {
 
     function readInput(bytes32 root) public view returns (bytes32) {
         return hashdb.readInput(root);
+    }
+
+    function genReservedKey(uint32 addr) public view returns (bytes memory) {
+        return bytes.concat(bytes5(bytes4(addr)));
+    }
+
+    function lr(bytes32 root, uint32 addr) public returns (bytes32) {
+        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes.concat(bytes1(uint8(1))), root);
+    }
+
+    function sc(bytes32 root, uint32 addr) public returns (bytes32) {
+        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes.concat(bytes1(uint8(0))), root);
+    }
+
+    function isReserved(bytes32 root, uint32 addr) public view returns (bool) {
+        (bool exist, bytes memory value) = MerkleTrie.get(hashdb, genReservedKey(addr), root);
+        if (!exist) {
+            return false;
+        }
+        return bytes1(value) == bytes1(uint8(1));
     }
 }

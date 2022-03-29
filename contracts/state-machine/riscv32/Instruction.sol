@@ -22,6 +22,8 @@ library Instruction {
     uint32 internal constant OP_U_AUIPC_TYPE = 23; //add upper immediate PC
     //J type
     uint32 internal constant OP_J_JAL_TYPE = 111; //jump and link
+    //M type
+    uint32 internal constant OP_M_TYPE = 47;
 
     function opcode(uint32 inst) internal pure returns (uint8) {
         return uint8(inst) & 0x7f;
