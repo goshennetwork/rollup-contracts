@@ -169,9 +169,6 @@ contract MachineState {
         if (!exist) {
             return false;
         }
-        if (bytes1(value) == bytes1(0)) {
-            return false;
-        }
-        return true;
+        return bytes1(value) == bytes1(1);
     }
 }
