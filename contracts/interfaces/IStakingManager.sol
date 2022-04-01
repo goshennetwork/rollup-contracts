@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "../libraries/OVMCodec.sol";
 
 interface IStakingManager {
     //proposer deposit for staking.
@@ -53,7 +54,7 @@ interface IStakingManager {
     function startWithdrawal() external;
 
     /// Withdraw to collateral When all block states the proposer published are comfirmed.
-    function finalizeWithdrawal() external;
+    function finalizeWithdrawal(OVMCodec.ChainBatchHeader memory _batchHeader) external;
 
     /// Slash the proposer's collateral. can only be called by Challenge contract.
     function slash(
@@ -65,10 +66,20 @@ interface IStakingManager {
     /// claim slashed collateral. Can only be called by Challenge contract.
     /// @notice revert if 1. new block root not confirmed; 2. the new comfirmed block root
     /// is the same as this proposer's.
-    function claim(address _proposer) external;
+    function claim(
+        address _proposer,
+        OVMCodec.BlockInfo memory _blockInfo,
+        OVMCodec.ChainBatchHeader memory _batchHeader,
+        OVMCodec.ChainInclusionProof memory _proof
+    ) external;
 
     /// Claim slashed collateral to governance. Can be called by anybody.
     /// @notice revert if 1. new block root not confirmed; 2. the new comfirmed block root
     /// is not the same as this proposer's.
-    function claimToGovernance(address _proposer) external;
+    function claimToGovernance(
+        address _proposer,
+        OVMCodec.BlockInfo memory _blockInfo,
+        OVMCodec.ChainBatchHeader memory _batchHeader,
+        OVMCodec.ChainInclusionProof memory _proof
+    ) external;
 }

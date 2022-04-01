@@ -5,6 +5,7 @@ import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/IStateCommitChain.sol";
 import "../interfaces/IChallengeFactory.sol";
+import "../libraries/OVMCodec.sol";
 
 contract StakingManager is IStakingManager {
     address private DAOAddress;
@@ -49,10 +50,10 @@ contract StakingManager is IStakingManager {
         emit WithdrawStarted(msg.sender, senderStake.needConfirmedBlock);
     }
 
-    function finalizeWithdrawal() external override {
+    function finalizeWithdrawal(OVMCodec.ChainBatchHeader memory _batchHeader) external override {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
-        require(scc.isBlockComfirmed(senderStake.needConfirmedBlock), "have not confirmed");
+        _assertBlockIsConfirmed(senderStake.needConfirmedBlock, _batchHeader);
         senderStake.state = StakingState.UNSTAKED;
         token.transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
@@ -82,29 +83,51 @@ contract StakingManager is IStakingManager {
         emit DepositSlashed(_proposer, msg.sender, _blockHeight, _stateRoot);
     }
 
-    function claim(address _proposer) external override {
+    function claim(
+        address _proposer,
+        OVMCodec.BlockInfo memory _blockInfo,
+        OVMCodec.ChainBatchHeader memory _batchHeader,
+        OVMCodec.ChainInclusionProof memory _proof
+    ) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
-        require(_root != proposerStake.earliestChallengeState, "unused challenge");
+        require(scc.verifyStateCommitment(_blockInfo, _batchHeader, _proof), "incorrect block info");
+        _assertBlockIsConfirmed(proposerStake.earliestChallengeBlock, _batchHeader);
+        require(_blockInfo.blockHash != proposerStake.earliestChallengeState, "unused challenge");
         token.transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
 
-    function claimToGovernance(address _proposer) external override {
+    function claimToGovernance(
+        address _proposer,
+        OVMCodec.BlockInfo memory _blockInfo,
+        OVMCodec.ChainBatchHeader memory _batchHeader,
+        OVMCodec.ChainInclusionProof memory _proof
+    ) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
-        require(_root == proposerStake.earliestChallengeState, "useful challenge");
+        require(scc.verifyStateCommitment(_blockInfo, _batchHeader, _proof), "incorrect block info");
+        _assertBlockIsConfirmed(proposerStake.earliestChallengeBlock, _batchHeader);
+        require(_blockInfo.blockHash == proposerStake.earliestChallengeState, "useful challenge");
         token.transfer(DAOAddress, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, DAOAddress, price);
+    }
+
+    function _assertBlockIsConfirmed(uint256 _blockNumber, OVMCodec.ChainBatchHeader memory _batchHeader)
+        internal
+        view
+    {
+        require(scc.verifyBatchHeader(_batchHeader), "incorrect batch header");
+        require(!scc.insideFraudProofWindow(_batchHeader), "provide batch not confirmed");
+        require(
+            _batchHeader.prevTotalElements + _batchHeader.batchSize > _blockNumber,
+            "can proof block not confirmed yet"
+        );
     }
 }
