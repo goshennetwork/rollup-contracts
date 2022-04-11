@@ -5,7 +5,6 @@ import { Types } from "../libraries/Types.sol";
 import { IStateCommitChain } from "../interfaces/IStateCommitChain.sol";
 import { ICanonicalTransactionChain } from "../interfaces/ICanonicalTransactionChain.sol";
 import { IStakingManager } from "../interfaces/IStakingManager.sol";
-import { IChainStorageContainer } from "../interfaces/IChainStorageContainer.sol";
 import "../interfaces/IChallengeFactory.sol";
 
 contract StateCommitChain is IStateCommitChain {
