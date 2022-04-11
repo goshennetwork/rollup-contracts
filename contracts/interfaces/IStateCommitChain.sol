@@ -1,76 +1,46 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
-import { OVMCodec } from "../libraries/OVMCodec.sol";
+import "../libraries/Types.sol";
 
 interface IStateCommitChain {
-    event StateBatchAppended(
-        uint256 indexed _batchIndex,
-        bytes32 _batchRoot,
-        uint256 _batchSize,
-        uint256 _prevTotalElements,
-        bytes _extraData
+    /**
+     * @dev Check the provided stateInfo whether inside fraud proof window, but not  guarantee the correctness of sateInfo
+     * @param _stateInfo State info to check.
+     * @return _inside Whether or not the given state info is inside the fraud proof window.
+     */
+    function insideFraudProofWindow(Types.StateInfo memory _stateInfo) external view returns (bool _inside);
+
+    /**
+     * @dev Verify provided info, it checkes info's index and hash
+     * @param _stateInfo State info in state chain
+     * @return Return true if state info is indeed in state chain
+     */
+    function verifyStateInfo(Types.StateInfo memory _stateInfo) external view returns (bool);
+
+    ///emit when appendStates, anyone can check the block hash and open a challenge.
+    event Appended(
+        uint64 indexed _startIndex,
+        bytes32[] indexed _blockHash,
+        address indexed _proposer,
+        uint64 _timestamp
     );
 
-    event StateBatchDeleted(uint256 indexed _batchIndex, bytes32 _batchRoot);
+    /**
+     * @dev Appends a list of block hash to the state chain.
+     * @param _blockHashes A list of state (we now store block hash).
+     * @param _totalStates Total states stored in state chain
+     */
+    function appendStates(bytes32[] memory _blockHashes, uint64 _totalStates) external;
 
-    /********************
-     * Public Functions *
-     ********************/
+    event Deleted(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
 
     /**
-     * Retrieves the total number of elements submitted.
-     * @return _totalElements Total submitted elements.
+     * @dev Cut state chain at specific state.=
+     * @param _stateInfo State info to cut the state chain
      */
-    function getCurrentBlockHeight() external view returns (uint256 _totalElements);
+    function deleteState(Types.StateInfo memory _stateInfo) external;
 
-    /**
-     * Retrieves the total number of batches submitted.
-     * @return _totalBatches Total submitted batches.
-     */
-    function getTotalBatches() external view returns (uint256 _totalBatches);
-
-    /**
-     * Retrieves the timestamp of the last batch submitted by the sequencer.
-     * @return _lastSequencerTimestamp Last sequencer batch timestamp.
-     */
-    function getLastSequencerTimestamp() external view returns (uint256 _lastSequencerTimestamp);
-
-    /**
-     * Appends a batch of state roots to the chain.
-     * @param _batch Batch of state roots(now state is hash of  block info).
-     * @param _shouldStartAtElement Index of the element at which this batch should start.
-     */
-    function appendStateBatch(bytes32[] calldata _batch, uint256 _shouldStartAtElement) external;
-
-    /**
-     * Deletes all state roots after (and including) a given batch.
-     * @param _batchHeader Header of the batch to start deleting from.
-     */
-    function deleteStateBatch(OVMCodec.ChainBatchHeader memory _batchHeader) external;
-
-    /**
-     * check batch header correctness
-     * @return whether BatchHeader is truely exist in chain.
-     */
-    function verifyBatchHeader(OVMCodec.ChainBatchHeader memory _batchHeader) external view returns (bool);
-
-    /**
-     * Verifies a batch inclusion proof.
-     * @param _element Hash of the element to verify a proof for.
-     * @param _batchHeader Header of the batch in which the element was included.
-     * @param _proof Merkle inclusion proof for the element.
-     */
-    function verifyStateCommitment(
-        OVMCodec.BlockInfo memory _element,
-        OVMCodec.ChainBatchHeader memory _batchHeader,
-        OVMCodec.ChainInclusionProof memory _proof
-    ) external view returns (bool _verified);
-
-    /**
-     * Checks whether a given batch is still inside its fraud proof window.
-     * @param _batchHeader Header of the batch to check.
-     * @return _inside Whether or not the batch is inside the fraud proof window.
-     */
-    function insideFraudProofWindow(OVMCodec.ChainBatchHeader memory _batchHeader) external view returns (bool _inside);
+    ///get state chain height
+    function chainHeight() external view returns (uint64);
 }

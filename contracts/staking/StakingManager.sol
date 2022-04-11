@@ -5,7 +5,7 @@ import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/IStateCommitChain.sol";
 import "../interfaces/IChallengeFactory.sol";
-import "../libraries/OVMCodec.sol";
+import "../libraries/Types.sol";
 
 contract StakingManager is IStakingManager {
     address private DAOAddress;
@@ -46,22 +46,22 @@ contract StakingManager is IStakingManager {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
-        senderStake.needConfirmedBlock = scc.getCurrentBlockHeight();
-        emit WithdrawStarted(msg.sender, senderStake.needConfirmedBlock);
+        senderStake.needConfirmedHeight = scc.chainHeight();
+        emit WithdrawStarted(msg.sender, senderStake.needConfirmedHeight);
     }
 
-    function finalizeWithdrawal(OVMCodec.ChainBatchHeader memory _batchHeader) external override {
+    function finalizeWithdrawal(Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
-        _assertBlockIsConfirmed(senderStake.needConfirmedBlock, _batchHeader);
+        _assertStateIsConfirmed(senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
         token.transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
     }
 
     function slash(
-        uint256 _blockHeight,
-        bytes32 _stateRoot,
+        uint64 _chainHeight,
+        bytes32 _blockHash,
         address _proposer
     ) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
@@ -73,61 +73,43 @@ contract StakingManager is IStakingManager {
             proposerStake.firstSlashTime = block.timestamp;
         }
         require(
-            proposerStake.earliestChallengeBlock == 0 || _blockHeight < proposerStake.earliestChallengeBlock,
+            proposerStake.earliestChallengeHeight == 0 || _chainHeight < proposerStake.earliestChallengeHeight,
             "should be smaller than last lash"
         );
-        proposerStake.earliestChallengeBlock = _blockHeight;
-        proposerStake.earliestChallengeState = _stateRoot;
+        proposerStake.earliestChallengeHeight = _chainHeight;
+        proposerStake.earliestChallengeBlockHash = _blockHash;
         //set state to slashing
         proposerStake.state = StakingState.SLASHING;
-        emit DepositSlashed(_proposer, msg.sender, _blockHeight, _stateRoot);
+        emit DepositSlashed(_proposer, msg.sender, _chainHeight, _blockHash);
     }
 
-    function claim(
-        address _proposer,
-        OVMCodec.BlockInfo memory _blockInfo,
-        OVMCodec.ChainBatchHeader memory _batchHeader,
-        OVMCodec.ChainInclusionProof memory _proof
-    ) external override {
+    function claim(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.verifyStateCommitment(_blockInfo, _batchHeader, _proof), "incorrect block info");
-        _assertBlockIsConfirmed(proposerStake.earliestChallengeBlock, _batchHeader);
-        require(_blockInfo.blockHash != proposerStake.earliestChallengeState, "unused challenge");
+        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
         token.transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
 
-    function claimToGovernance(
-        address _proposer,
-        OVMCodec.BlockInfo memory _blockInfo,
-        OVMCodec.ChainBatchHeader memory _batchHeader,
-        OVMCodec.ChainInclusionProof memory _proof
-    ) external override {
+    function claimToGovernance(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.verifyStateCommitment(_blockInfo, _batchHeader, _proof), "incorrect block info");
-        _assertBlockIsConfirmed(proposerStake.earliestChallengeBlock, _batchHeader);
-        require(_blockInfo.blockHash == proposerStake.earliestChallengeState, "useful challenge");
+        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
         token.transfer(DAOAddress, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, DAOAddress, price);
     }
 
-    function _assertBlockIsConfirmed(uint256 _blockNumber, OVMCodec.ChainBatchHeader memory _batchHeader)
-        internal
-        view
-    {
-        require(scc.verifyBatchHeader(_batchHeader), "incorrect batch header");
-        require(!scc.insideFraudProofWindow(_batchHeader), "provide batch not confirmed");
-        require(
-            _batchHeader.prevTotalElements + _batchHeader.batchSize > _blockNumber,
-            "can proof block not confirmed yet"
-        );
+    function _assertStateIsConfirmed(uint256 _index, Types.StateInfo memory _stateInfo) internal view {
+        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(!scc.insideFraudProofWindow(_stateInfo), "provided state not confirmed");
+        require(_stateInfo.index == _index, "should provide wanted state info");
     }
 }
