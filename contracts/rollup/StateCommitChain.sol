@@ -43,7 +43,7 @@ contract StateCommitChain is IStateCommitChain {
         //in case of duplicated
         require(_totalStates == chainHeight, "current length not equal, maybe others already appended");
 
-        // Proposers must have previously staked at the BondManager
+        // Proposers must in staking
         require(stakingManager.isStaking(msg.sender), "Proposer should be staking");
 
         require(_blockHashes.length > 0, "no block hashes");
