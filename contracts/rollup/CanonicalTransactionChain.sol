@@ -37,7 +37,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         if (msg.sender != tx.origin) {
             //the l1 bridge use cross Domain contract to enqueue tx to l2.We only allow contract as l2 EOA when sender is this contract,
             require(
-                msg.sender == addressResolver.crossDomainAddr(),
+                msg.sender == addressResolver.l1CrossDomainAddr(),
                 "contract can't act as EOA in L2 except l1 crossDomain contract"
             );
         }
