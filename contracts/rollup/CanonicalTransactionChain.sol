@@ -20,18 +20,11 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         addressResolver = IAddressResolver(_addressResolver);
     }
 
-    /**
-     * Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2,so L2 treat
-     * L1 -> L2 tx as origin tx.
-     * @param _target Target contract to send the transaction to.
-     * @param _gasLimit Gas limit for the given transaction.
-     * @param _data Transaction data.
-     */
     function enqueue(
         address _target,
         uint256 _gasLimit,
         bytes memory _data
-    ) external {
+    ) public {
         //We guarantee that the L2 EOA is L1 EOA, and L1 contract can't be L2 EOA except l1 crossDomainContract which is used
         //when l1 bridge try to  enqueue tx to l2
         if (msg.sender != tx.origin) {
@@ -48,15 +41,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         emit Enqueued(msg.sender, _target, _gasLimit, _data, uint64(queueElements.length - 1), _now);
     }
 
-    /**
-     * Allows the sequencer to append a batch of transactions.
-     * @dev This function uses a custom encoding scheme for efficiency reasons.
-     * .param _shouldStartAtElement Specific batch we expect to start appending to.
-     * .param _totalElementsToAppend Total number of batch elements we expect to append.
-     * .param _contexts Array of batch contexts.
-     * .param _transactionDataFields Array of raw transaction data.
-     */
-    function appendBatch() external {
+    function appendBatch() public {
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.ctcContainer();
         uint64 _num;
@@ -105,7 +90,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
                 if (pendingQueueIndex > 0) {
                     //make sure lastBatchTimestamp is the largest
                     require(
-                        _timestamp >= queueElements[pendingQueueIndex].timestamp,
+                        _timestamp >= queueElements[pendingQueueIndex - 1].timestamp,
                         "last sequenced tx timestamp should larger than appended queue timestamp"
                     );
                 }

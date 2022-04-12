@@ -12,7 +12,7 @@ contract ChainStorageContainer is IChainStorageContainer {
 
     //the total num of elements in chain, we cut the chain simply change this num
     uint64 public override chainSize;
-
+    //who can change the state of this container
     string owner;
 
     constructor(string memory _owner, address _addressResolver) {

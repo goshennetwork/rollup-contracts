@@ -11,6 +11,7 @@ interface ICanonicalTransactionChain {
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
+     * @notice Revert if contract caller isn't l1CrossDomain contract(make sure L1 contract can't act as L2 EOA)
      */
     function enqueue(
         address _target,
@@ -19,16 +20,26 @@ interface ICanonicalTransactionChain {
     ) external;
 
     /**
-     * append a batches of sequenced tx to tx chain.
+     * append a batches of sequenced tx to tx chain.Only staking sender permitted
      * @dev The info is in calldata,format as:
      *  uint64 (num_queue) || uint64 (queue_start_index)||uint64 (num_sequenced) || [uint64,uint64...] (timestamp)) || uint64 (batch_version) [batch_sequenced,batch...]
+     * @notice Revert if:
+     * - sender isn't staking
+     * - queue_start_index not equal to pending queue index
+     * - pending queue length beyond queue length locally(make sure can't attempt to append nonexistent queue)
+     * - first sequenced tx's timestamp smaller than or equal to  lastTimeStamp(make sure next sequenced tx timestamp larger than lastTimestamp)
+     * - last sequenced tx's timestamp smaller than last appended queue(to make sure last sequenced tx timestamp is largest)
+     * - last sequenced tx's timestamp larger than or equal to next pending queue timestamp(make sure next pending queue timestamp larger than lastTimestamp )
+     * - sequenced tx n timestamp not larger than sequenced tx n-1 timestamp(make sure all sequenced tx timestamp larger than lastTimestamp)
      */
     function appendBatch() external;
 
-    ///get total sequenced tx batches num
+    ///@return total sequenced tx batches num
     function chainHeight() external view returns (uint64);
 
+    ///@return next pending queue index
     function pendingQueueIndex() external view returns (uint64);
 
+    ///@return lastTimeStamp of CanonicalTransactionChain
     function lastTimestamp() external view returns (uint64);
 }
