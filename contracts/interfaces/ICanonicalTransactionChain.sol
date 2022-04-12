@@ -30,5 +30,5 @@ interface ICanonicalTransactionChain {
 
     function pendingQueueIndex() external view returns (uint64);
 
-    function lastBatchTimestamp() external view returns (uint64);
+    function lastTimestamp() external view returns (uint64);
 }

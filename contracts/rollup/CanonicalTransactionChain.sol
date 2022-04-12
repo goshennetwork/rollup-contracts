@@ -4,25 +4,20 @@ pragma solidity ^0.8.0;
 import { Types } from "../libraries/Types.sol";
 import "../interfaces/IStakingManager.sol";
 import { ICanonicalTransactionChain } from "../interfaces/ICanonicalTransactionChain.sol";
+import "../interfaces/IAddressResolver.sol";
+import "../interfaces/IChainStorageContainer.sol";
 
 contract CanonicalTransactionChain is ICanonicalTransactionChain {
     using Types for Types.QueueElement;
-    IStakingManager stakingManager;
-    //the l1 bridge use cross Domain contract to enqueue tx to l2.We only allow contract as l2 EOA when sender is this contract,
-    address crossDomainAddr;
+    IAddressResolver addressResolver;
 
     //store L1 -> L2 tx
     Types.QueueElement[] queueElements;
-    //store tx batches as a chain
-    bytes32[] txChain;
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
-    // the last batch time stamp, it is simply set with largest timestamp in current tx batch.
-    uint64 public override lastBatchTimestamp;
 
-    constructor(address _stakingManager, address _crossDomainAddr) {
-        stakingManager = IStakingManager(_stakingManager);
-        crossDomainAddr = _crossDomainAddr;
+    constructor(address _addressResolver) {
+        addressResolver = IAddressResolver(_addressResolver);
     }
 
     /**
@@ -40,7 +35,11 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         //We guarantee that the L2 EOA is L1 EOA, and L1 contract can't be L2 EOA except l1 crossDomainContract which is used
         //when l1 bridge try to  enqueue tx to l2
         if (msg.sender != tx.origin) {
-            require(msg.sender == crossDomainAddr, "contract can't act as EOA in L2 except l1 crossDomain contract");
+            //the l1 bridge use cross Domain contract to enqueue tx to l2.We only allow contract as l2 EOA when sender is this contract,
+            require(
+                msg.sender == addressResolver.crossDomainAddr(),
+                "contract can't act as EOA in L2 except l1 crossDomain contract"
+            );
         }
         //todo: maybe need more tx params, such as tip fee,value
         bytes32 transactionHash = keccak256(abi.encode(msg.sender, _target, _gasLimit, _data));
@@ -58,7 +57,8 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
      * .param _transactionDataFields Array of raw transaction data.
      */
     function appendBatch() external {
-        require(stakingManager.isStaking(msg.sender), "Sequencer should be staking");
+        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        IChainStorageContainer _chain = addressResolver.ctcContainer();
         uint64 _num;
         uint64 _queueStartIndex;
         assembly {
@@ -98,7 +98,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
             }
             if (i == 0) {
                 //first
-                require(_timestamp > lastBatchTimestamp, "start timestamp should be larger than obvious timestamp");
+                require(_timestamp > _chain.lastTimestamp(), "start timestamp should be larger than obvious timestamp");
             }
             if (i == _num - 1) {
                 //last
@@ -121,11 +121,15 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
             _lastTimestamp = _timestamp;
         }
         //record batches info
-        txChain.push(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
-        lastBatchTimestamp = _lastTimestamp;
+        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
+        _chain.setLastTimestamp(_lastTimestamp);
     }
 
     function chainHeight() public view returns (uint64) {
-        return uint64(txChain.length);
+        return addressResolver.ctcContainer().chainSize();
+    }
+
+    function lastTimestamp() public view returns (uint64) {
+        return addressResolver.ctcContainer().lastTimestamp();
     }
 }
