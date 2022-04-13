@@ -20,8 +20,8 @@ contract StateCommitChain is IStateCommitChain {
         FRAUD_PROOF_WINDOW = _fraudProofWindow;
     }
 
-    function insideFraudProofWindow(Types.StateInfo memory _stateInfo) public view returns (bool _inside) {
-        return (_stateInfo.timestamp + FRAUD_PROOF_WINDOW) > block.timestamp;
+    function isStateConfirmed(Types.StateInfo memory _stateInfo) public view returns (bool _confirmed) {
+        return (_stateInfo.timestamp + FRAUD_PROOF_WINDOW) <= block.timestamp;
     }
 
     function verifyStateInfo(Types.StateInfo memory _stateInfo) public view returns (bool) {
@@ -54,13 +54,13 @@ contract StateCommitChain is IStateCommitChain {
         emit Appended(_totalStates, _blockHashes, msg.sender, _now);
     }
 
-    function deleteState(Types.StateInfo memory _stateInfo) public {
+    function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
         require(
             addressResolver.challengeFactory().isChallengeContract(msg.sender),
             "only permitted by challenge contract"
         );
         require(verifyStateInfo(_stateInfo), "invalid state info");
-        require(insideFraudProofWindow(_stateInfo), "State info can only be deleted within the fraud proof window.");
+        require(!isStateConfirmed(_stateInfo), "State info can only be deleted without confirmed");
         addressResolver.sccContainer().resize(_stateInfo.index);
         emit Deleted(_stateInfo.index, _stateInfo.blockHash);
     }

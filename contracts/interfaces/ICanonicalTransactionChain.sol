@@ -19,6 +19,13 @@ interface ICanonicalTransactionChain {
         bytes memory _data
     ) external;
 
+    event Appended(
+        address indexed proposer,
+        uint256 indexed startQueueIndex,
+        uint256 queueNum,
+        uint256 indexed chainHeight
+    );
+
     /**
      * append a batches of sequenced tx to tx chain.Only staking sender permitted
      * @dev The info is in calldata,format as:

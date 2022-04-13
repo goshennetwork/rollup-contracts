@@ -44,22 +44,22 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
     function appendBatch() public {
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.ctcContainer();
-        uint64 _num;
+        uint64 _queueNum;
         uint64 _queueStartIndex;
         assembly {
-            _num := shr(192, calldataload(4))
+            _queueNum := shr(192, calldataload(4))
             _queueStartIndex := shr(192, calldataload(12))
         }
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
-        uint64 _nextPendingQueueIndex = _queueStartIndex + _num;
+        uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queueElements.length, "attempt to append unavailable queue");
-        bytes memory _queueHash = new bytes(32 * _num);
+        bytes memory _queueHash = new bytes(32 * _queueNum);
         uint256 ptr;
         assembly {
             ptr := add(_queueHash, 32)
         }
         uint64 _offset;
-        for (uint256 i = 0; i < _num; i++) {
+        for (uint256 i = 0; i < _queueNum; i++) {
             bytes32 _h = (queueElements[_queueStartIndex + i].hash());
             assembly {
                 mstore(add(ptr, _offset), _h)
@@ -69,14 +69,15 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         uint64 _sequencedIndex = 4 + 8 + 8; //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         //check sequencer timestamp
+        uint64 _contextNum;
         assembly {
-            _num := shr(192, _sequencedIndex)
+            _contextNum := shr(192, _sequencedIndex)
         }
         uint64 _timestamp;
         uint64 _lastTimestamp;
         //clear
         _offset = 0;
-        for (uint64 i = 0; i < _num; i++) {
+        for (uint64 i = 0; i < _contextNum; i++) {
             _offset = _sequencedIndex + 8 + 8 * i;
             assembly {
                 _timestamp := shr(192, calldataload(_offset))
@@ -85,7 +86,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
                 //first
                 require(_timestamp > _chain.lastTimestamp(), "start timestamp should be larger than obvious timestamp");
             }
-            if (i == _num - 1) {
+            if (i == _contextNum - 1) {
                 //last
                 if (pendingQueueIndex > 0) {
                     //make sure lastBatchTimestamp is the largest
@@ -108,6 +109,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         //record batches info
         _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
+        emit Appended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }
 
     function chainHeight() public view returns (uint64) {

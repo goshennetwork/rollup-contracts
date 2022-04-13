@@ -109,7 +109,7 @@ contract StakingManager is IStakingManager {
 
     function _assertStateIsConfirmed(uint256 _index, Types.StateInfo memory _stateInfo) internal view {
         require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
-        require(!scc.insideFraudProofWindow(_stateInfo), "provided state not confirmed");
+        require(scc.isStateConfirmed(_stateInfo), "provided state not confirmed");
         require(_stateInfo.index == _index, "should provide wanted state info");
     }
 }

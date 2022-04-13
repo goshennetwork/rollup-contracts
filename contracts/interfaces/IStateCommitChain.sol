@@ -5,11 +5,11 @@ import "../libraries/Types.sol";
 
 interface IStateCommitChain {
     /**
-     * @dev Check the provided stateInfo whether inside fraud proof window, but not  guarantee the correctness of sateInfo
+     * @dev Check the provided stateInfo whether confirmed, but not  guarantee the correctness of sateInfo
      * @param _stateInfo State info to check.
-     * @return _inside Whether or not the given state info is inside the fraud proof window.
+     * @return _confirmed Whether or not the given state info is confirmed
      */
-    function insideFraudProofWindow(Types.StateInfo memory _stateInfo) external view returns (bool _inside);
+    function isStateConfirmed(Types.StateInfo memory _stateInfo) external view returns (bool _confirmed);
 
     /**
      * @dev Verify provided info, it checkes info's index and hash
@@ -47,7 +47,7 @@ interface IStateCommitChain {
      * - invalid stateInfo
      * - stateInfo already confirmed;
      */
-    function deleteState(Types.StateInfo memory _stateInfo) external;
+    function rollbackStateBefore(Types.StateInfo memory _stateInfo) external;
 
     ///get state chain height
     function chainHeight() external view returns (uint64);
