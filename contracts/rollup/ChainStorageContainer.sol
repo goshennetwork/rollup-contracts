@@ -10,8 +10,6 @@ contract ChainStorageContainer is IChainStorageContainer {
     // the last chain element time stamp, it is simply set with largest timestamp in current tx batch.
     uint64 public override lastTimestamp;
 
-    //the total num of elements in chain, we cut the chain simply change this num
-    uint64 public override chainSize;
     //who can change the state of this container
     string owner;
 
@@ -28,20 +26,19 @@ contract ChainStorageContainer is IChainStorageContainer {
         _;
     }
 
+    function chainSize() external view returns (uint64) {
+        return chain.length;
+    }
+
     function append(bytes32 _element) public onlyOwner {
-        if (chainSize < chain.length) {
-            //has some unused storage, reuse it
-            chain[chainSize] = _element;
-        } else {
-            //append new chain storage
-            chain.push(_element);
-        }
-        chainSize++;
+        chain.push(_element);
     }
 
     function resize(uint64 _newSize) public onlyOwner {
         require(_newSize <= chain.length, "can't resize beyond chain length");
-        chainSize = _newSize;
+        assembly {
+            sstore(chain.slot, _newSize)
+        }
     }
 
     function setLastTimestamp(uint64 _timestamp) public onlyOwner {
@@ -49,7 +46,7 @@ contract ChainStorageContainer is IChainStorageContainer {
     }
 
     function get(uint64 _index) public view returns (bytes32) {
-        require(_index < chainSize, "beyond chain size");
+        require(_index < chain.length, "beyond chain size");
         return chain[_index];
     }
 }

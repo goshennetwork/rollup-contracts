@@ -31,5 +31,5 @@ interface IAddressResolver {
     function challengeFactory() external view returns (IChallengeFactory);
 
     ///get L1CrossDomain contract address
-    function l1CrossDomainAddr() external view returns (address);
+    function l1CrossLayerMessageWitness() external view returns (address);
 }
