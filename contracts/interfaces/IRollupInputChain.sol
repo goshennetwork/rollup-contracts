@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
+import "../libraries/Types.sol";
+
 interface IRollupInputChain {
     ///EVENT
     event TransactionEnqueued(
@@ -22,7 +24,7 @@ interface IRollupInputChain {
      */
     function enqueue(
         address _target,
-        uint256 _gasLimit,
+        uint64 _gasLimit,
         bytes memory _data
     ) external;
 
@@ -56,4 +58,6 @@ interface IRollupInputChain {
 
     ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
+
+    function getQueueElement(uint64 _queueIndex) external view returns (Types.QueueElement memory);
 }

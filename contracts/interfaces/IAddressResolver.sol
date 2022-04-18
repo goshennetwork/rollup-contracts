@@ -5,6 +5,8 @@ import "./IChainStorageContainer.sol";
 import "./IStakingManager.sol";
 import "./IChallengeFactory.sol";
 import "./IRollupInputChain.sol";
+import "./IL1CrossLayerMessageWitness.sol";
+import "./IL2CrossLayerMessageWitness.sol";
 
 ///@dev resolver only read address
 interface IAddressResolver {
@@ -32,4 +34,7 @@ interface IAddressResolver {
 
     ///get L1CrossLayerMessageWitness contract address
     function l1CrossLayerMessageWitness() external view returns (address);
+
+    ///get L2CrossDomainMessageWitness contract address
+    function l2CrossDomainMessageWitness() external view returns (IL2CrossLayerMessageWitness);
 }
