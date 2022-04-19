@@ -45,7 +45,7 @@ contract StateCommitChain is IStateCommitChain {
         );
         uint64 _now = uint64(block.timestamp);
         Types.StateInfo memory _stateInfo;
-        uint64 _pendingIndex=_totalStates;
+        uint64 _pendingIndex = _totalStates;
         for (uint256 i = 0; i < _blockHashes.length; i++) {
             _stateInfo.blockHash = _blockHashes[i];
             _stateInfo.timestamp = _now;
