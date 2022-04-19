@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./MerkleMountainRange.sol";
 import "./console.sol";
 import { CompactMerkleTree, MerkleMountainRange } from "./MerkleMountainRange.sol";
 
@@ -49,20 +48,10 @@ contract MMRTest {
         require(_trees.hashes.length == 3, "6");
     }
 
-    function append7Leaf() internal {
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(0));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(1)));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(2)));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(3)));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(4)));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(5)));
-
-        MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(6)));
+    function appendLeaf(uint64 _size) internal {
+        for (uint64 i = 0; i < _size; i++) {
+            MerkleMountainRange.appendLeafHash(_trees, bytes32(uint256(i)));
+        }
     }
 
     //todo: verify
