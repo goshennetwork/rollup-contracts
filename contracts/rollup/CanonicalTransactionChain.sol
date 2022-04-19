@@ -49,18 +49,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         emit Enqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
     }
 
-    function appendBatch() public {
-        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
-        IChainStorageContainer _chain = addressResolver.ctcContainer();
-        uint64 _queueNum;
-        uint64 _queueStartIndex;
-        assembly {
-            _queueNum := shr(192, calldataload(4))
-            _queueStartIndex := shr(192, calldataload(12))
-        }
-        require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
-        uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
-        require(_nextPendingQueueIndex <= queueElements.length, "attempt to append unavailable queue");
+    function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal returns (bytes32) {
         bytes memory _queueHash = new bytes(32 * _queueNum);
         uint256 ptr;
         assembly {
@@ -73,28 +62,44 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
                 mstore(add(ptr, _offset), _h)
             }
         }
-        bytes32 _queueHashes = keccak256(_queueHash);
-        uint64 _sequencedIndex = 4 + 8 + 8; //4byte function selector, 2 uint64
+        return keccak256(_queueHash);
+    }
+
+    // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batchTime([]uint64) + batchesData
+    function appendBatch() public {
+        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        IChainStorageContainer _chain = addressResolver.ctcContainer();
+        uint64 _queueNum;
+        uint64 _queueStartIndex;
+        assembly {
+            _queueNum := shr(192, calldataload(4))
+            _queueStartIndex := shr(192, calldataload(12))
+        }
+        require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
+        uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
+        require(_nextPendingQueueIndex <= queueElements.length, "attempt to append unavailable queue");
+        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
+        uint64 _batchDataPos = 4 + 8 + 8; //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         //check sequencer timestamp
-        uint64 _contextNum;
+        uint64 _batchNum;
         assembly {
-            _contextNum := shr(192, _sequencedIndex)
+            _batchNum := shr(192, _batchDataPos)
         }
         uint64 _timestamp;
         uint64 _lastTimestamp;
         //clear
         _offset = 0;
-        for (uint64 i = 0; i < _contextNum; i++) {
-            _offset = _sequencedIndex + 8 + 8 * i;
+        for (uint64 i = 0; i < _batchNum; i++) {
+            _offset = _batchDataPos + 8 + 8 * i;
             assembly {
                 _timestamp := shr(192, calldataload(_offset))
             }
             if (i == 0) {
                 //first
-                require(_timestamp > _chain.lastTimestamp(), "start timestamp should be larger than obvious timestamp");
+                require(_timestamp > _chain.lastTimestamp(), "start timestamp should be larger than previous timestamp");
             }
-            if (i == _contextNum - 1) {
+            if (i == _batchNum - 1) {
                 //last
                 if (pendingQueueIndex > 0) {
                     //make sure lastBatchTimestamp is the largest
