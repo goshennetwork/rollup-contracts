@@ -12,7 +12,7 @@ interface IStateCommitChain {
     function isStateConfirmed(Types.StateInfo memory _stateInfo) external view returns (bool _confirmed);
 
     /**
-     * @dev Verify provided info, it checkes info's index and hash
+     * @dev Verify provided info, it checks info's index and hash
      * @param _stateInfo State info in state chain
      * @return Return true if state info is indeed in state chain
      */
@@ -26,9 +26,9 @@ interface IStateCommitChain {
      * @param _blockHashes A list of state (we now store block hash).
      * @param _totalStates Total states stored in state chain
      * @notice Revert if:
-     * - _totalStates if equal to chain size
+     * - _totalStates not equal to state chain size
      * - sender isn't staking
-     * - pending states will beyond transaction chain size(every "block" in tx chain will finally drive a "block" in state chain)
+     * - pending states will beyond transaction chain size(because every "block" in tx chain will finally drive a "block" in state chain)
      */
     function appendStates(bytes32[] memory _blockHashes, uint64 _totalStates) external;
 
