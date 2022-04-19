@@ -14,6 +14,6 @@ library AddressName {
     string constant STAKING_MANAGER = "StakingManager";
     ///ChallengeFactory
     string constant CHALLENGE_FACTORY = "ChallengeFactory";
-    ///L1CrossDomain
+    ///L1CrossLayerMessageWitness
     string constant L1_CROSS_LAYER_MESSAGE_WITNESS = "L1CrossLayerMessageWitness";
 }

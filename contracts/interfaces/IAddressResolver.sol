@@ -30,6 +30,6 @@ interface IAddressResolver {
     ///Get ChallengeFactory contract
     function challengeFactory() external view returns (IChallengeFactory);
 
-    ///get L1CrossDomain contract address
+    ///get L1CrossLayerMessageWitness contract address
     function l1CrossLayerMessageWitness() external view returns (address);
 }
