@@ -2,6 +2,29 @@
 pragma solidity ^0.8.0;
 
 library MerkleMountainRange {
+    // CompactMerkleTree calculate merkle tree with compact hash store in HashStore
+    struct CompactMerkleTree {
+        bytes32 root;
+        bytes32[] hashes;
+        uint64 treeSize;
+    }
+
+    function appendLeafHash(CompactMerkleTree storage tree, bytes32 leaf) {
+        bytes32[] storage hashes = tree.hashes;
+        uint64 size = tree.hashes.length;
+        for (uint s = tree.treeSize; s%2 == 1; s = s>>1) {
+            leaf = keccak256(abi.encodePacked(hashes[size - 1], leaf));
+            size -= 1;
+        }
+        self.treeSize += 1;
+        // resize hashes
+        assembly {
+            sstore(hashes.slot, size)
+        }
+        hashes.push(leaf);
+        self.rootHash = bytes32(0);
+    }
+
     struct RootNode {
         uint64 level;
         bytes32 hash;
