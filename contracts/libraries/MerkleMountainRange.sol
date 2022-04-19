@@ -24,7 +24,7 @@ library MerkleMountainRange {
         hashes.push(leaf);
         require(hashes.length < (1 << 63), "length over flow");
         int64 _l = int64(uint64(hashes.length));
-        bytes32 _accum = tree.hashes[uint64(_l - 1)];
+        bytes32 _accum = leaf;
         for (int64 i = _l - 2; i >= 0; i--) {
             _accum = keccak256(abi.encodePacked(tree.hashes[uint64(i)], _accum));
         }
