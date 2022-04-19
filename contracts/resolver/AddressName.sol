@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 library AddressName {
-    ///CanonicalTransactionChain
+    ///RollupInputChain
     string constant CTC = "Ctc";
-    ///ChainStorageContainer of CanonicalTransactionChain
+    ///ChainStorageContainer of RollupInputChain
     string constant CTC_CONTAINER = "CtcContainer";
-    ///StateCommitChain
+    ///RollupStateChain
     string constant SCC = "Scc";
-    ///ChainStorageContainer of StateCommitChain
+    ///ChainStorageContainer of RollupStateChain
     string constant SCC_CONTAINER = "SccContainer";
     ///StakingManager
     string constant STAKING_MANAGER = "StakingManager";

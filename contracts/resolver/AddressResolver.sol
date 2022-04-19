@@ -18,16 +18,16 @@ contract AddressResolver is IAddressResolver {
         return _addr;
     }
 
-    function ctc() public view returns (ICanonicalTransactionChain) {
-        return ICanonicalTransactionChain(resolve(AddressName.CTC));
+    function ctc() public view returns (IRollupInputChain) {
+        return IRollupInputChain(resolve(AddressName.CTC));
     }
 
     function ctcContainer() public view returns (IChainStorageContainer) {
         return IChainStorageContainer(resolve(AddressName.CTC_CONTAINER));
     }
 
-    function scc() public view returns (IStateCommitChain) {
-        return IStateCommitChain(resolve(AddressName.SCC));
+    function scc() public view returns (IRollupStateChain) {
+        return IRollupStateChain(resolve(AddressName.SCC));
     }
 
     function sccContainer() public view returns (IChainStorageContainer) {

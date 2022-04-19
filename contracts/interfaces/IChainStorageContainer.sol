@@ -12,10 +12,10 @@ interface IChainStorageContainer {
     ///@return chain size
     function chainSize() external view returns (uint64);
 
-    ///@dev set lastTimeStamp,only use in CanonicalTransactionChain
+    ///@dev set lastTimeStamp,only use in RollupInputChain
     function setLastTimestamp(uint64 _timestamp) external;
 
-    ///@return lastTimeStamp, only used in CanonicalTransactionChain
+    ///@return lastTimeStamp, only used in RollupInputChain
     function lastTimestamp() external view returns (uint64);
 
     ///@dev Get element from chain by specific index

@@ -135,10 +135,10 @@ library Memory {
         if (len == 0) {
             return "";
         }
-        bytes memory msg = new bytes((len / 32 + 1) * 32);
+        bytes memory data = new bytes((len / 32 + 1) * 32);
         uint256 ptr;
         assembly {
-            ptr := add(msg, 32)
+            ptr := add(data, 32)
         }
         for (uint32 offset = 0; offset < len; offset += 32) {
             bytes32 piece = readMemoryBytes32(hashdb, root, addr + offset);
@@ -146,7 +146,7 @@ library Memory {
                 mstore(add(ptr, offset), piece)
             }
         }
-        return string(BytesSlice.toBytes(BytesSlice.slice(msg, 0, len)));
+        return string(BytesSlice.toBytes(BytesSlice.slice(data, 0, len)));
     }
 
     // note: we use big endian encoding to store memory in trie.

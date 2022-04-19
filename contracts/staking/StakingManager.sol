@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "../interfaces/IStateCommitChain.sol";
+import "../interfaces/IRollupStateChain.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "../libraries/Types.sol";
 
 contract StakingManager is IStakingManager {
     address private DAOAddress;
     IChallengeFactory challengeFactory;
-    IStateCommitChain public scc;
+    IRollupStateChain public scc;
     IERC20 public override token;
     mapping(address => StakingInfo) stakingInfos;
     //price should never change, unless every stakingInfo record the relating info of price.
@@ -19,13 +19,13 @@ contract StakingManager is IStakingManager {
     constructor(
         address _DAOAddress,
         address _challengeFactory,
-        address _stateCommitChain,
+        address _rollupStateChain,
         address _erc20,
         uint256 _price
     ) {
         DAOAddress = _DAOAddress;
         challengeFactory = IChallengeFactory(_challengeFactory);
-        scc = IStateCommitChain(_stateCommitChain);
+        scc = IRollupStateChain(_rollupStateChain);
         token = IERC20(_erc20);
         price = _price;
     }
@@ -46,7 +46,7 @@ contract StakingManager is IStakingManager {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
-        senderStake.needConfirmedHeight = scc.chainHeight();
+        senderStake.needConfirmedHeight = scc.totalSubmittedState();
         emit WithdrawStarted(msg.sender, senderStake.needConfirmedHeight);
     }
 

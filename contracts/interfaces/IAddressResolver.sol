@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./IChainStorageContainer.sol";
 import "./IStakingManager.sol";
 import "./IChallengeFactory.sol";
-import "./ICanonicalTransactionChain.sol";
+import "./IRollupInputChain.sol";
 
 ///@dev resolver only read address
 interface IAddressResolver {
@@ -12,16 +12,16 @@ interface IAddressResolver {
     ///@notice Revert if wanted contract have no address recorded
     function resolve(string memory _name) external view returns (address);
 
-    ///Get CanonicalTransactionChain contract
-    function ctc() external view returns (ICanonicalTransactionChain);
+    ///Get RollupInputChain contract
+    function ctc() external view returns (IRollupInputChain);
 
-    ///Get ChainStorageContainer of CanonicalTransactionChain contract
+    ///Get ChainStorageContainer of RollupInputChain contract
     function ctcContainer() external view returns (IChainStorageContainer);
 
-    ///Get StateCommitChain contract
-    function scc() external view returns (IStateCommitChain);
+    ///Get RollupStateChain contract
+    function scc() external view returns (IRollupStateChain);
 
-    ///Get ChainStorageContainer of StateCommitChain contract
+    ///Get ChainStorageContainer of RollupStateChain contract
     function sccContainer() external view returns (IChainStorageContainer);
 
     ///Get StakingManager contract

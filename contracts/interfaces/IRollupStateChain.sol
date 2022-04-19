@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
 
-interface IStateCommitChain {
+interface IRollupStateChain {
     /**
-     * @dev Check the provided stateInfo whether confirmed, but not  guarantee the correctness of sateInfo
+     * @dev Check the provided stateInfo whether confirmed, but not guarantee the correctness of stateInfo
      * @param _stateInfo State info to check.
      * @return _confirmed Whether or not the given state info is confirmed
      */
@@ -27,15 +27,15 @@ interface IStateCommitChain {
     );
 
     /**
-     * @dev Appends a list of block hash to the state chain.Only staking sender permitted
+     * @dev Appends a list of block hash to the state chain. Only staking sender permitted
      * @param _blockHashes A list of state (we now store block hash).
-     * @param _totalStates Total states stored in state chain
+     * @param _startIndex First block hash's index
      * @notice Revert if:
      * - _totalStates not equal to state chain size
      * - sender isn't staking
-     * - pending states will beyond transaction chain size(because every "block" in tx chain will finally drive a "block" in state chain)
+     * - pending states will beyond transaction chain size
      */
-    function appendStates(bytes32[] memory _blockHashes, uint64 _totalStates) external;
+    function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startIndex) external;
 
     event StateRollbacked(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
 

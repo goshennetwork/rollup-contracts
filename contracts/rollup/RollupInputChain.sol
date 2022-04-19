@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
-import { Types } from "../libraries/Types.sol";
+import "../libraries/Types.sol";
 import "../interfaces/IStakingManager.sol";
-import { ICanonicalTransactionChain } from "../interfaces/ICanonicalTransactionChain.sol";
+import "../interfaces/IRollupInputChain.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
 
-contract CanonicalTransactionChain is ICanonicalTransactionChain {
+contract RollupInputChain is IRollupInputChain {
     uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
+    uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
 
     uint256 public maxEnqueueTxGasLimit;
     uint256 public maxCrossLayerTxGasLimit;
@@ -52,6 +53,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         } else {
             require(msg.sender == addressResolver.l1CrossLayerMessageWitness(), "contract can not enqueue L2 Tx");
             require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
+            require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             sender = Constants.L1_CROSS_LAYER_MESSAGE_WITNESS;
         }
         // todo: maybe need more tx params, such as tip fee, value
@@ -62,13 +64,13 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
-        uint len = (32+8)*_queueNum;
+        uint256 len = (32 + 8) * _queueNum;
         bytes memory _queueHash = new bytes(len);
         uint64 _offset = 0;
         for (uint256 i = 0; i < _queueNum; i++) {
             QueueTxInfo memory info = queuedTxInfos[_queueStartIndex + i];
             bytes32 txHash = info.transactionHash;
-            bytes32 time = bytes32(uint256(info.timestamp)<<192);
+            bytes32 time = bytes32(uint256(info.timestamp) << 192);
             assembly {
                 let ptr := add(_queueHash, _offset)
                 mstore(ptr, txHash)

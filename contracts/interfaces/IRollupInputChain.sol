@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
-interface ICanonicalTransactionChain {
+interface IRollupInputChain {
     ///EVENT
     event TransactionEnqueued(
         uint64 indexed queueIndex,
@@ -54,6 +54,6 @@ interface ICanonicalTransactionChain {
     ///@return next pending queue index
     function pendingQueueIndex() external view returns (uint64);
 
-    ///@return lastTimeStamp of CanonicalTransactionChain
+    ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
 }

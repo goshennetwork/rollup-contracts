@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
-import { Types } from "../libraries/Types.sol";
-import { IStateCommitChain } from "../interfaces/IStateCommitChain.sol";
-import { ICanonicalTransactionChain } from "../interfaces/ICanonicalTransactionChain.sol";
-import { IStakingManager } from "../interfaces/IStakingManager.sol";
+import "../libraries/Types.sol";
+import "../interfaces/IRollupStateChain.sol";
+import "../interfaces/IRollupInputChain.sol";
+import "../interfaces/IStakingManager.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 
-contract StateCommitChain is IStateCommitChain {
+contract RollupStateChain is IRollupStateChain {
     using Types for Types.StateInfo;
     IAddressResolver addressResolver;
     //the window to fraud proof
-    uint256 public FRAUD_PROOF_WINDOW;
+    uint256 public immutable fraudProofWindow;
 
     constructor(address _addressResolver, uint256 _fraudProofWindow) {
         addressResolver = IAddressResolver(_addressResolver);
-        FRAUD_PROOF_WINDOW = _fraudProofWindow;
+        fraudProofWindow = _fraudProofWindow;
     }
 
     function isStateConfirmed(Types.StateInfo memory _stateInfo) public view returns (bool _confirmed) {
-        return (_stateInfo.timestamp + FRAUD_PROOF_WINDOW) <= block.timestamp;
+        return (_stateInfo.timestamp + fraudProofWindow) <= block.timestamp;
     }
 
     function verifyStateInfo(Types.StateInfo memory _stateInfo) public view returns (bool) {
@@ -45,7 +45,8 @@ contract StateCommitChain is IStateCommitChain {
         uint64 _now = uint64(block.timestamp);
         Types.StateInfo memory _stateInfo;
 
-        uint64 _pendingIndex = _startAt;        _stateInfo.timestamp = _now;
+        uint64 _pendingIndex = _startAt;
+        _stateInfo.timestamp = _now;
         _stateInfo.proposer = msg.sender;
         for (uint256 i = 0; i < _blockHashes.length; i++) {
             _stateInfo.blockHash = _blockHashes[i];
