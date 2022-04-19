@@ -25,7 +25,7 @@ library Types {
     using Types for StateInfo;
 
     function encode(StateInfo memory _stateInfo) internal pure returns (bytes memory) {
-        return abi.encodePacked(_stateInfo.blockHash, _stateInfo.timestamp, _stateInfo.proposer);
+        return abi.encodePacked(_stateInfo.blockHash, _stateInfo.index, _stateInfo.timestamp, _stateInfo.proposer);
     }
 
     ///hash state info
