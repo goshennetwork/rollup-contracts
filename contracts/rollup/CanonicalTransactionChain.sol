@@ -15,11 +15,15 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
     uint256 public maxEnqueueTxGasLimit;
     uint256 public maxCrossLayerTxGasLimit;
 
-    using Types for Types.QueueElement;
     IAddressResolver addressResolver;
 
     //store L1 -> L2 tx
-    Types.QueueElement[] queueElements;
+    struct QueueTxInfo {
+        bytes32 transactionHash;
+        uint64 timestamp;
+    }
+
+    QueueTxInfo[] queuedTxInfos;
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
 
@@ -53,24 +57,34 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         // todo: maybe need more tx params, such as tip fee, value
         bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
         uint64 _now = uint64(block.timestamp);
-        queueElements.push(Types.QueueElement({ transactionHash: transactionHash, timestamp: _now }));
-        emit TransactionEnqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
+        queuedTxInfos.push(QueueTxInfo({ transactionHash: transactionHash, timestamp: _now }));
+        emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _gasLimit, _data, _now);
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
-        bytes memory _queueHash = new bytes(32 * _queueNum);
-        uint256 ptr;
-        assembly {
-            ptr := add(_queueHash, 32)
-        }
-        uint64 _offset;
+        uint len = (32+8)*_queueNum;
+        bytes memory _queueHash = new bytes(len);
+        uint64 _offset = 0;
         for (uint256 i = 0; i < _queueNum; i++) {
-            bytes32 _h = (queueElements[_queueStartIndex + i].hash());
+            QueueTxInfo memory info = queuedTxInfos[_queueStartIndex + i];
+            bytes32 txHash = info.transactionHash;
+            bytes32 time = bytes32(uint256(info.timestamp)<<192);
             assembly {
-                mstore(add(ptr, _offset), _h)
+                let ptr := add(_queueHash, _offset)
+                mstore(ptr, txHash)
+                ptr := add(ptr, 32)
+                // @notice we reuse _queueHash's the first 32 byte length bits, so no overflow
+                mstore(ptr, time)
             }
+            _offset += 40;
         }
-        return keccak256(_queueHash);
+
+        // @notice we reuse _queueHash's length, so can not use keccak256(_queueHash)
+        bytes32 result;
+        assembly {
+            result := keccak256(_queueHash, len)
+        }
+        return result;
     }
 
     // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
@@ -86,7 +100,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         }
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
-        require(_nextPendingQueueIndex <= queueElements.length, "attempt to append unavailable queue");
+        require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
         uint64 _batchDataPos = 4 + 8 + 8; //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
@@ -114,14 +128,14 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         }
 
         if (_nextPendingQueueIndex > 0) {
-            uint64 _lastIncludedQueueTime = queueElements[_nextPendingQueueIndex - 1].timestamp;
+            uint64 _lastIncludedQueueTime = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
             if (_timestamp < _lastIncludedQueueTime) {
                 _timestamp = _lastIncludedQueueTime;
             }
         }
         uint64 _nextTimestamp = uint64(block.timestamp);
-        if (_nextPendingQueueIndex < queueElements.length) {
-            _nextTimestamp = queueElements[_nextPendingQueueIndex].timestamp;
+        if (_nextPendingQueueIndex < queuedTxInfos.length) {
+            _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
 

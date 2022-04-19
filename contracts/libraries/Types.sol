@@ -2,18 +2,6 @@
 pragma solidity ^0.8.0;
 
 library Types {
-    struct QueueElement {
-        bytes32 transactionHash;
-        uint64 timestamp;
-    }
-
-    function encode(QueueElement memory _element) internal pure returns (bytes memory) {
-        return abi.encodePacked(_element.transactionHash, _element.timestamp);
-    }
-
-    function hash(QueueElement memory _element) internal pure returns (bytes32) {
-        return keccak256(encode(_element));
-    }
 
     struct StateInfo {
         bytes32 blockHash;
