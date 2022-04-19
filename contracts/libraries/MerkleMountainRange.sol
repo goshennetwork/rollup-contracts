@@ -57,10 +57,12 @@ library MerkleMountainRange {
             require(_pos < _pathLen, "proof too short");
             if (_leafIndex % 2 == 1) {
                 _calculatedHash = keccak256(abi.encodePacked(_auditPath[_pos], _calculatedHash));
+                _pos++;
             } else if (_leafIndex < _lastNode) {
                 _calculatedHash = keccak256(abi.encodePacked(_calculatedHash, _auditPath[_pos]));
+                _pos++;
             }
-            _pos++;
+
             _leafIndex >>= 1;
         }
         require(_pos >= _pathLen, "proof too long");
