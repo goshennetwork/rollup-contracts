@@ -29,32 +29,31 @@ contract StateCommitChain is IStateCommitChain {
         return _stateInfo.index < _chain.chainSize() && _chain.get(_stateInfo.index) == _stateInfo.hash();
     }
 
-    function appendStates(bytes32[] memory _blockHashes, uint64 _totalStates) public {
+    function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startAt) public {
         IChainStorageContainer _chain = addressResolver.sccContainer();
-        //in case of duplicated
-        require(_totalStates == _chain.chainSize(), "current length not equal, maybe others already appended");
+        // in case of duplicated
+        require(_startAt == _chain.chainSize(), "start pos mismatch");
 
         // Proposers must in staking
-        require(addressResolver.stakingManager().isStaking(msg.sender), "Proposer should be staking");
-
+        require(addressResolver.stakingManager().isStaking(msg.sender), "unstaked");
         require(_blockHashes.length > 0, "no block hashes");
 
         require(
             _chain.chainSize() + _blockHashes.length <= addressResolver.ctc().chainHeight(),
-            "Number of state info cannot exceed the tx chain height."
+            "exceed tx chain height"
         );
         uint64 _now = uint64(block.timestamp);
         Types.StateInfo memory _stateInfo;
-        uint64 _pendingIndex = _totalStates;
+
+        uint64 _pendingIndex = _startAt;        _stateInfo.timestamp = _now;
+        _stateInfo.proposer = msg.sender;
         for (uint256 i = 0; i < _blockHashes.length; i++) {
             _stateInfo.blockHash = _blockHashes[i];
-            _stateInfo.timestamp = _now;
-            _stateInfo.proposer = msg.sender;
             _stateInfo.index = _pendingIndex;
             _chain.append(_stateInfo.hash());
             _pendingIndex++;
         }
-        emit StateAppended(_totalStates, _blockHashes, msg.sender, _now);
+        emit StateBatchAppended(_startAt, msg.sender, _now, _blockHashes);
     }
 
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
@@ -63,12 +62,12 @@ contract StateCommitChain is IStateCommitChain {
             "only permitted by challenge contract"
         );
         require(verifyStateInfo(_stateInfo), "invalid state info");
-        require(!isStateConfirmed(_stateInfo), "State info can only be deleted without confirmed");
+        require(!isStateConfirmed(_stateInfo), "state confirmed");
         addressResolver.sccContainer().resize(_stateInfo.index);
-        emit StateRolledBackBefore(_stateInfo.index, _stateInfo.blockHash);
+        emit StateRollbacked(_stateInfo.index, _stateInfo.blockHash);
     }
 
-    function chainHeight() public view returns (uint64) {
+    function totalSubmittedState() external view returns (uint64) {
         return addressResolver.sccContainer().chainSize();
     }
 }

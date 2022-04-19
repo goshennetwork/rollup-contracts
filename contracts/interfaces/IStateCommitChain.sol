@@ -19,7 +19,12 @@ interface IStateCommitChain {
     function verifyStateInfo(Types.StateInfo memory _stateInfo) external view returns (bool);
 
     ///emit when appendStates, anyone can check the block hash and open a challenge.
-    event StateAppended(uint64 indexed _startIndex, bytes32[] _blockHash, address indexed _proposer, uint64 _timestamp);
+    event StateBatchAppended(
+        uint64 indexed _startIndex,
+        address indexed _proposer,
+        uint64 _timestamp,
+        bytes32[] _blockHash
+    );
 
     /**
      * @dev Appends a list of block hash to the state chain.Only staking sender permitted
@@ -32,7 +37,7 @@ interface IStateCommitChain {
      */
     function appendStates(bytes32[] memory _blockHashes, uint64 _totalStates) external;
 
-    event StateRolledBackBefore(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
+    event StateRollbacked(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
 
     /**
      * @dev Cut state chain at specific state.Only called by Challenge contract
@@ -44,6 +49,6 @@ interface IStateCommitChain {
      */
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) external;
 
-    ///get state chain height
-    function chainHeight() external view returns (uint64);
+    ///get total number of submitted state
+    function totalSubmittedState() external view returns (uint64);
 }
