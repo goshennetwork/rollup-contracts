@@ -17,7 +17,6 @@ library Types {
 
     struct StateInfo {
         bytes32 blockHash;
-        //index in state chain, ignored when encoding.
         uint64 index;
         uint64 timestamp;
         address proposer;
@@ -25,7 +24,6 @@ library Types {
 
     using Types for StateInfo;
 
-    //encode state info to bytes, not encode index
     function encode(StateInfo memory _stateInfo) internal pure returns (bytes memory) {
         return abi.encodePacked(_stateInfo.blockHash, _stateInfo.timestamp, _stateInfo.proposer);
     }

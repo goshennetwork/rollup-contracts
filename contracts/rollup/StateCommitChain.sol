@@ -49,7 +49,9 @@ contract StateCommitChain is IStateCommitChain {
             _stateInfo.blockHash = _blockHashes[i];
             _stateInfo.timestamp = _now;
             _stateInfo.proposer = msg.sender;
+            _stateInfo.index = _totalStates;
             _chain.append(_stateInfo.hash());
+            _totalStates++;
         }
         emit StateAppended(_totalStates, _blockHashes, msg.sender, _now);
     }
