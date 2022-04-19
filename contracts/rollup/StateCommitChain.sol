@@ -51,7 +51,7 @@ contract StateCommitChain is IStateCommitChain {
             _stateInfo.proposer = msg.sender;
             _chain.append(_stateInfo.hash());
         }
-        emit Appended(_totalStates, _blockHashes, msg.sender, _now);
+        emit StateAppended(_totalStates, _blockHashes, msg.sender, _now);
     }
 
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
@@ -62,7 +62,7 @@ contract StateCommitChain is IStateCommitChain {
         require(verifyStateInfo(_stateInfo), "invalid state info");
         require(!isStateConfirmed(_stateInfo), "State info can only be deleted without confirmed");
         addressResolver.sccContainer().resize(_stateInfo.index);
-        emit Deleted(_stateInfo.index, _stateInfo.blockHash);
+        emit StateRolledBackBefore(_stateInfo.index, _stateInfo.blockHash);
     }
 
     function chainHeight() public view returns (uint64) {

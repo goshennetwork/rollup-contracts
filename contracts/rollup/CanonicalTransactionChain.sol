@@ -54,7 +54,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
         uint64 _now = uint64(block.timestamp);
         queueElements.push(Types.QueueElement({ transactionHash: transactionHash, timestamp: _now }));
-        emit Enqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
+        emit TransactionEnqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
@@ -127,7 +127,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
 
         _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
-        emit Appended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
+        emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }
 
     function chainHeight() public view returns (uint64) {
