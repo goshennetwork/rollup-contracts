@@ -65,7 +65,8 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         return keccak256(_queueHash);
     }
 
-    // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batchTime([]uint64) + batchesData
+    // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
+    // batchLeftTimeDiff([]uint32) + batchesData
     function appendBatch() public {
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.ctcContainer();
@@ -86,40 +87,38 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         assembly {
             _batchNum := shr(192, _batchDataPos)
         }
+        require(_batchNum > 0, "no batch");
+        _batchDataPos += 8;
         uint64 _timestamp;
+        assembly {
+            _timestamp := shr(192, calldataload(_batchDataPos))
+        }
+        require(_timestamp > _chain.lastTimestamp() && _timestamp < block.timestamp, "wrong batch timestap");
+        _batchDataPos += 8;
         uint64 _lastTimestamp;
         //clear
         _offset = 0;
-        for (uint64 i = 0; i < _batchNum; i++) {
-            _offset = _batchDataPos + 8 + 8 * i;
+        for (uint64 i = 1; i < _batchNum; i++) {
+            uint32 _timediff;
             assembly {
-                _timestamp := shr(192, calldataload(_offset))
+                _timediff:= shr(224, calldataload(batchPos))
             }
-            if (i == 0) {
-                //first
-                require(_timestamp > _chain.lastTimestamp(), "start timestamp should be larger than previous timestamp");
-            }
-            if (i == _batchNum - 1) {
-                //last
-                if (pendingQueueIndex > 0) {
-                    //make sure lastBatchTimestamp is the largest
-                    require(
-                        _timestamp >= queueElements[pendingQueueIndex - 1].timestamp,
-                        "last sequenced tx timestamp should larger than appended queue timestamp"
-                    );
-                }
-                if (pendingQueueIndex < queueElements.length) {
-                    //make sure lastBatchTimestamp smaller than pending queue.
-                    require(
-                        _timestamp < queueElements[pendingQueueIndex].timestamp,
-                        "last batch muse less than pending queue timestamp"
-                    );
-                }
-            }
-            require(_timestamp >= _lastTimestamp, "sequenced batch timestamp should be continuous");
-            _lastTimestamp = _timestamp;
+            _timestamp += uint64(_timediff);
+            _batchDataPos += 4;
         }
-        //record batches info
+
+        if (_nextPendingQueueIndex> 0) {
+            uint64 _lastIncludedQueueTime = queueElements[_nextPendingQueueIndex - 1].timestamp;
+            if (_timestamp < _lastIncludedQueueTime) {
+                _timestamp = _lastIncludedQueueTime;
+            }
+        }
+        uint64 _nextTimestamp = block.timestamp;
+        if (_nextPendingQueueIndex < queueElements.length) {
+            _nextTimestamp = queueElements[_nextPendingQueueIndex].timestamp;
+        }
+        require(_timestamp < _nextTimestamp, "last batch timestamp too high");
+
         _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
         emit Appended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
