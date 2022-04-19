@@ -6,8 +6,8 @@ import "./console.sol";
 import "./MerkleMountainRange.sol";
 
 contract MMRTest {
-    using MerkleMountainRange for MerkleMountainRange.CompactMerkleTree;
-    MerkleMountainRange.CompactMerkleTree _trees;
+    using MerkleMountainRange for CompactMerkleTree;
+    CompactMerkleTree _trees;
 
     function getTreeSize() public returns (uint64) {
         return _trees.treeSize;

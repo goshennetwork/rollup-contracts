@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-library MerkleMountainRange {
-    // CompactMerkleTree calculate merkle tree with compact hash store in HashStore
-    struct CompactMerkleTree {
-        bytes32 rootHash;
-        bytes32[] hashes;
-        uint64 treeSize;
-    }
+// CompactMerkleTree calculate merkle tree with compact hash store in HashStore
+struct CompactMerkleTree {
+    bytes32 rootHash;
+    bytes32[] hashes;
+    uint64 treeSize;
+}
 
+library MerkleMountainRange {
     function appendLeafHash(CompactMerkleTree storage tree, bytes32 leaf) internal {
         bytes32[] storage hashes = tree.hashes;
         uint64 size = uint64(tree.hashes.length);
@@ -22,7 +22,6 @@ library MerkleMountainRange {
             sstore(hashes.slot, size)
         }
         hashes.push(leaf);
-        require(hashes.length < (1 << 63), "length over flow");
         int64 _l = int64(uint64(hashes.length));
         bytes32 _accum = leaf;
         for (int64 i = _l - 2; i >= 0; i--) {
@@ -67,5 +66,4 @@ library MerkleMountainRange {
         require(_pos >= _pathLen, "proof too long");
         return _calculatedHash;
     }
-
 }
