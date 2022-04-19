@@ -41,7 +41,7 @@ library MerkleMountainRange {
         require(_leafIndex < _treeSize, "leaf index out of bounds");
         require(
             calculateRootHashFromAuditPath(_leafHash, _leafIndex, _proof, _treeSize) == _rootHash,
-            "Constructed root hash differs from provided root hash"
+            "mmr root differ"
         );
     }
 
@@ -68,24 +68,4 @@ library MerkleMountainRange {
         return _calculatedHash;
     }
 
-    //@dev hash child tree add prefix byte(1) to data
-    function merkleRoot(CompactMerkleTree storage tree) internal returns (bytes32) {
-        if (tree.rootHash != bytes32(0)) {
-            //not changed
-            return tree.rootHash;
-        }
-        if (tree.treeSize == 0) {
-            //no leaf,simply return empty hash
-            return bytes32(0);
-        }
-        //changed,re calc
-        require(tree.hashes.length < (1 << 63), "length over flow");
-        int64 _l = int64(uint64(tree.hashes.length));
-        assert(_l >= 0);
-        bytes32 _accum = tree.hashes[uint64(_l - 1)];
-        for (int64 i = _l - 2; i >= 0; i--) {
-            _accum = keccak256(abi.encodePacked(tree.hashes[uint64(i)], _accum));
-        }
-        return _accum;
-    }
 }

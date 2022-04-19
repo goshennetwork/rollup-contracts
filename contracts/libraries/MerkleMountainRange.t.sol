@@ -14,7 +14,7 @@ contract MMRTest {
     }
 
     function getRootHash() public returns (bytes32) {
-        return _trees.merkleRoot();
+        return _trees.rootHash;
     }
 
     function verifyProof(
