@@ -45,13 +45,14 @@ contract StateCommitChain is IStateCommitChain {
         );
         uint64 _now = uint64(block.timestamp);
         Types.StateInfo memory _stateInfo;
+        uint64 _pendingIndex=_totalStates;
         for (uint256 i = 0; i < _blockHashes.length; i++) {
             _stateInfo.blockHash = _blockHashes[i];
             _stateInfo.timestamp = _now;
             _stateInfo.proposer = msg.sender;
-            _stateInfo.index = _totalStates;
+            _stateInfo.index = _pendingIndex;
             _chain.append(_stateInfo.hash());
-            _totalStates++;
+            _pendingIndex++;
         }
         emit StateAppended(_totalStates, _blockHashes, msg.sender, _now);
     }
