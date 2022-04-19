@@ -51,7 +51,7 @@ library MerkleMountainRange {
         uint64 _treeSize
     ) internal pure returns (bytes32) {
         bytes32 _calculatedHash = _leafHash;
-        uint64 _pos;
+        uint64 _pos=0;
         uint64 _pathLen = uint64(_auditPath.length);
         for (uint64 _lastNode = _treeSize - 1; _lastNode > 0; _lastNode >>= 1) {
             require(_pos < _pathLen, "proof too short");
