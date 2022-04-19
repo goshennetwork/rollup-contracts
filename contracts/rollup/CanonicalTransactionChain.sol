@@ -6,8 +6,15 @@ import "../interfaces/IStakingManager.sol";
 import { ICanonicalTransactionChain } from "../interfaces/ICanonicalTransactionChain.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
+import "../libraries/Constants.sol";
 
 contract CanonicalTransactionChain is ICanonicalTransactionChain {
+    uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
+    uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
+
+    uint256 public maxEnqueueTxGasLimit;
+    uint256 public maxCrossLayerTxGasLimit;
+
     using Types for Types.QueueElement;
     IAddressResolver addressResolver;
 
@@ -16,29 +23,30 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
 
-    constructor(address _addressResolver) {
+    constructor(address _addressResolver, uint256 _maxTxGasLimit, uint256 _maxCrossLayerTxGasLimit) {
         addressResolver = IAddressResolver(_addressResolver);
+        maxEnqueueTxGasLimit = _maxTxGasLimit;
+        maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
     }
 
-    function enqueue(
-        address _target,
-        uint256 _gasLimit,
-        bytes memory _data
-    ) public {
-        //We guarantee that the L2 EOA is L1 EOA, and L1 contract can't be L2 EOA except l1 crossDomainContract which is used
-        //when l1 bridge try to  enqueue tx to l2
-        if (msg.sender != tx.origin) {
-            //the l1 bridge use cross Domain contract to enqueue tx to l2.We only allow contract as l2 EOA when sender is this contract,
-            require(
-                msg.sender == addressResolver.l1CrossLayerMessageWitness(),
-                "contract can't act as EOA in L2 except l1 crossDomain contract"
-            );
+    function enqueue(address _target, uint256 _gasLimit, bytes memory _data) public {
+        require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
+        require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
+        require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
+        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerMessageWitness
+        address sender;
+        if (msg.sender == tx.origin) {
+            sender = msg.sender;
+        } else {
+            require(msg.sender == addressResolver.l1CrossLayerMessageWitness(), "contract can not enqueue L2 Tx");
+            require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
+            sender = Constants.L1_CROSS_LAYER_MESSAGE_WITNESS;
         }
-        //todo: maybe need more tx params, such as tip fee,value
-        bytes32 transactionHash = keccak256(abi.encode(msg.sender, _target, _gasLimit, _data));
+        // todo: maybe need more tx params, such as tip fee, value
+        bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
         uint64 _now = uint64(block.timestamp);
         queueElements.push(Types.QueueElement({ transactionHash: transactionHash, timestamp: _now }));
-        emit Enqueued(msg.sender, _target, _gasLimit, _data, uint64(queueElements.length - 1), _now);
+        emit Enqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
     }
 
     function appendBatch() public {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 interface ICanonicalTransactionChain {
     ///EVENT
-    event Enqueued(address indexed from, address to, uint256 gaslimit, bytes data, uint64 queueIndex, uint64 timestamp);
+    event Enqueued(uint64 indexed queueIndex, address indexed from, address indexed to, uint256 gaslimit, bytes data, uint64 timestamp);
 
     /**
      * Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2,so L2 treat

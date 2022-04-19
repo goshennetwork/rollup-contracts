@@ -15,5 +15,5 @@ library AddressName {
     ///ChallengeFactory
     string constant CHALLENGE_FACTORY = "ChallengeFactory";
     ///L1CrossDomain
-    string constant L1_CROSS_DOMAIN = "L1CrossDomain";
+    string constant L1_CROSS_LAYER_MESSAGE_WITNESS = "L1CrossLayerMessageWitness";
 }

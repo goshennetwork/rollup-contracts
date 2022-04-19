@@ -42,7 +42,7 @@ contract AddressResolver is IAddressResolver {
         return IChallengeFactory(resolve(AddressName.CHALLENGE_FACTORY));
     }
 
-    function l1CrossDomainAddr() public view returns (address) {
-        return resolve(AddressName.L1_CROSS_DOMAIN);
+    function l1CrossLayerMessageWitness() public view returns (address) {
+        return resolve(AddressName.L1_CROSS_LAYER_MESSAGE_WITNESS);
     }
 }
