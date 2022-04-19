@@ -27,7 +27,7 @@ contract ChainStorageContainer is IChainStorageContainer {
     }
 
     function chainSize() external view returns (uint64) {
-        return chain.length;
+        return uint64(chain.length);
     }
 
     function append(bytes32 _element) public onlyOwner {

@@ -23,13 +23,21 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
 
-    constructor(address _addressResolver, uint256 _maxTxGasLimit, uint256 _maxCrossLayerTxGasLimit) {
+    constructor(
+        address _addressResolver,
+        uint256 _maxTxGasLimit,
+        uint256 _maxCrossLayerTxGasLimit
+    ) {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
     }
 
-    function enqueue(address _target, uint256 _gasLimit, bytes memory _data) public {
+    function enqueue(
+        address _target,
+        uint256 _gasLimit,
+        bytes memory _data
+    ) public {
         require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
@@ -49,7 +57,7 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         emit Enqueued(uint64(queueElements.length - 1), sender, _target, _gasLimit, _data, _now);
     }
 
-    function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal returns (bytes32) {
+    function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
         bytes memory _queueHash = new bytes(32 * _queueNum);
         uint256 ptr;
         assembly {
@@ -96,24 +104,22 @@ contract CanonicalTransactionChain is ICanonicalTransactionChain {
         require(_timestamp > _chain.lastTimestamp() && _timestamp < block.timestamp, "wrong batch timestap");
         _batchDataPos += 8;
         uint64 _lastTimestamp;
-        //clear
-        _offset = 0;
         for (uint64 i = 1; i < _batchNum; i++) {
             uint32 _timediff;
             assembly {
-                _timediff:= shr(224, calldataload(batchPos))
+                _timediff := shr(224, calldataload(_batchDataPos))
             }
             _timestamp += uint64(_timediff);
             _batchDataPos += 4;
         }
 
-        if (_nextPendingQueueIndex> 0) {
+        if (_nextPendingQueueIndex > 0) {
             uint64 _lastIncludedQueueTime = queueElements[_nextPendingQueueIndex - 1].timestamp;
             if (_timestamp < _lastIncludedQueueTime) {
                 _timestamp = _lastIncludedQueueTime;
             }
         }
-        uint64 _nextTimestamp = block.timestamp;
+        uint64 _nextTimestamp = uint64(block.timestamp);
         if (_nextPendingQueueIndex < queueElements.length) {
             _nextTimestamp = queueElements[_nextPendingQueueIndex].timestamp;
         }
