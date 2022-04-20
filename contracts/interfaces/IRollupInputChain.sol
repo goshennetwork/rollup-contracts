@@ -59,5 +59,5 @@ interface IRollupInputChain {
     ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
 
-    function getQueueElement(uint64 _queueIndex) external view returns (Types.QueueElement memory);
+    function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64);
 }

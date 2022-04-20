@@ -40,7 +40,7 @@ contract RollupInputChain is IRollupInputChain {
 
     function enqueue(
         address _target,
-        uint256 _gasLimit,
+        uint64 _gasLimit,
         bytes memory _data
     ) public {
         require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
@@ -141,7 +141,16 @@ contract RollupInputChain is IRollupInputChain {
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
 
-        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
+        _chain.append(
+            keccak256(
+                abi.encodePacked(
+                    keccak256(msg.data),
+                    _queueHashes,
+                    addressResolver.l1CrossDomainMessageWitness().mmrRoot(),
+                    addressResolver.l1CrossDomainMessageWitness().totalSize()
+                )
+            )
+        );
         _chain.setLastTimestamp(_lastTimestamp);
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }
@@ -152,5 +161,11 @@ contract RollupInputChain is IRollupInputChain {
 
     function lastTimestamp() public view returns (uint64) {
         return addressResolver.rollupInputChainContainer().lastTimestamp();
+    }
+
+    function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
+        require(_queueIndex < queueElements.length, "queue index over capacity");
+        QueueTxInfo storage info = queueElements[_queueIndex];
+        return (info.transactionHash, info.timestamp);
     }
 }
