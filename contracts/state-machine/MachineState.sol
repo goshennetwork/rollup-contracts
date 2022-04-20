@@ -152,7 +152,7 @@ contract MachineState {
         return hashdb.readInput(root);
     }
 
-    function genReservedKey(uint32 addr) public view returns (bytes memory) {
+    function genReservedKey(uint32 addr) public pure returns (bytes memory) {
         return bytes.concat(bytes5(bytes4(addr)));
     }
 

@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "../interfaces/IStateCommitChain.sol";
+import "../interfaces/IRollupStateChain.sol";
 import "../interfaces/IChallengeFactory.sol";
+import "../libraries/Types.sol";
 
 contract StakingManager is IStakingManager {
     address private DAOAddress;
     IChallengeFactory challengeFactory;
-    IStateCommitChain public scc;
+    IRollupStateChain public rollupStateChain;
     IERC20 public override token;
     mapping(address => StakingInfo) stakingInfos;
     //price should never change, unless every stakingInfo record the relating info of price.
@@ -18,13 +19,13 @@ contract StakingManager is IStakingManager {
     constructor(
         address _DAOAddress,
         address _challengeFactory,
-        address _stateCommitChain,
+        address _rollupStateChain,
         address _erc20,
         uint256 _price
     ) {
         DAOAddress = _DAOAddress;
         challengeFactory = IChallengeFactory(_challengeFactory);
-        scc = IStateCommitChain(_stateCommitChain);
+        rollupStateChain = IRollupStateChain(_rollupStateChain);
         token = IERC20(_erc20);
         price = _price;
     }
@@ -45,22 +46,22 @@ contract StakingManager is IStakingManager {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
-        senderStake.needConfirmedBlock = scc.getCurrentBlockHeight();
-        emit WithdrawStarted(msg.sender, senderStake.needConfirmedBlock);
+        senderStake.needConfirmedHeight = rollupStateChain.totalSubmittedState();
+        emit WithdrawStarted(msg.sender, senderStake.needConfirmedHeight);
     }
 
-    function finalizeWithdrawal() external override {
+    function finalizeWithdrawal(Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
-        require(scc.isBlockComfirmed(senderStake.needConfirmedBlock), "have not confirmed");
+        _assertStateIsConfirmed(senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
         token.transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
     }
 
     function slash(
-        uint256 _blockHeight,
-        bytes32 _stateRoot,
+        uint64 _chainHeight,
+        bytes32 _blockHash,
         address _proposer
     ) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
@@ -72,39 +73,43 @@ contract StakingManager is IStakingManager {
             proposerStake.firstSlashTime = block.timestamp;
         }
         require(
-            proposerStake.earliestChallengeBlock == 0 || _blockHeight < proposerStake.earliestChallengeBlock,
+            proposerStake.earliestChallengeHeight == 0 || _chainHeight < proposerStake.earliestChallengeHeight,
             "should be smaller than last lash"
         );
-        proposerStake.earliestChallengeBlock = _blockHeight;
-        proposerStake.earliestChallengeState = _stateRoot;
+        proposerStake.earliestChallengeHeight = _chainHeight;
+        proposerStake.earliestChallengeBlockHash = _blockHash;
         //set state to slashing
         proposerStake.state = StakingState.SLASHING;
-        emit DepositSlashed(_proposer, msg.sender, _blockHeight, _stateRoot);
+        emit DepositSlashed(_proposer, msg.sender, _chainHeight, _blockHash);
     }
 
-    function claim(address _proposer) external override {
+    function claim(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
-        require(_root != proposerStake.earliestChallengeState, "unused challenge");
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
         token.transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
 
-    function claimToGovernance(address _proposer) external override {
+    function claimToGovernance(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        uint256 _earliestChallengeBlock = proposerStake.earliestChallengeBlock;
-        require(scc.isBlockComfirmed(_earliestChallengeBlock), "block not confirmed yet");
-        (, bytes32 _root, , , ) = scc.getBlockInfo(_earliestChallengeBlock);
-        require(_root == proposerStake.earliestChallengeState, "useful challenge");
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
         token.transfer(DAOAddress, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, DAOAddress, price);
+    }
+
+    function _assertStateIsConfirmed(uint256 _index, Types.StateInfo memory _stateInfo) internal view {
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(rollupStateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
+        require(_stateInfo.index == _index, "should provide wanted state info");
     }
 }

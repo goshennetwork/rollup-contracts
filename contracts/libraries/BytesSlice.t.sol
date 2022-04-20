@@ -27,7 +27,7 @@ contract BytesSliceTest {
         );
     }
 
-    function checkToBytes32(bytes memory val, bytes32 expected) private view {
+    function checkToBytes32(bytes memory val, bytes32 expected) private pure {
         bytes32 ret = BytesSlice.toBytes32(val);
         require(ret == expected);
     }

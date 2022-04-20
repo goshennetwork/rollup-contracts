@@ -9,11 +9,11 @@ library DisputeTree {
         bytes32 midStateRoot;
     }
 
-    function middle(uint128 _lower, uint128 _upper) internal view returns (uint128) {
+    function middle(uint128 _lower, uint128 _upper) internal pure returns (uint128) {
         return _lower + (_upper - _lower) / 2;
     }
 
-    function encodeNodeKey(uint128 _stepLower, uint128 _stepUpper) internal view returns (uint256) {
+    function encodeNodeKey(uint128 _stepLower, uint128 _stepUpper) internal pure returns (uint256) {
         return uint256(_stepLower) + (uint256(_stepUpper) << 128);
     }
 
@@ -68,7 +68,7 @@ library DisputeTree {
         return _addr;
     }
 
-    function isChildNode(uint256 _parentKey, uint256 _childKey) internal view returns (bool) {
+    function isChildNode(uint256 _parentKey, uint256 _childKey) internal pure returns (bool) {
         (uint128 parentLower, uint128 parentUpper) = decodeNodeKey(_parentKey);
         (uint128 childLower, uint128 childUpper) = decodeNodeKey(_childKey);
         return _parentKey != _childKey && childLower >= parentLower && childUpper <= parentUpper;
@@ -79,7 +79,6 @@ library DisputeTree {
         view
         returns (uint256)
     {
-        DisputeNode storage node = tree[_rootKey];
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
             uint128 _stepMid = middle(_stepLower, _stepUpper);

@@ -121,7 +121,7 @@ contract Interpretor {
         } else if (op == Instruction.OP_I_FENCE_TYPE) {
             // fence: nop
         } else if (op == Instruction.OP_I_CSR_TYPE) {
-            (, uint8 rd, uint8 fn3, uint8 rs1, uint32 csr) = Instruction.decodeIType(inst);
+            (, , uint8 fn3, , uint32 csr) = Instruction.decodeIType(inst);
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
@@ -321,7 +321,6 @@ contract Interpretor {
             //panic,a0 put the panic info start addr, a1 put length.program halt
             uint32 va1 = mstate.readRegister(_root, Register.REG_A1);
             revert(mstate.readMemoryString(_root, va0, va1));
-            _nextPC = MemoryLayout.HaltMagic;
         } else if (_systemNumer == 5) {
             //pub fn debug (msg: *const u8, len: usize);
             //debug,a0 put the debug info, a1 put the length.

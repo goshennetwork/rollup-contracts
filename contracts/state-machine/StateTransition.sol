@@ -26,12 +26,15 @@ contract StateTransition is IStateTransition {
         return riscvMem.writeInput(imageStateRoot, inputHash);
     }
 
-    function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external {
+    function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external view {
         require(riscvMem.isHalt(finalState) == true, "not halted");
         require(riscvMem.mustReadOutput(finalState) == outputRoot, "mismatch root");
     }
 
-    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
+    function executeNextStep(bytes32 stateHash) external pure returns (bytes32 nextStateHash) {
+        //fix warning
+        stateHash;
+        nextStateHash;
         revert("todo");
     }
 }

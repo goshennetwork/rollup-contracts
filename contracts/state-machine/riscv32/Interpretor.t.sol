@@ -32,12 +32,12 @@ contract InterpretorTest {
         root = mstate.writeRegister(root, Register.REG_PC, 0);
     }
 
-    function checkRegState(ExpectReg memory e) internal returns (bool) {
+    function checkRegState(ExpectReg memory e) internal view returns (bool) {
         uint32 value = mstate.readRegister(root, e.register);
         return value == uint32(e.value);
     }
 
-    function checkMemState(ExpectMem memory e) internal returns (bool) {
+    function checkMemState(ExpectMem memory e) internal view returns (bool) {
         uint32 value = mstate.readMemory(root, e.ptr);
         return value == uint32(e.value);
     }
@@ -54,6 +54,7 @@ contract InterpretorTest {
     }
 
     function execInstruction(string memory raw, uint32 inst) internal {
+        raw;
         //console.log(string(bytes.concat("exec: ", bytes(raw))));
         uint32 pc = mstate.readRegister(root, Register.REG_PC);
         root = mstate.writeMemory(root, pc, inst);
