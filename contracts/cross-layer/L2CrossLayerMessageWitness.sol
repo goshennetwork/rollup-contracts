@@ -70,7 +70,7 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
         //should buy gas
         bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(_target, msg.sender, _message, _messageIndex);
         compactMerkleTree.appendLeafHash(keccak256(_crossLayerCalldata));
-        emit SentMessage(_target, msg.sender, _message, _messageIndex);
+        emit MessageSent(_target, msg.sender, _message, _messageIndex);
     }
 
     function _encodeCrossLayerCallData(
