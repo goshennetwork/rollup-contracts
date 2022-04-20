@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IAddressManager.sol";
+import "./AddressName.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import "../interfaces/IAddressResolver.sol";
 
-contract AddressManager is IAddressManager, Ownable {
+contract AddressManager is IAddressManager, IAddressResolver, Ownable {
     mapping(bytes32 => address) private addrs;
 
     ///cant set empty address
@@ -27,6 +29,40 @@ contract AddressManager is IAddressManager, Ownable {
 
     function getAddr(string memory _name) public view returns (address) {
         return addrs[hash(_name)];
+    }
+
+    function resolve(string memory _name) public view returns (address) {
+        address _addr = this.getAddr(_name);
+        require(_addr != address(0), "no name saved");
+        return _addr;
+    }
+
+    function rollupInputChain() public view returns (IRollupInputChain) {
+        return IRollupInputChain(resolve(AddressName.ROLLUP_INPUT_CHAIN));
+    }
+
+    function rollupInputChainContainer() public view returns (IChainStorageContainer) {
+        return IChainStorageContainer(resolve(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER));
+    }
+
+    function rollupStateChain() public view returns (IRollupStateChain) {
+        return IRollupStateChain(resolve(AddressName.ROLLUP_STATE_CHAIN));
+    }
+
+    function rollupStateChainContainer() public view returns (IChainStorageContainer) {
+        return IChainStorageContainer(resolve(AddressName.ROLLUP_STATE_CHAIN_CONTAINER));
+    }
+
+    function stakingManager() public view returns (IStakingManager) {
+        return IStakingManager(resolve(AddressName.STAKING_MANAGER));
+    }
+
+    function challengeFactory() public view returns (IChallengeFactory) {
+        return IChallengeFactory(resolve(AddressName.CHALLENGE_FACTORY));
+    }
+
+    function l1CrossLayerMessageWitness() public view returns (address) {
+        return resolve(AddressName.L1_CROSS_LAYER_MESSAGE_WITNESS);
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

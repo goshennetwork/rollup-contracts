@@ -13,16 +13,16 @@ interface IAddressResolver {
     function resolve(string memory _name) external view returns (address);
 
     ///Get RollupInputChain contract
-    function ctc() external view returns (IRollupInputChain);
+    function rollupInputChain() external view returns (IRollupInputChain);
 
     ///Get ChainStorageContainer of RollupInputChain contract
-    function ctcContainer() external view returns (IChainStorageContainer);
+    function rollupInputChainContainer() external view returns (IChainStorageContainer);
 
     ///Get RollupStateChain contract
-    function scc() external view returns (IRollupStateChain);
+    function rollupStateChain() external view returns (IRollupStateChain);
 
     ///Get ChainStorageContainer of RollupStateChain contract
-    function sccContainer() external view returns (IChainStorageContainer);
+    function rollupStateChainContainer() external view returns (IChainStorageContainer);
 
     ///Get StakingManager contract
     function stakingManager() external view returns (IStakingManager);

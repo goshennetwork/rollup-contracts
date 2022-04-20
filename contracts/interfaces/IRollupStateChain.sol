@@ -33,7 +33,7 @@ interface IRollupStateChain {
      * @notice Revert if:
      * - _totalStates not equal to state chain size
      * - sender isn't staking
-     * - pending states will beyond transaction chain size
+     * - pending states will beyond input chain size
      */
     function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startIndex) external;
 

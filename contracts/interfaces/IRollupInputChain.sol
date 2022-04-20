@@ -34,7 +34,7 @@ interface IRollupInputChain {
     );
 
     /**
-     * append a batches of sequenced tx to tx chain.Only staking sender permitted
+     * append a batches of sequenced tx to input chain.Only staking sender permitted
      * @dev The info is in calldata,format as:
      *  uint64 (num_queue) || uint64 (queue_start_index)||uint64 (num_sequenced) || [uint64,uint64...] (timestamp)) || uint64 (batch_version) [batch_sequenced,batch...]
      * @notice Revert if:
@@ -48,7 +48,7 @@ interface IRollupInputChain {
      */
     function appendBatch() external;
 
-    ///@return total sequenced tx batches num
+    ///@return total sequenced input num
     function chainHeight() external view returns (uint64);
 
     ///@return next pending queue index

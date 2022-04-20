@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 library AddressName {
     ///RollupInputChain
-    string constant CTC = "Ctc";
+    string constant ROLLUP_INPUT_CHAIN = "RollupInputChain";
     ///ChainStorageContainer of RollupInputChain
-    string constant CTC_CONTAINER = "CtcContainer";
+    string constant ROLLUP_INPUT_CHAIN_CONTAINER = "RollupInputChainContainer";
     ///RollupStateChain
-    string constant SCC = "Scc";
+    string constant ROLLUP_STATE_CHAIN = "RollupStateChain";
     ///ChainStorageContainer of RollupStateChain
-    string constant SCC_CONTAINER = "SccContainer";
+    string constant ROLLUP_STATE_CHAIN_CONTAINER = "RollupStateChainContainer";
     ///StakingManager
     string constant STAKING_MANAGER = "StakingManager";
     ///ChallengeFactory

@@ -25,12 +25,12 @@ contract RollupStateChain is IRollupStateChain {
     }
 
     function verifyStateInfo(Types.StateInfo memory _stateInfo) public view returns (bool) {
-        IChainStorageContainer _chain = addressResolver.sccContainer();
+        IChainStorageContainer _chain = addressResolver.rollupStateChainContainer();
         return _stateInfo.index < _chain.chainSize() && _chain.get(_stateInfo.index) == _stateInfo.hash();
     }
 
     function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startAt) public {
-        IChainStorageContainer _chain = addressResolver.sccContainer();
+        IChainStorageContainer _chain = addressResolver.rollupStateChainContainer();
         // in case of duplicated
         require(_startAt == _chain.chainSize(), "start pos mismatch");
 
@@ -39,8 +39,8 @@ contract RollupStateChain is IRollupStateChain {
         require(_blockHashes.length > 0, "no block hashes");
 
         require(
-            _chain.chainSize() + _blockHashes.length <= addressResolver.ctc().chainHeight(),
-            "exceed tx chain height"
+            _chain.chainSize() + _blockHashes.length <= addressResolver.rollupInputChain().chainHeight(),
+            "exceed input chain height"
         );
         uint64 _now = uint64(block.timestamp);
         Types.StateInfo memory _stateInfo;
@@ -64,11 +64,11 @@ contract RollupStateChain is IRollupStateChain {
         );
         require(verifyStateInfo(_stateInfo), "invalid state info");
         require(!isStateConfirmed(_stateInfo), "state confirmed");
-        addressResolver.sccContainer().resize(_stateInfo.index);
+        addressResolver.rollupStateChainContainer().resize(_stateInfo.index);
         emit StateRollbacked(_stateInfo.index, _stateInfo.blockHash);
     }
 
     function totalSubmittedState() external view returns (uint64) {
-        return addressResolver.sccContainer().chainSize();
+        return addressResolver.rollupStateChainContainer().chainSize();
     }
 }

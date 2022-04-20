@@ -10,7 +10,7 @@ interface IChallengeFactory {
 
     function executor() external view returns (IStateTransition);
 
-    function scc() external view returns (IRollupStateChain);
+    function rollupStateChain() external view returns (IRollupStateChain);
 
     function isChallengeContract(address _addr) external view returns (bool);
 }

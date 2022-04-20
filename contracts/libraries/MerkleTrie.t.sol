@@ -36,8 +36,8 @@ contract MockMerkleTrie {
         _hashdb.update(_key, _value, _root);
     }
 
-    function rawGet(bytes memory _key, bytes32 _root) external returns (bytes memory) {
-        (bool _exist, bytes memory _data) = _hashdb.get(_key, root);
+    function rawGet(bytes memory _key, bytes32 _root) external view returns (bytes memory) {
+        (bool _exist, bytes memory _data) = _hashdb.get(_key, _root);
         require(_exist, "not exist");
         return _data;
     }
@@ -52,7 +52,7 @@ contract MockMerkleTrie {
         require(_getRoot == _expectRoot, "not equal");
     }
 
-    function checkGet(bytes memory _key, bytes32 _root) external returns (bytes memory) {
+    function checkGet(bytes memory _key, bytes32 _root) external view returns (bytes memory) {
         (bool exist, bytes memory _res) = _hashdb.get(_key, _root);
         require(exist, "not exist");
         return _res;

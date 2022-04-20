@@ -10,7 +10,7 @@ import "../libraries/Types.sol";
 contract StakingManager is IStakingManager {
     address private DAOAddress;
     IChallengeFactory challengeFactory;
-    IRollupStateChain public scc;
+    IRollupStateChain public rollupStateChain;
     IERC20 public override token;
     mapping(address => StakingInfo) stakingInfos;
     //price should never change, unless every stakingInfo record the relating info of price.
@@ -25,7 +25,7 @@ contract StakingManager is IStakingManager {
     ) {
         DAOAddress = _DAOAddress;
         challengeFactory = IChallengeFactory(_challengeFactory);
-        scc = IRollupStateChain(_rollupStateChain);
+        rollupStateChain = IRollupStateChain(_rollupStateChain);
         token = IERC20(_erc20);
         price = _price;
     }
@@ -46,7 +46,7 @@ contract StakingManager is IStakingManager {
         StakingInfo storage senderStake = stakingInfos[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
-        senderStake.needConfirmedHeight = scc.totalSubmittedState();
+        senderStake.needConfirmedHeight = rollupStateChain.totalSubmittedState();
         emit WithdrawStarted(msg.sender, senderStake.needConfirmedHeight);
     }
 
@@ -88,7 +88,7 @@ contract StakingManager is IStakingManager {
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
         token.transfer(msg.sender, price);
@@ -99,7 +99,7 @@ contract StakingManager is IStakingManager {
     function claimToGovernance(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = stakingInfos[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
         token.transfer(DAOAddress, price);
@@ -108,8 +108,8 @@ contract StakingManager is IStakingManager {
     }
 
     function _assertStateIsConfirmed(uint256 _index, Types.StateInfo memory _stateInfo) internal view {
-        require(scc.verifyStateInfo(_stateInfo), "incorrect state info");
-        require(scc.isStateConfirmed(_stateInfo), "provided state not confirmed");
+        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(rollupStateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
         require(_stateInfo.index == _index, "should provide wanted state info");
     }
 }

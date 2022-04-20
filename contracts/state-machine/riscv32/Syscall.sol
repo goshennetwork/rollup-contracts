@@ -34,7 +34,7 @@ library Syscall {
         return exist ? bytes32(value) : bytes32(0);
     }
 
-    function genKey(uint32 flag) internal view returns (bytes memory) {
+    function genKey(uint32 flag) internal pure returns (bytes memory) {
         return bytes.concat(bytes2(uint16(flag)));
     }
 }

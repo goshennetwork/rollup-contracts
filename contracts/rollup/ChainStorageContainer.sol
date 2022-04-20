@@ -7,7 +7,7 @@ import "../interfaces/IAddressResolver.sol";
 contract ChainStorageContainer is IChainStorageContainer {
     IAddressResolver addressResolver;
     bytes32[] chain;
-    // the last chain element time stamp, it is simply set with largest timestamp in current tx batch.
+    // the last chain element time stamp, it is simply set with largest timestamp in current input batch.
     uint64 public override lastTimestamp;
 
     //who can change the state of this container

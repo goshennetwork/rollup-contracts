@@ -93,7 +93,7 @@ contract RollupInputChain is IRollupInputChain {
     // batchLeftTimeDiff([]uint32) + batchesData
     function appendBatch() public {
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
-        IChainStorageContainer _chain = addressResolver.ctcContainer();
+        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
         uint64 _queueNum;
         uint64 _queueStartIndex;
         assembly {
@@ -147,10 +147,10 @@ contract RollupInputChain is IRollupInputChain {
     }
 
     function chainHeight() public view returns (uint64) {
-        return addressResolver.ctcContainer().chainSize();
+        return addressResolver.rollupInputChainContainer().chainSize();
     }
 
     function lastTimestamp() public view returns (uint64) {
-        return addressResolver.ctcContainer().lastTimestamp();
+        return addressResolver.rollupInputChainContainer().lastTimestamp();
     }
 }
