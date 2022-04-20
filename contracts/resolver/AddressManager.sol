@@ -61,8 +61,12 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         return IChallengeFactory(resolve(AddressName.CHALLENGE_FACTORY));
     }
 
-    function l1CrossLayerMessageWitness() public view returns (address) {
-        return resolve(AddressName.L1_CROSS_LAYER_MESSAGE_WITNESS);
+    function l1CrossLayerMessageWitness() public view returns (IL1CrossLayerMessageWitness) {
+        return IL1CrossLayerMessageWitness(resolve(AddressName.L1_CROSS_LAYER_MESSAGE_WITNESS));
+    }
+
+    function l2CrossLayerMessageWitness() public view returns (IL2CrossLayerMessageWitness) {
+        return IL2CrossLayerMessageWitness(resolve(AddressName.L2_CROSS_LAYER_MESSAGE_WITNESS));
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

@@ -34,7 +34,7 @@ interface IL2CrossLayerMessageWitness {
      * @notice this function get l1 mmr root and size by builtin contract.and the mmr root only after l1->l2 tx failed.
      * Revert if:
      * - Provided tree in proof not consistent with l1 mmr root got by builtinContext
-     * - Provided message not consistent with leaf in proof;can't proof leaf surly exist in l1 mmr
+     * - Provided _proof cant proof message indeed exist in l1 mmr root
      * - Provided message already relayed
      */
     function relayMessage(
@@ -42,7 +42,7 @@ interface IL2CrossLayerMessageWitness {
         address _sender,
         bytes memory _message,
         uint64 _messageIndex,
-        Types.MMRInclusionProof memory _proof
+        bytes32[] memory _proof
     ) external;
 
     event MessageSent(address _target, address _sender, bytes _message, uint64 _messageIndex);

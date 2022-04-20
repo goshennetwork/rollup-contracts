@@ -4,17 +4,6 @@ pragma solidity ^0.8.0;
 import "./MerkleMountainRange.sol";
 
 library Types {
-    ///MerkleMountainRange proof helper
-    struct MMRInclusionProof {
-        //all perfect binary trees in order
-        MerkleMountainRange.RootNode[] trees;
-        //leaf(message hash) index in mmr
-        uint64 leafIndex;
-        //siblings to help generate merkle tree root,ranged in lowest level to highest level
-        bytes32[] siblings;
-        //leaf (should equal to message hash)
-        bytes32 leaf;
-    }
     ///block info,need fix
     struct Block {
         ///....more

@@ -33,8 +33,8 @@ interface IAddressResolver {
     function challengeFactory() external view returns (IChallengeFactory);
 
     ///get L1CrossLayerMessageWitness contract address
-    function l1CrossLayerMessageWitness() external view returns (address);
+    function l1CrossLayerMessageWitness() external view returns (IL1CrossLayerMessageWitness);
 
-    ///get L2CrossDomainMessageWitness contract address
-    function l2CrossDomainMessageWitness() external view returns (IL2CrossLayerMessageWitness);
+    ///get L2CrossLayerMessageWitness contract address
+    function l2CrossLayerMessageWitness() external view returns (IL2CrossLayerMessageWitness);
 }

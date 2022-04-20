@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../libraries/Types.sol";
 
 interface IL1CrossLayerMessageWitness {
-    event FailedRelayedMessage(bytes32 _calldataHash);
-    event RelayedMessage(bytes32 _calldataHash);
+    event MessageRelayFailed(bytes32 _calldataHash);
+    event MessageRelayed(bytes32 _calldataHash);
 
     /**
      * @dev Relay L2 -> L1 message that in L2CrossLayerMessageWitness contract.
@@ -21,8 +21,7 @@ interface IL1CrossLayerMessageWitness {
      * - provide wrong state info(not exist in StateCommitChain)
      * - provided state info not confirmed.(only confirmed state is right)
      * - provided block is not consistent with state recorded
-     * - provided mmr trees not consistent with l2 mmr root
-     * - provided tx info not consistent with leaf in proof;can't proof leaf surly exist in l2 mmr.
+     * - provided _proof can't proof message indeed exist in l2 block
      * - message already relayed
      */
     function relayMessage(
@@ -32,7 +31,7 @@ interface IL1CrossLayerMessageWitness {
         uint64 _messageIndex,
         Types.Block memory _block,
         Types.StateInfo memory _stateInfo,
-        Types.MMRInclusionProof memory _proof
+        bytes32[] memory _proof
     ) external;
 
     /**

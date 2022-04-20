@@ -51,7 +51,10 @@ contract RollupInputChain is IRollupInputChain {
         if (msg.sender == tx.origin) {
             sender = msg.sender;
         } else {
-            require(msg.sender == addressResolver.l1CrossLayerMessageWitness(), "contract can not enqueue L2 Tx");
+            require(
+                msg.sender == address(addressResolver.l1CrossLayerMessageWitness()),
+                "contract can not enqueue L2 Tx"
+            );
             require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             sender = Constants.L1_CROSS_LAYER_WITNESS;
@@ -141,13 +144,14 @@ contract RollupInputChain is IRollupInputChain {
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
 
+        //input msgdata hash, queue hash, mmr root, mmr size
         _chain.append(
             keccak256(
                 abi.encodePacked(
                     keccak256(msg.data),
                     _queueHashes,
-                    addressResolver.l1CrossDomainMessageWitness().mmrRoot(),
-                    addressResolver.l1CrossDomainMessageWitness().totalSize()
+                    addressResolver.l1CrossLayerMessageWitness().mmrRoot(),
+                    addressResolver.l1CrossLayerMessageWitness().totalSize()
                 )
             )
         );
@@ -164,8 +168,8 @@ contract RollupInputChain is IRollupInputChain {
     }
 
     function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
-        require(_queueIndex < queueElements.length, "queue index over capacity");
-        QueueTxInfo storage info = queueElements[_queueIndex];
+        require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
+        QueueTxInfo storage info = queuedTxInfos[_queueIndex];
         return (info.transactionHash, info.timestamp);
     }
 }
