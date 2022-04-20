@@ -11,7 +11,7 @@ interface IL2CrossLayerMessageWitness {
      * @param _message EVM call data
      * @param _messageIndex index in l1 merkle mountain range's leaf
      * @notice Revert if:
-     * - sender not L1CrossLayerMessageWitness
+     * - sender not L1CrossLayerMessageWitness and can't proof message indeed in l1 mmr
      * - message already relayed
      */
     function relayMessage(
