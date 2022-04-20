@@ -54,7 +54,7 @@ contract RollupInputChain is IRollupInputChain {
             require(msg.sender == addressResolver.l1CrossLayerMessageWitness(), "contract can not enqueue L2 Tx");
             require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
-            sender = Constants.L1_CROSS_LAYER_MESSAGE_WITNESS;
+            sender = Constants.L1_CROSS_LAYER_WITNESS;
         }
         // todo: maybe need more tx params, such as tip fee, value
         bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));

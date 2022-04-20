@@ -29,6 +29,7 @@ library Types {
     function hash(Block memory _block) internal pure returns (bytes32) {
         return keccak256(encode(_block));
     }
+
     struct StateInfo {
         bytes32 blockHash;
         uint64 index;
