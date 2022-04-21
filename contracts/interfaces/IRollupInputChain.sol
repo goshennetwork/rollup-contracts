@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
+import "../libraries/Types.sol";
+
 interface IRollupInputChain {
     ///EVENT
     event TransactionEnqueued(
@@ -18,11 +20,11 @@ interface IRollupInputChain {
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
-     * @notice Revert if contract caller isn't l1CrossLayerMessageWitness contract(make sure L1 contract can't act as L2 EOA)
+     * @notice Revert if contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
      */
     function enqueue(
         address _target,
-        uint256 _gasLimit,
+        uint64 _gasLimit,
         bytes memory _data
     ) external;
 
@@ -56,4 +58,6 @@ interface IRollupInputChain {
 
     ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
+
+    function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
 }

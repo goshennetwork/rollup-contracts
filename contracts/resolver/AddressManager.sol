@@ -37,6 +37,10 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         return _addr;
     }
 
+    function dao() public view returns (address) {
+        return resolve(AddressName.DAO);
+    }
+
     function rollupInputChain() public view returns (IRollupInputChain) {
         return IRollupInputChain(resolve(AddressName.ROLLUP_INPUT_CHAIN));
     }
@@ -61,8 +65,12 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         return IChallengeFactory(resolve(AddressName.CHALLENGE_FACTORY));
     }
 
-    function l1CrossLayerMessageWitness() public view returns (address) {
-        return resolve(AddressName.L1_CROSS_LAYER_MESSAGE_WITNESS);
+    function l1CrossLayerWitness() public view returns (IL1CrossLayerWitness) {
+        return IL1CrossLayerWitness(resolve(AddressName.L1_CROSS_LAYER_WITNESS));
+    }
+
+    function l2CrossLayerWitness() public view returns (IL2CrossLayerWitness) {
+        return IL2CrossLayerWitness(resolve(AddressName.L2_CROSS_LAYER_WITNESS));
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

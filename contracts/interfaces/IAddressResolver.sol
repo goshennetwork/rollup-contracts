@@ -5,12 +5,16 @@ import "./IChainStorageContainer.sol";
 import "./IStakingManager.sol";
 import "./IChallengeFactory.sol";
 import "./IRollupInputChain.sol";
+import "./IL1CrossLayerWitness.sol";
+import "./IL2CrossLayerWitness.sol";
 
 ///@dev resolver only read address
 interface IAddressResolver {
     ///Get address related with name
     ///@notice Revert if wanted contract have no address recorded
     function resolve(string memory _name) external view returns (address);
+
+    function dao() external view returns (address);
 
     ///Get RollupInputChain contract
     function rollupInputChain() external view returns (IRollupInputChain);
@@ -30,6 +34,9 @@ interface IAddressResolver {
     ///Get ChallengeFactory contract
     function challengeFactory() external view returns (IChallengeFactory);
 
-    ///get L1CrossLayerMessageWitness contract address
-    function l1CrossLayerMessageWitness() external view returns (address);
+    ///get L1CrossLayerWitness contract address
+    function l1CrossLayerWitness() external view returns (IL1CrossLayerWitness);
+
+    ///get L2CrossLayerWitness contract address
+    function l2CrossLayerWitness() external view returns (IL2CrossLayerWitness);
 }

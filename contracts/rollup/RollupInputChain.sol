@@ -40,21 +40,21 @@ contract RollupInputChain is IRollupInputChain {
 
     function enqueue(
         address _target,
-        uint256 _gasLimit,
+        uint64 _gasLimit,
         bytes memory _data
     ) public {
         require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
-        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerMessageWitness
+        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         address sender;
         if (msg.sender == tx.origin) {
             sender = msg.sender;
         } else {
-            require(msg.sender == addressResolver.l1CrossLayerMessageWitness(), "contract can not enqueue L2 Tx");
+            require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
-            sender = Constants.L1_CROSS_LAYER_MESSAGE_WITNESS;
+            sender = Constants.L1_CROSS_LAYER_WITNESS;
         }
         // todo: maybe need more tx params, such as tip fee, value
         bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
@@ -140,8 +140,9 @@ contract RollupInputChain is IRollupInputChain {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
-
-        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
+        require(_batchDataPos + 32 < msg.data.length);
+        //input msgdata hash, queue hash
+        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }
@@ -152,5 +153,11 @@ contract RollupInputChain is IRollupInputChain {
 
     function lastTimestamp() public view returns (uint64) {
         return addressResolver.rollupInputChainContainer().lastTimestamp();
+    }
+
+    function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
+        require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
+        QueueTxInfo storage info = queuedTxInfos[_queueIndex];
+        return (info.transactionHash, info.timestamp);
     }
 }

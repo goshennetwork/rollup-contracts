@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 library AddressName {
+    ///DAO
+    string constant DAO = "DAO";
     ///RollupInputChain
     string constant ROLLUP_INPUT_CHAIN = "RollupInputChain";
     ///ChainStorageContainer of RollupInputChain
@@ -14,6 +16,8 @@ library AddressName {
     string constant STAKING_MANAGER = "StakingManager";
     ///ChallengeFactory
     string constant CHALLENGE_FACTORY = "ChallengeFactory";
-    ///L1CrossLayerMessageWitness
-    string constant L1_CROSS_LAYER_MESSAGE_WITNESS = "L1CrossLayerMessageWitness";
+    ///L1CrossLayerWitness
+    string constant L1_CROSS_LAYER_WITNESS = "L1CrossLayerWitness";
+    ///L2CrossLayerWitness
+    string constant L2_CROSS_LAYER_WITNESS = "L2CrossLayerWitness";
 }
