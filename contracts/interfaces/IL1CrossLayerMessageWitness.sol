@@ -64,11 +64,15 @@ interface IL1CrossLayerMessageWitness {
         uint64 _newGasLimit
     ) external;
 
+    event MessageBlocked(bytes32[] _messageHashes);
+
     /**
      * @dev Block a list of l2 -> l1 message.Only allowed by DAO
      * @param _messageHashes A list of blocked message hash
      */
     function blockMessage(bytes32[] memory _messageHashes) external;
+
+    event MessageAllowed(bytes32[] _messageHashes);
 
     ///@dev allow a list of L2->L1 message.Only allowed by DAO
     function allowMessage(bytes32[] memory _messageHashes) external;

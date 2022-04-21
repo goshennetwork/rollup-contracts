@@ -107,6 +107,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = true;
         }
+        emit MessageBlocked(_messageHashes);
     }
 
     function allowMessage(bytes32[] memory _messageHashes) public {
@@ -114,6 +115,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = false;
         }
+        emit MessageAllowed(_messageHashes);
     }
 
     function mmrRoot() public view returns (bytes32) {
