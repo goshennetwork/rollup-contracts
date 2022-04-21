@@ -60,7 +60,4 @@ interface IRollupInputChain {
     function lastTimestamp() external view returns (uint64);
 
     function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
-
-    ///@return get pending mmr state for next input
-    function getPendingMMRState() external view returns (bytes32, uint64);
 }

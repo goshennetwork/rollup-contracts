@@ -37,6 +37,10 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         return _addr;
     }
 
+    function dao() public view returns (address) {
+        return resolve(AddressName.DAO);
+    }
+
     function rollupInputChain() public view returns (IRollupInputChain) {
         return IRollupInputChain(resolve(AddressName.ROLLUP_INPUT_CHAIN));
     }

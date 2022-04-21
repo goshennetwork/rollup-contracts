@@ -57,7 +57,7 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         bytes32 _mmrRoot = mmrRoots[_mmrSize];
         require(_mmrRoot != bytes32(0), "unknown mmr root");
-        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _totalSize);
+        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _mmrSize);
         require(successRelayedMessages[_hash] == false, "message already relayed");
         crossLayerMsgSender = _sender;
         (bool success, ) = _target.call(_message);
@@ -71,6 +71,7 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
     }
 
     function sendMessage(address _target, bytes calldata _message) public {
+        require(msg.sender != address(this), "wired situation");
         uint64 _messageIndex = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, _messageIndex, _message);
         compactMerkleTree.appendLeafHash(_hash);

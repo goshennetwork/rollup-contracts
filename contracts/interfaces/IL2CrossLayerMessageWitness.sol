@@ -10,15 +10,19 @@ interface IL2CrossLayerMessageWitness {
      * @param _sender EVM call sender
      * @param _message EVM call data
      * @param _messageIndex index in l1 merkle mountain range's leaf
+     * @param _messageIndex l1 merkle mountain range root
+     * @param _mmrSize l1 merkle mountain range tree size
      * @notice Revert if:
-     * - sender not L1CrossLayerMessageWitness and can't proof message indeed in l1 mmr
+     * - sender isn't L1CrossLayerMessageWitness.
      * - message already relayed
      */
     function relayMessage(
         address _target,
         address _sender,
         bytes memory _message,
-        uint64 _messageIndex
+        uint64 _messageIndex,
+        bytes32 _mmrRoot,
+        uint64 _mmrSize
     ) external;
 
     event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
@@ -31,10 +35,10 @@ interface IL2CrossLayerMessageWitness {
      * @param _message EVM call data
      * @param _messageIndex index in l1 merkle mountain range's leaf
      * @param _proof Merkle mountain range inclusion proof
-     * @notice this function get l1 mmr root and size by builtin contract.and the mmr root only after l1->l2 tx failed.
-     * Revert if:
-     * - Provided tree in proof not consistent with l1 mmr root got by builtinContext
-     * - Provided _proof cant proof message indeed exist in l1 mmr root
+     * @param _mmrSize L1 merkle mountain range tree size
+     * @notice Revert if:
+     * - Provided mmrSize have no related mmrRoot.(which means first relay message didn't successful finish or relay succeed)
+     * - Provided _proof cant proof message indeed exist in l1 mmr root got by local recorded
      * - Provided message already relayed
      */
     function relayMessage(
@@ -42,7 +46,8 @@ interface IL2CrossLayerMessageWitness {
         address _sender,
         bytes memory _message,
         uint64 _messageIndex,
-        bytes32[] memory _proof
+        bytes32[] memory _proof,
+        uint64 _mmrSize
     ) external;
 
     event MessageSent(uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes _message);
@@ -52,6 +57,7 @@ interface IL2CrossLayerMessageWitness {
      * @dev Send message to L1CrossLayerMessageWitness
      * @param _target EVM call target
      * @param _message EVM call data
+     * @notice Revert if sender is self
      */
     function sendMessage(address _target, bytes calldata _message) external;
 }

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 library AddressName {
+    ///DAO
+    string constant DAO = "DAO";
     ///RollupInputChain
     string constant ROLLUP_INPUT_CHAIN = "RollupInputChain";
     ///ChainStorageContainer of RollupInputChain

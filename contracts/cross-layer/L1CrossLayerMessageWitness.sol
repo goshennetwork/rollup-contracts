@@ -13,6 +13,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
 
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
+    mapping(bytes32 => bool) public blockedMessages;
     address private crossLayerMsgSender;
 
     constructor(address _addressResolver) {
@@ -34,20 +35,22 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         bytes32[] memory _proof
     ) public {
         require(crossLayerMsgSender == address(0), "reentrancy");
+        require(_target != address(addressResolver.rollupInputChain()), "can't relay message to l1 system");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(addressResolver.rollupStateChain().verifyStateInfo(_stateInfo), "wrong state info");
         require(addressResolver.rollupStateChain().isStateConfirmed(_stateInfo), "state not confirmed yet");
         require(_block.hash() == _stateInfo.blockHash, "wrong block provide");
         MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _block.mmrRoot, _block.mmrSize);
         require(successRelayedMessages[_hash] == false, "provided message already been relayed");
+        require(blockedMessages[_hash] == false, "message blocked");
         crossLayerMsgSender = _sender;
         (bool success, ) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;
-            emit MessageRelayed(_hash);
+            emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash);
+            emit MessageRelayFailed(_hash, _block.mmrSize, _block.mmrRoot);
         }
     }
 
@@ -56,6 +59,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         bytes calldata _message,
         uint64 _gasLimit
     ) public {
+        require(msg.sender != address(this), "wired situation");
         uint64 treeSize = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
         compactMerkleTree.appendLeafHash(_hash);
@@ -96,6 +100,20 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
             _newGasLimit,
             _crossLayerCalldata
         );
+    }
+
+    function blockMessage(bytes32[] memory _messageHashes) public {
+        require(msg.sender == addressResolver.dao(), "only dao allowed");
+        for (uint256 i = 0; i < _messageHashes.length; i++) {
+            blockedMessages[_messageHashes[i]] = true;
+        }
+    }
+
+    function allowMessage(bytes32[] memory _messageHashes) public {
+        require(msg.sender == addressResolver.dao(), "only dao allowed");
+        for (uint256 i = 0; i < _messageHashes.length; i++) {
+            blockedMessages[_messageHashes[i]] = false;
+        }
     }
 
     function mmrRoot() public view returns (bytes32) {

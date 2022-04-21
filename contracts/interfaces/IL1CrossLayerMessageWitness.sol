@@ -18,11 +18,13 @@ interface IL1CrossLayerMessageWitness {
      * @param _proof MMR proof that used to proof provided info surly exists in l2 block mmr
      * @notice Revert if:
      * - reentrancy
+     * - target is l1 system contract.(In this case, anyone can't send any calldata to L2 relay contract)
      * - provide wrong state info(not exist in StateCommitChain)
      * - provided state info not confirmed.(only confirmed state is right)
      * - provided block is not consistent with state recorded
      * - provided _proof can't proof message indeed exist in l2 block
      * - message already relayed
+     * - message blocked
      */
     function relayMessage(
         address _target,
@@ -61,6 +63,15 @@ interface IL1CrossLayerMessageWitness {
         uint64 _oldGasLimit,
         uint64 _newGasLimit
     ) external;
+
+    /**
+     * @dev Block a list of l2 -> l1 message.Only allowed by DAO
+     * @param _messageHashes A list of blocked message hash
+     */
+    function blockMessage(bytes32[] memory _messageHashes) external;
+
+    ///@dev allow a list of L2->L1 message.Only allowed by DAO
+    function allowMessage(bytes32[] memory _messageHashes) external;
 
     ///@return merkle mountain root used to proof l1 -> l2 tx existence
     function mmrRoot() external view returns (bytes32);

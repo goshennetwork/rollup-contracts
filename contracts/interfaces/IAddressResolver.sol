@@ -14,6 +14,8 @@ interface IAddressResolver {
     ///@notice Revert if wanted contract have no address recorded
     function resolve(string memory _name) external view returns (address);
 
+    function dao() external view returns (address);
+
     ///Get RollupInputChain contract
     function rollupInputChain() external view returns (IRollupInputChain);
 
