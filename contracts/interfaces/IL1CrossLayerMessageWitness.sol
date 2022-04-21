@@ -13,7 +13,7 @@ interface IL1CrossLayerMessageWitness {
      * @param _sender EVM call sender
      * @param _message EVM call data
      * @param _messageIndex index in l2 merkle mountain range's leaf
-     * @param _block L2 block contains l2 mmr root and size
+     * @param _rlpHeader L2 block header contains l2 mmr root and size
      * @param _stateInfo L2 stateInfo contains block hash
      * @param _proof MMR proof that used to proof provided info surly exists in l2 block mmr
      * @notice Revert if:
@@ -31,7 +31,7 @@ interface IL1CrossLayerMessageWitness {
         address _sender,
         bytes memory _message,
         uint64 _messageIndex,
-        Types.Block memory _block,
+        bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
     ) external;

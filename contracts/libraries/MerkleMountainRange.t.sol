@@ -8,11 +8,11 @@ contract MMRTest {
     using MerkleMountainRange for CompactMerkleTree;
     CompactMerkleTree _trees;
 
-    function getTreeSize() public returns (uint64) {
+    function getTreeSize() public view returns (uint64) {
         return _trees.treeSize;
     }
 
-    function getRootHash() public returns (bytes32) {
+    function getRootHash() public view returns (bytes32) {
         return _trees.rootHash;
     }
 
@@ -26,7 +26,7 @@ contract MMRTest {
         bytes32[] memory _proof,
         bytes32 _rootHash,
         uint64 _treeSize
-    ) public {
+    ) public pure {
         MerkleMountainRange.verifyLeafHashInclusion(_leafHash, _leafIndex, _proof, _rootHash, _treeSize);
     }
 

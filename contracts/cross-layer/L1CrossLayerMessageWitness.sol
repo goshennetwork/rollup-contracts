@@ -30,7 +30,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         address _sender,
         bytes memory _message,
         uint64 _messageIndex,
-        Types.Block memory _block,
+        bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
     ) public {
@@ -39,8 +39,9 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(addressResolver.rollupStateChain().verifyStateInfo(_stateInfo), "wrong state info");
         require(addressResolver.rollupStateChain().isStateConfirmed(_stateInfo), "state not confirmed yet");
-        require(_block.hash() == _stateInfo.blockHash, "wrong block provide");
-        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _block.mmrRoot, _block.mmrSize);
+        require(keccak256(_rlpHeader) == _stateInfo.blockHash, "wrong block provide");
+        (bytes32 _mmrRoot, uint64 _mmrSize) = Types.decodeMMRFromRlpHeader(_rlpHeader);
+        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _mmrSize);
         require(successRelayedMessages[_hash] == false, "provided message already been relayed");
         require(blockedMessages[_hash] == false, "message blocked");
         crossLayerMsgSender = _sender;
@@ -50,7 +51,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
             successRelayedMessages[_hash] = true;
             emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash, _block.mmrSize, _block.mmrRoot);
+            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
     }
 
