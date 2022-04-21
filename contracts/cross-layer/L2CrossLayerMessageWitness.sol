@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../libraries/Constants.sol";
-import { MerkleMountainRange, CompactMerkleTree } from "../libraries/MerkleMountainRange.sol";
+import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL2CrossLayerMessageWitness.sol";
 import "../interfaces/IBuiltinContext.sol";
 import "../libraries/Types.sol";
 import "../predeployed/PreDeployed.sol";
+import "./CrossLayerCodec.sol";
 
 contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
     using MerkleMountainRange for CompactMerkleTree;
@@ -14,6 +15,7 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
 
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
+    mapping(uint64 => bytes32) public mmrRoots;
     address private crossLayerMsgSender;
 
     function l1Sender() public view returns (address) {
@@ -25,20 +27,22 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
         address _target,
         address _sender,
         bytes memory _message,
-        uint64 _messageIndex
+        uint64 _messageIndex,
+        bytes32 _mmrRoot,
+        uint64 _mmrSize
     ) public {
         require(msg.sender == Constants.L1_CROSS_LAYER_WITNESS, "wrong sender");
-        bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(_target, _sender, _message, _messageIndex);
-        bytes32 _hash = keccak256(_crossLayerCalldata);
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(successRelayedMessages[_hash] == false, "already relayed");
         crossLayerMsgSender = _sender;
         (bool success, ) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;
-            emit MessageRelayed(_hash);
+            emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash);
+            mmrRoots[_mmrSize] = _mmrRoot;
+            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
     }
 
@@ -47,45 +51,29 @@ contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
         address _sender,
         bytes memory _message,
         uint64 _messageIndex,
-        bytes32[] memory _proof
+        bytes32[] memory _proof,
+        uint64 _mmrSize
     ) public {
-        bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(_target, _sender, _message, _messageIndex);
-        bytes32 _hash = keccak256(_crossLayerCalldata);
-        (bytes32 _l1Root, uint64 _totalSize) = builtinContext.l1MMRRoot();
-        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _l1Root, _totalSize);
-        require(successRelayedMessages[_hash] == false, "provided message already been relayed");
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
+        bytes32 _mmrRoot = mmrRoots[_mmrSize];
+        require(_mmrRoot != bytes32(0), "unknown mmr root");
+        MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _totalSize);
+        require(successRelayedMessages[_hash] == false, "message already relayed");
         crossLayerMsgSender = _sender;
         (bool success, ) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;
-            emit MessageRelayed(_hash);
+            emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash);
+            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
     }
 
     function sendMessage(address _target, bytes calldata _message) public {
         uint64 _messageIndex = compactMerkleTree.treeSize;
-        //should buy gas
-        bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(_target, msg.sender, _message, _messageIndex);
-        compactMerkleTree.appendLeafHash(keccak256(_crossLayerCalldata));
-        emit MessageSent(_target, msg.sender, _message, _messageIndex);
-    }
-
-    function _encodeCrossLayerCallData(
-        address _target,
-        address _sender,
-        bytes memory _message,
-        uint64 _messageIndex
-    ) internal pure returns (bytes memory) {
-        return
-            abi.encodeWithSignature(
-                "relayMessage(address,address,bytes,uint64)",
-                _target,
-                _sender,
-                _message,
-                _messageIndex
-            );
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, _messageIndex, _message);
+        compactMerkleTree.appendLeafHash(_hash);
+        emit MessageSent(_messageIndex, _target, msg.sender, _message);
     }
 }

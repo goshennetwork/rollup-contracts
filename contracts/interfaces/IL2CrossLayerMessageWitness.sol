@@ -21,8 +21,8 @@ interface IL2CrossLayerMessageWitness {
         uint64 _messageIndex
     ) external;
 
-    event MessageRelayFailed(bytes32 _calldataHash);
-    event MessageRelayed(bytes32 _calldataHash);
+    event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
+    event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
 
     /**
      * @dev Relay L1 -> L2 message when obvious relayed false
@@ -45,7 +45,7 @@ interface IL2CrossLayerMessageWitness {
         bytes32[] memory _proof
     ) external;
 
-    event MessageSent(address _target, address _sender, bytes _message, uint64 _messageIndex);
+    event MessageSent(uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes _message);
 
     //Send L1 -> L2 message
     /**

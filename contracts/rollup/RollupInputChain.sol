@@ -145,16 +145,7 @@ contract RollupInputChain is IRollupInputChain {
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
 
         //input msgdata hash, queue hash, mmr root, mmr size
-        _chain.append(
-            keccak256(
-                abi.encodePacked(
-                    keccak256(msg.data),
-                    _queueHashes,
-                    addressResolver.l1CrossLayerMessageWitness().mmrRoot(),
-                    addressResolver.l1CrossLayerMessageWitness().totalSize()
-                )
-            )
-        );
+        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }

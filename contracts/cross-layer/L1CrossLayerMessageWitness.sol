@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
-import { MerkleMountainRange, CompactMerkleTree } from "../libraries/MerkleMountainRange.sol";
+import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL1CrossLayerMessageWitness.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../libraries/Types.sol";
+import "./CrossLayerCodec.sol";
 
 contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
     using Types for Types.Block;
@@ -33,9 +34,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         bytes32[] memory _proof
     ) public {
         require(crossLayerMsgSender == address(0), "reentrancy");
-        bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(_target, _sender, _message, _messageIndex);
-        bytes32 _hash = keccak256(_crossLayerCalldata);
-
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(addressResolver.rollupStateChain().verifyStateInfo(_stateInfo), "wrong state info");
         require(addressResolver.rollupStateChain().isStateConfirmed(_stateInfo), "state not confirmed yet");
         require(_block.hash() == _stateInfo.blockHash, "wrong block provide");
@@ -57,21 +56,22 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         bytes calldata _message,
         uint64 _gasLimit
     ) public {
-        //should buy gas
-        bytes memory _crossLayerCalldata = _encodeCrossLayerCallData(
+        uint64 treeSize = compactMerkleTree.treeSize;
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
+        compactMerkleTree.appendLeafHash(_hash);
+        bytes memory _crossLayerCalldata = CrossLayerCodec.encodeL1ToL2CallData(
             _target,
             msg.sender,
             _message,
-            compactMerkleTree.treeSize
+            treeSize,
+            compactMerkleTree.rootHash,
+            treeSize + 1
         );
-        compactMerkleTree.appendLeafHash(keccak256(_crossLayerCalldata));
         addressResolver.rollupInputChain().enqueue(
             address(addressResolver.l2CrossLayerMessageWitness()),
             _gasLimit,
             _crossLayerCalldata
         );
-        //todo: emit
-        //do not need event,already emit in rollupInputChain
     }
 
     function replayMessage(
@@ -81,7 +81,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         uint64 _newGasLimit
     ) public {
         (bytes32 _infoHash, ) = addressResolver.rollupInputChain().getQueueTxInfo(_queueIndex);
-        //same as rollupInputChain
+        // same as rollupInputChain
         bytes32 _txHash = keccak256(
             abi.encode(
                 address(this),
@@ -90,7 +90,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
                 _crossLayerCalldata
             )
         );
-        require(_txHash == _infoHash, "Provided message has not been enqueued");
+        require(_txHash == _infoHash, "message not in queue");
         addressResolver.rollupInputChain().enqueue(
             address(addressResolver.l2CrossLayerMessageWitness()),
             _newGasLimit,
@@ -104,21 +104,5 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
 
     function totalSize() public view returns (uint64) {
         return compactMerkleTree.treeSize;
-    }
-
-    function _encodeCrossLayerCallData(
-        address _target,
-        address _sender,
-        bytes memory _message,
-        uint64 _messageIndex
-    ) internal pure returns (bytes memory) {
-        return
-            abi.encodeWithSignature(
-                "relayMessage(address,address,bytes,uint64)",
-                _target,
-                _sender,
-                _message,
-                _messageIndex
-            );
     }
 }

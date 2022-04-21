@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../libraries/Types.sol";
 
 interface IL1CrossLayerMessageWitness {
-    event MessageRelayFailed(bytes32 _calldataHash);
-    event MessageRelayed(bytes32 _calldataHash);
+    event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
+    event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
 
     /**
      * @dev Relay L2 -> L1 message that in L2CrossLayerMessageWitness contract.
