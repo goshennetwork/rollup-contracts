@@ -4,15 +4,11 @@ pragma solidity ^0.8.0;
 import "../libraries/Constants.sol";
 import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL2CrossLayerMessageWitness.sol";
-import "../interfaces/IBuiltinContext.sol";
 import "../libraries/Types.sol";
-import "../predeployed/PreDeployed.sol";
 import "./CrossLayerCodec.sol";
 
 contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
     using MerkleMountainRange for CompactMerkleTree;
-    IBuiltinContext builtinContext = IBuiltinContext(PreDeployed.BUILTIN_CONTEXT);
-
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
     mapping(uint64 => bytes32) public mmrRoots;
