@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Constants.sol";
 import "../libraries/MerkleMountainRange.sol";
-import "../interfaces/IL2CrossLayerMessageWitness.sol";
+import "../interfaces/IL2CrossLayerWitness.sol";
 import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
-contract L2CrossLayerMessageWitness is IL2CrossLayerMessageWitness {
+contract L2CrossLayerWitness is IL2CrossLayerWitness {
     using MerkleMountainRange for CompactMerkleTree;
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;

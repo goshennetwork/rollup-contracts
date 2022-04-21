@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 import "../libraries/MerkleMountainRange.sol";
-import "../interfaces/IL1CrossLayerMessageWitness.sol";
+import "../interfaces/IL1CrossLayerWitness.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
-contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
+contract L1CrossLayerWitness is IL1CrossLayerWitness {
     using Types for Types.Block;
     using MerkleMountainRange for CompactMerkleTree;
     IAddressResolver addressResolver;
@@ -73,7 +73,7 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
             treeSize + 1
         );
         addressResolver.rollupInputChain().enqueue(
-            address(addressResolver.l2CrossLayerMessageWitness()),
+            address(addressResolver.l2CrossLayerWitness()),
             _gasLimit,
             _crossLayerCalldata
         );
@@ -88,16 +88,11 @@ contract L1CrossLayerMessageWitness is IL1CrossLayerMessageWitness {
         (bytes32 _infoHash, ) = addressResolver.rollupInputChain().getQueueTxInfo(_queueIndex);
         // same as rollupInputChain
         bytes32 _txHash = keccak256(
-            abi.encode(
-                address(this),
-                address(addressResolver.l2CrossLayerMessageWitness()),
-                _oldGasLimit,
-                _crossLayerCalldata
-            )
+            abi.encode(address(this), address(addressResolver.l2CrossLayerWitness()), _oldGasLimit, _crossLayerCalldata)
         );
         require(_txHash == _infoHash, "message not in queue");
         addressResolver.rollupInputChain().enqueue(
-            address(addressResolver.l2CrossLayerMessageWitness()),
+            address(addressResolver.l2CrossLayerWitness()),
             _newGasLimit,
             _crossLayerCalldata
         );

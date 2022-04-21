@@ -46,15 +46,12 @@ contract RollupInputChain is IRollupInputChain {
         require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
-        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerMessageWitness
+        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         address sender;
         if (msg.sender == tx.origin) {
             sender = msg.sender;
         } else {
-            require(
-                msg.sender == address(addressResolver.l1CrossLayerMessageWitness()),
-                "contract can not enqueue L2 Tx"
-            );
+            require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             sender = Constants.L1_CROSS_LAYER_WITNESS;

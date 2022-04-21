@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
 
-interface IL1CrossLayerMessageWitness {
+interface IL1CrossLayerWitness {
     event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
     event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
 
     /**
-     * @dev Relay L2 -> L1 message that in L2CrossLayerMessageWitness contract.
+     * @dev Relay L2 -> L1 message that in L2CrossLayerWitness contract.
      * @param _target EVM call Target
      * @param _sender EVM call sender
      * @param _message EVM call data
@@ -50,7 +50,7 @@ interface IL1CrossLayerMessageWitness {
 
     /**
      * @dev Replay failed L2->L1 message.We only assume that poor gasLimit is the only failed reason.So this update old gasLimit
-     * @param _crossLayerCalldata ols EVM call data to L2CrossLayerMessageWitness contract
+     * @param _crossLayerCalldata ols EVM call data to L2CrossLayerWitness contract
      * @param _queueIndex Replayed tx in queue index
      * @param _oldGasLimit Old gasLimit
      * @param _newGasLimit New gasLimit

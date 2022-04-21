@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
 
-interface IL2CrossLayerMessageWitness {
+interface IL2CrossLayerWitness {
     /**
-     * @dev Relay L1 -> L2 message that in L1CrossLayerMessageWitness contract.
+     * @dev Relay L1 -> L2 message that in L1CrossLayerWitness contract.
      * @param _target EVM call Target
      * @param _sender EVM call sender
      * @param _message EVM call data
@@ -13,7 +13,7 @@ interface IL2CrossLayerMessageWitness {
      * @param _messageIndex l1 merkle mountain range root
      * @param _mmrSize l1 merkle mountain range tree size
      * @notice Revert if:
-     * - sender isn't L1CrossLayerMessageWitness.
+     * - sender isn't L1CrossLayerWitness.
      * - message already relayed
      */
     function relayMessage(
@@ -54,7 +54,7 @@ interface IL2CrossLayerMessageWitness {
 
     //Send L1 -> L2 message
     /**
-     * @dev Send message to L1CrossLayerMessageWitness
+     * @dev Send message to L1CrossLayerWitness
      * @param _target EVM call target
      * @param _message EVM call data
      * @notice Revert if sender is self
