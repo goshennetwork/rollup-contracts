@@ -140,9 +140,9 @@ contract RollupInputChain is IRollupInputChain {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
-
+        require(_batchDataPos + 32 < msg.data.length);
         //input msgdata hash, queue hash
-        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data), _queueHashes)));
+        _chain.append(keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes)));
         _chain.setLastTimestamp(_lastTimestamp);
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1);
     }
