@@ -10,30 +10,27 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/core/vm/runtime"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb/memorydb"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/abi"
+	"github.com/laizy/web3/evm"
 	"github.com/laizy/web3/hardhat"
+	"github.com/laizy/web3/utils/common/math"
 	"github.com/ontology-layer-2/rollup-contracts/tests"
 	"github.com/pkg/errors"
 )
 
-var emptyRoot = common.HexToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
+var emptyRoot = web3.HexToHash("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
 //testCase is a single test object, it hold the trie info and evm storage db info.
 type testCase struct {
 	cAbi     *abi.ABI
-	vm       *vm.EVM
+	vm       *evm.EVM
 	trie     *trie.Trie
 	db       *trie.Database
-	contract common.Address
-	sender   vm.AccountRef
+	contract web3.Address
+	sender   evm.AccountRef
 }
 
 func newCase() *testCase {
@@ -48,9 +45,9 @@ func newCase() *testCase {
 		panic(err)
 	}
 	//setup evm
-	contractAddr := common.BytesToAddress([]byte("merkleContract"))
-	vmenv := tests.NewEVMWithCode(map[common.Address][]byte{contractAddr: ars.DeployedBytecode})
-	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
+	contractAddr := web3.BytesToAddress([]byte("merkleContract"))
+	vmenv := tests.NewEVMWithCode(map[web3.Address][]byte{contractAddr: ars.DeployedBytecode})
+	sender := evm.AccountRef(web3.BytesToAddress([]byte("test")))
 	db := trie.NewDatabase(memorydb.New())
 	emptyTrie, err := trie.New(common.Hash{}, db)
 	if err != nil {
@@ -74,7 +71,7 @@ func (this *testCase) checkUpdateString(key, value string) error {
 func (this *testCase) update(key, value []byte, root common.Hash) error {
 	//function rawUpdate( bytes memory _key,bytes memory _value,bytes32 _root)external
 	input := this.cAbi.Methods["rawUpdate"].MustEncodeIDAndInput(key, value, root)
-	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -85,7 +82,7 @@ func (this *testCase) update(key, value []byte, root common.Hash) error {
 func (this *testCase) get(key []byte, root common.Hash) error {
 	//function rawGet(bytes memory _key,bytes32 _root)external returns (bytes memory)
 	input := this.cAbi.Methods["rawGet"].MustEncodeIDAndInput(key, root)
-	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -109,7 +106,7 @@ func (this *testCase) checkUpdate(key, value []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "checkUpdate input")
 	}
-	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -124,7 +121,7 @@ func (this *testCase) checkGet(key []byte) error {
 	if err != nil {
 		return errors.Wrap(err, "checkGet input")
 	}
-	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -147,7 +144,7 @@ func (this *testCase) insertTrieNode(encoded []byte) error {
 	if err != nil {
 		return err
 	}
-	ret, _, err := this.vm.Call(this.sender, this.contract, input, defaultsConfig().GasLimit, new(big.Int))
+	ret, _, err := this.vm.Call(this.sender, this.contract, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		s, _ := web3.DecodeRevert(ret)
 		return errors.Wrap(err, s)
@@ -319,51 +316,4 @@ func Generate(r *rand.Rand) []struct{ k, v []byte } {
 		binary.BigEndian.PutUint64(res[i].v, uint64(i))
 	}
 	return res
-}
-
-func defaultsConfig() (cfg *runtime.Config) {
-	cfg = new(runtime.Config)
-	if cfg.ChainConfig == nil {
-		cfg.ChainConfig = &params.ChainConfig{
-			ChainID:             big.NewInt(1),
-			HomesteadBlock:      new(big.Int),
-			DAOForkBlock:        new(big.Int),
-			DAOForkSupport:      false,
-			EIP150Block:         new(big.Int),
-			EIP150Hash:          common.Hash{},
-			EIP155Block:         new(big.Int),
-			EIP158Block:         new(big.Int),
-			ByzantiumBlock:      new(big.Int),
-			ConstantinopleBlock: new(big.Int),
-			PetersburgBlock:     new(big.Int),
-			IstanbulBlock:       new(big.Int),
-			MuirGlacierBlock:    new(big.Int),
-			BerlinBlock:         new(big.Int),
-		}
-	}
-
-	if cfg.Difficulty == nil {
-		cfg.Difficulty = new(big.Int)
-	}
-	if cfg.Time == nil {
-		cfg.Time = big.NewInt(time.Now().Unix())
-	}
-	if cfg.GasLimit == 0 {
-		cfg.GasLimit = math.MaxUint64
-	}
-	if cfg.GasPrice == nil {
-		cfg.GasPrice = new(big.Int)
-	}
-	if cfg.Value == nil {
-		cfg.Value = new(big.Int)
-	}
-	if cfg.BlockNumber == nil {
-		cfg.BlockNumber = new(big.Int)
-	}
-	if cfg.GetHashFn == nil {
-		cfg.GetHashFn = func(n uint64) common.Hash {
-			return common.BytesToHash(crypto.Keccak256([]byte(new(big.Int).SetUint64(n).String())))
-		}
-	}
-	return
 }

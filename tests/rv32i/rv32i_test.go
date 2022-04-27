@@ -3,21 +3,23 @@ package rv32i
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 	"math/big"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/laizy/web3/evm"
+
+	"github.com/ontology-layer-2/rollup-contracts/tests"
+
 	"github.com/ethereum/go-ethereum/ethdb/memorydb"
 	"github.com/ethereum/go-ethereum/trie"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/abi"
 	"github.com/laizy/web3/hardhat"
 	"github.com/mitchellh/mapstructure"
-	"github.com/ontology-layer-2/rollup-contracts/tests"
 	"github.com/pkg/errors"
 )
 
@@ -149,17 +151,17 @@ func start(ram map[uint32]uint32, entrypoint uint32) ([]byte, error) {
 }
 
 type testCase struct {
-	evm *vm.EVM
+	evm *evm.EVM
 	//interpreter contract bi
 	rvAbi *abi.ABI
 	//interpreter contract addr
-	rvAddr common.Address
+	rvAddr web3.Address
 	//machine state abi
 	ramAbi *abi.ABI
 	//machine state addr
-	ramAddr common.Address
+	ramAddr web3.Address
 	ramTrie *trie.Trie
-	sender  vm.AccountRef
+	sender  evm.AccountRef
 	mdb     *trie.Database
 }
 
@@ -184,9 +186,13 @@ func newCase() *testCase {
 		panic(err)
 
 	}
-	ramAddr := common.BytesToAddress([]byte("MachineState"))
-	vmevm := tests.NewEVMWithCode(map[common.Address][]byte{ramAddr: ramA.DeployedBytecode})
-	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
+	ramAddr := web3.BytesToAddress([]byte("MachineState"))
+
+	//ramAddr := web3.BytesToAddress([]byte("MachineState"))
+	vmevm := tests.NewEVMWithCode(map[web3.Address][]byte{ramAddr: ramA.DeployedBytecode})
+
+	//vmevm := tests.NewEVMWithCode(map[web3.Address][]byte{ramAddr: ramA.DeployedBytecode})
+	sender := evm.AccountRef(common.BytesToAddress([]byte("test")))
 	mdb := trie.NewDatabase(memorydb.New())
 	trie, err := trie.New(common.Hash{}, mdb)
 	if err != nil {
@@ -194,7 +200,7 @@ func newCase() *testCase {
 	}
 	///constructor(address state,bool _testing)
 	type CCC struct {
-		State common.Address
+		State web3.Address
 	}
 	input, err := rvAbi.Constructor.Inputs.Encode(CCC{State: ramAddr})
 	if err != nil {
@@ -217,7 +223,7 @@ func (this *testCase) copyRam(ram map[uint32]uint32) ([]byte, error) {
 		binary.LittleEndian.PutUint32(vv[:], v)
 		this.ramTrie.Update(kk, vv)
 	}
-	if _, err := this.ramTrie.Commit(nil); err != nil {
+	if _, _, err := this.ramTrie.Commit(nil); err != nil {
 		panic(err)
 	}
 	err := this.mdb.Commit(this.ramTrie.Hash(), false, func(hash common.Hash) {
