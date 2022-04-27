@@ -114,7 +114,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         //check sequencer timestamp
         uint64 _batchNum;
         assembly {
-            _batchNum := shr(192, _batchDataPos)
+            _batchNum := shr(192, calldataload(_batchDataPos))
         }
         require(_batchNum > 0, "no batch");
         _batchDataPos += 8;
@@ -122,9 +122,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         assembly {
             _timestamp := shr(192, calldataload(_batchDataPos))
         }
-        require(_timestamp > _chain.lastTimestamp() && _timestamp < block.timestamp, "wrong batch timestap");
+        require(_timestamp > _chain.lastTimestamp() && _timestamp < block.timestamp, "wrong batch timestamp");
         _batchDataPos += 8;
-        uint64 _lastTimestamp;
         for (uint64 i = 1; i < _batchNum; i++) {
             uint32 _timediff;
             assembly {
@@ -145,11 +144,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
-        require(_batchDataPos + 32 < msg.data.length);
+        require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
         _chain.append(inputHash);
-        _chain.setLastTimestamp(_lastTimestamp);
+        _chain.setLastTimestamp(_timestamp);
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1, inputHash);
     }
 

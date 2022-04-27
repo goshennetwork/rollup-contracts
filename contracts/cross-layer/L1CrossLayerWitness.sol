@@ -36,7 +36,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
         bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
-    ) public {
+    ) public returns (bool) {
         require(crossLayerMsgSender == address(0), "reentrancy");
         require(_target != address(addressResolver.rollupInputChain()), "can't relay message to l1 system");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
@@ -56,6 +56,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
         } else {
             emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
+        return success;
     }
 
     function sendMessage(address _target, bytes calldata _message) public {
@@ -77,6 +78,10 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
             _crossLayerCalldata
         );
         emit MessageSent(treeSize, _target, msg.sender, _message);
+    }
+
+    function isMessageSucceed(bytes32 _messageHash) public view returns (bool) {
+        return successRelayedMessages[_messageHash];
     }
 
     function blockMessage(bytes32[] memory _messageHashes) public {

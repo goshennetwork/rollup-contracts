@@ -30,7 +30,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         uint64 _messageIndex,
         bytes32 _mmrRoot,
         uint64 _mmrSize
-    ) public {
+    ) public returns (bool) {
         require(crossLayerMsgSender == address(0), "reentrancy");
         require(msg.sender == Constants.L1_CROSS_LAYER_WITNESS, "wrong sender");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
@@ -45,6 +45,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
             mmrRoots[_mmrSize] = _mmrRoot;
             emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
+        return success;
     }
 
     function replayMessage(
@@ -54,7 +55,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         uint64 _messageIndex,
         bytes32[] memory _proof,
         uint64 _mmrSize
-    ) public {
+    ) public returns (bool) {
         require(crossLayerMsgSender == address(0), "reentrancy");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         bytes32 _mmrRoot = mmrRoots[_mmrSize];
@@ -70,6 +71,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         } else {
             emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
         }
+        return success;
     }
 
     function sendMessage(address _target, bytes calldata _message) public {
