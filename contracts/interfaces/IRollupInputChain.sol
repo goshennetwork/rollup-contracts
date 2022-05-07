@@ -32,7 +32,8 @@ interface IRollupInputChain {
         address indexed proposer,
         uint256 indexed startQueueIndex,
         uint256 queueNum,
-        uint256 indexed chainHeight
+        uint256 indexed chainHeight,
+        bytes32 inputHash
     );
 
     /**
