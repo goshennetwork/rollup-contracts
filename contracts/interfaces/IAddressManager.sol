@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IAddressManager {
+    event AddressUpdated(string _name, address _old, address _new);
+
     /**
      * @dev Set new address related name
      * @param _name Contract name to related
