@@ -19,12 +19,14 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         bytes32 _hash = hash(_name);
         require(addrs[_hash] == address(0), "address already exist");
         addrs[_hash] = _addr;
+        emit AddrNewed(_name, _addr);
     }
 
     function updateAddr(string memory _name, address _addr) public onlyOwner noEmptyAddr(_addr) {
         bytes32 _hash = hash(_name);
         require(addrs[_hash] != address(0), "can't update empty addr, use newAddr instead");
         addrs[_hash] = _addr;
+        emit AddrUpdated(_name, _addr);
     }
 
     function getAddr(string memory _name) public view returns (address) {
