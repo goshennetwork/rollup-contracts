@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IAddressManager {
-    event AddrNewed(string _name, address _addr);
+    event AddressUpdated(string _name, address _old, address _new);
 
     /**
      * @dev Set new address related name
@@ -11,8 +11,6 @@ interface IAddressManager {
      * @notice Revert when contract name already set its address
      */
     function newAddr(string memory _name, address _addr) external;
-
-    event AddrUpdated(string _name, address _addr);
 
     /**
      * @dev update new address related name
