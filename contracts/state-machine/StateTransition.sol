@@ -23,7 +23,6 @@ contract StateTransition is IStateTransition {
 
     function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
         require(msg.sender == resolver.dao(), "only dao");
-        require(upgradeHeight == 0, "upgrading");
         require(blockNumber > resolver.rollupStateChainContainer().chainSize(), "illegal height");
         require(newImageStateRoot != bytes32(0), "illegal new root");
         upgradeHeight = blockNumber;
