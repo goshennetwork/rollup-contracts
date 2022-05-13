@@ -152,6 +152,10 @@ contract RollupInputChain is IRollupInputChain {
         return addressResolver.rollupInputChainContainer().chainSize();
     }
 
+    function totalQueue() public view returns (uint64) {
+        return uint64(queuedTxInfos.length);
+    }
+
     function lastTimestamp() public view returns (uint64) {
         return addressResolver.rollupInputChainContainer().lastTimestamp();
     }
