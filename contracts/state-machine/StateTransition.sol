@@ -54,7 +54,6 @@ contract StateTransition is IStateTransition {
         require(riscvMem.mustReadOutput(finalState) == outputRoot, "mismatch root");
     }
 
-    // TODO: only challenge contract
     function executeNextStep(bytes32 stateHash) external pure returns (bytes32 nextStateHash) {
         //fix warning
         stateHash;
