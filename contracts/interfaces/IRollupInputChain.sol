@@ -57,6 +57,9 @@ interface IRollupInputChain {
     ///@return next pending queue index
     function pendingQueueIndex() external view returns (uint64);
 
+    ///@return total queueNum
+    function totalQueue() external view returns (uint64);
+
     ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
 
