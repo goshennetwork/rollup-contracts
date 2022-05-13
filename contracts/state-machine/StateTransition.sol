@@ -14,6 +14,8 @@ contract StateTransition is IStateTransition {
     bytes32 public pendingImageStateRoot;
     IAddressResolver public resolver;
 
+    event UpgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot);
+
     constructor(bytes32 _imageStateRoot, IAddressResolver _resolver) {
         imageStateRoot = _imageStateRoot;
         resolver = _resolver;
@@ -26,6 +28,8 @@ contract StateTransition is IStateTransition {
         require(newImageStateRoot != bytes32(0), "illegal new root");
         upgradeHeight = blockNumber;
         pendingImageStateRoot = newImageStateRoot;
+
+        emit UpgradeToNewRoot(blockNumber, newImageStateRoot);
     }
 
     function generateStartState(
