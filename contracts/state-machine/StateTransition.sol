@@ -4,14 +4,31 @@ pragma solidity ^0.8.0;
 import "../interfaces/IMemory.sol";
 import "./MemoryLayout.sol";
 import "../interfaces/IStateTransition.sol";
+import "../interfaces/IAddressResolver.sol";
 
 contract StateTransition is IStateTransition {
     using MemoryLayout for IMemory;
     bytes32 public imageStateRoot;
     IMemory public riscvMem;
+    uint256 public upgradeHeight;
+    bytes32 public pendingImageStateRoot;
+    IAddressResolver public resolver;
 
-    constructor(bytes32 _imageStateRoot) {
+    event UpgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot);
+
+    constructor(bytes32 _imageStateRoot, IAddressResolver _resolver) {
         imageStateRoot = _imageStateRoot;
+        resolver = _resolver;
+    }
+
+    function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
+        require(msg.sender == resolver.dao(), "only dao");
+        require(blockNumber > resolver.rollupStateChainContainer().chainSize(), "illegal height");
+        require(newImageStateRoot != bytes32(0), "illegal new root");
+        upgradeHeight = blockNumber;
+        pendingImageStateRoot = newImageStateRoot;
+
+        emit UpgradeToNewRoot(blockNumber, newImageStateRoot);
     }
 
     function generateStartState(
@@ -22,7 +39,13 @@ contract StateTransition is IStateTransition {
         uint256 gasLimit,
         uint256 timestemp
     ) external returns (bytes32) {
+        require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
         bytes32 inputHash = keccak256(abi.encodePacked(blockNumber, parentHash, txhash, coinbase, gasLimit, timestemp));
+        if (upgradeHeight > 0 && blockNumber >= upgradeHeight) {
+            imageStateRoot = pendingImageStateRoot;
+            upgradeHeight = 0;
+            pendingImageStateRoot = bytes32(0);
+        }
         return riscvMem.writeInput(imageStateRoot, inputHash);
     }
 
