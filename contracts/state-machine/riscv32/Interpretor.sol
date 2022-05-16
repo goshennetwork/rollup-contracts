@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "./Instruction.sol";
 import "../MachineState.sol";
 import "./Register.sol";
@@ -10,10 +12,10 @@ import "./Syscall.sol";
 import "../../libraries/console.sol";
 import "../../interfaces/IInterpretor.sol";
 
-contract Interpretor is IInterpretor {
+contract Interpretor is IInterpretor, Initializable {
     MachineState public mstate;
 
-    constructor(address state) {
+    function initialize(address state) public initializer {
         mstate = MachineState(state);
     }
 

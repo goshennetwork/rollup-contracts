@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL1CrossLayerWitness.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
-contract L1CrossLayerWitness is IL1CrossLayerWitness {
+contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
     using Types for Types.Block;
     using MerkleMountainRange for CompactMerkleTree;
     IAddressResolver addressResolver;
@@ -16,7 +19,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness {
     mapping(bytes32 => bool) public blockedMessages;
     address private crossLayerMsgSender;
 
-    constructor(address _addressResolver) {
+    function initialize(address _addressResolver) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
     }
 

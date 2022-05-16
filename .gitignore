@@ -11,3 +11,6 @@ artifacts
 /out
 yarn-error.log
 isa/
+
+# upgrades record for local devnet
+.openzeppelin/unknown-31337.json

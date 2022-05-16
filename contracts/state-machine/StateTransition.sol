@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../interfaces/IMachineState.sol";
 import "./MemoryLayout.sol";
 import "../interfaces/IStateTransition.sol";
 import "../interfaces/IAddressResolver.sol";
 import "./MachineState.sol";
-import "../interfaces/IInterpretor.sol";
 import "./riscv32/Interpretor.sol";
 
-contract StateTransition is IStateTransition {
+contract StateTransition is IStateTransition, Initializable {
     using MemoryLayout for IMachineState;
     IMachineState public mstate;
-    IInterpretor interpretor;
+    Interpretor interpretor;
     bytes32 public imageStateRoot;
     uint256 public upgradeHeight;
     bytes32 public pendingImageStateRoot;
@@ -20,15 +21,16 @@ contract StateTransition is IStateTransition {
 
     event UpgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot);
 
-    constructor(
+    function initialize(
         bytes32 _imageStateRoot,
         IAddressResolver _resolver,
         IMachineState _mstate
-    ) {
+    ) public initializer {
         imageStateRoot = _imageStateRoot;
         resolver = _resolver;
         mstate = _mstate;
-        interpretor = new Interpretor(address(_mstate));
+        interpretor = new Interpretor();
+        interpretor.initialize(address(_mstate));
     }
 
     function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
@@ -62,7 +64,7 @@ contract StateTransition is IStateTransition {
     }
 
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
-        (nextStateHash, ) = interpretor.step(stateHash);
+        (nextStateHash,) = interpretor.step(stateHash);
         return nextStateHash;
     }
 }

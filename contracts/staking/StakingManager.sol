@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/IRollupStateChain.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "../libraries/Types.sol";
 
-contract StakingManager is IStakingManager {
+contract StakingManager is IStakingManager, Initializable {
     address private DAOAddress;
     IChallengeFactory challengeFactory;
     IRollupStateChain public rollupStateChain;
@@ -16,13 +18,13 @@ contract StakingManager is IStakingManager {
     //price should never change, unless every stakingInfo record the relating info of price.
     uint256 public price;
 
-    constructor(
+    function initialize(
         address _DAOAddress,
         address _challengeFactory,
         address _rollupStateChain,
         address _erc20,
         uint256 _price
-    ) {
+    ) public initializer {
         DAOAddress = _DAOAddress;
         challengeFactory = IChallengeFactory(_challengeFactory);
         rollupStateChain = IRollupStateChain(_rollupStateChain);

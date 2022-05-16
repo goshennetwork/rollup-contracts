@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../libraries/Types.sol";
 import "../interfaces/IRollupStateChain.sol";
 import "../interfaces/IRollupInputChain.sol";
@@ -9,13 +11,13 @@ import "../interfaces/IChallengeFactory.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 
-contract RollupStateChain is IRollupStateChain {
+contract RollupStateChain is IRollupStateChain, Initializable {
     using Types for Types.StateInfo;
     IAddressResolver addressResolver;
     //the window to fraud proof
-    uint256 public immutable fraudProofWindow;
+    uint256 public fraudProofWindow;
 
-    constructor(address _addressResolver, uint256 _fraudProofWindow) {
+    function initialize(address _addressResolver, uint256 _fraudProofWindow) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         fraudProofWindow = _fraudProofWindow;
     }

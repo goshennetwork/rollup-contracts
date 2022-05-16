@@ -15,7 +15,8 @@ contract InterpretorTest {
 
     function setUp() public {
         mstate = new MachineState();
-        exec = new Interpretor(address(mstate));
+        exec = new Interpretor();
+        exec.initialize(address(mstate));
         root = MerkleTrie.KECCAK256_RLP_NULL_BYTES;
     }
 

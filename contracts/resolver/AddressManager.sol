@@ -3,16 +3,20 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IAddressManager.sol";
 import "./AddressName.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../interfaces/IAddressResolver.sol";
 
-contract AddressManager is IAddressManager, IAddressResolver, Ownable {
+contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable {
     mapping(bytes32 => address) private addrs;
 
     ///cant set empty address
     modifier noEmptyAddr(address _addr) {
         require(_addr != address(0), "set empty addr not allowed");
         _;
+    }
+
+    function initialize() public initializer {
+        __Ownable_init();
     }
 
     function newAddr(string memory _name, address _addr) public onlyOwner noEmptyAddr(_addr) {

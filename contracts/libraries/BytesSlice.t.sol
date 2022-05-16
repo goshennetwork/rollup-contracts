@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./BytesSlice.sol";
 
 contract BytesSliceTest {
-    function testToBytes32() public view {
+    function testToBytes32() public pure {
         checkToBytes32("", 0);
         checkToBytes32(hex"01", bytes32(hex"01"));
         checkToBytes32(hex"0102", bytes32(hex"0102"));
