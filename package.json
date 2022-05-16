@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "forge build --root ./",
+    "build": "forge build -o out --root ./",
     "test": "forge test -vvv --root ./",
     "format": "prettier --write 'contracts/**/*.sol'",
     "format-lint": "prettier --list-different 'contracts/**/*.sol'",

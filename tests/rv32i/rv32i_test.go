@@ -192,15 +192,13 @@ func newCase() *testCase {
 	if err != nil {
 		panic(err)
 	}
-	///constructor(address state,bool _testing)
-	type CCC struct {
-		State common.Address
-	}
-	input, err := rvAbi.Constructor.Inputs.Encode(CCC{State: ramAddr})
+	_, rvAddr, _, err := vmevm.Create(sender, rvA.Bytecode, math.MaxUint64, new(big.Int))
 	if err != nil {
 		panic(err)
 	}
-	_, rvAddr, _, err := vmevm.Create(sender, append(rvA.Bytecode, input...), math.MaxUint64, new(big.Int))
+	// init contract
+	input := rvAbi.Methods["initialize"].MustEncodeIDAndInput(ramAddr)
+	_, _, err = vmevm.Call(sender, rvAddr, input, math.MaxUint64, new(big.Int))
 	if err != nil {
 		panic(err)
 	}
