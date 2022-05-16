@@ -1,16 +1,16 @@
 pragma solidity ^0.8.0;
 
+import "../libraries/Types.sol";
+
 interface IChallenge {
     //the info of rv32 system info.
     struct SystemInfo {
-        uint256 blockNumber;
-        address proposer;
+        Types.StateInfo stateInfo;
         //systemEndState index,must > 1.
         uint128 endStep;
         //systemStartState calculated by Executor.
         bytes32 systemStartState;
         bytes32 systemEndState;
-        bytes32 outputRoot;
     }
 
     enum State {
@@ -35,19 +35,17 @@ interface IChallenge {
     /**
      * @dev Create challenge by challengeFactory.guarantee the info provided true.
      * @param _blockN Challenged l2 block number.
-     * @param _proposer Proposer of challenged block.
      * @param _systemStartState System initial state of program, calculated by executor.
-     * @param _outputRoot When program over, output the block root.
      * @param _creator Challenger who start challenge.
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
+     * @param _stateInfo StateInfo contains the challenged block info, already confirmed by challengeFactory
      */
     function create(
         uint256 _blockN,
-        address _proposer,
         bytes32 _systemStartState,
-        bytes32 _outputRoot,
         address _creator,
-        uint256 _proposerTimeLimit
+        uint256 _proposerTimeLimit,
+        Types.StateInfo memory _stateInfo
     ) external;
 
     event ChallengeStarted(
@@ -130,6 +128,8 @@ interface IChallenge {
 
     /**
      * @dev Challenger can get reward by this way if there exist only one branch.Otherwise, now just transfer to DAO.
+     * @param _challenger Which challenger claims the payback
+     * @param _stateInfo StateInfo to provide the New stateInfo
      */
-    function claimChallengerWin(address _challenger) external;
+    function claimChallengerWin(address _challenger, Types.StateInfo memory _stateInfo) external;
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "./DisputeTree.sol";
-import { IERC20 } from "@openzeppelin/interfaces/IERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
@@ -25,8 +25,6 @@ contract Challenge is IChallenge {
     uint256 expireAfterBlock;
     //fixme: evaluate timeout more legitimate. The dispute solver can delay the challenge by provide step ((1<<256) -1),and choose deadline to repond, and responsible challenger respond in next block ,so the system judge will delay 256*(timeout+1)+timeout,if timeout is 100 this roughly 4.5 Days!
     uint256 proposerTimeLimit;
-    //record whether the challenged block can process.
-    uint256 confirmedBlock;
     //amount challenge get from dispute proposer.
     uint256 rewardAmount;
 
@@ -52,33 +50,34 @@ contract Challenge is IChallenge {
     }
 
     modifier beforeBlockConfirmed() {
-        require(block.number <= confirmedBlock, "block confirmed");
+        require(!factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo), "block confirmed");
         _;
     }
 
     modifier afterBlockConfirmed() {
-        require(block.number > confirmedBlock, "block not confirmed");
+        require(factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo), "block not confirmed");
+        _;
+    }
+
+    modifier onlyProposer() {
+        require(msg.sender == systemInfo.stateInfo.proposer, "only proposer");
         _;
     }
 
     //when create, creator should deposit at this contract.
     function create(
         uint256 _blockN,
-        address _proposer,
         bytes32 _systemStartState,
-        bytes32 _outputRoot,
         address _creator,
-        uint256 _proposerTimeLimit
+        uint256 _proposerTimeLimit,
+        Types.StateInfo memory _stateInfo
     ) external override {
         factory = IChallengeFactory(msg.sender);
-        systemInfo.blockNumber = _blockN;
-        systemInfo.proposer = _proposer;
         systemInfo.systemStartState = _systemStartState;
-        systemInfo.outputRoot = _outputRoot;
         creator = _creator;
-        expireAfterBlock = block.number + proposerTimeLimit;
         proposerTimeLimit = _proposerTimeLimit;
-        (, , , , confirmedBlock) = factory.scc().getBlockInfo(_blockN);
+        expireAfterBlock = block.number + proposerTimeLimit;
+        systemInfo.stateInfo = _stateInfo;
         //started
         state = State.Started;
         //emit by challengeFactory
@@ -89,14 +88,14 @@ contract Challenge is IChallenge {
         uint128 _endStep,
         bytes32 _systemEndState,
         bytes32 _midSystemState
-    ) external override stage1 {
+    ) external override stage1 onlyProposer {
         //in start period.
         require(
-            block.number <= expireAfterBlock && msg.sender == systemInfo.proposer && _endStep > 1, //larger than 1
+            block.number <= expireAfterBlock && _endStep > 1, //larger than 1
             "wrong context"
         );
         systemInfo.systemEndState = _systemEndState;
-        factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.outputRoot);
+        factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.stateInfo.blockHash);
         require(_midSystemState != 0, "0 system state root is illegal");
 
         systemInfo.endStep = _endStep;
@@ -119,8 +118,8 @@ contract Challenge is IChallenge {
         override
         beforeBlockConfirmed
         stage2
+        onlyProposer
     {
-        require(msg.sender == systemInfo.proposer, "only proposer");
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
 
         for (uint256 i = 0; i < _stateRoots.length; i++) {
@@ -204,15 +203,16 @@ contract Challenge is IChallenge {
         IERC20 token = factory.stakingManager().token();
         uint256 _amount = token.balanceOf(address(this));
         //todo: maybe burn some amount
-        token.transfer(systemInfo.proposer, _amount);
-        emit ProposerWin(systemInfo.proposer, _amount);
+        address _proposer = systemInfo.stateInfo.proposer;
+        token.transfer(_proposer, _amount);
+        emit ProposerWin(_proposer, _amount);
     }
 
-    function claimChallengerWin(address _challenger) external override stage3 {
+    function claimChallengerWin(address _challenger, Types.StateInfo memory _stateInfo) external override stage3 {
         if (claimStatus == ClaimStatus.UnClaimed) {
             //if not claimed, then claim
             uint256 _before = factory.stakingManager().token().balanceOf(address(this));
-            factory.stakingManager().claim(systemInfo.proposer);
+            factory.stakingManager().claim(systemInfo.stateInfo.proposer, _stateInfo);
             uint256 _now = factory.stakingManager().token().balanceOf(address(this));
             rewardAmount = _now - _before;
             //claim over
@@ -302,8 +302,13 @@ contract Challenge is IChallenge {
     //finish game and rollback the dispute l2 block & slash the dispute proposer.
     function _challengeSuccess() internal {
         _setWinner(true);
-        factory.scc().rollbackBlockBefore(systemInfo.blockNumber);
-        factory.stakingManager().slash(systemInfo.blockNumber, systemInfo.outputRoot, systemInfo.proposer);
+        Types.StateInfo memory _stateInfo;
+        factory.rollupStateChain().rollbackStateBefore(systemInfo.stateInfo);
+        factory.stakingManager().slash(
+            systemInfo.stateInfo.index,
+            systemInfo.stateInfo.blockHash,
+            systemInfo.stateInfo.proposer
+        );
     }
 
     function _proposerSuccess() internal {
