@@ -84,7 +84,6 @@ library DisputeTree {
         returns (uint256, bool)
     {
         bool _oneBranch = true;
-        DisputeNode storage node = tree[_rootKey];
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
             uint128 _stepMid = middle(_stepLower, _stepUpper);
