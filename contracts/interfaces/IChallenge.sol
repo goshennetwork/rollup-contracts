@@ -65,7 +65,7 @@ interface IChallenge {
      * @param _midSystemState Mid state root of system,0 is illegal.
      */
     function initialize(
-        uint128 _endStep,
+        uint64 _endStep,
         bytes32 _systemEndState,
         bytes32 _midSystemState
     ) external;
