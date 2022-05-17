@@ -13,7 +13,7 @@ interface IChallenge {
         bytes32 systemEndState;
     }
 
-    enum State {
+    enum ChallengeStage {
         Uninitialized,
         //challenge game started.
         Started,

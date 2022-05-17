@@ -8,16 +8,16 @@ import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
-    IChallengeFactory factory;
+    IChallengeFactory public factory;
     //fixme: flows need more evaluation.
-    uint256 public constant override minChallengerDeposit = 0.01 ether;
+    uint256 public constant override minChallengerDeposit = 0.1 ether;
 
     //so the last step and 0 step's state is not in node's state root.
     mapping(uint256 => DisputeTree.DisputeNode) public disputeTree;
     //record every challenger last select node key in disputeTree.
-    mapping(address => uint256) lastSelectedNodeKey;
+    mapping(address => uint256) public lastSelectedNodeKey;
     SystemInfo systemInfo;
-    State state;
+    ChallengeStage public stage;
     ClaimStatus claimStatus;
     // who start challenge.
     address creator;
@@ -30,22 +30,22 @@ contract Challenge is IChallenge {
 
     /** challenge game have 3 stage now:
      * stage1: game started by challenger, proposer need to init game info.
-     * stage2: now proposer and multi challengers have to work together to find out one step and challenger prove this one step is wrong.
+     * stage2: proposer and challengers find out one step and challenger prove this one step is wrong.
      * stage3: challenge game over.Now challenger have to claim out the payback(proposer get reward immediately when game over, but challenger have to wait to claim).
      * note: in stage1&stage2, proposer can make challenge game "stuck"(not participate in time).
      */
     modifier stage1() {
-        require(state == State.Started, "only started stage");
+        require(stage == ChallengeStage.Started, "only started stage");
         _;
     }
 
     modifier stage2() {
-        require(state == State.Running, "only running stage");
+        require(stage == ChallengeStage.Running, "only running stage");
         _;
     }
 
     modifier stage3() {
-        require(state == State.Finished, "only finished stage");
+        require(stage == ChallengeStage.Finished, "only finished stage");
         _;
     }
 
@@ -73,32 +73,32 @@ contract Challenge is IChallenge {
         Types.StateInfo memory _stateInfo
     ) external override {
         factory = IChallengeFactory(msg.sender);
+        IERC20 depositToken = factory.stakingManager().token();
+        require(depositToken.transferFrom(_creator, address(this), minChallengerDeposit));
         systemInfo.systemStartState = _systemStartState;
         creator = _creator;
         proposerTimeLimit = _proposerTimeLimit;
         expireAfterBlock = block.number + proposerTimeLimit;
         systemInfo.stateInfo = _stateInfo;
         //started
-        state = State.Started;
+        stage = ChallengeStage.Started;
         //emit by challengeFactory
         //emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
 
     function initialize(
-        uint128 _endStep,
+        uint64 endStep,
         bytes32 _systemEndState,
         bytes32 _midSystemState
     ) external override stage1 onlyProposer {
+        uint128 _endStep = endStep;
         //in start period.
-        require(
-            block.number <= expireAfterBlock && _endStep > 1, //larger than 1
-            "wrong context"
-        );
+        require(block.number <= expireAfterBlock && _endStep > 1, "wrong context");
         systemInfo.systemEndState = _systemEndState;
-        factory.executor().verifyFinalState(systemInfo.systemEndState, systemInfo.stateInfo.blockHash);
-        require(_midSystemState != 0, "0 system state root is illegal");
-
         systemInfo.endStep = _endStep;
+        factory.executor().verifyFinalState(_systemEndState, systemInfo.stateInfo.blockHash);
+        require(_midSystemState != 0, "illegal state root");
+
         uint256 rootKey = DisputeTree.encodeNodeKey(0, _endStep);
         disputeTree[rootKey] = DisputeTree.DisputeNode({
             parent: rootKey, // we take node.parent != 0 as initialized node. so set root's parent pointer to self
@@ -108,8 +108,8 @@ contract Challenge is IChallenge {
         });
 
         lastSelectedNodeKey[creator] = rootKey;
-        state = State.Running;
-        //notify other's participate in this game.
+        stage = ChallengeStage.Running;
+        //notify challengers in this game.
         emit ChallengeInitialized(_endStep, _midSystemState);
     }
 
@@ -125,8 +125,8 @@ contract Challenge is IChallenge {
         for (uint256 i = 0; i < _stateRoots.length; i++) {
             bytes32 stateRoot = _stateRoots[i];
             DisputeTree.DisputeNode storage node = disputeTree[_nodeKeys[i]];
-            //there is no need to check node existence(if there is , make sure not timeout), so proposer can reveal mid state in advance
-            //to speed up the process
+            // there is no need to check node existence(if there is , make sure not timeout), so proposer can reveal
+            // mid state in advance to speed up the process
             if (node.parent != 0) {
                 //exist
                 require(block.number <= node.expireAfterBlock, "time out");
@@ -138,13 +138,13 @@ contract Challenge is IChallenge {
     }
 
     function proposerTimeout(uint256 _nodeKey) external override beforeBlockConfirmed {
-        if (state == State.Finished) {
+        if (stage == ChallengeStage.Finished) {
             //challenge game finished, just return.
             return;
-        } else if (state == State.Started) {
+        } else if (stage == ChallengeStage.Started) {
             //proposer initialize timeout.
             require(block.number > expireAfterBlock, "initialize challenge info not timeout");
-        } else if (state == State.Running) {
+        } else if (stage == ChallengeStage.Running) {
             //proposer reveal timeout
             DisputeTree.DisputeNode storage nextNode = disputeTree[_nodeKey];
             (uint128 stepLower, uint128 stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
@@ -171,8 +171,9 @@ contract Challenge is IChallenge {
             uint256 _childKey = disputeTree.addNewChild(_parentNodeKey, _isLeft, _expireAfterBlock, msg.sender);
             uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
             if (_lastSelect == 0) {
-                //first select, need deposit.
-                factory.stakingManager().token().transferFrom(msg.sender, address(this), minChallengerDeposit);
+                // first select, need deposit.
+                IERC20 depositToken = factory.stakingManager().token();
+                require(depositToken.transferFrom(msg.sender, address(this), minChallengerDeposit));
             } else {
                 //can only select last's child node
                 require(DisputeTree.isChildNode(_lastSelect, _childKey));
@@ -202,7 +203,6 @@ contract Challenge is IChallenge {
         _proposerSuccess();
         IERC20 token = factory.stakingManager().token();
         uint256 _amount = token.balanceOf(address(this));
-        //todo: maybe burn some amount
         address _proposer = systemInfo.stateInfo.proposer;
         token.transfer(_proposer, _amount);
         emit ProposerWin(_proposer, _amount);
@@ -247,24 +247,24 @@ contract Challenge is IChallenge {
         IERC20 token = factory.stakingManager().token();
         require(rewardAmount > 0, "no cake");
         uint256 _canWithdraw;
-        uint256 _correctNodeAddr = _lowestNodeKey;
+        uint256 _correctNodeKey = _lowestNodeKey;
         uint256 _amount = 0;
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
         bool haveDeposited;
-        while (_correctNodeAddr != 0) {
-            DisputeTree.DisputeNode storage node = disputeTree[_correctNodeAddr];
+        while (_correctNodeKey != 0) {
+            DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
             //pay back challenger's deposit
-            address _gainer = node.challenger;
-            if (_gainer == _challenger) {
+            if (node.challenger == _challenger) {
                 //only pay back once,because challenger can select different nodes in one branch.
                 haveDeposited = true;
             }
             _amount++;
-            if (_correctNodeAddr == node.parent) {
+            uint256 parent = node.parent;
+            if (_correctNodeKey == parent) {
                 //reach the root;
                 break;
             }
-            _correctNodeAddr = node.parent;
+            _correctNodeKey = parent;
         }
         if (haveDeposited) {
             //pay back
@@ -276,23 +276,24 @@ contract Challenge is IChallenge {
                 _canWithdraw += rewardAmount;
             }
         } else {
-            //Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer get 5/15,second gainer get 4/15,
-            //next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat all cake!but assume there is 256 gainer.the last gainer gain 1/32896,maybe not meet the gas cost he consumes.
-            //todo: so maybe we should pay back the gas cost to gainer, and then divide the cake.
+            // Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer
+            // get 5/15,second gainer get 4/15, next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat
+            // all cake!but assume there is 64 gainer.the last gainer gain 1/2080, maybe not meet the gas cost he consumes.
+            // vi = (i+k) / [n*(n+1)/2 + nk] , k = 10, n = 50, v0 = 10/(25*51+ 500) = 1/355, vn/v0 = 6
             uint256 _pieces = ((1 + _amount) * _amount) / 2;
-            _correctNodeAddr = _lowestNodeKey;
-            while (_correctNodeAddr != 0) {
-                DisputeTree.DisputeNode storage node = disputeTree[_correctNodeAddr];
+            _correctNodeKey = _lowestNodeKey;
+            while (_correctNodeKey != 0) {
+                DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
                 //first pay back,and record the amount of gainer.
                 if (_challenger == node.challenger) {
                     _canWithdraw += (_amount * rewardAmount) / _pieces;
                 }
                 _amount--;
-                if (node.parent == _correctNodeAddr) {
+                if (node.parent == _correctNodeKey) {
                     //reach the root
                     break;
                 }
-                _correctNodeAddr = node.parent;
+                _correctNodeKey = node.parent;
             }
         }
         token.transfer(_challenger, _canWithdraw);
@@ -301,8 +302,7 @@ contract Challenge is IChallenge {
 
     //finish game and rollback the dispute l2 block & slash the dispute proposer.
     function _challengeSuccess() internal {
-        _setWinner(true);
-        Types.StateInfo memory _stateInfo;
+        stage = ChallengeStage.Finished;
         factory.rollupStateChain().rollbackStateBefore(systemInfo.stateInfo);
         factory.stakingManager().slash(
             systemInfo.stateInfo.index,
@@ -312,14 +312,8 @@ contract Challenge is IChallenge {
     }
 
     function _proposerSuccess() internal {
-        _setWinner(false);
-    }
-
-    function _setWinner(bool isChallengerWin) internal {
-        state = State.Finished;
-        if (!isChallengerWin) {
-            //only challenger need to claim
-            claimStatus = ClaimStatus.Over;
-        }
+        stage = ChallengeStage.Finished;
+        //only challenger need to claim
+        claimStatus = ClaimStatus.Over;
     }
 }
