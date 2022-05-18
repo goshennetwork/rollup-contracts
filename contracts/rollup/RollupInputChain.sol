@@ -13,8 +13,8 @@ contract RollupInputChain is IRollupInputChain {
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
 
-    uint256 public maxEnqueueTxGasLimit;
-    uint256 public maxCrossLayerTxGasLimit;
+    uint64 public maxEnqueueTxGasLimit;
+    uint64 public maxCrossLayerTxGasLimit;
 
     IAddressResolver addressResolver;
 
