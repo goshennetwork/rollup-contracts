@@ -204,7 +204,7 @@ contract Challenge is IChallenge {
         IERC20 token = factory.stakingManager().token();
         uint256 _amount = token.balanceOf(address(this));
         address _proposer = systemInfo.stateInfo.proposer;
-        token.transfer(_proposer, _amount);
+        require(token.transfer(_proposer, _amount), "transfer failed");
         emit ProposerWin(_proposer, _amount);
     }
 
@@ -223,7 +223,7 @@ contract Challenge is IChallenge {
             //not initial.
             uint256 _amount = token.balanceOf(address(this));
             //transfer to creator.
-            token.transfer(creator, _amount);
+            require(token.transfer(creator, _amount), "transfer failed");
             return;
         }
 
@@ -235,7 +235,7 @@ contract Challenge is IChallenge {
             //more than one branch
             uint256 _amount = token.balanceOf(address(this));
             //transfer to DAO
-            token.transfer(factory.dao(), _amount);
+            require(token.transfer(factory.dao(), _amount), "transfer failed");
         }
     }
 
@@ -252,35 +252,30 @@ contract Challenge is IChallenge {
         uint256 _canWithdraw = minChallengerDeposit;
         uint64 _amount = _depth;
         //pay back deposit
-        if (_amount == 1) {
-            //only root node.pay all reward to it.
-            if (_challenger == disputeTree[_rootKey].challenger) {
-                _canWithdraw += rewardAmount;
+        // Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer
+        // get 5/15,second gainer get 4/15, next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat
+        // all cake!but assume there is 64 gainer.the last gainer gain 1/2080, maybe not meet the gas cost he consumes.
+        // vi = (i+k) / [n*(n+1)/2 + nk] , k = 10, n = 50, v0 = 10/(25*51+ 500) = 1/355, vn/v0 = 6
+        uint256 _scale;
+        uint256 _k = 10;
+        uint256 _pieces = (((1 + _amount) * _amount) / 2) + (_amount * _k);
+        uint256 _correctNodeKey = _lowestNodeKey;
+        while (_correctNodeKey != 0) {
+            DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
+            //first pay back,and record the amount of gainer.
+            if (_challenger == node.challenger) {
+                _scale += (_amount + _k) / _pieces;
             }
-        } else {
-            // Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer
-            // get 5/15,second gainer get 4/15, next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat
-            // all cake!but assume there is 64 gainer.the last gainer gain 1/2080, maybe not meet the gas cost he consumes.
-            // vi = (i+k) / [n*(n+1)/2 + nk] , k = 10, n = 50, v0 = 10/(25*51+ 500) = 1/355, vn/v0 = 6
-            uint256 _k = 10;
-            uint256 _pieces = (((1 + _amount) * _amount) / 2) + (_amount * _k);
-            uint256 _correctNodeKey = _lowestNodeKey;
-            while (_correctNodeKey != 0) {
-                DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
-                //first pay back,and record the amount of gainer.
-                if (_challenger == node.challenger) {
-                    _canWithdraw += ((_amount + _k) * rewardAmount) / _pieces;
-                }
-                _amount--;
-                if (node.parent == _correctNodeKey) {
-                    //reach the root
-                    break;
-                }
-                _correctNodeKey = node.parent;
+            _amount--;
+            if (node.parent == _correctNodeKey) {
+                //reach the root
+                break;
             }
+            _correctNodeKey = node.parent;
         }
+        _canWithdraw += _scale * rewardAmount;
         lastSelectedNodeKey[_challenger] = 0;
-        token.transfer(_challenger, _canWithdraw);
+        require(token.transfer(_challenger, _canWithdraw), "transfer failed");
     }
 
     //finish game and rollback the dispute l2 block & slash the dispute proposer.
