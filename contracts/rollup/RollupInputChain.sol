@@ -13,8 +13,8 @@ contract RollupInputChain is IRollupInputChain {
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
 
-    uint256 public maxEnqueueTxGasLimit;
-    uint256 public maxCrossLayerTxGasLimit;
+    uint64 public maxEnqueueTxGasLimit;
+    uint64 public maxCrossLayerTxGasLimit;
 
     IAddressResolver addressResolver;
 
@@ -30,8 +30,8 @@ contract RollupInputChain is IRollupInputChain {
 
     constructor(
         address _addressResolver,
-        uint256 _maxTxGasLimit,
-        uint256 _maxCrossLayerTxGasLimit
+        uint64 _maxTxGasLimit,
+        uint64 _maxCrossLayerTxGasLimit
     ) {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
@@ -43,19 +43,20 @@ contract RollupInputChain is IRollupInputChain {
         uint64 _gasLimit,
         bytes memory _data
     ) public {
-        require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
-        require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
-        require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         address sender;
         if (msg.sender == tx.origin) {
             sender = msg.sender;
+            require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         } else {
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
-            require(_gasLimit <= maxCrossLayerTxGasLimit, "too high cross layer Tx gas limit");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             sender = Constants.L1_CROSS_LAYER_WITNESS;
+            _gasLimit = maxCrossLayerTxGasLimit;
         }
+        require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
+        require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
+
         // todo: maybe need more tx params, such as tip fee, value
         bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
         uint64 _now = uint64(block.timestamp);

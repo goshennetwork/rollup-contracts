@@ -20,8 +20,8 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness {
         addressResolver = IAddressResolver(_addressResolver);
     }
 
-    function l2Sender() public view returns (address) {
-        require(crossLayerMsgSender != address(0), "crossLayerMsgSender not set");
+    function crossLayerSender() external view returns (address) {
+        require(crossLayerMsgSender != address(0), "no cross layer sender");
         return crossLayerMsgSender;
     }
 
@@ -55,11 +55,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness {
         }
     }
 
-    function sendMessage(
-        address _target,
-        bytes calldata _message,
-        uint64 _gasLimit
-    ) public {
+    function sendMessage(address _target, bytes calldata _message) public {
         require(msg.sender != address(this), "wired situation");
         uint64 treeSize = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
@@ -74,28 +70,10 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness {
         );
         addressResolver.rollupInputChain().enqueue(
             address(addressResolver.l2CrossLayerWitness()),
-            _gasLimit,
+            0,
             _crossLayerCalldata
         );
-    }
-
-    function replayMessage(
-        bytes memory _crossLayerCalldata,
-        uint64 _queueIndex,
-        uint64 _oldGasLimit,
-        uint64 _newGasLimit
-    ) public {
-        (bytes32 _infoHash, ) = addressResolver.rollupInputChain().getQueueTxInfo(_queueIndex);
-        // same as rollupInputChain
-        bytes32 _txHash = keccak256(
-            abi.encode(address(this), address(addressResolver.l2CrossLayerWitness()), _oldGasLimit, _crossLayerCalldata)
-        );
-        require(_txHash == _infoHash, "message not in queue");
-        addressResolver.rollupInputChain().enqueue(
-            address(addressResolver.l2CrossLayerWitness()),
-            _newGasLimit,
-            _crossLayerCalldata
-        );
+        emit MessageSent(treeSize, _target, msg.sender, _message);
     }
 
     function blockMessage(bytes32[] memory _messageHashes) public {
