@@ -249,11 +249,9 @@ contract Challenge is IChallenge {
     ) internal {
         require(lastSelectedNodeKey[_challenger] != 0, "you can't eat cake");
         require(rewardAmount > 0, "no cake");
-        uint256 _canWithdraw;
+        uint256 _canWithdraw=minChallengerDeposit;
         uint64 _amount = _depth;
-        bool haveDeposited;
         //pay back deposit
-        _canWithdraw += minChallengerDeposit;
         if (_amount == 1) {
             //only root node.pay all reward to it.
             if (_challenger == disputeTree[_rootKey].challenger) {
@@ -281,8 +279,8 @@ contract Challenge is IChallenge {
                 _correctNodeKey = node.parent;
             }
         }
-        token.transfer(_challenger, _canWithdraw);
         lastSelectedNodeKey[_challenger] = 0;
+        token.transfer(_challenger, _canWithdraw);
     }
 
     //finish game and rollback the dispute l2 block & slash the dispute proposer.
