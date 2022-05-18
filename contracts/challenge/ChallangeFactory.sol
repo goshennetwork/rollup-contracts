@@ -25,7 +25,7 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
     ) public returns (bool) {
-        require(challengedStates[_challengedStateInfo.index] != address(0), "already challenged");
+        require(challengedStates[_challengedStateInfo.index] == address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
         require(resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
