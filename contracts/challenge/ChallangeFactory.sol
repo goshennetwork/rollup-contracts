@@ -39,11 +39,6 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
         );
         bytes memory _data;
         address newChallenge = address(new BeaconProxy(address(this), _data));
-        //maybe do not need to deposit because of the cost create contract?
-        require(
-            resolver.stakingManager().token().transferFrom(msg.sender, newChallenge, minChallengerDeposit),
-            "transfer failed"
-        );
         contracts[newChallenge] = true;
         challengedStates[_challengedStateInfo.index] = newChallenge;
         IChallenge(newChallenge).create(

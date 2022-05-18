@@ -74,13 +74,14 @@ contract Challenge is IChallenge {
     ) external override {
         factory = IChallengeFactory(msg.sender);
         IERC20 depositToken = factory.stakingManager().token();
-        require(depositToken.transferFrom(_creator, address(this), minChallengerDeposit));
         systemInfo.systemStartState = _systemStartState;
         creator = _creator;
         proposerTimeLimit = _proposerTimeLimit;
         expireAfterBlock = block.number + proposerTimeLimit;
         systemInfo.stateInfo = _stateInfo;
         minChallengerDeposit = _minChallengerDeposit;
+        //maybe do not need to deposit because of the cost create contract?
+        require(depositToken.transferFrom(_creator, address(this), minChallengerDeposit), "transfer failed");
         //started
         stage = ChallengeStage.Started;
         //emit by challengeFactory

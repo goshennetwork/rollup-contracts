@@ -40,6 +40,7 @@ interface IChallenge {
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
      * @param _stateInfo StateInfo contains the challenged block info, already confirmed by challengeFactory
      * @param _minChallengerDeposit floor price for challenge to engage challenge game
+     * @notice revert when transfer failed
      */
     function create(
         uint256 _blockN,
