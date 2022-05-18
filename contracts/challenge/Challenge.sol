@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "./DisputeTree.sol";
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
