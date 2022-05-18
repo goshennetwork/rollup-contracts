@@ -51,14 +51,6 @@ interface IChallenge {
         uint256 _minChallengerDeposit
     ) external;
 
-    event ChallengeStarted(
-        uint256 indexed _l2BlockN,
-        address indexed _proposer,
-        bytes32 _startSystemState,
-        bytes32 _endSystemState,
-        uint256 expireAfterBlock
-    );
-
     event ChallengeInitialized(uint128 _systemEndStep, bytes32 _midSystemState);
 
     /**

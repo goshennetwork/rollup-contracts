@@ -6,6 +6,13 @@ import "../interfaces/IStateTransition.sol";
 import "../interfaces/IRollupStateChain.sol";
 
 interface IChallengeFactory {
+    event ChallengeStarted(
+        uint256 indexed _l2BlockN,
+        address indexed _proposer,
+        bytes32 _startSystemState,
+        uint256 expireAfterBlock
+    );
+
     /**
      * @dev start a challenge game, challenger need to deposit first
      * @param _challengedStateInfo Challenged state
