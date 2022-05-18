@@ -44,6 +44,8 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
             resolver.stakingManager().token().transferFrom(msg.sender, newChallenge, minChallengerDeposit),
             "transfer failed"
         );
+        contracts[newChallenge] = true;
+        challengedStates[_challengedStateInfo.index] = newChallenge;
         IChallenge(newChallenge).create(
             _challengedStateInfo.index,
             _systemStartState,
@@ -52,8 +54,6 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
             _challengedStateInfo,
             minChallengerDeposit
         );
-        contracts[newChallenge] = true;
-        challengedStates[_challengedStateInfo.index] = newChallenge;
         return true;
     }
 
