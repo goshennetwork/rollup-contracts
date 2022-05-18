@@ -57,6 +57,7 @@ contract RollupStateChain is IRollupStateChain {
         emit StateBatchAppended(_startAt, msg.sender, _now, _blockHashes);
     }
 
+    //challenge factory already check the stateInfo,meybe do not check stateInfo?
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
         require(
             addressResolver.challengeFactory().isChallengeContract(msg.sender),

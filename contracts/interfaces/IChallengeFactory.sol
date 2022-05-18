@@ -12,5 +12,7 @@ interface IChallengeFactory {
 
     function rollupStateChain() external view returns (IRollupStateChain);
 
+    function dao() external view returns (address);
+
     function isChallengeContract(address _addr) external view returns (bool);
 }
