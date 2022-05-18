@@ -252,9 +252,6 @@ contract Challenge is IChallenge {
         uint256 _canWithdraw = minChallengerDeposit;
         uint64 _amount = _depth;
         //pay back deposit
-        // Now just divide remaining to pieces.Assume there are 5 gainer.so divide to 5+4+3+2+1=15.so first gainer
-        // get 5/15,second gainer get 4/15, next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat
-        // all cake!but assume there is 64 gainer.the last gainer gain 1/2080, maybe not meet the gas cost he consumes.
         // vi = (i+k) / [n*(n+1)/2 + nk] , k = 10, n = 50, v0 = 10/(25*51+ 500) = 1/355, vn/v0 = 6
         uint256 _scale;
         uint256 _k = 10;
