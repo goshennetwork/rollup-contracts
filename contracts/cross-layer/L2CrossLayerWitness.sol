@@ -14,8 +14,8 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness {
     mapping(uint64 => bytes32) public mmrRoots;
     address private crossLayerMsgSender;
 
-    function l1Sender() public view returns (address) {
-        require(crossLayerMsgSender != address(0), "crossDomainMsgSender not set yet");
+    function crossLayerSender() external view returns (address) {
+        require(crossLayerMsgSender != address(0), "no cross layer sender");
         return crossLayerMsgSender;
     }
 
@@ -27,6 +27,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness {
         bytes32 _mmrRoot,
         uint64 _mmrSize
     ) public {
+        require(crossLayerMsgSender == address(0), "reentrancy");
         require(msg.sender == Constants.L1_CROSS_LAYER_WITNESS, "wrong sender");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(successRelayedMessages[_hash] == false, "already relayed");
@@ -42,7 +43,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness {
         }
     }
 
-    function relayMessage(
+    function replayMessage(
         address _target,
         address _sender,
         bytes memory _message,
@@ -50,6 +51,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness {
         bytes32[] memory _proof,
         uint64 _mmrSize
     ) public {
+        require(crossLayerMsgSender == address(0), "reentrancy");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         bytes32 _mmrRoot = mmrRoots[_mmrSize];
         require(_mmrRoot != bytes32(0), "unknown mmr root");

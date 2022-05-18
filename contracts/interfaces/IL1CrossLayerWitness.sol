@@ -2,11 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
+import "./ICrossLayerWitness.sol";
 
-interface IL1CrossLayerWitness {
-    event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
-    event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
-
+interface IL1CrossLayerWitness is ICrossLayerWitness {
     /**
      * @dev Relay L2 -> L1 message that in L2CrossLayerWitness contract.
      * @param _target EVM call Target
@@ -34,34 +32,6 @@ interface IL1CrossLayerWitness {
         bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
-    ) external;
-
-    /**
-     * @dev Send L1->L2 tx to l2,record tx in local mmr
-     * @param _target EVM call target
-     * @param _message EVM call data
-     * @param _gasLimit EVM call gasLimit
-     */
-    function sendMessage(
-        address _target,
-        bytes calldata _message,
-        uint64 _gasLimit
-    ) external;
-
-    /**
-     * @dev Replay failed L2->L1 message.We only assume that poor gasLimit is the only failed reason.So this update old gasLimit
-     * @param _crossLayerCalldata ols EVM call data to L2CrossLayerWitness contract
-     * @param _queueIndex Replayed tx in queue index
-     * @param _oldGasLimit Old gasLimit
-     * @param _newGasLimit New gasLimit
-     * @notice Revert if:
-     * - Provided message not enqueued
-     */
-    function replayMessage(
-        bytes memory _crossLayerCalldata,
-        uint64 _queueIndex,
-        uint64 _oldGasLimit,
-        uint64 _newGasLimit
     ) external;
 
     event MessageBlocked(bytes32[] _messageHashes);

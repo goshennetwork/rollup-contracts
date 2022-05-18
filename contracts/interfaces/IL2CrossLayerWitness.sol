@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
+import "./ICrossLayerWitness.sol";
 
-interface IL2CrossLayerWitness {
+interface IL2CrossLayerWitness is ICrossLayerWitness {
     /**
      * @dev Relay L1 -> L2 message that in L1CrossLayerWitness contract.
      * @param _target EVM call Target
@@ -25,11 +26,8 @@ interface IL2CrossLayerWitness {
         uint64 _mmrSize
     ) external;
 
-    event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
-    event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
-
     /**
-     * @dev Relay L1 -> L2 message when obvious relayed false
+     * @dev Relay L1 -> L2 message when previous relayed false
      * @param _target EVM call Target
      * @param _sender EVM call sender
      * @param _message EVM call data
@@ -41,7 +39,7 @@ interface IL2CrossLayerWitness {
      * - Provided _proof cant proof message indeed exist in l1 mmr root got by local recorded
      * - Provided message already relayed
      */
-    function relayMessage(
+    function replayMessage(
         address _target,
         address _sender,
         bytes memory _message,
@@ -49,15 +47,4 @@ interface IL2CrossLayerWitness {
         bytes32[] memory _proof,
         uint64 _mmrSize
     ) external;
-
-    event MessageSent(uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes _message);
-
-    //Send L1 -> L2 message
-    /**
-     * @dev Send message to L1CrossLayerWitness
-     * @param _target EVM call target
-     * @param _message EVM call data
-     * @notice Revert if sender is self
-     */
-    function sendMessage(address _target, bytes calldata _message) external;
 }
