@@ -10,7 +10,8 @@ interface IChallengeFactory {
         uint256 indexed _l2BlockN,
         address indexed _proposer,
         bytes32 _startSystemState,
-        uint256 expireAfterBlock
+        uint256 _expireAfterBlock,
+        address _contract
     );
 
     /**

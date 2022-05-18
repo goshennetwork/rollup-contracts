@@ -53,7 +53,8 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
             _challengedStateInfo.index,
             _challengedStateInfo.proposer,
             _systemStartState,
-            block.number + proposerTimeLimit
+            block.number + proposerTimeLimit,
+            newChallenge
         );
         return true;
     }
