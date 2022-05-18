@@ -6,13 +6,17 @@ interface IStateTransition {
 
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
 
+    /**
+    * @dev Only Challenge factory permitted, because it acts like a button to switch different version of system
+    * @param rollupInputHash RollupInput hash in RollupInputChain
+    * @param blockNumber state's block number in RollupStateChain(same as RollupInputChain)
+    * @param parentBlockHash Parent block's hash
+
+    */
     function generateStartState(
-        uint256 blockNumber,
-        bytes32 parentHash,
-        bytes32 txhash,
-        bytes32 coinbase,
-        uint256 gasLimit,
-        uint256 timestemp
+        bytes32 rollupInputHash,
+        uint64 blockNumber,
+        bytes32 parentBlockHash
     ) external returns (bytes32);
 
     function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external;

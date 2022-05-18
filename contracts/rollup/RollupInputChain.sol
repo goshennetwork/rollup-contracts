@@ -161,6 +161,10 @@ contract RollupInputChain is IRollupInputChain {
         return addressResolver.rollupInputChainContainer().lastTimestamp();
     }
 
+    function getInputHash(uint64 _inputIndex) public view returns (bytes32) {
+        return addressResolver.rollupInputChainContainer().get(_inputIndex);
+    }
+
     function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
         require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
         QueueTxInfo storage info = queuedTxInfos[_queueIndex];

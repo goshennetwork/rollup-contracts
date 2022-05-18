@@ -76,6 +76,10 @@ contract AddressManager is IAddressManager, IAddressResolver, Ownable {
         return IL2CrossLayerWitness(resolve(AddressName.L2_CROSS_LAYER_WITNESS));
     }
 
+    function stateTransition() public view returns (IStateTransition) {
+        return IStateTransition(resolve(AddressName.STATE_TRANSITION));
+    }
+
     function hash(string memory _name) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(_name));
     }

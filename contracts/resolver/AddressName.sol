@@ -20,4 +20,6 @@ library AddressName {
     string constant L1_CROSS_LAYER_WITNESS = "L1CrossLayerWitness";
     ///L2CrossLayerWitness
     string constant L2_CROSS_LAYER_WITNESS = "L2CrossLayerWitness";
+    ///StateTransition
+    string constant STATE_TRANSITION = "StateTransition";
 }

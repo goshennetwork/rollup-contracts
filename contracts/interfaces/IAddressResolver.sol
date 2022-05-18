@@ -39,4 +39,7 @@ interface IAddressResolver {
 
     ///get L2CrossLayerWitness contract address
     function l2CrossLayerWitness() external view returns (IL2CrossLayerWitness);
+
+    ///get StateTransition contract address
+    function stateTransition() external view returns (IStateTransition);
 }
