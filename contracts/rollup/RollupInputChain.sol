@@ -30,8 +30,8 @@ contract RollupInputChain is IRollupInputChain {
 
     constructor(
         address _addressResolver,
-        uint256 _maxTxGasLimit,
-        uint256 _maxCrossLayerTxGasLimit
+        uint64 _maxTxGasLimit,
+        uint64 _maxCrossLayerTxGasLimit
     ) {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
