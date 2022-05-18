@@ -209,32 +209,30 @@ contract Challenge is IChallenge {
     }
 
     function claimChallengerWin(address _challenger, Types.StateInfo memory _stateInfo) external override stage3 {
+        IERC20 token = factory.stakingManager().token();
         if (claimStatus == ClaimStatus.UnClaimed) {
             //if not claimed, then claim
-            uint256 _before = factory.stakingManager().token().balanceOf(address(this));
+            uint256 _before = token.balanceOf(address(this));
             factory.stakingManager().claim(systemInfo.stateInfo.proposer, _stateInfo);
-            uint256 _now = factory.stakingManager().token().balanceOf(address(this));
+            uint256 _now = token.balanceOf(address(this));
             rewardAmount = _now - _before;
             //claim over
             claimStatus = ClaimStatus.Over;
         }
         if (systemInfo.endStep == 0) {
             //not initial.
-            IERC20 token = factory.stakingManager().token();
             uint256 _amount = token.balanceOf(address(this));
             //transfer to creator.
             token.transfer(creator, _amount);
             return;
         }
 
-        (uint256 _nodeKey, bool oneBranch) = disputeTree.getFirstLeafNode(
-            DisputeTree.encodeNodeKey(0, systemInfo.endStep)
-        );
+        uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
+        (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(_rootKey);
         if (oneBranch) {
-            _divideTheCake(_nodeKey, _challenger);
+            _divideTheCake(_nodeKey, _rootKey, _depth, _challenger, token);
         } else {
             //more than one branch
-            IERC20 token = factory.stakingManager().token();
             uint256 _amount = token.balanceOf(address(this));
             //transfer to DAO
             token.transfer(factory.dao(), _amount);
@@ -242,34 +240,20 @@ contract Challenge is IChallenge {
     }
 
     //divide the cake at specific branch provided lowest node address.
-    function _divideTheCake(uint256 _lowestNodeKey, address _challenger) internal {
+    function _divideTheCake(
+        uint256 _lowestNodeKey,
+        uint256 _rootKey,
+        uint64 _depth,
+        address _challenger,
+        IERC20 token
+    ) internal {
         require(lastSelectedNodeKey[_challenger] != 0, "you can't eat cake");
-        IERC20 token = factory.stakingManager().token();
         require(rewardAmount > 0, "no cake");
         uint256 _canWithdraw;
-        uint256 _correctNodeKey = _lowestNodeKey;
-        uint256 _amount = 0;
-        uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
+        uint64 _amount = _depth;
         bool haveDeposited;
-        while (_correctNodeKey != 0) {
-            DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
-            //pay back challenger's deposit
-            if (node.challenger == _challenger) {
-                //only pay back once,because challenger can select different nodes in one branch.
-                haveDeposited = true;
-            }
-            _amount++;
-            uint256 parent = node.parent;
-            if (_correctNodeKey == parent) {
-                //reach the root;
-                break;
-            }
-            _correctNodeKey = parent;
-        }
-        if (haveDeposited) {
-            //pay back
-            _canWithdraw += minChallengerDeposit;
-        }
+        //pay back deposit
+        _canWithdraw += minChallengerDeposit;
         if (_amount == 1) {
             //only root node.pay all reward to it.
             if (_challenger == disputeTree[_rootKey].challenger) {
@@ -280,13 +264,14 @@ contract Challenge is IChallenge {
             // get 5/15,second gainer get 4/15, next gainer get 3/15,next gainer get 2/15,last gainer get 1/15.they eat
             // all cake!but assume there is 64 gainer.the last gainer gain 1/2080, maybe not meet the gas cost he consumes.
             // vi = (i+k) / [n*(n+1)/2 + nk] , k = 10, n = 50, v0 = 10/(25*51+ 500) = 1/355, vn/v0 = 6
-            uint256 _pieces = ((1 + _amount) * _amount) / 2;
-            _correctNodeKey = _lowestNodeKey;
+            uint256 _k = 10;
+            uint256 _pieces = (((1 + _amount) * _amount) / 2) + (_amount * _k);
+            uint256 _correctNodeKey = _lowestNodeKey;
             while (_correctNodeKey != 0) {
                 DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
                 //first pay back,and record the amount of gainer.
                 if (_challenger == node.challenger) {
-                    _canWithdraw += (_amount * rewardAmount) / _pieces;
+                    _canWithdraw += ((_amount + _k) * rewardAmount) / _pieces;
                 }
                 _amount--;
                 if (node.parent == _correctNodeKey) {

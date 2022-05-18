@@ -81,11 +81,17 @@ library DisputeTree {
     function getFirstLeafNode(mapping(uint256 => DisputeNode) storage tree, uint256 _rootKey)
         internal
         view
-        returns (uint256, bool)
+        returns (
+            uint256,
+            uint64,
+            bool
+        )
     {
+        uint64 _depth;
         bool _oneBranch = true;
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
+            _depth++;
             uint128 _stepMid = middle(_stepLower, _stepUpper);
             //now check branch.
             bool _leftChildExist = tree[encodeNodeKey(_stepLower, _stepMid)].parent != 0;
@@ -107,10 +113,11 @@ library DisputeTree {
             }
 
             // no child
-            return (encodeNodeKey(_stepLower, _stepUpper), _oneBranch);
+            return (encodeNodeKey(_stepLower, _stepUpper), _depth, _oneBranch);
         }
+        _depth++;
         //find one step, one step is surely leaf.
-        return (encodeNodeKey(_stepLower, _stepUpper), _oneBranch);
+        return (encodeNodeKey(_stepLower, _stepUpper), _depth, _oneBranch);
     }
 
     function removeSelfBranch(mapping(uint256 => DisputeNode) storage tree, uint256 _leafKey) internal {
