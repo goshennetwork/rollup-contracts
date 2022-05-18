@@ -249,7 +249,7 @@ contract Challenge is IChallenge {
     ) internal {
         require(lastSelectedNodeKey[_challenger] != 0, "you can't eat cake");
         require(rewardAmount > 0, "no cake");
-        uint256 _canWithdraw=minChallengerDeposit;
+        uint256 _canWithdraw = minChallengerDeposit;
         uint64 _amount = _depth;
         //pay back deposit
         if (_amount == 1) {
