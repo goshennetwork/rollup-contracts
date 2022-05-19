@@ -6,7 +6,7 @@ import "./riscv32/Register.sol";
 import "../libraries/BytesSlice.sol";
 import "./riscv32/Syscall.sol";
 
-contract MachineState {
+contract MachineState is IMemory {
     using Memory for mapping(bytes32 => bytes);
     using Register for mapping(bytes32 => bytes);
     using Syscall for mapping(bytes32 => bytes);
