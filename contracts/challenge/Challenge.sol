@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "./DisputeTree.sol";
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
-contract Challenge is IChallenge {
+contract Challenge is IChallenge, Initializable {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
     IChallengeFactory public factory;
@@ -62,6 +64,9 @@ contract Challenge is IChallenge {
         require(msg.sender == systemInfo.stateInfo.proposer, "only proposer");
         _;
     }
+
+    /// @notice invoke this method after upgrades.deployProxy('', [])
+    function initializeUpgradeability() public initializer{}
 
     //when create, creator should deposit at this contract.
     function create(
