@@ -130,7 +130,10 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContext {
         // withdrawals. safeTransferFrom also checks if the contract has code, so this will fail if
         // _from is an EOA or address(0).
         // slither-disable-next-line reentrancy-events, reentrancy-benign
+        uint256 _origin = IERC20(_l1Token).balanceOf(address(this));
         IERC20(_l1Token).safeTransferFrom(_from, address(this), _amount);
+        uint256 _current = IERC20(_l1Token).balanceOf(address(this));
+        _amount = _current - _origin;
 
         // Construct calldata for _l2Token.finalizeDeposit(_to, _amount)
         bytes memory message = abi.encodeWithSelector(
