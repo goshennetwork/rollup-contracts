@@ -66,7 +66,7 @@ contract Challenge is IChallenge, Initializable {
     }
 
     /// @notice invoke this method after upgrades.deployProxy('', [])
-    function initializeUpgradeability() public initializer{}
+    function initializeUpgradeability() public initializer {}
 
     //when create, creator should deposit at this contract.
     function create(

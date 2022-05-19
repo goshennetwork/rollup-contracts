@@ -80,7 +80,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
     }
 
     function blockMessage(bytes32[] memory _messageHashes) public {
-        require(msg.sender == addressResolver.dao(), "only dao allowed");
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = true;
         }
@@ -88,7 +88,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
     }
 
     function allowMessage(bytes32[] memory _messageHashes) public {
-        require(msg.sender == addressResolver.dao(), "only dao allowed");
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = false;
         }

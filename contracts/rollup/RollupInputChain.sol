@@ -95,6 +95,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
     // batchLeftTimeDiff([]uint32) + batchesData
     function appendBatch() public {
+        require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
         uint64 _queueNum;
@@ -107,7 +108,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        uint64 _batchDataPos = 4 + 8 + 8; //4byte function selector, 2 uint64
+        uint64 _batchDataPos = 4 + 8 + 8;
+        //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         //check sequencer timestamp
         uint64 _batchNum;
