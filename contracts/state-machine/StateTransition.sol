@@ -32,15 +32,12 @@ contract StateTransition is IStateTransition {
     }
 
     function generateStartState(
-        uint256 blockNumber,
-        bytes32 parentHash,
-        bytes32 txhash,
-        bytes32 coinbase,
-        uint256 gasLimit,
-        uint256 timestemp
+        bytes32 rollupInputHash,
+        uint64 blockNumber,
+        bytes32 parentBlockHash
     ) external returns (bytes32) {
         require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
-        bytes32 inputHash = keccak256(abi.encodePacked(blockNumber, parentHash, txhash, coinbase, gasLimit, timestemp));
+        bytes32 inputHash = keccak256(abi.encodePacked(rollupInputHash, parentBlockHash));
         if (upgradeHeight > 0 && blockNumber >= upgradeHeight) {
             imageStateRoot = pendingImageStateRoot;
             upgradeHeight = 0;

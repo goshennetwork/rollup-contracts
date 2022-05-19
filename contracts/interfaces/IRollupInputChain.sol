@@ -63,5 +63,8 @@ interface IRollupInputChain {
     ///@return lastTimeStamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
 
+    ///@return input hash related input index in rollup input chain.
+    function getInputHash(uint64 _inputIndex) external view returns (bytes32);
+
     function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
 }
