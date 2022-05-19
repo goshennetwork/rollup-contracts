@@ -11,7 +11,7 @@ contract ChallengeFactory is IChallengeFactory {
     IAddressResolver resolver;
     IChallenge challenge;
     uint256 immutable proposerTimeLimit;
-    address beacon;
+    address public override beacon;
     //fixme: flows need more evaluation.
     uint256 public constant minChallengerDeposit = 0.1 ether;
 
