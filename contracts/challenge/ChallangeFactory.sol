@@ -6,8 +6,9 @@ import "./Challenge.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 contract ChallengeFactory is IChallengeFactory {
+    using Types for Types.StateInfo;
     mapping(address => bool) contracts;
-    mapping(uint64 => address) challengedStates;
+    mapping(bytes32 => address) challengedStates;
     IAddressResolver resolver;
     IChallenge challenge;
     uint256 immutable proposerTimeLimit;
@@ -24,12 +25,13 @@ contract ChallengeFactory is IChallengeFactory {
         //when create, creator should deposit at this contract.
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
-    ) public returns (bool) {
-        require(challengedStates[_challengedStateInfo.index] == address(0), "already challenged");
+    ) public {
+        bytes32 _hash = _challengedStateInfo.hash();
+        require(challengedStates[_hash] != address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
-        require(resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
+        require(!resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
-        require(resolver.rollupStateChain().isStateConfirmed(_parentStateInfo), "state confirmed");
+        require(!resolver.rollupStateChain().isStateConfirmed(_parentStateInfo), "state confirmed");
         require(_parentStateInfo.index + 1 == _challengedStateInfo.index, "wrong parent stateInfo");
         bytes32 _inputHash = resolver.rollupInputChain().getInputHash(_challengedStateInfo.index);
         bytes32 _systemStartState = resolver.stateTransition().generateStartState(
@@ -40,7 +42,7 @@ contract ChallengeFactory is IChallengeFactory {
         bytes memory _data;
         address newChallenge = address(new BeaconProxy(beacon, _data));
         contracts[newChallenge] = true;
-        challengedStates[_challengedStateInfo.index] = newChallenge;
+        challengedStates[_hash] = newChallenge;
         IChallenge(newChallenge).create(
             _challengedStateInfo.index,
             _systemStartState,
@@ -56,11 +58,10 @@ contract ChallengeFactory is IChallengeFactory {
             block.number + proposerTimeLimit,
             newChallenge
         );
-        return true;
     }
 
-    function getChallengedContract(uint64 _stateIndex) public view returns (address) {
-        address _c = challengedStates[_stateIndex];
+    function getChallengedContract(bytes32 _stateInfoHash) public view returns (address) {
+        address _c = challengedStates[_stateInfoHash];
         require(_c != address(0), "not challenged");
         return _c;
     }

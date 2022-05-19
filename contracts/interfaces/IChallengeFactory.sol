@@ -22,15 +22,13 @@ interface IChallengeFactory {
      * 1.There exist challenge with challenged state
      * 2.Provide wrong state info
      * 3.token transfer failed
-     * @return true if create challenge success
      */
     function newChallange(Types.StateInfo memory _challengedStateInfo, Types.StateInfo memory _parentStateInfo)
-        external
-        returns (bool);
+        external;
 
     ///@return Challenge contract address
     ///@notice revert if not exist challenge to given stateIndex
-    function getChallengedContract(uint64 _stateIndex) external view returns (address);
+    function getChallengedContract(bytes32 _stateInfoHash) external view returns (address);
 
     ///@return StakingManager
     function stakingManager() external view returns (IStakingManager);
