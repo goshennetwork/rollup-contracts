@@ -8,8 +8,9 @@ import "../MemoryLayout.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./Syscall.sol";
 import "../../libraries/console.sol";
+import "../../interfaces/IInterpretor.sol";
 
-contract Interpretor {
+contract Interpretor is IInterpretor {
     MachineState public mstate;
 
     constructor(address state) {

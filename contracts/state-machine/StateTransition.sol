@@ -1,24 +1,34 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
-import "../interfaces/IMemory.sol";
+import "../interfaces/IMachineState.sol";
 import "./MemoryLayout.sol";
 import "../interfaces/IStateTransition.sol";
 import "../interfaces/IAddressResolver.sol";
+import "./MachineState.sol";
+import "../interfaces/IInterpretor.sol";
+import "./riscv32/Interpretor.sol";
 
 contract StateTransition is IStateTransition {
-    using MemoryLayout for IMemory;
+    using MemoryLayout for IMachineState;
+    IMachineState public mstate;
+    IInterpretor interpretor;
     bytes32 public imageStateRoot;
-    IMemory public riscvMem;
     uint256 public upgradeHeight;
     bytes32 public pendingImageStateRoot;
     IAddressResolver public resolver;
 
     event UpgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot);
 
-    constructor(bytes32 _imageStateRoot, IAddressResolver _resolver) {
+    constructor(
+        bytes32 _imageStateRoot,
+        IAddressResolver _resolver,
+        IMachineState _mstate
+    ) {
         imageStateRoot = _imageStateRoot;
         resolver = _resolver;
+        mstate = _mstate;
+        interpretor = new Interpretor(address(_mstate));
     }
 
     function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
@@ -43,18 +53,16 @@ contract StateTransition is IStateTransition {
             upgradeHeight = 0;
             pendingImageStateRoot = bytes32(0);
         }
-        return riscvMem.writeInput(imageStateRoot, inputHash);
+        return mstate.writeInput(imageStateRoot, inputHash);
     }
 
     function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external view {
-        require(riscvMem.isHalt(finalState) == true, "not halted");
-        require(riscvMem.mustReadOutput(finalState) == outputRoot, "mismatch root");
+        require(mstate.isHalt(finalState) == true, "not halted");
+        require(mstate.mustReadOutput(finalState) == outputRoot, "mismatch root");
     }
 
-    function executeNextStep(bytes32 stateHash) external pure returns (bytes32 nextStateHash) {
-        //fix warning
-        stateHash;
-        nextStateHash;
-        revert("todo");
+    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
+        (nextStateHash, ) = interpretor.step(stateHash);
+        return nextStateHash;
     }
 }
