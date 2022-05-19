@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../interfaces/ICrossLayerWitness.sol";
 
-contract CrossLayerContext {
+contract CrossLayerContext is Initializable{
     ICrossLayerWitness public crossLayerWitness;
 
-    constructor(address _witness) {
+    function initialize(address _witness) public initializer {
         crossLayerWitness = ICrossLayerWitness(_witness);
     }
 

@@ -26,7 +26,8 @@ import "../interfaces/IL2StandardERC20.sol";
 contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContext {
     address public l1TokenBridge;
 
-    constructor(address _l2witness, address _l1TokenBridge) CrossLayerContext(_l2witness) {
+    function initialize(address _l2witness, address _l1TokenBridge) public {
+        CrossLayerContext.initialize(_l2witness);
         l1TokenBridge = _l1TokenBridge;
     }
 
@@ -144,7 +145,7 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContext {
     ) external virtual ensureCrossLayerSender(l1TokenBridge) {
         require(address(this).balance >= _amount, "ETH not enough");
         // slither-disable-next-line reentrancy-events
-        (bool success, ) = _to.call{ value: _amount }(new bytes(0));
+        (bool success,) = _to.call{value : _amount}(new bytes(0));
         require(success, "ETH transfer failed");
 
         emit DepositFinalized(address(0), address(0), _from, _to, _amount, _data);
@@ -161,7 +162,7 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContext {
         // Check the target token is compliant and
         // verify the deposited token on L1 matches the L2 deposited token representation here
         if (
-            // slither-disable-next-line reentrancy-events
+        // slither-disable-next-line reentrancy-events
             ERC165Checker.supportsInterface(_l2Token, 0x1d1d8b63) && _l1Token == IL2StandardERC20(_l2Token).l1Token()
         ) {
             // When a deposit is finalized, we credit the account on L2 with the same amount of

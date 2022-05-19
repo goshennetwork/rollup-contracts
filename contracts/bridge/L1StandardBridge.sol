@@ -28,13 +28,9 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContext {
     // Maps L1 token to L2 token to balance of the L1 token deposited
     mapping(address => mapping(address => uint256)) public deposits;
 
-    // This contract lives behind a proxy, so the constructor parameters will go unused.
-    constructor() CrossLayerContext(address(0)) {}
-
     // slither-disable-next-line external-function
     function initialize(address _l1witness, address _l2TokenBridge) public {
-        require(address(crossLayerWitness) == address(0), "already initialized.");
-        crossLayerWitness = ICrossLayerWitness(_l1witness);
+        CrossLayerContext.initialize(_l1witness);
         l2TokenBridge = _l2TokenBridge;
     }
 
@@ -164,7 +160,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContext {
         bytes calldata _data
     ) external ensureCrossLayerSender(l2TokenBridge) {
         // slither-disable-next-line reentrancy-events
-        (bool success, ) = _to.call{ value: _amount }(new bytes(0));
+        (bool success,) = _to.call{value : _amount}(new bytes(0));
         require(success, "ETH transfer failed");
 
         // slither-disable-next-line reentrancy-events
