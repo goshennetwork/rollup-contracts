@@ -3,21 +3,21 @@ pragma solidity ^0.8.0;
 import "../interfaces/IChallengeFactory.sol";
 import "../interfaces/IAddressResolver.sol";
 import "./Challenge.sol";
-import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
-contract ChallengeFactory is IChallengeFactory, IBeacon {
+contract ChallengeFactory is IChallengeFactory {
     mapping(address => bool) contracts;
     mapping(uint64 => address) challengedStates;
     IAddressResolver resolver;
     IChallenge challenge;
     uint256 immutable proposerTimeLimit;
+    address beacon;
     //fixme: flows need more evaluation.
     uint256 public constant minChallengerDeposit = 0.1 ether;
 
-    constructor(uint256 _proposerTimeLimit) {
+    constructor(address _beacon, uint256 _proposerTimeLimit) {
+        beacon = _beacon;
         proposerTimeLimit = _proposerTimeLimit;
-        challenge = new Challenge();
     }
 
     function newChallange(
@@ -38,7 +38,7 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
             _parentStateInfo.blockHash
         );
         bytes memory _data;
-        address newChallenge = address(new BeaconProxy(address(this), _data));
+        address newChallenge = address(new BeaconProxy(beacon, _data));
         contracts[newChallenge] = true;
         challengedStates[_challengedStateInfo.index] = newChallenge;
         IChallenge(newChallenge).create(
@@ -63,10 +63,6 @@ contract ChallengeFactory is IChallengeFactory, IBeacon {
         address _c = challengedStates[_stateIndex];
         require(_c != address(0), "not challenged");
         return _c;
-    }
-
-    function implementation() public view returns (address) {
-        return address(challenge);
     }
 
     function stakingManager() public view returns (IStakingManager) {
