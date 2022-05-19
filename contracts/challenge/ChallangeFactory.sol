@@ -31,7 +31,6 @@ contract ChallengeFactory is IChallengeFactory {
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
         require(!resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
-        require(!resolver.rollupStateChain().isStateConfirmed(_parentStateInfo), "state confirmed");
         require(_parentStateInfo.index + 1 == _challengedStateInfo.index, "wrong parent stateInfo");
         bytes32 _inputHash = resolver.rollupInputChain().getInputHash(_challengedStateInfo.index);
         bytes32 _systemStartState = resolver.stateTransition().generateStartState(
