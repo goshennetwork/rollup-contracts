@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
-interface IMemory {
+interface IMachineState {
+    function insertTrieNode(bytes calldata _node) external;
+
+    function preimage(bytes32 _hash) external view returns (bytes memory _ret, uint32 _len);
+
+    function preimageAt(bytes32 _hash, uint32 pos) external view returns (uint32);
+
     function writeMemory(
         bytes32 root,
         uint32 ptr,
@@ -30,6 +36,12 @@ interface IMemory {
         bytes32 root,
         uint32 ptr,
         bytes32 val
+    ) external returns (bytes32);
+
+    function writeMemoryAddr(
+        bytes32 root,
+        uint32 ptr,
+        address val
     ) external returns (bytes32);
 
     function readMemoryBytes2(bytes32 root, uint32 ptr) external view returns (bytes2);
@@ -71,4 +83,12 @@ interface IMemory {
     function writeInput(bytes32 root, bytes32 hash) external returns (bytes32);
 
     function readInput(bytes32 root) external view returns (bytes32);
+
+    function genReservedKey(uint32 addr) external pure returns (bytes memory);
+
+    function lr(bytes32 root, uint32 addr) external returns (bytes32);
+
+    function sc(bytes32 root, uint32 addr) external returns (bytes32);
+
+    function isReserved(bytes32 root, uint32 addr) external view returns (bool);
 }

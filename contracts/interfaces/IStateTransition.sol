@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 interface IStateTransition {
     function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) external;
 
-    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
-
     /**
     * @dev Only Challenge factory permitted, because it acts like a button to switch different version of system
     * @param rollupInputHash RollupInput hash in RollupInputChain
@@ -19,5 +17,9 @@ interface IStateTransition {
         bytes32 parentBlockHash
     ) external returns (bytes32);
 
+    ///@dev validate final state, revert if final state is not halt or output inconsistent root
     function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external;
+
+    ///@dev Exec one step transition
+    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
 }
