@@ -64,7 +64,7 @@ contract StateTransition is IStateTransition, Initializable {
     }
 
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
-        (nextStateHash,) = interpretor.step(stateHash);
+        (nextStateHash, ) = interpretor.step(stateHash);
         return nextStateHash;
     }
 }

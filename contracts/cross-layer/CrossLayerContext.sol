@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "../interfaces/ICrossLayerWitness.sol";
 
-contract CrossLayerContext is Initializable{
+contract CrossLayerContext is Initializable {
     ICrossLayerWitness public crossLayerWitness;
 
     function initialize(address _witness) public initializer {

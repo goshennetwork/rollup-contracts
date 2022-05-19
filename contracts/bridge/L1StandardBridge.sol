@@ -160,7 +160,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContext {
         bytes calldata _data
     ) external ensureCrossLayerSender(l2TokenBridge) {
         // slither-disable-next-line reentrancy-events
-        (bool success,) = _to.call{value : _amount}(new bytes(0));
+        (bool success, ) = _to.call{ value: _amount }(new bytes(0));
         require(success, "ETH transfer failed");
 
         // slither-disable-next-line reentrancy-events

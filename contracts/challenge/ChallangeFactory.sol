@@ -1,22 +1,24 @@
+// SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
 import "../interfaces/IChallengeFactory.sol";
 import "../interfaces/IAddressResolver.sol";
 import "./Challenge.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract ChallengeFactory is IChallengeFactory {
+contract ChallengeFactory is IChallengeFactory, Initializable {
     using Types for Types.StateInfo;
     mapping(address => bool) contracts;
     mapping(bytes32 => address) challengedStates;
     IAddressResolver resolver;
     IChallenge challenge;
-    uint256 immutable proposerTimeLimit;
+    uint256 proposerTimeLimit;
     address public override beacon;
     //fixme: flows need more evaluation.
     uint256 public constant minChallengerDeposit = 0.1 ether;
 
-    constructor(address _beacon, uint256 _proposerTimeLimit) {
+    function initialize(address _beacon, uint256 _proposerTimeLimit) public initializer {
         beacon = _beacon;
         proposerTimeLimit = _proposerTimeLimit;
     }
@@ -26,6 +28,7 @@ contract ChallengeFactory is IChallengeFactory {
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
     ) public {
+        require(resolver.dao().challengerWhitelist(msg.sender), "only challenger");
         bytes32 _hash = _challengedStateInfo.hash();
         require(challengedStates[_hash] != address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
@@ -43,7 +46,6 @@ contract ChallengeFactory is IChallengeFactory {
         contracts[newChallenge] = true;
         challengedStates[_hash] = newChallenge;
         IChallenge(newChallenge).create(
-            _challengedStateInfo.index,
             _systemStartState,
             msg.sender,
             proposerTimeLimit,
@@ -78,7 +80,7 @@ contract ChallengeFactory is IChallengeFactory {
     }
 
     function dao() public view returns (address) {
-        return resolver.dao();
+        return address(resolver.dao());
     }
 
     function isChallengeContract(address _addr) public view returns (bool) {

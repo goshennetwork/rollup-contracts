@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
@@ -34,7 +35,6 @@ interface IChallenge {
 
     /**
      * @dev Create challenge by challengeFactory.guarantee the info provided true.
-     * @param _blockN Challenged l2 block number.
      * @param _systemStartState System initial state of program, calculated by executor.
      * @param _creator Challenger who start challenge.
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
@@ -43,7 +43,6 @@ interface IChallenge {
      * @notice revert when transfer failed
      */
     function create(
-        uint256 _blockN,
         bytes32 _systemStartState,
         address _creator,
         uint256 _proposerTimeLimit,
