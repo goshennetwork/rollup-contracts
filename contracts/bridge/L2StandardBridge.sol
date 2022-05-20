@@ -26,7 +26,8 @@ import "../interfaces/IL2StandardERC20.sol";
 contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContext {
     address public l1TokenBridge;
 
-    constructor(address _l2witness, address _l1TokenBridge) CrossLayerContext(_l2witness) {
+    function initialize(address _l2witness, address _l1TokenBridge) public {
+        CrossLayerContext.initialize(_l2witness);
         l1TokenBridge = _l1TokenBridge;
     }
 

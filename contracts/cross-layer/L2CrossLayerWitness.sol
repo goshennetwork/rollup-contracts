@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../libraries/Constants.sol";
 import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL2CrossLayerWitness.sol";
 import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
-contract L2CrossLayerWitness is IL2CrossLayerWitness {
+contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
     using MerkleMountainRange for CompactMerkleTree;
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
     mapping(uint64 => bytes32) public mmrRoots;
     address private crossLayerMsgSender;
+
+    function initialize() public initializer {}
 
     function crossLayerSender() external view returns (address) {
         require(crossLayerMsgSender != address(0), "no cross layer sender");

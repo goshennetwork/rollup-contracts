@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import "../libraries/Types.sol";
 import "../interfaces/IStakingManager.sol";
 import "../interfaces/IRollupInputChain.sol";
@@ -8,7 +10,7 @@ import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
 
-contract RollupInputChain is IRollupInputChain {
+contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
@@ -28,11 +30,11 @@ contract RollupInputChain is IRollupInputChain {
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
 
-    constructor(
+    function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
         uint64 _maxCrossLayerTxGasLimit
-    ) {
+    ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
@@ -93,6 +95,7 @@ contract RollupInputChain is IRollupInputChain {
     // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
     // batchLeftTimeDiff([]uint32) + batchesData
     function appendBatch() public {
+        require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
         uint64 _queueNum;
@@ -105,7 +108,8 @@ contract RollupInputChain is IRollupInputChain {
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        uint64 _batchDataPos = 4 + 8 + 8; //4byte function selector, 2 uint64
+        uint64 _batchDataPos = 4 + 8 + 8;
+        //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         //check sequencer timestamp
         uint64 _batchNum;

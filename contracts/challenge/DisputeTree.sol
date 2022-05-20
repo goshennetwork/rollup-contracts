@@ -26,7 +26,7 @@ library DisputeTree {
         uint128 _stepLower,
         uint128 _stepUpper,
         uint256 _midStep
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         while (_stepUpper - _stepLower > 1) {
             uint128 _stateStep = middle(_stepLower, _stepUpper);
             if (_midStep < _stateStep) {

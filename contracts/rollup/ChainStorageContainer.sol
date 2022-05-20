@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-v3
 pragma solidity ^0.8.0;
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "../interfaces/IChainStorageContainer.sol";
 import "../interfaces/IAddressResolver.sol";
 
-contract ChainStorageContainer is IChainStorageContainer {
+contract ChainStorageContainer is IChainStorageContainer, Initializable {
     IAddressResolver addressResolver;
     bytes32[] chain;
     // the last chain element time stamp, it is simply set with largest timestamp in current input batch.
@@ -13,7 +14,7 @@ contract ChainStorageContainer is IChainStorageContainer {
     //who can change the state of this container
     string owner;
 
-    constructor(string memory _owner, address _addressResolver) {
+    function initialize(string memory _owner, address _addressResolver) public initializer {
         owner = _owner;
         addressResolver = IAddressResolver(_addressResolver);
     }

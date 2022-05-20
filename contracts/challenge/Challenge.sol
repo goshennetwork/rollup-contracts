@@ -1,11 +1,14 @@
+// SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
 import "../interfaces/IChallenge.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "./DisputeTree.sol";
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
-contract Challenge is IChallenge {
+contract Challenge is IChallenge, Initializable {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
     IChallengeFactory public factory;
@@ -63,9 +66,11 @@ contract Challenge is IChallenge {
         _;
     }
 
+    /// @notice invoke this method after upgrades.deployProxy('', [])
+    function initializeUpgradeability() public initializer {}
+
     //when create, creator should deposit at this contract.
     function create(
-        uint256 _blockN,
         bytes32 _systemStartState,
         address _creator,
         uint256 _proposerTimeLimit,
@@ -232,7 +237,7 @@ contract Challenge is IChallenge {
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
         (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(_rootKey);
         if (oneBranch) {
-            _divideTheCake(_nodeKey, _rootKey, _depth, _challenger, token);
+            _divideTheCake(_nodeKey, _depth, _challenger, token);
         } else {
             //more than one branch
             uint256 _amount = token.balanceOf(address(this));
@@ -244,7 +249,6 @@ contract Challenge is IChallenge {
     //divide the cake at specific branch provided lowest node address.
     function _divideTheCake(
         uint256 _lowestNodeKey,
-        uint256 _rootKey,
         uint64 _depth,
         address _challenger,
         IERC20 token

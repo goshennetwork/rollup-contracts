@@ -7,6 +7,7 @@ import "./IChallengeFactory.sol";
 import "./IRollupInputChain.sol";
 import "./IL1CrossLayerWitness.sol";
 import "./IL2CrossLayerWitness.sol";
+import "./IDAO.sol";
 
 ///@dev resolver only read address
 interface IAddressResolver {
@@ -14,7 +15,7 @@ interface IAddressResolver {
     ///@notice Revert if wanted contract have no address recorded
     function resolve(string memory _name) external view returns (address);
 
-    function dao() external view returns (address);
+    function dao() external view returns (IDAO);
 
     ///Get RollupInputChain contract
     function rollupInputChain() external view returns (IRollupInputChain);
