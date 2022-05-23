@@ -35,7 +35,7 @@ func NewEVM() *evm.EVM {
 		return h
 	}
 	caccheDB := storage.NewCacheDB(overlaydb.NewOverlayDB(storage.NewFakeDB()))
-	statedb := storage.NewStateDB(caccheDB, web3.Hash{}, web3.Hash{})
+	statedb := storage.NewStateDB(caccheDB)
 	ctx := executor.NewEVMBlockContext(0, uint64(time.Now().Unix()), hashFn)
 	vmenv := evm.NewEVM(ctx, evm.TxContext{}, statedb, params.MainnetChainConfig, evm.Config{})
 	return vmenv

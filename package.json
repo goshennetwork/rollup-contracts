@@ -9,7 +9,8 @@
     "format": "prettier --write 'contracts/**/*.sol'",
     "format-lint": "prettier --list-different 'contracts/**/*.sol'",
     "solhint": "solhint 'contracts/**/*.sol'",
-    "abi": "abigen --name test --output tests/contracts/build/ --package build --source out/AddressManager.sol/*,out/ChainStorageContainer.sol/*,out/ERC20.sol/*,out/RollupInputChain.sol/*,out/RollupStateChain.sol/*,out/StakingManager.sol/*"
+    "abi": "abigen --name test --output tests/contracts/build/ --package build --source out/AddressManager.sol/*,out/ChainStorageContainer.sol/*,out/ERC20.sol/*,out/RollupInputChain.sol/*,out/RollupStateChain.sol/*,out/StakingManager.sol/*",
+    "abigen": "bash scripts/abigen.bash"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",
