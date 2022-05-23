@@ -10,6 +10,8 @@ L2CrossLayerWitness.sol/*
 RollupInputChain.sol/*
 RollupStateChain.sol/*
 StakingManager.sol/*
+TestERC20.sol/*
+ChallengeFactory.sol/*
 "
 prefix="out/"
 for file in $files ; do

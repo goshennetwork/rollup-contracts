@@ -28,8 +28,8 @@ type ChainStorageContainer struct {
 }
 
 // DeployChainStorageContainer deploys a new ChainStorageContainer contract
-func DeployChainStorageContainer(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiChainStorageContainer, binChainStorageContainer, args...)
+func DeployChainStorageContainer(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiChainStorageContainer, binChainStorageContainer)
 }
 
 // NewChainStorageContainer creates a new instance of the contract at a specific address
@@ -108,6 +108,11 @@ func (_a *ChainStorageContainer) Append(element [32]byte) *contract.Txn {
 	return _a.c.Txn("append", element)
 }
 
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *ChainStorageContainer) Initialize(owner string, addressResolver web3.Address) *contract.Txn {
+	return _a.c.Txn("initialize", owner, addressResolver)
+}
+
 // Resize sends a resize transaction in the solidity contract
 func (_a *ChainStorageContainer) Resize(newSize uint64) *contract.Txn {
 	return _a.c.Txn("resize", newSize)
@@ -119,3 +124,39 @@ func (_a *ChainStorageContainer) SetLastTimestamp(timestamp uint64) *contract.Tx
 }
 
 // events
+
+func (_a *ChainStorageContainer) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *ChainStorageContainer) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}

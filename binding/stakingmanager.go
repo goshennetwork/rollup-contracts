@@ -28,8 +28,8 @@ type StakingManager struct {
 }
 
 // DeployStakingManager deploys a new StakingManager contract
-func DeployStakingManager(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiStakingManager, binStakingManager, args...)
+func DeployStakingManager(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiStakingManager, binStakingManager)
 }
 
 // NewStakingManager creates a new instance of the contract at a specific address
@@ -140,6 +140,11 @@ func (_a *StakingManager) Deposit() *contract.Txn {
 // FinalizeWithdrawal sends a finalizeWithdrawal transaction in the solidity contract
 func (_a *StakingManager) FinalizeWithdrawal(stateInfo StateInfo) *contract.Txn {
 	return _a.c.Txn("finalizeWithdrawal", stateInfo)
+}
+
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *StakingManager) Initialize(DAOAddress web3.Address, challengeFactory web3.Address, rollupStateChain web3.Address, erc20 web3.Address, price *big.Int) *contract.Txn {
+	return _a.c.Txn("initialize", DAOAddress, challengeFactory, rollupStateChain, erc20, price)
 }
 
 // Slash sends a slash transaction in the solidity contract
@@ -283,6 +288,44 @@ func (_a *StakingManager) FilterDepositedEvent(proposer []web3.Address, startBlo
 			return nil, err
 		}
 		var evtItem DepositedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
+func (_a *StakingManager) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *StakingManager) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

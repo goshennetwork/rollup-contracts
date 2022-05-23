@@ -18,6 +18,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
 
+    uint64 public override lastTimestamp;
+
     IAddressResolver addressResolver;
 
     //store L1 -> L2 tx
@@ -122,7 +124,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         assembly {
             _timestamp := shr(192, calldataload(_batchDataPos))
         }
-        require(_timestamp > _chain.lastTimestamp() && _timestamp < block.timestamp, "wrong batch timestamp");
+        require(_timestamp > lastTimestamp && _timestamp < block.timestamp, "wrong batch timestamp");
         _batchDataPos += 8;
         for (uint64 i = 1; i < _batchNum; i++) {
             uint32 _timediff;
@@ -148,7 +150,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         //input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
         _chain.append(inputHash);
-        _chain.setLastTimestamp(_timestamp);
+        lastTimestamp = _timestamp;
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1, inputHash);
     }
 
@@ -158,10 +160,6 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     function totalQueue() public view returns (uint64) {
         return uint64(queuedTxInfos.length);
-    }
-
-    function lastTimestamp() public view returns (uint64) {
-        return addressResolver.rollupInputChainContainer().lastTimestamp();
     }
 
     function getInputHash(uint64 _inputIndex) public view returns (bytes32) {

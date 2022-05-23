@@ -1,5 +1,23 @@
 {
   "definitions": {
+    "AddressSetEvent": {
+      "Name": "AddressSetEvent",
+      "Fields": [
+        {
+          "Name": "_name",
+          "Type": "string"
+        },
+        {
+          "Name": "_old",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_new",
+          "Type": "web3.Address"
+        }
+      ],
+      "IsEvent": true
+    },
     "AddressUpdatedEvent": {
       "Name": "AddressUpdatedEvent",
       "Fields": [
@@ -144,6 +162,16 @@
         {
           "Name": "expireAfterBlock",
           "Type": "*big.Int"
+        }
+      ],
+      "IsEvent": true
+    },
+    "InitializedEvent": {
+      "Name": "InitializedEvent",
+      "Fields": [
+        {
+          "Name": "version",
+          "Type": "uint8"
         }
       ],
       "IsEvent": true

@@ -6,15 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/laizy/web3/utils/common"
-
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts/staking"
-
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts/resolver"
-	"gotest.tools/assert"
-
+	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
+	"github.com/ontology-layer-2/rollup-contracts/tests/contracts/resolver"
+	"github.com/ontology-layer-2/rollup-contracts/tests/contracts/staking"
+	"gotest.tools/assert"
 )
 
 func TestEnqueue(t *testing.T) {

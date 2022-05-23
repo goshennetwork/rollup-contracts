@@ -28,8 +28,8 @@ type Challenge struct {
 }
 
 // DeployChallenge deploys a new Challenge contract
-func DeployChallenge(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiChallenge, binChallenge, args...)
+func DeployChallenge(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiChallenge, binChallenge)
 }
 
 // NewChallenge creates a new instance of the contract at a specific address
@@ -161,8 +161,8 @@ func (_a *Challenge) ClaimProposerWin() *contract.Txn {
 }
 
 // Create sends a create transaction in the solidity contract
-func (_a *Challenge) Create(blockN *big.Int, systemStartState [32]byte, creator web3.Address, proposerTimeLimit *big.Int, stateInfo StateInfo) *contract.Txn {
-	return _a.c.Txn("create", blockN, systemStartState, creator, proposerTimeLimit, stateInfo)
+func (_a *Challenge) Create(systemStartState [32]byte, creator web3.Address, proposerTimeLimit *big.Int, stateInfo StateInfo, minChallengerDeposit *big.Int) *contract.Txn {
+	return _a.c.Txn("create", systemStartState, creator, proposerTimeLimit, stateInfo, minChallengerDeposit)
 }
 
 // ExecOneStepTransition sends a execOneStepTransition transaction in the solidity contract
@@ -173,6 +173,11 @@ func (_a *Challenge) ExecOneStepTransition(leafNodeKey *big.Int) *contract.Txn {
 // Initialize sends a initialize transaction in the solidity contract
 func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, midSystemState [32]byte) *contract.Txn {
 	return _a.c.Txn("initialize", endStep, systemEndState, midSystemState)
+}
+
+// InitializeUpgradeability sends a initializeUpgradeability transaction in the solidity contract
+func (_a *Challenge) InitializeUpgradeability() *contract.Txn {
+	return _a.c.Txn("initializeUpgradeability")
 }
 
 // ProposerTimeout sends a proposerTimeout transaction in the solidity contract
@@ -230,54 +235,6 @@ func (_a *Challenge) FilterChallengeInitializedEvent(startBlock uint64, endBlock
 	return res, nil
 }
 
-var ChallengeStartedEventID = crypto.Keccak256Hash([]byte("ChallengeStarted(uint256,address,bytes32,bytes32,uint256)"))
-
-func (_a *Challenge) ChallengeStartedTopicFilter(l2BlockN []*big.Int, proposer []web3.Address) [][]web3.Hash {
-
-	var l2BlockNRule []interface{}
-	for _, _l2BlockNItem := range l2BlockN {
-		l2BlockNRule = append(l2BlockNRule, _l2BlockNItem)
-	}
-
-	var proposerRule []interface{}
-	for _, _proposerItem := range proposer {
-		proposerRule = append(proposerRule, _proposerItem)
-	}
-
-	var query [][]interface{}
-	query = append(query, []interface{}{ChallengeStartedEventID}, l2BlockNRule, proposerRule)
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *Challenge) FilterChallengeStartedEvent(l2BlockN []*big.Int, proposer []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ChallengeStartedEvent, error) {
-	topic := _a.ChallengeStartedTopicFilter(l2BlockN, proposer)
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*ChallengeStartedEvent, 0)
-	evts := _a.c.Abi.Events["ChallengeStarted"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem ChallengeStartedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
 var DisputeBranchSelectedEventID = crypto.Keccak256Hash([]byte("DisputeBranchSelected(address,uint256[],uint256)"))
 
 func (_a *Challenge) DisputeBranchSelectedTopicFilter(challenger []web3.Address) [][]web3.Hash {
@@ -311,6 +268,42 @@ func (_a *Challenge) FilterDisputeBranchSelectedEvent(challenger []web3.Address,
 			return nil, err
 		}
 		var evtItem DisputeBranchSelectedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+func (_a *Challenge) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *Challenge) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

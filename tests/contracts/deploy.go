@@ -2,9 +2,11 @@ package contracts
 
 import (
 	"fmt"
-	"github.com/laizy/web3/utils"
+	"math/big"
 
+	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
+	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 )
 
@@ -12,17 +14,73 @@ type ChainEnv struct {
 	ChainId           uint64
 	RpcUrl            string
 	PrivKey           string
+	L1ChainConfig *L1ChainConfig
+}
+
+type L1ChainConfig struct {
+	FeeToken web3.Address
+	FraudProofWindow uint64 // block number
+	MaxEnqueueTxGasLimit uint64
+	MaxCrossLayerTxGasLimit uint64
 }
 
 type L1Contracts struct {
 	AddressManager *binding.AddressManager
 	InputChainStorage *binding.ChainStorageContainer
 	StateChainStorage *binding.ChainStorageContainer
-	RollupInputChain *binding.ChainStorageContainer
-	RollupStateChain *binding.ChainStorageContainer
+	RollupInputChain *binding.RollupInputChain
+	RollupStateChain *binding.RollupStateChain
+	L1CrossLayerWitness *binding.L1CrossLayerWitness
+	TestFeeToken *binding.TestERC20
 }
 
-func DeployL1Contract(signer *contract.Signer) *L1Contracts {
+func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
+	maxCrossLayerTxGasLimit uint64 )*binding.RollupInputChain {
+	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
+	rollupInputChain.Contract().SetFrom(signer.Address())
+	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxCrossLayerTxGasLimit).Sign(signer).SendTransaction(signer)
+
+	return rollupInputChain
+}
+
+func DeployRollupStateChain(signer *contract.Signer, addrMan web3.Address, fraudProofWindow uint64) *binding.RollupStateChain {
+	receipt := binding.DeployRollupStateChain(signer.Client, signer.Address(), ).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	rollupStateChain := binding.NewRollupStateChain(receipt.ContractAddress, signer.Client)
+	rollupStateChain.Contract().SetFrom(signer.Address())
+	rollupStateChain.Initialize(addrMan, big.NewInt(0).SetUint64(fraudProofWindow)).Sign(signer).SendTransaction(signer)
+
+	return rollupStateChain
+}
+
+func DeployChainStorage(signer *contract.Signer, addrMan web3.Address, owner string) *binding.ChainStorageContainer {
+	receipt := binding.DeployChainStorageContainer(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	fmt.Printf("deploy chain storage, owner: %s, address:%s\n", owner, receipt.ContractAddress.String())
+	chainStorage := binding.NewChainStorageContainer(receipt.ContractAddress, signer.Client)
+	chainStorage.Contract().SetFrom(signer.Address())
+	chainStorage.Initialize(owner, addrMan).Sign(signer).SendTransaction(signer)
+	fmt.Println("initialized chain storage")
+
+	return chainStorage
+}
+
+func DeployL1CrossLayerWitness(signer *contract.Signer, addrMan web3.Address) *binding.L1CrossLayerWitness {
+	receipt := binding.DeployL1CrossLayerWitness(signer.Client, signer.Address()).
+		Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	fmt.Println("deploy l1 cross layer witness, address:", receipt.ContractAddress.String())
+	l1CrossLayerWitness := binding.NewL1CrossLayerWitness(receipt.ContractAddress, signer.Client)
+	l1CrossLayerWitness.Contract().SetFrom(signer.Address())
+	l1CrossLayerWitness.Initialize(addrMan).Sign(signer).SendTransaction(signer)
+
+	return l1CrossLayerWitness
+}
+
+// TODO: using proxy
+func DeployL1Contract(signer *contract.Signer, cfg *L1ChainConfig) *L1Contracts {
 	client := signer.Client
 	// deploy address manager
 	receipt := binding.DeployAddressManager(client, signer.Address()).Sign(signer).SendTransaction(signer)
@@ -31,29 +89,27 @@ func DeployL1Contract(signer *contract.Signer) *L1Contracts {
 
 	addrMan := binding.NewAddressManager(receipt.ContractAddress, signer.Client)
 	addrMan.Contract().SetFrom(signer.Address())
+	utils.EnsureTrue(1 ==addrMan.Initialize().Sign(signer).SendTransaction(signer).Status)
 
-	receipt = binding.DeployChainStorageContainer(client, signer.Address(), "RollupInputChain", addrMan.Contract().Addr()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
-	inputChainContainer := binding.NewChainStorageContainer(receipt.ContractAddress, client)
-	inputChainContainer.Contract().SetFrom(signer.Address())
-	fmt.Println("deploy input chain storage, address:", receipt.ContractAddress.String())
-	receipt = binding.DeployChainStorageContainer(client, signer.Address(), "RollupStateChain", addrMan.Contract().Addr()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
-	stateChainContainer := binding.NewChainStorageContainer(receipt.ContractAddress, client)
-	stateChainContainer.Contract().SetFrom(signer.Address())
-	fmt.Println("deploy state chain storage, address:", receipt.ContractAddress.String())
+	l1CrossLayerWitness := DeployL1CrossLayerWitness(signer, addrMan.Contract().Addr())
+	addrMan.SetAddress("L1CrossLayerWitness", l1CrossLayerWitness.Contract().Addr())
 
-	addrMan.NewAddr("RollupInputChainContainer", inputChainContainer.Contract().Addr())
-	addrMan.NewAddr("RollupStateChainContainer", stateChainContainer.Contract().Addr())
+	inputChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupInputChain")
+	stateChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupStateChain")
+	addrMan.SetAddress("RollupInputChainContainer", inputChainContainer.Contract().Addr())
+	addrMan.SetAddress("RollupStateChainContainer", stateChainContainer.Contract().Addr())
 
-	receipt = binding.DeployRollupInputChain(client, signer.Address(), "RollupInputChain", addrMan.Contract().Addr()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
-	inputChainContainer := binding.NewChainStorageContainer(receipt.ContractAddress, client)
-	inputChainContainer.Contract().SetFrom(signer.Address())
+	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit,
+		cfg.MaxCrossLayerTxGasLimit)
+	rollupStateChain := DeployRollupStateChain(signer, addrMan.Contract().Addr(), cfg.FraudProofWindow)
+	addrMan.SetAddress("RollupInputChain", rollupInputChain.Contract().Addr())
+	addrMan.SetAddress("RollupStateChain", rollupStateChain.Contract().Addr())
 
 	return &L1Contracts{
 		AddressManager: addrMan,
 		InputChainStorage: inputChainContainer,
 		StateChainStorage: stateChainContainer,
+		RollupInputChain: rollupInputChain,
+		L1CrossLayerWitness: l1CrossLayerWitness,
 	}
 }

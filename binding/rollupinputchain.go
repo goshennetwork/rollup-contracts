@@ -28,8 +28,8 @@ type RollupInputChain struct {
 }
 
 // DeployRollupInputChain deploys a new RollupInputChain contract
-func DeployRollupInputChain(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiRollupInputChain, binRollupInputChain, args...)
+func DeployRollupInputChain(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiRollupInputChain, binRollupInputChain)
 }
 
 // NewRollupInputChain creates a new instance of the contract at a specific address
@@ -107,6 +107,25 @@ func (_a *RollupInputChain) ChainHeight(block ...web3.BlockNumber) (retval0 uint
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("chainHeight", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// GetInputHash calls the getInputHash method in the solidity contract
+func (_a *RollupInputChain) GetInputHash(inputIndex uint64, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("getInputHash", web3.EncodeBlock(block...), inputIndex)
 	if err != nil {
 		return
 	}
@@ -249,7 +268,48 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 	return _a.c.Txn("enqueue", target, gasLimit, data)
 }
 
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxCrossLayerTxGasLimit uint64) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxCrossLayerTxGasLimit)
+}
+
 // events
+
+func (_a *RollupInputChain) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *RollupInputChain) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
 
 var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint256,uint256,uint256,bytes32)"))
 

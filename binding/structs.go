@@ -13,6 +13,14 @@ var (
 	_ = web3.HexToAddress
 )
 
+type AddressSetEvent struct {
+	Name string
+	Old  web3.Address
+	New  web3.Address
+
+	Raw *web3.Log
+}
+
 type AddressUpdatedEvent struct {
 	Name string
 	Old  web3.Address
@@ -74,6 +82,12 @@ type DisputeBranchSelectedEvent struct {
 	Challenger       web3.Address
 	NodeKey          []*big.Int
 	ExpireAfterBlock *big.Int
+
+	Raw *web3.Log
+}
+
+type InitializedEvent struct {
+	Version uint8
 
 	Raw *web3.Log
 }

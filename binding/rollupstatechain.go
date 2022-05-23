@@ -28,8 +28,8 @@ type RollupStateChain struct {
 }
 
 // DeployRollupStateChain deploys a new RollupStateChain contract
-func DeployRollupStateChain(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiRollupStateChain, binRollupStateChain, args...)
+func DeployRollupStateChain(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiRollupStateChain, binRollupStateChain)
 }
 
 // NewRollupStateChain creates a new instance of the contract at a specific address
@@ -127,12 +127,53 @@ func (_a *RollupStateChain) AppendStateBatch(blockHashes [][32]byte, startAt uin
 	return _a.c.Txn("appendStateBatch", blockHashes, startAt)
 }
 
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *RollupStateChain) Initialize(addressResolver web3.Address, fraudProofWindow *big.Int) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, fraudProofWindow)
+}
+
 // RollbackStateBefore sends a rollbackStateBefore transaction in the solidity contract
 func (_a *RollupStateChain) RollbackStateBefore(stateInfo StateInfo) *contract.Txn {
 	return _a.c.Txn("rollbackStateBefore", stateInfo)
 }
 
 // events
+
+func (_a *RollupStateChain) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *RollupStateChain) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
 
 var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(uint64,address,uint64,bytes32[])"))
 

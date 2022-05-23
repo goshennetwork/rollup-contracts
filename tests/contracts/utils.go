@@ -1,6 +1,9 @@
 package contracts
 
 import (
+	"github.com/laizy/web3/contract"
+	"github.com/laizy/web3/jsonrpc"
+	"github.com/laizy/web3/jsonrpc/transport"
 	"math/big"
 	"strconv"
 	"time"
@@ -133,4 +136,26 @@ func NewCase() *TestCase {
 	}
 	c.Vm.Origin = web3.Address(c.Sender)
 	return c
+}
+
+var LocalChainEnv = &ChainEnv{
+	ChainId: 1234,
+	RpcUrl:  "local",
+	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+	L1ChainConfig: &L1ChainConfig{
+		FraudProofWindow:        3,
+		MaxEnqueueTxGasLimit:    15000000,
+		MaxCrossLayerTxGasLimit: 5000000,
+	},
+}
+
+func SetupLocalSigner(chainEnv *ChainEnv) *contract.Signer {
+	db := storage.NewFakeDB()
+	local := transport.NewLocal(db, chainEnv.ChainId)
+	client := jsonrpc.NewClientWithTransport(local)
+	signer := contract.NewSigner(chainEnv.PrivKey, client, chainEnv.ChainId)
+	signer.Submit = true
+	local.SetBalance(signer.Address(), web3.Ether(1000))
+
+	return signer
 }

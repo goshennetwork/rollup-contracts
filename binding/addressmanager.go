@@ -28,8 +28,8 @@ type AddressManager struct {
 }
 
 // DeployAddressManager deploys a new AddressManager contract
-func DeployAddressManager(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiAddressManager, binAddressManager, args...)
+func DeployAddressManager(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiAddressManager, binAddressManager)
 }
 
 // NewAddressManager creates a new instance of the contract at a specific address
@@ -272,11 +272,30 @@ func (_a *AddressManager) StakingManager(block ...web3.BlockNumber) (retval0 web
 	return
 }
 
+// StateTransition calls the stateTransition method in the solidity contract
+func (_a *AddressManager) StateTransition(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("stateTransition", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // txns
 
-// NewAddr sends a newAddr transaction in the solidity contract
-func (_a *AddressManager) NewAddr(name string, addr web3.Address) *contract.Txn {
-	return _a.c.Txn("newAddr", name, addr)
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *AddressManager) Initialize() *contract.Txn {
+	return _a.c.Txn("initialize")
 }
 
 // RenounceOwnership sends a renounceOwnership transaction in the solidity contract
@@ -284,24 +303,24 @@ func (_a *AddressManager) RenounceOwnership() *contract.Txn {
 	return _a.c.Txn("renounceOwnership")
 }
 
+// SetAddress sends a setAddress transaction in the solidity contract
+func (_a *AddressManager) SetAddress(name string, addr web3.Address) *contract.Txn {
+	return _a.c.Txn("setAddress", name, addr)
+}
+
 // TransferOwnership sends a transferOwnership transaction in the solidity contract
 func (_a *AddressManager) TransferOwnership(newOwner web3.Address) *contract.Txn {
 	return _a.c.Txn("transferOwnership", newOwner)
 }
 
-// UpdateAddr sends a updateAddr transaction in the solidity contract
-func (_a *AddressManager) UpdateAddr(name string, addr web3.Address) *contract.Txn {
-	return _a.c.Txn("updateAddr", name, addr)
-}
-
 // events
 
-var AddressUpdatedEventID = crypto.Keccak256Hash([]byte("AddressUpdated(string,address,address)"))
+var AddressSetEventID = crypto.Keccak256Hash([]byte("AddressSet(string,address,address)"))
 
-func (_a *AddressManager) AddressUpdatedTopicFilter() [][]web3.Hash {
+func (_a *AddressManager) AddressSetTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
-	query = append(query, []interface{}{AddressUpdatedEventID})
+	query = append(query, []interface{}{AddressSetEventID})
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -309,21 +328,57 @@ func (_a *AddressManager) AddressUpdatedTopicFilter() [][]web3.Hash {
 	return topics
 }
 
-func (_a *AddressManager) FilterAddressUpdatedEvent(startBlock uint64, endBlock ...uint64) ([]*AddressUpdatedEvent, error) {
-	topic := _a.AddressUpdatedTopicFilter()
+func (_a *AddressManager) FilterAddressSetEvent(startBlock uint64, endBlock ...uint64) ([]*AddressSetEvent, error) {
+	topic := _a.AddressSetTopicFilter()
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]*AddressUpdatedEvent, 0)
-	evts := _a.c.Abi.Events["AddressUpdated"]
+	res := make([]*AddressSetEvent, 0)
+	evts := _a.c.Abi.Events["AddressSet"]
 	for _, log := range logs {
 		args, err := evts.ParseLog(log)
 		if err != nil {
 			return nil, err
 		}
-		var evtItem AddressUpdatedEvent
+		var evtItem AddressSetEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+func (_a *AddressManager) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *AddressManager) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

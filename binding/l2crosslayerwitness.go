@@ -28,8 +28,8 @@ type L2CrossLayerWitness struct {
 }
 
 // DeployL2CrossLayerWitness deploys a new L2CrossLayerWitness contract
-func DeployL2CrossLayerWitness(provider *jsonrpc.Client, from web3.Address, args ...interface{}) *contract.Txn {
-	return contract.DeployContract(provider, from, abiL2CrossLayerWitness, binL2CrossLayerWitness, args...)
+func DeployL2CrossLayerWitness(provider *jsonrpc.Client, from web3.Address) *contract.Txn {
+	return contract.DeployContract(provider, from, abiL2CrossLayerWitness, binL2CrossLayerWitness)
 }
 
 // NewL2CrossLayerWitness creates a new instance of the contract at a specific address
@@ -103,6 +103,11 @@ func (_a *L2CrossLayerWitness) SuccessRelayedMessages(val0 [32]byte, block ...we
 
 // txns
 
+// Initialize sends a initialize transaction in the solidity contract
+func (_a *L2CrossLayerWitness) Initialize() *contract.Txn {
+	return _a.c.Txn("initialize")
+}
+
 // RelayMessage sends a relayMessage transaction in the solidity contract
 func (_a *L2CrossLayerWitness) RelayMessage(target web3.Address, sender web3.Address, message []byte, messageIndex uint64, mmrRoot [32]byte, mmrSize uint64) *contract.Txn {
 	return _a.c.Txn("relayMessage", target, sender, message, messageIndex, mmrRoot, mmrSize)
@@ -119,6 +124,44 @@ func (_a *L2CrossLayerWitness) SendMessage(target web3.Address, message []byte) 
 }
 
 // events
+
+func (_a *L2CrossLayerWitness) InitializedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{InitializedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *L2CrossLayerWitness) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
+	topic := _a.InitializedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*InitializedEvent, 0)
+	evts := _a.c.Abi.Events["Initialized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem InitializedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(bytes32,uint64,bytes32)"))
 
 func (_a *L2CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte) [][]web3.Hash {
 
@@ -160,6 +203,8 @@ func (_a *L2CrossLayerWitness) FilterMessageRelayFailedEvent(msgHash [][32]byte,
 	}
 	return res, nil
 }
+
+var MessageRelayedEventID = crypto.Keccak256Hash([]byte("MessageRelayed(uint64,bytes32)"))
 
 func (_a *L2CrossLayerWitness) MessageRelayedTopicFilter(messageIndex []uint64, msgHash [][32]byte) [][]web3.Hash {
 
@@ -206,6 +251,8 @@ func (_a *L2CrossLayerWitness) FilterMessageRelayedEvent(messageIndex []uint64, 
 	}
 	return res, nil
 }
+
+var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes)"))
 
 func (_a *L2CrossLayerWitness) MessageSentTopicFilter(messageIndex []uint64, target []web3.Address, sender []web3.Address) [][]web3.Hash {
 
