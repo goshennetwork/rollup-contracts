@@ -9,29 +9,16 @@ import "../interfaces/IAddressResolver.sol";
 contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable {
     mapping(bytes32 => address) private addrs;
 
-    ///cant set empty address
-    modifier noEmptyAddr(address _addr) {
-        require(_addr != address(0), "set empty addr not allowed");
-        _;
-    }
-
     function initialize() public initializer {
         __Ownable_init();
     }
 
-    function newAddr(string memory _name, address _addr) public onlyOwner noEmptyAddr(_addr) {
-        bytes32 _hash = hash(_name);
-        require(addrs[_hash] == address(0), "address already exist");
-        addrs[_hash] = _addr;
-        emit AddressUpdated(_name, address(0), _addr);
-    }
-
-    function updateAddr(string memory _name, address _addr) public onlyOwner noEmptyAddr(_addr) {
+    function setAddress(string memory _name, address _addr) public onlyOwner {
+        require(_addr != address(0), "empty addr");
         bytes32 _hash = hash(_name);
         address _old = addrs[_hash];
-        require(_old != address(0), "can't update empty addr, use newAddr instead");
         addrs[_hash] = _addr;
-        emit AddressUpdated(_name, _old, _addr);
+        emit AddressSet(_name, _old, _addr);
     }
 
     function getAddr(string memory _name) public view returns (address) {

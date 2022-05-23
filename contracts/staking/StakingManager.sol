@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
 import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "../interfaces/IRollupStateChain.sol";
 import "../interfaces/IChallengeFactory.sol";
 import "../libraries/Types.sol";
+import "../libraries/console.sol";
 
 contract StakingManager is IStakingManager, Initializable {
     address private DAOAddress;
@@ -35,7 +35,7 @@ contract StakingManager is IStakingManager, Initializable {
     function deposit() external override {
         StakingInfo storage senderStaking = stakingInfos[msg.sender];
         require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
-        token.transferFrom(msg.sender, address(this), price);
+        require(token.transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
         emit Deposited(msg.sender, price);
     }

@@ -8,51 +8,18 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./RollupStateChain.sol";
 import "./RollupInputChain.sol";
 import "./ChainStorageContainer.sol";
+import "../test-helper/TestBase.sol";
 
-interface VM {
-    function prank(address sender) external;
-
-    function startPrank(address sender) external;
-
-    function stopPrank() external;
-}
-
-contract TestRollupStateChain {
-    AddressManager addressManager;
-    RollupStateChain rollupStateChain;
-    IRollupInputChain rollupInputChain;
-    VM vm = VM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+contract TestRollupStateChain is TestBase {
     address sender = address(0x7777);
-    address dao = address(0x6666);
-    address challengerFactory;
 
     function setUp() public {
         vm.startPrank(sender);
-        challengerFactory = address(new MockChallengeFactory());
-        ERC20 erc20 = new ERC20("test", "test");
-        addressManager = new AddressManager();
-        rollupStateChain = new RollupStateChain(address(addressManager), 3);
-        IStakingManager stakingManager = new StakingManager(
-            dao,
-            challengerFactory,
-            address(rollupStateChain),
-            address(erc20),
-            0
-        );
+        super.initialize();
+        dao.setProposerWhitelist(sender, true);
+        dao.setSequencerWhitelist(sender, true);
+        feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
-        rollupInputChain = new RollupInputChain(address(addressManager), 2_000_000, 1_000_000);
-        address stateStorage = address(
-            new ChainStorageContainer(AddressName.ROLLUP_STATE_CHAIN, address(addressManager))
-        );
-        address inputStorage = address(
-            new ChainStorageContainer(AddressName.ROLLUP_INPUT_CHAIN, address(addressManager))
-        );
-        addressManager.newAddr(AddressName.ROLLUP_INPUT_CHAIN, address(rollupInputChain));
-        addressManager.newAddr(AddressName.STAKING_MANAGER, address(stakingManager));
-        addressManager.newAddr(AddressName.ROLLUP_STATE_CHAIN_CONTAINER, stateStorage);
-        addressManager.newAddr(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER, inputStorage);
-        addressManager.newAddr(AddressName.ROLLUP_STATE_CHAIN, address(rollupStateChain));
-        addressManager.newAddr(AddressName.CHALLENGE_FACTORY, challengerFactory);
         vm.stopPrank();
     }
 
@@ -110,11 +77,5 @@ contract TestRollupStateChain {
         stateInfo.index = 0;
         rollupStateChain.rollbackStateBefore(stateInfo);
         require(rollupStateChain.totalSubmittedState() == 0, "0");
-    }
-}
-
-contract MockChallengeFactory {
-    function isChallengeContract(address _addr) external view returns (bool) {
-        return _addr == address(this);
     }
 }

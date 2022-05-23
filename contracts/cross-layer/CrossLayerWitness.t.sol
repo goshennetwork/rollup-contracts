@@ -28,10 +28,10 @@ contract TestCrossLayerWitness {
     using MerkleMountainRange for CompactMerkleTree;
     CompactMerkleTree _trees;
     AddressManager addressManager;
-    IRollupStateChain rollupStateChain;
-    IRollupInputChain rollupInputChain;
-    IL1CrossLayerWitness l1CrossLayerWitness;
-    IL2CrossLayerWitness l2CrossLayerWitness;
+    RollupStateChain rollupStateChain;
+    RollupInputChain rollupInputChain;
+    L1CrossLayerWitness l1CrossLayerWitness;
+    L2CrossLayerWitness l2CrossLayerWitness;
     VM vm = VM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
     address sender = address(0x7777);
     address dao = address(0x6666);
@@ -40,33 +40,32 @@ contract TestCrossLayerWitness {
     function setUp() public {
         vm.startPrank(sender);
         addressManager = new AddressManager();
-        l1CrossLayerWitness = new L1CrossLayerWitness(address(addressManager));
+        addressManager.initialize();
+        l1CrossLayerWitness = new L1CrossLayerWitness();
+        l1CrossLayerWitness.initialize(address(addressManager));
         l2CrossLayerWitness = new L2CrossLayerWitness();
         ERC20 erc20 = new ERC20("test", "test");
-        rollupStateChain = new RollupStateChain(address(addressManager), 3);
-        IStakingManager stakingManager = new StakingManager(
-            dao,
-            challengerFactory,
-            address(rollupStateChain),
-            address(erc20),
-            0
-        );
+        rollupStateChain = new RollupStateChain();
+        rollupStateChain.initialize(address(addressManager), 3);
+        StakingManager stakingManager = new StakingManager();
+        stakingManager.initialize(dao, challengerFactory, address(rollupStateChain), address(erc20), 0);
         stakingManager.deposit();
-        rollupInputChain = new RollupInputChain(address(addressManager), 2_000_000, 1_000_000);
-        address stateStorage = address(
-            new ChainStorageContainer(AddressName.ROLLUP_STATE_CHAIN, address(addressManager))
-        );
-        address inputStorage = address(
-            new ChainStorageContainer(AddressName.ROLLUP_INPUT_CHAIN, address(addressManager))
-        );
-        addressManager.newAddr(AddressName.ROLLUP_INPUT_CHAIN, address(rollupInputChain));
-        addressManager.newAddr(AddressName.STAKING_MANAGER, address(stakingManager));
-        addressManager.newAddr(AddressName.ROLLUP_STATE_CHAIN_CONTAINER, stateStorage);
-        addressManager.newAddr(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER, inputStorage);
-        addressManager.newAddr(AddressName.ROLLUP_STATE_CHAIN, address(rollupStateChain));
-        addressManager.newAddr(AddressName.L1_CROSS_LAYER_WITNESS, address(l1CrossLayerWitness));
-        addressManager.newAddr(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
-        addressManager.newAddr(AddressName.DAO, sender);
+        rollupInputChain = new RollupInputChain();
+        rollupInputChain.initialize(address(addressManager), 15000000, 3000000);
+        ChainStorageContainer stateStorageContainer = new ChainStorageContainer();
+        stateStorageContainer.initialize(AddressName.ROLLUP_STATE_CHAIN, address(addressManager));
+        address stateStorage = address(stateStorageContainer);
+        ChainStorageContainer inputStorageContainer = new ChainStorageContainer();
+        inputStorageContainer.initialize(AddressName.ROLLUP_INPUT_CHAIN, address(addressManager));
+        address inputStorage = address(inputStorageContainer);
+        addressManager.setAddress(AddressName.ROLLUP_INPUT_CHAIN, address(rollupInputChain));
+        addressManager.setAddress(AddressName.STAKING_MANAGER, address(stakingManager));
+        addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN_CONTAINER, stateStorage);
+        addressManager.setAddress(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER, inputStorage);
+        addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN, address(rollupStateChain));
+        addressManager.setAddress(AddressName.L1_CROSS_LAYER_WITNESS, address(l1CrossLayerWitness));
+        addressManager.setAddress(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
+        addressManager.setAddress(AddressName.DAO, sender);
         vm.stopPrank();
     }
 
