@@ -16,25 +16,25 @@
           "Type": "web3.Address"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "AddressSet(string,address,address)",
+      "EventName": "AddressSetEventID"
     },
-    "AddressUpdatedEvent": {
-      "Name": "AddressUpdatedEvent",
+    "AdminChangedEvent": {
+      "Name": "AdminChangedEvent",
       "Fields": [
         {
-          "Name": "_name",
-          "Type": "string"
-        },
-        {
-          "Name": "_old",
+          "Name": "previousAdmin",
           "Type": "web3.Address"
         },
         {
-          "Name": "_new",
+          "Name": "newAdmin",
           "Type": "web3.Address"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "AdminChanged(address,address)",
+      "EventName": "AdminChangedEventID"
     },
     "ApprovalEvent": {
       "Name": "ApprovalEvent",
@@ -52,7 +52,21 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "Approval(address,address,uint256)",
+      "EventName": "ApprovalEventID"
+    },
+    "BeaconUpgradedEvent": {
+      "Name": "BeaconUpgradedEvent",
+      "Fields": [
+        {
+          "Name": "beacon",
+          "Type": "web3.Address"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "BeaconUpgraded(address)",
+      "EventName": "BeaconUpgradedEventID"
     },
     "ChallengeInitializedEvent": {
       "Name": "ChallengeInitializedEvent",
@@ -66,7 +80,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "ChallengeInitialized(uint128,bytes32)",
+      "EventName": "ChallengeInitializedEventID"
     },
     "ChallengeStartedEvent": {
       "Name": "ChallengeStartedEvent",
@@ -84,15 +100,17 @@
           "Type": "[32]byte"
         },
         {
-          "Name": "_endSystemState",
-          "Type": "[32]byte"
+          "Name": "_expireAfterBlock",
+          "Type": "*big.Int"
         },
         {
-          "Name": "expireAfterBlock",
-          "Type": "*big.Int"
+          "Name": "_contract",
+          "Type": "web3.Address"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "ChallengeStarted(uint256,address,bytes32,uint256,address)",
+      "EventName": "ChallengeStartedEventID"
     },
     "DepositClaimedEvent": {
       "Name": "DepositClaimedEvent",
@@ -110,7 +128,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "DepositClaimed(address,address,uint256)",
+      "EventName": "DepositClaimedEventID"
     },
     "DepositSlashedEvent": {
       "Name": "DepositSlashedEvent",
@@ -132,7 +152,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "DepositSlashed(address,address,uint256,bytes32)",
+      "EventName": "DepositSlashedEventID"
     },
     "DepositedEvent": {
       "Name": "DepositedEvent",
@@ -146,7 +168,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "Deposited(address,uint256)",
+      "EventName": "DepositedEventID"
     },
     "DisputeBranchSelectedEvent": {
       "Name": "DisputeBranchSelectedEvent",
@@ -164,7 +188,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "DisputeBranchSelected(address,uint256[],uint256)",
+      "EventName": "DisputeBranchSelectedEventID"
     },
     "InitializedEvent": {
       "Name": "InitializedEvent",
@@ -174,7 +200,9 @@
           "Type": "uint8"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "Initialized(uint8)",
+      "EventName": "InitializedEventID"
     },
     "MessageAllowedEvent": {
       "Name": "MessageAllowedEvent",
@@ -184,7 +212,9 @@
           "Type": "[][32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MessageAllowed(bytes32[])",
+      "EventName": "MessageAllowedEventID"
     },
     "MessageBlockedEvent": {
       "Name": "MessageBlockedEvent",
@@ -194,7 +224,9 @@
           "Type": "[][32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MessageBlocked(bytes32[])",
+      "EventName": "MessageBlockedEventID"
     },
     "MessageRelayFailedEvent": {
       "Name": "MessageRelayFailedEvent",
@@ -212,7 +244,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MessageRelayFailed(bytes32,uint64,bytes32)",
+      "EventName": "MessageRelayFailedEventID"
     },
     "MessageRelayedEvent": {
       "Name": "MessageRelayedEvent",
@@ -226,7 +260,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MessageRelayed(uint64,bytes32)",
+      "EventName": "MessageRelayedEventID"
     },
     "MessageSentEvent": {
       "Name": "MessageSentEvent",
@@ -248,7 +284,9 @@
           "Type": "[]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MessageSent(uint64,address,address,bytes)",
+      "EventName": "MessageSentEventID"
     },
     "MidStateRevealedEvent": {
       "Name": "MidStateRevealedEvent",
@@ -262,7 +300,9 @@
           "Type": "[][32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "MidStateRevealed(uint256[],bytes32[])",
+      "EventName": "MidStateRevealedEventID"
     },
     "OneStepTransitionEvent": {
       "Name": "OneStepTransitionEvent",
@@ -280,7 +320,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "OneStepTransition(uint256,bytes32,bytes32)",
+      "EventName": "OneStepTransitionEventID"
     },
     "OwnershipTransferredEvent": {
       "Name": "OwnershipTransferredEvent",
@@ -294,7 +336,9 @@
           "Type": "web3.Address"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "OwnershipTransferred(address,address)",
+      "EventName": "OwnershipTransferredEventID"
     },
     "ProposerTimeoutEvent": {
       "Name": "ProposerTimeoutEvent",
@@ -304,7 +348,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "ProposerTimeout(uint256)",
+      "EventName": "ProposerTimeoutEventID"
     },
     "ProposerWinEvent": {
       "Name": "ProposerWinEvent",
@@ -318,7 +364,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "ProposerWin(address,uint256)",
+      "EventName": "ProposerWinEventID"
     },
     "StateBatchAppendedEvent": {
       "Name": "StateBatchAppendedEvent",
@@ -340,7 +388,9 @@
           "Type": "[][32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "StateBatchAppended(uint64,address,uint64,bytes32[])",
+      "EventName": "StateBatchAppendedEventID"
     },
     "StateInfo": {
       "Name": "StateInfo",
@@ -362,7 +412,9 @@
           "Type": "web3.Address"
         }
       ],
-      "IsEvent": false
+      "IsEvent": false,
+      "EventID": "",
+      "EventName": ""
     },
     "StateRollbackedEvent": {
       "Name": "StateRollbackedEvent",
@@ -376,7 +428,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "StateRollbacked(uint64,bytes32)",
+      "EventName": "StateRollbackedEventID"
     },
     "TransactionAppendedEvent": {
       "Name": "TransactionAppendedEvent",
@@ -402,7 +456,9 @@
           "Type": "[32]byte"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "TransactionAppended(address,uint256,uint256,uint256,bytes32)",
+      "EventName": "TransactionAppendedEventID"
     },
     "TransactionEnqueuedEvent": {
       "Name": "TransactionEnqueuedEvent",
@@ -432,7 +488,9 @@
           "Type": "uint64"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)",
+      "EventName": "TransactionEnqueuedEventID"
     },
     "TransferEvent": {
       "Name": "TransferEvent",
@@ -450,7 +508,21 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "Transfer(address,address,uint256)",
+      "EventName": "TransferEventID"
+    },
+    "UpgradedEvent": {
+      "Name": "UpgradedEvent",
+      "Fields": [
+        {
+          "Name": "implementation",
+          "Type": "web3.Address"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "Upgraded(address)",
+      "EventName": "UpgradedEventID"
     },
     "WithdrawFinalizedEvent": {
       "Name": "WithdrawFinalizedEvent",
@@ -464,7 +536,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "WithdrawFinalized(address,uint256)",
+      "EventName": "WithdrawFinalizedEventID"
     },
     "WithdrawStartedEvent": {
       "Name": "WithdrawStartedEvent",
@@ -478,7 +552,9 @@
           "Type": "*big.Int"
         }
       ],
-      "IsEvent": true
+      "IsEvent": true,
+      "EventID": "WithdrawStarted(address,uint256)",
+      "EventName": "WithdrawStartedEventID"
     }
   }
 }

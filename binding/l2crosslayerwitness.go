@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // L2CrossLayerWitness is a solidity contract
@@ -125,8 +123,6 @@ func (_a *L2CrossLayerWitness) SendMessage(target web3.Address, message []byte) 
 
 // events
 
-var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
-
 func (_a *L2CrossLayerWitness) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -162,8 +158,6 @@ func (_a *L2CrossLayerWitness) FilterInitializedEvent(startBlock uint64, endBloc
 	}
 	return res, nil
 }
-
-var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(bytes32,uint64,bytes32)"))
 
 func (_a *L2CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte) [][]web3.Hash {
 
@@ -205,8 +199,6 @@ func (_a *L2CrossLayerWitness) FilterMessageRelayFailedEvent(msgHash [][32]byte,
 	}
 	return res, nil
 }
-
-var MessageRelayedEventID = crypto.Keccak256Hash([]byte("MessageRelayed(uint64,bytes32)"))
 
 func (_a *L2CrossLayerWitness) MessageRelayedTopicFilter(messageIndex []uint64, msgHash [][32]byte) [][]web3.Hash {
 
@@ -253,8 +245,6 @@ func (_a *L2CrossLayerWitness) FilterMessageRelayedEvent(messageIndex []uint64, 
 	}
 	return res, nil
 }
-
-var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes)"))
 
 func (_a *L2CrossLayerWitness) MessageSentTopicFilter(messageIndex []uint64, target []web3.Address, sender []web3.Address) [][]web3.Hash {
 

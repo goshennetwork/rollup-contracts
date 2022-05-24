@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // ERC20 is a solidity contract
@@ -187,8 +185,6 @@ func (_a *ERC20) TransferFrom(from web3.Address, to web3.Address, amount *big.In
 
 // events
 
-var ApprovalEventID = crypto.Keccak256Hash([]byte("Approval(address,address,uint256)"))
-
 func (_a *ERC20) ApprovalTopicFilter(owner []web3.Address, spender []web3.Address) [][]web3.Hash {
 
 	var ownerRule []interface{}
@@ -234,8 +230,6 @@ func (_a *ERC20) FilterApprovalEvent(owner []web3.Address, spender []web3.Addres
 	}
 	return res, nil
 }
-
-var TransferEventID = crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)"))
 
 func (_a *ERC20) TransferTopicFilter(from []web3.Address, to []web3.Address) [][]web3.Hash {
 

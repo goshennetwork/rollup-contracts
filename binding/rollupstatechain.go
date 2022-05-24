@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // RollupStateChain is a solidity contract
@@ -139,8 +137,6 @@ func (_a *RollupStateChain) RollbackStateBefore(stateInfo StateInfo) *contract.T
 
 // events
 
-var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
-
 func (_a *RollupStateChain) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -176,8 +172,6 @@ func (_a *RollupStateChain) FilterInitializedEvent(startBlock uint64, endBlock .
 	}
 	return res, nil
 }
-
-var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(uint64,address,uint64,bytes32[])"))
 
 func (_a *RollupStateChain) StateBatchAppendedTopicFilter(startIndex []uint64, proposer []web3.Address) [][]web3.Hash {
 
@@ -224,8 +218,6 @@ func (_a *RollupStateChain) FilterStateBatchAppendedEvent(startIndex []uint64, p
 	}
 	return res, nil
 }
-
-var StateRollbackedEventID = crypto.Keccak256Hash([]byte("StateRollbacked(uint64,bytes32)"))
 
 func (_a *RollupStateChain) StateRollbackedTopicFilter(stateIndex []uint64, blockHash [][32]byte) [][]web3.Hash {
 

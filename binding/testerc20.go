@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // TestERC20 is a solidity contract

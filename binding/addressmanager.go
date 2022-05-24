@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // AddressManager is a solidity contract
@@ -315,8 +313,6 @@ func (_a *AddressManager) TransferOwnership(newOwner web3.Address) *contract.Txn
 
 // events
 
-var AddressSetEventID = crypto.Keccak256Hash([]byte("AddressSet(string,address,address)"))
-
 func (_a *AddressManager) AddressSetTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -353,8 +349,6 @@ func (_a *AddressManager) FilterAddressSetEvent(startBlock uint64, endBlock ...u
 	return res, nil
 }
 
-var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
-
 func (_a *AddressManager) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -390,8 +384,6 @@ func (_a *AddressManager) FilterInitializedEvent(startBlock uint64, endBlock ...
 	}
 	return res, nil
 }
-
-var OwnershipTransferredEventID = crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)"))
 
 func (_a *AddressManager) OwnershipTransferredTopicFilter(previousOwner []web3.Address, newOwner []web3.Address) [][]web3.Hash {
 

@@ -5,13 +5,17 @@ import (
 	"math/big"
 
 	"github.com/laizy/web3"
+	"github.com/laizy/web3/crypto"
 )
 
 var (
 	_ = big.NewInt
 	_ = fmt.Printf
 	_ = web3.HexToAddress
+	_ = crypto.Keccak256Hash
 )
+
+var AddressSetEventID = crypto.Keccak256Hash([]byte("AddressSet(string,address,address)"))
 
 type AddressSetEvent struct {
 	Name string
@@ -21,13 +25,16 @@ type AddressSetEvent struct {
 	Raw *web3.Log
 }
 
-type AddressUpdatedEvent struct {
-	Name string
-	Old  web3.Address
-	New  web3.Address
+var AdminChangedEventID = crypto.Keccak256Hash([]byte("AdminChanged(address,address)"))
+
+type AdminChangedEvent struct {
+	PreviousAdmin web3.Address
+	NewAdmin      web3.Address
 
 	Raw *web3.Log
 }
+
+var ApprovalEventID = crypto.Keccak256Hash([]byte("Approval(address,address,uint256)"))
 
 type ApprovalEvent struct {
 	Owner   web3.Address
@@ -37,6 +44,16 @@ type ApprovalEvent struct {
 	Raw *web3.Log
 }
 
+var BeaconUpgradedEventID = crypto.Keccak256Hash([]byte("BeaconUpgraded(address)"))
+
+type BeaconUpgradedEvent struct {
+	Beacon web3.Address
+
+	Raw *web3.Log
+}
+
+var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32)"))
+
 type ChallengeInitializedEvent struct {
 	SystemEndStep  *big.Int
 	MidSystemState [32]byte
@@ -44,15 +61,19 @@ type ChallengeInitializedEvent struct {
 	Raw *web3.Log
 }
 
+var ChallengeStartedEventID = crypto.Keccak256Hash([]byte("ChallengeStarted(uint256,address,bytes32,uint256,address)"))
+
 type ChallengeStartedEvent struct {
 	L2BlockN         *big.Int
 	Proposer         web3.Address
 	StartSystemState [32]byte
-	EndSystemState   [32]byte
 	ExpireAfterBlock *big.Int
+	Contract         web3.Address
 
 	Raw *web3.Log
 }
+
+var DepositClaimedEventID = crypto.Keccak256Hash([]byte("DepositClaimed(address,address,uint256)"))
 
 type DepositClaimedEvent struct {
 	Proposer web3.Address
@@ -61,6 +82,8 @@ type DepositClaimedEvent struct {
 
 	Raw *web3.Log
 }
+
+var DepositSlashedEventID = crypto.Keccak256Hash([]byte("DepositSlashed(address,address,uint256,bytes32)"))
 
 type DepositSlashedEvent struct {
 	Proposer    web3.Address
@@ -71,12 +94,16 @@ type DepositSlashedEvent struct {
 	Raw *web3.Log
 }
 
+var DepositedEventID = crypto.Keccak256Hash([]byte("Deposited(address,uint256)"))
+
 type DepositedEvent struct {
 	Proposer web3.Address
 	Amount   *big.Int
 
 	Raw *web3.Log
 }
+
+var DisputeBranchSelectedEventID = crypto.Keccak256Hash([]byte("DisputeBranchSelected(address,uint256[],uint256)"))
 
 type DisputeBranchSelectedEvent struct {
 	Challenger       web3.Address
@@ -86,11 +113,15 @@ type DisputeBranchSelectedEvent struct {
 	Raw *web3.Log
 }
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 type InitializedEvent struct {
 	Version uint8
 
 	Raw *web3.Log
 }
+
+var MessageAllowedEventID = crypto.Keccak256Hash([]byte("MessageAllowed(bytes32[])"))
 
 type MessageAllowedEvent struct {
 	MessageHashes [][32]byte
@@ -98,11 +129,15 @@ type MessageAllowedEvent struct {
 	Raw *web3.Log
 }
 
+var MessageBlockedEventID = crypto.Keccak256Hash([]byte("MessageBlocked(bytes32[])"))
+
 type MessageBlockedEvent struct {
 	MessageHashes [][32]byte
 
 	Raw *web3.Log
 }
+
+var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(bytes32,uint64,bytes32)"))
 
 type MessageRelayFailedEvent struct {
 	MsgHash [32]byte
@@ -112,12 +147,16 @@ type MessageRelayFailedEvent struct {
 	Raw *web3.Log
 }
 
+var MessageRelayedEventID = crypto.Keccak256Hash([]byte("MessageRelayed(uint64,bytes32)"))
+
 type MessageRelayedEvent struct {
 	MessageIndex uint64
 	MsgHash      [32]byte
 
 	Raw *web3.Log
 }
+
+var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes)"))
 
 type MessageSentEvent struct {
 	MessageIndex uint64
@@ -128,12 +167,16 @@ type MessageSentEvent struct {
 	Raw *web3.Log
 }
 
+var MidStateRevealedEventID = crypto.Keccak256Hash([]byte("MidStateRevealed(uint256[],bytes32[])"))
+
 type MidStateRevealedEvent struct {
 	NodeKeys   []*big.Int
 	StateRoots [][32]byte
 
 	Raw *web3.Log
 }
+
+var OneStepTransitionEventID = crypto.Keccak256Hash([]byte("OneStepTransition(uint256,bytes32,bytes32)"))
 
 type OneStepTransitionEvent struct {
 	StartStep    *big.Int
@@ -143,6 +186,8 @@ type OneStepTransitionEvent struct {
 	Raw *web3.Log
 }
 
+var OwnershipTransferredEventID = crypto.Keccak256Hash([]byte("OwnershipTransferred(address,address)"))
+
 type OwnershipTransferredEvent struct {
 	PreviousOwner web3.Address
 	NewOwner      web3.Address
@@ -150,11 +195,15 @@ type OwnershipTransferredEvent struct {
 	Raw *web3.Log
 }
 
+var ProposerTimeoutEventID = crypto.Keccak256Hash([]byte("ProposerTimeout(uint256)"))
+
 type ProposerTimeoutEvent struct {
 	NodeKey *big.Int
 
 	Raw *web3.Log
 }
+
+var ProposerWinEventID = crypto.Keccak256Hash([]byte("ProposerWin(address,uint256)"))
 
 type ProposerWinEvent struct {
 	Winner web3.Address
@@ -162,6 +211,8 @@ type ProposerWinEvent struct {
 
 	Raw *web3.Log
 }
+
+var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(uint64,address,uint64,bytes32[])"))
 
 type StateBatchAppendedEvent struct {
 	StartIndex uint64
@@ -179,12 +230,16 @@ type StateInfo struct {
 	Proposer  web3.Address
 }
 
+var StateRollbackedEventID = crypto.Keccak256Hash([]byte("StateRollbacked(uint64,bytes32)"))
+
 type StateRollbackedEvent struct {
 	StateIndex uint64
 	BlockHash  [32]byte
 
 	Raw *web3.Log
 }
+
+var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint256,uint256,uint256,bytes32)"))
 
 type TransactionAppendedEvent struct {
 	Proposer        web3.Address
@@ -195,6 +250,8 @@ type TransactionAppendedEvent struct {
 
 	Raw *web3.Log
 }
+
+var TransactionEnqueuedEventID = crypto.Keccak256Hash([]byte("TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)"))
 
 type TransactionEnqueuedEvent struct {
 	QueueIndex uint64
@@ -207,6 +264,8 @@ type TransactionEnqueuedEvent struct {
 	Raw *web3.Log
 }
 
+var TransferEventID = crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)"))
+
 type TransferEvent struct {
 	From  web3.Address
 	To    web3.Address
@@ -215,12 +274,24 @@ type TransferEvent struct {
 	Raw *web3.Log
 }
 
+var UpgradedEventID = crypto.Keccak256Hash([]byte("Upgraded(address)"))
+
+type UpgradedEvent struct {
+	Implementation web3.Address
+
+	Raw *web3.Log
+}
+
+var WithdrawFinalizedEventID = crypto.Keccak256Hash([]byte("WithdrawFinalized(address,uint256)"))
+
 type WithdrawFinalizedEvent struct {
 	Proposer web3.Address
 	Amount   *big.Int
 
 	Raw *web3.Log
 }
+
+var WithdrawStartedEventID = crypto.Keccak256Hash([]byte("WithdrawStarted(address,uint256)"))
 
 type WithdrawStartedEvent struct {
 	Proposer           web3.Address

@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // StakingManager is a solidity contract
@@ -159,8 +157,6 @@ func (_a *StakingManager) StartWithdrawal() *contract.Txn {
 
 // events
 
-var DepositClaimedEventID = crypto.Keccak256Hash([]byte("DepositClaimed(address,address,uint256)"))
-
 func (_a *StakingManager) DepositClaimedTopicFilter(proposer []web3.Address, receiver []web3.Address) [][]web3.Hash {
 
 	var proposerRule []interface{}
@@ -207,8 +203,6 @@ func (_a *StakingManager) FilterDepositClaimedEvent(proposer []web3.Address, rec
 	return res, nil
 }
 
-var DepositSlashedEventID = crypto.Keccak256Hash([]byte("DepositSlashed(address,address,uint256,bytes32)"))
-
 func (_a *StakingManager) DepositSlashedTopicFilter(proposer []web3.Address, challenger []web3.Address) [][]web3.Hash {
 
 	var proposerRule []interface{}
@@ -254,8 +248,6 @@ func (_a *StakingManager) FilterDepositSlashedEvent(proposer []web3.Address, cha
 	}
 	return res, nil
 }
-
-var DepositedEventID = crypto.Keccak256Hash([]byte("Deposited(address,uint256)"))
 
 func (_a *StakingManager) DepositedTopicFilter(proposer []web3.Address) [][]web3.Hash {
 
@@ -334,8 +326,6 @@ func (_a *StakingManager) FilterInitializedEvent(startBlock uint64, endBlock ...
 	return res, nil
 }
 
-var WithdrawFinalizedEventID = crypto.Keccak256Hash([]byte("WithdrawFinalized(address,uint256)"))
-
 func (_a *StakingManager) WithdrawFinalizedTopicFilter(proposer []web3.Address) [][]web3.Hash {
 
 	var proposerRule []interface{}
@@ -376,8 +366,6 @@ func (_a *StakingManager) FilterWithdrawFinalizedEvent(proposer []web3.Address, 
 	}
 	return res, nil
 }
-
-var WithdrawStartedEventID = crypto.Keccak256Hash([]byte("WithdrawStarted(address,uint256)"))
 
 func (_a *StakingManager) WithdrawStartedTopicFilter(proposer []web3.Address) [][]web3.Hash {
 

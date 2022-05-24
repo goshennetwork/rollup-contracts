@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // Challenge is a solidity contract
@@ -197,8 +195,6 @@ func (_a *Challenge) SelectDisputeBranch(parentNodeKeys []*big.Int, isLefts []bo
 
 // events
 
-var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32)"))
-
 func (_a *Challenge) ChallengeInitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -234,8 +230,6 @@ func (_a *Challenge) FilterChallengeInitializedEvent(startBlock uint64, endBlock
 	}
 	return res, nil
 }
-
-var DisputeBranchSelectedEventID = crypto.Keccak256Hash([]byte("DisputeBranchSelected(address,uint256[],uint256)"))
 
 func (_a *Challenge) DisputeBranchSelectedTopicFilter(challenger []web3.Address) [][]web3.Hash {
 
@@ -278,8 +272,6 @@ func (_a *Challenge) FilterDisputeBranchSelectedEvent(challenger []web3.Address,
 	return res, nil
 }
 
-var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
-
 func (_a *Challenge) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -315,8 +307,6 @@ func (_a *Challenge) FilterInitializedEvent(startBlock uint64, endBlock ...uint6
 	}
 	return res, nil
 }
-
-var MidStateRevealedEventID = crypto.Keccak256Hash([]byte("MidStateRevealed(uint256[],bytes32[])"))
 
 func (_a *Challenge) MidStateRevealedTopicFilter() [][]web3.Hash {
 
@@ -354,8 +344,6 @@ func (_a *Challenge) FilterMidStateRevealedEvent(startBlock uint64, endBlock ...
 	return res, nil
 }
 
-var OneStepTransitionEventID = crypto.Keccak256Hash([]byte("OneStepTransition(uint256,bytes32,bytes32)"))
-
 func (_a *Challenge) OneStepTransitionTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -392,8 +380,6 @@ func (_a *Challenge) FilterOneStepTransitionEvent(startBlock uint64, endBlock ..
 	return res, nil
 }
 
-var ProposerTimeoutEventID = crypto.Keccak256Hash([]byte("ProposerTimeout(uint256)"))
-
 func (_a *Challenge) ProposerTimeoutTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -429,8 +415,6 @@ func (_a *Challenge) FilterProposerTimeoutEvent(startBlock uint64, endBlock ...u
 	}
 	return res, nil
 }
-
-var ProposerWinEventID = crypto.Keccak256Hash([]byte("ProposerWin(address,uint256)"))
 
 func (_a *Challenge) ProposerWinTopicFilter() [][]web3.Hash {
 

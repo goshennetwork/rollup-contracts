@@ -12,6 +12,9 @@ RollupStateChain.sol/*
 StakingManager.sol/*
 TestERC20.sol/*
 ChallengeFactory.sol/*
+UpgradeableBeacon.sol/*
+ProxyAdmin.sol/*
+TransparentUpgradeableProxy.sol/*
 "
 prefix="out/"
 for file in $files ; do

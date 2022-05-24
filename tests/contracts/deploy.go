@@ -32,6 +32,7 @@ type L1Contracts struct {
 	RollupStateChain *binding.RollupStateChain
 	L1CrossLayerWitness *binding.L1CrossLayerWitness
 	StakingManager *binding.StakingManager
+	ChallengeBeacon *binding.
 	FeeToken *binding.ERC20
 }
 

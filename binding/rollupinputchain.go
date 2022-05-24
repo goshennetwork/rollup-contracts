@@ -7,7 +7,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
@@ -19,7 +18,6 @@ var (
 	_ = fmt.Printf
 	_ = utils.JsonStr
 	_ = mapstructure.Decode
-	_ = crypto.Keccak256Hash
 )
 
 // RollupInputChain is a solidity contract
@@ -311,8 +309,6 @@ func (_a *RollupInputChain) FilterInitializedEvent(startBlock uint64, endBlock .
 	return res, nil
 }
 
-var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint256,uint256,uint256,bytes32)"))
-
 func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Address, startQueueIndex []*big.Int, chainHeight []*big.Int) [][]web3.Hash {
 
 	var proposerRule []interface{}
@@ -363,8 +359,6 @@ func (_a *RollupInputChain) FilterTransactionAppendedEvent(proposer []web3.Addre
 	}
 	return res, nil
 }
-
-var TransactionEnqueuedEventID = crypto.Keccak256Hash([]byte("TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)"))
 
 func (_a *RollupInputChain) TransactionEnqueuedTopicFilter(queueIndex []uint64, from []web3.Address, to []web3.Address) [][]web3.Hash {
 
