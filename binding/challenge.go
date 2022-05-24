@@ -278,6 +278,8 @@ func (_a *Challenge) FilterDisputeBranchSelectedEvent(challenger []web3.Address,
 	return res, nil
 }
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 func (_a *Challenge) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

@@ -298,8 +298,6 @@ func (_a *StakingManager) FilterDepositedEvent(proposer []web3.Address, startBlo
 	return res, nil
 }
 
-var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
-
 func (_a *StakingManager) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

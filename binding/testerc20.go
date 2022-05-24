@@ -187,8 +187,6 @@ func (_a *TestERC20) TransferFrom(from web3.Address, to web3.Address, amount *bi
 
 // events
 
-var ApprovalEventID = crypto.Keccak256Hash([]byte("Approval(address,address,uint256)"))
-
 func (_a *TestERC20) ApprovalTopicFilter(owner []web3.Address, spender []web3.Address) [][]web3.Hash {
 
 	var ownerRule []interface{}

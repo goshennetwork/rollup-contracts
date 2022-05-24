@@ -187,6 +187,8 @@ func (_a *L1CrossLayerWitness) SendMessage(target web3.Address, message []byte) 
 
 // events
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 func (_a *L1CrossLayerWitness) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}
@@ -299,6 +301,8 @@ func (_a *L1CrossLayerWitness) FilterMessageBlockedEvent(startBlock uint64, endB
 	return res, nil
 }
 
+var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(bytes32,uint64,bytes32)"))
+
 func (_a *L1CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte) [][]web3.Hash {
 
 	var msgHashRule []interface{}
@@ -339,6 +343,8 @@ func (_a *L1CrossLayerWitness) FilterMessageRelayFailedEvent(msgHash [][32]byte,
 	}
 	return res, nil
 }
+
+var MessageRelayedEventID = crypto.Keccak256Hash([]byte("MessageRelayed(uint64,bytes32)"))
 
 func (_a *L1CrossLayerWitness) MessageRelayedTopicFilter(messageIndex []uint64, msgHash [][32]byte) [][]web3.Hash {
 
@@ -385,6 +391,8 @@ func (_a *L1CrossLayerWitness) FilterMessageRelayedEvent(messageIndex []uint64, 
 	}
 	return res, nil
 }
+
+var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes)"))
 
 func (_a *L1CrossLayerWitness) MessageSentTopicFilter(messageIndex []uint64, target []web3.Address, sender []web3.Address) [][]web3.Hash {
 

@@ -139,6 +139,8 @@ func (_a *RollupStateChain) RollbackStateBefore(stateInfo StateInfo) *contract.T
 
 // events
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 func (_a *RollupStateChain) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

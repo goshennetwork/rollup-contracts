@@ -353,6 +353,8 @@ func (_a *AddressManager) FilterAddressSetEvent(startBlock uint64, endBlock ...u
 	return res, nil
 }
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 func (_a *AddressManager) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

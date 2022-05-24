@@ -31,7 +31,26 @@ type L1Contracts struct {
 	RollupInputChain *binding.RollupInputChain
 	RollupStateChain *binding.RollupStateChain
 	L1CrossLayerWitness *binding.L1CrossLayerWitness
-	TestFeeToken *binding.TestERC20
+	StakingManager *binding.StakingManager
+	FeeToken *binding.ERC20
+}
+
+func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
+	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT").Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+
+	feeToken := binding.NewERC20(receipt.ContractAddress, signer.Client)
+	feeToken.Contract().SetFrom(signer.Address())
+
+	return feeToken
+}
+
+func DeployStakingManager(signer *contract.Signer) *binding.StakingManager {
+	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
+	staking.Contract().SetFrom(signer.Address())
+	staking.Initialize()
 }
 
 func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
@@ -105,11 +124,20 @@ func DeployL1Contract(signer *contract.Signer, cfg *L1ChainConfig) *L1Contracts 
 	addrMan.SetAddress("RollupInputChain", rollupInputChain.Contract().Addr())
 	addrMan.SetAddress("RollupStateChain", rollupStateChain.Contract().Addr())
 
+	var feeToken *binding.ERC20
+	if cfg.FeeToken.IsZero() {
+		feeToken = DeployTestFeeToken(signer)
+	} else {
+		feeToken = binding.NewERC20(cfg.FeeToken, signer.Client)
+		feeToken.Contract().SetFrom(signer.Address())
+	}
+
 	return &L1Contracts{
 		AddressManager: addrMan,
 		InputChainStorage: inputChainContainer,
 		StateChainStorage: stateChainContainer,
 		RollupInputChain: rollupInputChain,
 		L1CrossLayerWitness: l1CrossLayerWitness,
+		FeeToken: feeToken,
 	}
 }

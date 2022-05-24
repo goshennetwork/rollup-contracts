@@ -1,11 +1,14 @@
 package rollup
 
 import (
+	"github.com/laizy/web3/crypto"
+	"github.com/laizy/web3/utils/codec"
 	"math/big"
 	"math/rand"
 	"testing"
 	"time"
 
+	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
@@ -14,24 +17,37 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestEnqueue(t *testing.T) {
-	c := contracts.NewCase()
-	addrManager := resolver.AddressManager(contracts.NewAddressManager(c.Sender, c.Vm))
-	container := ChainStorageContainer(contracts.NewChainStorageContainer(c.Sender, c.Vm, "RollupInputChain", web3.Address(addrManager)))
-	rollupInputChain := RollupInputChain(contracts.NewRollupInputChain(c.Sender, c.Vm, web3.Address(addrManager), new(big.Int).SetUint64(2_000_000), new(big.Int).SetUint64(1_000_000)))
-	_ = addrManager.NewAddr(c.Sender, c.Vm, "RollupInputChainContainer", web3.Address(container))
-	_ = addrManager.NewAddr(c.Sender, c.Vm, "RollupInputChain", web3.Address(rollupInputChain))
-	_ = addrManager.NewAddr(c.Sender, c.Vm, "L1CrossLayerWitness", web3.Address{53, 53, 53, 53})
-	target := web3.Address{1, 1}
-	err := rollupInputChain.Enqueue(c.Sender, c.Vm, target, 900_000, []byte("test"))
-	assert.NilError(t, err)
-	_, _, err = rollupInputChain.GetQueueTxInfo(c.Sender, c.Vm, 0)
-	assert.NilError(t, err)
+var L1CrossLayerWitnessAddr = web3.HexToAddress("0x5800000000000000000000000000000000000000")
 
-	c.Vm.Origin = web3.Address{2, 2, 2, 2}
-	_ = addrManager.UpdateAddr(c.Sender, c.Vm, "L1CrossLayerWitness", c.Sender.Address())
-	err = rollupInputChain.Enqueue(c.Sender, c.Vm, target, 900_000, []byte("test"))
-	assert.NilError(t, err)
+func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte) web3.Hash {
+	sink := codec.NewZeroCopySink(nil)
+	sink.WriteAddress(sender)
+	sink.WriteAddress(target)
+	sink.WriteUint64BE(gasLimit)
+	sink.WriteBytes(data)
+
+	return crypto.Keccak256Hash(sink.Bytes())
+}
+
+func TestEnqueue(t *testing.T) {
+	chainEnv := contracts.LocalChainEnv
+	signer := contracts.SetupLocalSigner(chainEnv)
+	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+
+	target, gasLimit, data := web3.Address{1, 1}, uint64(900_000), []byte("test")
+	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+
+	txHash, _, err := l1Chain.RollupInputChain.GetQueueTxInfo(0)
+	utils.Ensure(err)
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(signer.Address(), target, gasLimit, data))
+
+	l1Chain.AddressManager.SetAddress("L1CrossLayerWitness", signer.Address())
+	l1Chain.RollupInputChain.Enqueue(target, gasLimit, data).
+		Sign(signer).SendTransaction(signer)
+	txHash, _, err = l1Chain.RollupInputChain.GetQueueTxInfo(1)
+	utils.Ensure(err)
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerWitnessAddr, target, gasLimit, data))
 }
 
 func TestAppendBatches(t *testing.T) {

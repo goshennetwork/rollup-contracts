@@ -62,7 +62,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
         // todo: maybe need more tx params, such as tip fee, value
-        bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data));
+        bytes32 transactionHash = keccak256(abi.encodePacked(sender, _target, _gasLimit, _data));
         uint64 _now = uint64(block.timestamp);
         queuedTxInfos.push(QueueTxInfo({ transactionHash: transactionHash, timestamp: _now }));
         emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _gasLimit, _data, _now);

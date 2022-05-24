@@ -125,6 +125,8 @@ func (_a *L2CrossLayerWitness) SendMessage(target web3.Address, message []byte) 
 
 // events
 
+var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
+
 func (_a *L2CrossLayerWitness) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

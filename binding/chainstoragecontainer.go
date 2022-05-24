@@ -82,12 +82,12 @@ func (_a *ChainStorageContainer) Get(index uint64, block ...web3.BlockNumber) (r
 	return
 }
 
-// LastTimestamp calls the lastTimestamp method in the solidity contract
-func (_a *ChainStorageContainer) LastTimestamp(block ...web3.BlockNumber) (retval0 uint64, err error) {
+// Owner calls the owner method in the solidity contract
+func (_a *ChainStorageContainer) Owner(block ...web3.BlockNumber) (retval0 string, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("lastTimestamp", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("owner", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -116,11 +116,6 @@ func (_a *ChainStorageContainer) Initialize(owner string, addressResolver web3.A
 // Resize sends a resize transaction in the solidity contract
 func (_a *ChainStorageContainer) Resize(newSize uint64) *contract.Txn {
 	return _a.c.Txn("resize", newSize)
-}
-
-// SetLastTimestamp sends a setLastTimestamp transaction in the solidity contract
-func (_a *ChainStorageContainer) SetLastTimestamp(timestamp uint64) *contract.Txn {
-	return _a.c.Txn("setLastTimestamp", timestamp)
 }
 
 // events
