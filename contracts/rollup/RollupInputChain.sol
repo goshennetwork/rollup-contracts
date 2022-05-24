@@ -45,6 +45,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint64 _gasLimit,
         bytes memory _data
     ) public {
+        require(_target != address(0), "can't create contract");
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         address sender;
         if (msg.sender == tx.origin) {
