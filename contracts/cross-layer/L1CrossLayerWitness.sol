@@ -75,7 +75,11 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
         addressResolver.rollupInputChain().enqueue(
             address(addressResolver.l2CrossLayerWitness()),
             0,
-            _crossLayerCalldata
+            _crossLayerCalldata,
+            treeSize,
+            0,
+            0,
+            0
         );
         emit MessageSent(treeSize, _target, msg.sender, _message);
     }

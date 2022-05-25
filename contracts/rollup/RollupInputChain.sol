@@ -45,7 +45,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function enqueue(
         address _target,
         uint64 _gasLimit,
-        bytes memory _data
+        bytes memory _data,
+        uint64 _nonce,
+        uint256 r,
+        uint256 s,
+        uint256 v
     ) public {
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         address sender;
@@ -61,11 +65,25 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
-        // todo: maybe need more tx params, such as tip fee, value
-        bytes32 transactionHash = keccak256(abi.encodePacked(sender, _target, _gasLimit, _data));
+        //fixme: now chainID set 1337
+        //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId(1337)
+        //sender used to recognize tx from L1CrossLayerWitness
+        bytes32 transactionHash = keccak256(abi.encode(sender, _target, _gasLimit, _data, _nonce, r, s, v, 1, 0, 1337));
         uint64 _now = uint64(block.timestamp);
         queuedTxInfos.push(QueueTxInfo({ transactionHash: transactionHash, timestamp: _now }));
-        emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _gasLimit, _data, _now);
+        //do not need to reveal default value
+        emit TransactionEnqueued(
+            uint64(queuedTxInfos.length - 1),
+            sender,
+            _target,
+            _gasLimit,
+            _data,
+            _nonce,
+            r,
+            s,
+            v,
+            _now
+        );
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
