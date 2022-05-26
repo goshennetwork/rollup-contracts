@@ -2,6 +2,9 @@ package rollup
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
@@ -9,8 +12,6 @@ import (
 	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
-	"strings"
-	"testing"
 )
 
 var L1CrossLayerWitnessAddr = web3.HexToAddress("0x5800000000000000000000000000000000000000")
