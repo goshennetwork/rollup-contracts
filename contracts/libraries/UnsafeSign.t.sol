@@ -10,11 +10,9 @@ contract TestUnsafeSign {
         for (uint256 i = 0; i < 100000; i++) {
             bytes32 signedHash = keccak256(abi.encode(i, "test"));
             (uint256 r, uint256 s, uint64 v) = UnsafeSign.Sign(signedHash, 1);
-            uint8 _v = 27;
-            if (v - 35 - 2 == 1) {
-                _v = 28;
-            }
-            address sender = ecrecover(signedHash, _v, bytes32(r), bytes32(s));
+            uint64 _pureV = v - 2 * 1 - 8;
+            require(_pureV <= 28, "invalid v");
+            address sender = ecrecover(signedHash, uint8(_pureV), bytes32(r), bytes32(s));
             require(sender == UnsafeSign.SENDER, "wrong sender");
         }
     }

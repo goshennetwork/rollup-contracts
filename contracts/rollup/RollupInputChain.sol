@@ -83,10 +83,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             //help sign L1CrossLayerWitness
             (r, s, v) = UnsafeSign.Sign(_signTxHash, L2_CHAIN_ID);
         }
-        uint8 _pureV = 27;
-        if (_pureV - 35 - 2 * L2_CHAIN_ID == 1) {
-            _pureV = 28;
-        }
+        uint64 _pureV = v - 2 * L2_CHAIN_ID - 8;
+        require(_pureV <= 28, "invalid v");
         require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)), "wrong sign");
         //now change rsv value in tx to calc tx's hash
         _rlpList[6] = RLPWriter.writeUint(v);

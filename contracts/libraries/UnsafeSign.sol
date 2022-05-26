@@ -56,12 +56,12 @@ library UnsafeSign {
         //only happen when pv*r+e=order*integer
         //todo: maybe use more than just one k to avoid special signed hahs attack?
         require(s != 0, "zero s");
-        uint64 v = 0;
+        uint64 v = 27;
         if (vice) {
-            v = 1;
+            v = 28;
         }
         //now add chainId
-        v += 35 + chainId * 2;
+        v += 8 + chainId * 2;
         return (Primitive_ELEMENT_X, s, v);
     }
 }
