@@ -29,7 +29,7 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     function setAddressBatch(string[] calldata _names, address[] calldata _addrs) public onlyOwner {
         uint256 _len = _names.length;
         require(_len == _addrs.length, "length mismatch");
-        for (uint i = 0; i < _len; i++ ) {
+        for (uint256 i = 0; i < _len; i++) {
             string calldata _name = _names[i];
             address _addr = _addrs[i];
             bytes32 _hash = hash(_name);

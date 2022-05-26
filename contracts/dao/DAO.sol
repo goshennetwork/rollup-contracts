@@ -35,7 +35,11 @@ contract DAO is IDAO, OwnableUpgradeable {
     }
 
     // used to transfer fee token
-    function transferERC20(IERC20 token, address to, uint256 amount) public onlyOwner {
+    function transferERC20(
+        IERC20 token,
+        address to,
+        uint256 amount
+    ) public onlyOwner {
         token.transfer(to, amount);
     }
 }

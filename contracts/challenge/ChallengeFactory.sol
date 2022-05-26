@@ -17,7 +17,12 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
     address public override challengeBeacon;
     uint256 public challengerDeposit;
 
-    function initialize(IAddressResolver _resolver, address _beacon, uint256 _blockLimitPerRound, uint256 _challengerDeposit) public initializer {
+    function initialize(
+        IAddressResolver _resolver,
+        address _beacon,
+        uint256 _blockLimitPerRound,
+        uint256 _challengerDeposit
+    ) public initializer {
         resolver = _resolver;
         challengeBeacon = _beacon;
         blockLimitPerRound = _blockLimitPerRound;
