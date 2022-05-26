@@ -112,6 +112,22 @@
       "EventID": "ChallengeStarted(uint256,address,bytes32,uint256,address)",
       "EventName": "ChallengeStartedEventID"
     },
+    "ChallengerWhitelistUpdatedEvent": {
+      "Name": "ChallengerWhitelistUpdatedEvent",
+      "Fields": [
+        {
+          "Name": "challenger",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "enabled",
+          "Type": "bool"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "ChallengerWhitelistUpdated(address,bool)",
+      "EventName": "ChallengerWhitelistUpdatedEventID"
+    },
     "DepositClaimedEvent": {
       "Name": "DepositClaimedEvent",
       "Fields": [
@@ -352,6 +368,22 @@
       "EventID": "ProposerTimeout(uint256)",
       "EventName": "ProposerTimeoutEventID"
     },
+    "ProposerWhitelistUpdatedEvent": {
+      "Name": "ProposerWhitelistUpdatedEvent",
+      "Fields": [
+        {
+          "Name": "proposer",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "enabled",
+          "Type": "bool"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "ProposerWhitelistUpdated(address,bool)",
+      "EventName": "ProposerWhitelistUpdatedEventID"
+    },
     "ProposerWinEvent": {
       "Name": "ProposerWinEvent",
       "Fields": [
@@ -367,6 +399,22 @@
       "IsEvent": true,
       "EventID": "ProposerWin(address,uint256)",
       "EventName": "ProposerWinEventID"
+    },
+    "SequencerWhitelistUpdatedEvent": {
+      "Name": "SequencerWhitelistUpdatedEvent",
+      "Fields": [
+        {
+          "Name": "submitter",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "enabled",
+          "Type": "bool"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "SequencerWhitelistUpdated(address,bool)",
+      "EventName": "SequencerWhitelistUpdatedEventID"
     },
     "StateBatchAppendedEvent": {
       "Name": "StateBatchAppendedEvent",

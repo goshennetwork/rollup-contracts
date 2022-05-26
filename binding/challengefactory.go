@@ -42,12 +42,50 @@ func (_a *ChallengeFactory) Contract() *contract.Contract {
 
 // calls
 
-// Beacon calls the beacon method in the solidity contract
-func (_a *ChallengeFactory) Beacon(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+// BlockLimitPerRound calls the blockLimitPerRound method in the solidity contract
+func (_a *ChallengeFactory) BlockLimitPerRound(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("beacon", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("blockLimitPerRound", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// ChallengeBeacon calls the challengeBeacon method in the solidity contract
+func (_a *ChallengeFactory) ChallengeBeacon(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("challengeBeacon", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// ChallengerDeposit calls the challengerDeposit method in the solidity contract
+func (_a *ChallengeFactory) ChallengerDeposit(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("challengerDeposit", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -137,25 +175,6 @@ func (_a *ChallengeFactory) IsChallengeContract(addr web3.Address, block ...web3
 	return
 }
 
-// MinChallengerDeposit calls the minChallengerDeposit method in the solidity contract
-func (_a *ChallengeFactory) MinChallengerDeposit(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("minChallengerDeposit", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // RollupStateChain calls the rollupStateChain method in the solidity contract
 func (_a *ChallengeFactory) RollupStateChain(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
@@ -197,8 +216,8 @@ func (_a *ChallengeFactory) StakingManager(block ...web3.BlockNumber) (retval0 w
 // txns
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *ChallengeFactory) Initialize(beacon web3.Address, proposerTimeLimit *big.Int) *contract.Txn {
-	return _a.c.Txn("initialize", beacon, proposerTimeLimit)
+func (_a *ChallengeFactory) Initialize(resolver web3.Address, beacon web3.Address, blockLimitPerRound *big.Int, challengerDeposit *big.Int) *contract.Txn {
+	return _a.c.Txn("initialize", resolver, beacon, blockLimitPerRound, challengerDeposit)
 }
 
 // NewChallange sends a newChallange transaction in the solidity contract

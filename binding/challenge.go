@@ -173,11 +173,6 @@ func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, midSyst
 	return _a.c.Txn("initialize", endStep, systemEndState, midSystemState)
 }
 
-// InitializeUpgradeability sends a initializeUpgradeability transaction in the solidity contract
-func (_a *Challenge) InitializeUpgradeability() *contract.Txn {
-	return _a.c.Txn("initializeUpgradeability")
-}
-
 // ProposerTimeout sends a proposerTimeout transaction in the solidity contract
 func (_a *Challenge) ProposerTimeout(nodeKey *big.Int) *contract.Txn {
 	return _a.c.Txn("proposerTimeout", nodeKey)
@@ -262,42 +257,6 @@ func (_a *Challenge) FilterDisputeBranchSelectedEvent(challenger []web3.Address,
 			return nil, err
 		}
 		var evtItem DisputeBranchSelectedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
-func (_a *Challenge) InitializedTopicFilter() [][]web3.Hash {
-
-	var query [][]interface{}
-	query = append(query, []interface{}{InitializedEventID})
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *Challenge) FilterInitializedEvent(startBlock uint64, endBlock ...uint64) ([]*InitializedEvent, error) {
-	topic := _a.InitializedTopicFilter()
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*InitializedEvent, 0)
-	evts := _a.c.Abi.Events["Initialized"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem InitializedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

@@ -99,6 +99,25 @@ func (_a *AddressManager) GetAddr(name string, block ...web3.BlockNumber) (retva
 	return
 }
 
+// GetAddrByHash calls the getAddrByHash method in the solidity contract
+func (_a *AddressManager) GetAddrByHash(val0 [32]byte, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("getAddrByHash", web3.EncodeBlock(block...), val0)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // L1CrossLayerWitness calls the l1CrossLayerWitness method in the solidity contract
 func (_a *AddressManager) L1CrossLayerWitness(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
@@ -304,6 +323,11 @@ func (_a *AddressManager) RenounceOwnership() *contract.Txn {
 // SetAddress sends a setAddress transaction in the solidity contract
 func (_a *AddressManager) SetAddress(name string, addr web3.Address) *contract.Txn {
 	return _a.c.Txn("setAddress", name, addr)
+}
+
+// SetAddressBatch sends a setAddressBatch transaction in the solidity contract
+func (_a *AddressManager) SetAddressBatch(names []string, addrs []web3.Address) *contract.Txn {
+	return _a.c.Txn("setAddressBatch", names, addrs)
 }
 
 // TransferOwnership sends a transferOwnership transaction in the solidity contract

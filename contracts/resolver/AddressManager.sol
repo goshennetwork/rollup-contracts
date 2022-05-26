@@ -7,22 +7,39 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../interfaces/IAddressResolver.sol";
 
 contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable {
-    mapping(bytes32 => address) private addrs;
+    mapping(bytes32 => address) public getAddrByHash;
 
     function initialize() public initializer {
         __Ownable_init();
     }
 
     function setAddress(string memory _name, address _addr) public onlyOwner {
-        require(_addr != address(0), "empty addr");
         bytes32 _hash = hash(_name);
-        address _old = addrs[_hash];
-        addrs[_hash] = _addr;
+        address _old = _setAddress(_hash, _addr);
         emit AddressSet(_name, _old, _addr);
     }
 
+    function _setAddress(bytes32 _hash, address _addr) internal returns (address) {
+        require(_addr != address(0), "empty addr");
+        address _old = getAddrByHash[_hash];
+        getAddrByHash[_hash] = _addr;
+        return _old;
+    }
+
+    function setAddressBatch(string[] calldata _names, address[] calldata _addrs) public onlyOwner {
+        uint256 _len = _names.length;
+        require(_len == _addrs.length, "length mismatch");
+        for (uint i = 0; i < _len; i++ ) {
+            string calldata _name = _names[i];
+            address _addr = _addrs[i];
+            bytes32 _hash = hash(_name);
+            address _old = _setAddress(_hash, _addr);
+            emit AddressSet(_name, _old, _addr);
+        }
+    }
+
     function getAddr(string memory _name) public view returns (address) {
-        return addrs[hash(_name)];
+        return getAddrByHash[hash(_name)];
     }
 
     function resolve(string memory _name) public view returns (address) {

@@ -15,6 +15,7 @@ ChallengeFactory.sol/*
 UpgradeableBeacon.sol/*
 ProxyAdmin.sol/*
 TransparentUpgradeableProxy.sol/*
+DAO.sol/*
 "
 prefix="out/"
 for file in $files ; do
