@@ -24,7 +24,7 @@ library UnsafeSign {
     uint256 internal constant MUL_R_WITH_PRIVATE =
         55066263022277343669578718895168534326250603453777594175500187360389116729240;
 
-    ///@dev sign specific hash and chainId, return r,s,v
+    /// @dev sign specific hash and chainId, return r,s,v
     function Sign(bytes32 signedHash, uint64 chainId)
         internal
         pure
@@ -50,12 +50,11 @@ library UnsafeSign {
         s = s % ORDER;
         bool vice = false;
         if (s > HALF_ORDER) {
-            //s is the scale of the curv(just like private key), so when s beyond half order, just use inverse element
+            //s is the scale of the curve(just like private key), so when s beyond half order, just use inverse element
             vice = true;
             s = ORDER - s;
         }
         //only happen when pv*r+e=order*integer
-        //todo: maybe use more than just one k to avoid special signed hahs attack?
         require(s != 0, "zero s");
         uint64 v = 27;
         if (vice) {
