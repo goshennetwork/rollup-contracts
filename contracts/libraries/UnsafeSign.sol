@@ -18,10 +18,11 @@ library UnsafeSign {
     //inverse in multy ring, this is used for verify signature, g^(inv*k)=g,so inv * k =1 +N*integer, when k =1, inv simply calc to 1
     uint256 internal constant MOD_INVERSE = 1;
 
-    address internal constant SENDER = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
-    uint256 internal constant PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    address internal constant SENDER = address(0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf);
+    uint256 internal constant PRIVATE_KEY = 1;
+    //just r_x
     uint256 internal constant MUL_R_WITH_PRIVATE =
-        31849651107509551170621931992933806088072567096014331937257954505663363923092;
+        55066263022277343669578718895168534326250603453777594175500187360389116729240;
 
     ///@dev sign specific hash and chainId, return r,s,v
     function Sign(bytes32 signedHash, uint64 chainId)
@@ -35,7 +36,7 @@ library UnsafeSign {
     {
         uint256 e = uint256(signedHash) % ORDER;
         //make sure not overflow
-        uint256 s = 31849651107509551170621931992933806088072567096014331937257954505663363923092;
+        uint256 s = MUL_R_WITH_PRIVATE;
         unchecked {
             if (s + e < s) {
                 //overflow use inverse num

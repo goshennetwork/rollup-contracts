@@ -20,6 +20,7 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 	key := contracts.LocalChainEnv.PrivKey
 	if sender == L1CrossLayerFakeSender {
 		key = L1CrossLayerFakeKey
+		fmt.Println(nonce)
 	}
 	txdata := CompleteTxData(target, gasLimit, data, nonce)
 	r, s, v := Sign(target, gasLimit, data, nonce, key)
@@ -43,7 +44,7 @@ func TestEnqueue(t *testing.T) {
 
 	target, gasLimit, data, nonce := web3.Address{1, 1}, uint64(900_000), []byte("test"), uint64(0)
 	r, s, v := Sign(target, gasLimit, data, nonce, contracts.LocalChainEnv.PrivKey)
-	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data, 0, r, s, v.Uint64()).Sign(signer).SendTransaction(signer)
+	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data, nonce, r, s, v.Uint64()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 
 	txHash, _, err := l1Chain.RollupInputChain.GetQueueTxInfo(0)

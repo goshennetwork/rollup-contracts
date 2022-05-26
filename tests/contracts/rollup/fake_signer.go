@@ -14,10 +14,10 @@ import (
 const (
 	L2ChainID           = 1337
 	GasPrice            = 1_000_000_000
-	L1CrossLayerFakeKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	L1CrossLayerFakeKey = "0x01"
 )
 
-var L1CrossLayerFakeSender = web3.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+var L1CrossLayerFakeSender = web3.HexToAddress("0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf")
 
 func CompleteTxData(target web3.Address, gasLimit uint64, data []byte, nonce uint64) *types.LegacyTx {
 	to := common.Address(target)

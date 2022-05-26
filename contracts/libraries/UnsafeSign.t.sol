@@ -33,7 +33,7 @@ contract TestUnsafeSign {
         _rlpList[8] = RLPWriter.writeUint(s);
         bytes32 _txHash = keccak256(RLPWriter.writeList(_rlpList));
         require(
-            _txHash == bytes32(uint256(0xbabdfa0c36828141cf854c840a1b55103b949bb06407396a28bcdaabf5d6aad9)),
+            _txHash == bytes32(uint256(0xc9b48053c410d9e6f14571cbe239f83397ae23adaaf1d61561294fdff0e93587)),
             "wrong tx hash"
         );
     }
