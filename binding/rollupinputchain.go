@@ -42,6 +42,63 @@ func (_a *RollupInputChain) Contract() *contract.Contract {
 
 // calls
 
+// GASPRICE calls the GAS_PRICE method in the solidity contract
+func (_a *RollupInputChain) GASPRICE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("GAS_PRICE", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// L1CROSSLAYERWITNESSEOA calls the L1_CROSS_LAYER_WITNESS_EOA method in the solidity contract
+func (_a *RollupInputChain) L1CROSSLAYERWITNESSEOA(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("L1_CROSS_LAYER_WITNESS_EOA", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// L2CHAINID calls the L2_CHAIN_ID method in the solidity contract
+func (_a *RollupInputChain) L2CHAINID(block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("L2_CHAIN_ID", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // MAXCROSSLAYERTXSIZE calls the MAX_CROSS_LAYER_TX_SIZE method in the solidity contract
 func (_a *RollupInputChain) MAXCROSSLAYERTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
@@ -86,6 +143,25 @@ func (_a *RollupInputChain) MINROLLUPTXGAS(block ...web3.BlockNumber) (retval0 *
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("MIN_ROLLUP_TX_GAS", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// VALUE calls the VALUE method in the solidity contract
+func (_a *RollupInputChain) VALUE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("VALUE", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -154,6 +230,25 @@ func (_a *RollupInputChain) GetQueueTxInfo(queueIndex uint64, block ...web3.Bloc
 	}
 	if err = mapstructure.Decode(out["1"], &retval1); err != nil {
 		err = fmt.Errorf("failed to encode output at index 1")
+	}
+
+	return
+}
+
+// L1CrossLayerEOA calls the l1CrossLayerEOA method in the solidity contract
+func (_a *RollupInputChain) L1CrossLayerEOA(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("l1CrossLayerEOA", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
 	}
 
 	return
@@ -262,8 +357,8 @@ func (_a *RollupInputChain) AppendBatch() *contract.Txn {
 }
 
 // Enqueue sends a enqueue transaction in the solidity contract
-func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data []byte) *contract.Txn {
-	return _a.c.Txn("enqueue", target, gasLimit, data)
+func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data []byte, nonce uint64, r *big.Int, s *big.Int, v uint64) *contract.Txn {
+	return _a.c.Txn("enqueue", target, gasLimit, data, nonce, r, s, v)
 }
 
 // Initialize sends a initialize transaction in the solidity contract

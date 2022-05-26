@@ -532,12 +532,28 @@
           "Type": "[]byte"
         },
         {
+          "Name": "nonce",
+          "Type": "uint64"
+        },
+        {
+          "Name": "r",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "s",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "v",
+          "Type": "uint64"
+        },
+        {
           "Name": "timestamp",
           "Type": "uint64"
         }
       ],
       "IsEvent": true,
-      "EventID": "TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)",
+      "EventID": "TransactionEnqueued(uint64,address,address,uint256,bytes,uint64,uint256,uint256,uint64,uint64)",
       "EventName": "TransactionEnqueuedEventID"
     },
     "TransferEvent": {

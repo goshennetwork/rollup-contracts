@@ -278,7 +278,7 @@ type TransactionAppendedEvent struct {
 	Raw *web3.Log
 }
 
-var TransactionEnqueuedEventID = crypto.Keccak256Hash([]byte("TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)"))
+var TransactionEnqueuedEventID = crypto.Keccak256Hash([]byte("TransactionEnqueued(uint64,address,address,uint256,bytes,uint64,uint256,uint256,uint64,uint64)"))
 
 type TransactionEnqueuedEvent struct {
 	QueueIndex uint64
@@ -286,6 +286,10 @@ type TransactionEnqueuedEvent struct {
 	To         web3.Address
 	Gaslimit   *big.Int
 	Data       []byte
+	Nonce      uint64
+	R          *big.Int
+	S          *big.Int
+	V          uint64
 	Timestamp  uint64
 
 	Raw *web3.Log

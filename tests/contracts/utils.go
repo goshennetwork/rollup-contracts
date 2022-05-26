@@ -11,7 +11,8 @@ import (
 var LocalChainEnv = &ChainEnv{
 	ChainId: 1234,
 	RpcUrl:  "local",
-	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+	//private can't same as 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, which use by L1CrossLayerWitness
+	PrivKey: "0x000974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 	L1ChainConfig: &L1ChainDeployConfig{
 		FraudProofWindow:        3,
 		MaxEnqueueTxGasLimit:    15000000,

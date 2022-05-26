@@ -1,29 +1,39 @@
 package rollup
 
 import (
+	"bytes"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/laizy/web3"
-	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
-	"github.com/laizy/web3/utils/codec"
 	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 )
 
-var L1CrossLayerWitnessAddr = web3.HexToAddress("0x5800000000000000000000000000000000000000")
-
-func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte) web3.Hash {
-	sink := codec.NewZeroCopySink(nil)
-	sink.WriteAddress(sender)
-	sink.WriteAddress(target)
-	sink.WriteUint64BE(gasLimit)
-	sink.WriteBytes(data)
-
-	return crypto.Keccak256Hash(sink.Bytes())
+func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte, nonce uint64) web3.Hash {
+	key := contracts.LocalChainEnv.PrivKey
+	if sender == L1CrossLayerFakeSender {
+		key = L1CrossLayerFakeKey
+	}
+	txdata := CompleteTxData(target, gasLimit, data, nonce)
+	r, s, v := Sign(target, gasLimit, data, nonce, key)
+	txdata.V = v
+	txdata.R = r
+	txdata.S = s
+	_s, err := types.NewEIP155Signer(big.NewInt(L2ChainID)).Sender(types.NewTx(txdata))
+	if err != nil {
+		panic(err)
+	}
+	if !bytes.Equal(sender.Bytes(), _s.Bytes()) {
+		panic("wrong sig")
+	}
+	return web3.Hash(types.NewTx(txdata).Hash())
 }
 
 func TestEnqueue(t *testing.T) {
@@ -31,13 +41,14 @@ func TestEnqueue(t *testing.T) {
 	signer := contracts.SetupLocalSigner(chainEnv)
 	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
 
-	target, gasLimit, data := web3.Address{1, 1}, uint64(900_000), []byte("test")
-	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data).Sign(signer).SendTransaction(signer)
+	target, gasLimit, data, nonce := web3.Address{1, 1}, uint64(900_000), []byte("test"), uint64(0)
+	r, s, v := Sign(target, gasLimit, data, nonce, contracts.LocalChainEnv.PrivKey)
+	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data, 0, r, s, v.Uint64()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 
 	txHash, _, err := l1Chain.RollupInputChain.GetQueueTxInfo(0)
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(signer.Address(), target, gasLimit, data))
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(signer.Address(), target, gasLimit, data, nonce))
 
 	receipt = l1Chain.L1CrossLayerWitness.SendMessage(target, data).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(strings.Contains(utils.JsonStr(receipt), "MessageSent"))
@@ -50,7 +61,9 @@ func TestEnqueue(t *testing.T) {
 
 	txHash, _, err = l1Chain.RollupInputChain.GetQueueTxInfo(1)
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerWitnessAddr, chainEnv.L1ChainConfig.L2CrossLayerWitness, chainEnv.L1ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg))
+	size, err := l1Chain.L1CrossLayerWitness.TotalSize()
+	utils.Ensure(err)
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.L1ChainConfig.L2CrossLayerWitness, chainEnv.L1ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg, size-1))
 }
 
 func TestAppendBatches(t *testing.T) {
