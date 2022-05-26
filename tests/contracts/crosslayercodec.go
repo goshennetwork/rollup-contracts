@@ -13,13 +13,13 @@ func CrossLayerMessageHash(target, sender web3.Address, msgIndex uint64, msg []b
 	return crypto.Keccak256Hash(sink.Bytes())
 }
 
-func EncodeL1ToL2CallData(target, sender web3.Address, msg []byte, msgIndex uint64, mmrRoot web3.Hash, mmrSize uint64) []byte  {
+func EncodeL1ToL2CallData(target, sender web3.Address, msg []byte, msgIndex uint64, mmrRoot web3.Hash, mmrSize uint64) []byte {
 	method := binding.L2CrossLayerWitnessAbi().Methods["relayMessage"]
 	calldata := method.MustEncodeIDAndInput(target, sender, msg, msgIndex, mmrRoot, mmrSize)
 	return calldata
 }
 
-func EncodeL2ToL1CallData(target, sender web3.Address, msg []byte, msgIndex uint64, mmrRoot web3.Hash, mmrSize uint64) []byte  {
+func EncodeL2ToL1CallData(target, sender web3.Address, msg []byte, msgIndex uint64, mmrRoot web3.Hash, mmrSize uint64) []byte {
 	method := binding.L1CrossLayerWitnessAbi().Methods["relayMessage"]
 	calldata := method.MustEncodeIDAndInput(target, sender, msg, msgIndex, mmrRoot, mmrSize)
 	return calldata

@@ -39,7 +39,7 @@ func TestEnqueue(t *testing.T) {
 	utils.EnsureTrue(txHash == EnqueueTransactionHash(signer.Address(), target, gasLimit, data))
 
 	receipt = l1Chain.L1CrossLayerWitness.SendMessage(target, data).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(strings.Contains(utils.JsonStr(receipt), "MessageSent" ))
+	utils.EnsureTrue(strings.Contains(utils.JsonStr(receipt), "MessageSent"))
 
 	msgHash := contracts.CrossLayerMessageHash(target, signer.Address(), 0, data)
 	mmrRoot, err := l1Chain.L1CrossLayerWitness.MmrRoot()
@@ -49,7 +49,7 @@ func TestEnqueue(t *testing.T) {
 
 	txHash, _, err = l1Chain.RollupInputChain.GetQueueTxInfo(1)
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerWitnessAddr, chainEnv.L1ChainConfig.L2CrossLayerWitness, chainEnv.L1ChainConfig.MaxCrossLayerTxGasLimit , crossLayerMsg))
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerWitnessAddr, chainEnv.L1ChainConfig.L2CrossLayerWitness, chainEnv.L1ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg))
 }
 
 func TestAppendBatches(t *testing.T) {
@@ -75,5 +75,5 @@ func TestAppendBatches(t *testing.T) {
 	//utils.EnsureTrue(strings.Contains(utils.JsonStr(receipt), "TransactionAppended"))
 	height, err := l1Chain.RollupInputChain.ChainHeight()
 	utils.Ensure(err)
-	utils.EnsureTrue(height== uint64(1))
+	utils.EnsureTrue(height == uint64(1))
 }

@@ -146,8 +146,8 @@ var LocalChainEnv = &ChainEnv{
 		FraudProofWindow:        3,
 		MaxEnqueueTxGasLimit:    15000000,
 		MaxCrossLayerTxGasLimit: 5000000,
-		StakingAmount: web3.Ether(10),
-		L2CrossLayerWitness: web3.Address{1,2,3,4,5,6},
+		StakingAmount:           web3.Ether(10),
+		L2CrossLayerWitness:     web3.Address{1, 2, 3, 4, 5, 6},
 		ChallengeConfig: &ChallengeConfig{
 			BlockLimitPerRound: 10,
 			ChallengerDeposit:  web3.Ether(1),
