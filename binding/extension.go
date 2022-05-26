@@ -37,7 +37,7 @@ func (self *RollupInputBatches) Encode() []byte {
 
 // AppendBatch sends a appendBatch transaction in the solidity contract
 func (_a *RollupInputChain) AppendInputBatches(batches *RollupInputBatches) *contract.Txn {
-	txn :=  _a.c.Txn("appendBatch")
+	txn := _a.c.Txn("appendBatch")
 	txn.Data = batches.Calldata()
 
 	return txn
