@@ -10,6 +10,7 @@ import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
 import "../libraries/RLPWriter.sol";
+import "../libraries/UnsafeSign.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
@@ -29,11 +30,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     //store L1 -> L2 tx
     struct QueueTxInfo {
-        bytes32 signHash;
-        uint256 r;
-        uint256 s;
-        uint64 v;
-        bool isL1CrossLayerWitness;
+        bytes32 transactionHash;
         uint64 timestamp;
     }
 
@@ -64,35 +61,32 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint256 s,
         uint64 v
     ) public {
-        bool _isL1CrossLayerWitness = false;
-        bytes32 _signTxHash;
-        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
+        //sender used to event filter
         address sender;
+        bytes32 _signTxHash = calculateSignHash(_nonce, _gasLimit, _target, _data);
+        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         if (msg.sender == tx.origin) {
             sender = msg.sender;
+            //make sure only L1CrossLayerWitness use unsafe sender
+            require(sender == UnsafeSign.SENDER, "malicious sender");
             require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
-            _signTxHash = calculateSignHash(_nonce, _gasLimit, _target, _data);
+            uint64 _pureV = v - 35 - ((l2ChainId * 2));
+            require(_pureV <= 28, "wrong v");
+            require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)));
         } else {
+            sender = UnsafeSign.SENDER;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
-            sender = Constants.L1_CROSS_LAYER_WITNESS;
             _gasLimit = maxCrossLayerTxGasLimit;
-            _signTxHash = calculateSignHash(_nonce, _gasLimit, _target, _data);
-            _isL1CrossLayerWitness = true;
+            //help sign L1CrissLayerWitness
+            (r, s, v) = UnsafeSign.Sign(_signTxHash, l2ChainId);
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
         uint64 _now = uint64(block.timestamp);
         queuedTxInfos.push(
-            QueueTxInfo({
-                timestamp: _now,
-                signHash: _signTxHash,
-                r: r,
-                s: s,
-                v: v,
-                isL1CrossLayerWitness: _isL1CrossLayerWitness
-            })
+            QueueTxInfo({ timestamp: _now, transactionHash: keccak256(abi.encode(_signTxHash, r, s, v)) })
         );
         //do not need to reveal default value
         emit TransactionEnqueued(
@@ -133,39 +127,13 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             );
     }
 
-    function completeQueueInfo(
-        uint64 _queueStartIndex,
-        uint64 _queueNum,
-        uint64 _batchDataPos
-    ) internal returns (bytes32, uint64) {
-        uint64 v;
-        bytes32 r;
-        bytes32 s;
-        uint64 _crossTxNum;
+    function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
         uint256 len = (32 + 8) * _queueNum;
         bytes memory _queueHash = new bytes(len);
         uint64 _offset = 0;
         for (uint256 i = 0; i < _queueNum; i++) {
-            QueueTxInfo storage info = queuedTxInfos[_queueStartIndex + i];
-            if (info.isL1CrossLayerWitness) {
-                _crossTxNum++;
-                //check signature
-                assembly {
-                    r := calldataload(_batchDataPos)
-                    s := calldataload(add(_batchDataPos, 32))
-                    v := shr(192, calldataload(add(_batchDataPos, 64)))
-                }
-                uint64 _pureV = v - 32 - ((l2ChainId * 2));
-                require(_pureV <= 1, "wrong v");
-                address signer = ecrecover(info.signHash, uint8(_pureV), r, s);
-                require(signer == l1CrossLayerEOA, "wrong sig");
-                _batchDataPos += 32 + 32 + 8;
-                //now complete signature
-                info.r = uint256(r);
-                info.s = uint256(s);
-                info.v = v;
-            }
-            bytes32 txHash = keccak256(abi.encode(info.signHash, info.r, info.s, info.v, info.isL1CrossLayerWitness));
+            QueueTxInfo memory info = queuedTxInfos[_queueStartIndex + i];
+            bytes32 txHash = info.transactionHash;
             bytes32 time = bytes32(uint256(info.timestamp) << 192);
             assembly {
                 let ptr := add(_queueHash, _offset)
@@ -182,11 +150,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         assembly {
             result := keccak256(_queueHash, len)
         }
-        return (result, _crossTxNum);
+        return result;
     }
 
     // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
-    // batchLeftTimeDiff([]uint32) + crossLayerSig([]bytes72(uint256 R || uint256 S || uint64 V)) + batchesData
+    // batchLeftTimeDiff([]uint32) + batchesData
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
@@ -200,6 +168,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
+        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
         uint64 _batchDataPos = 4 + 8 + 8;
         //4byte function selector, 2 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
@@ -236,13 +205,9 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp < _nextTimestamp, "last batch timestamp too high");
-
-        //now check signature and feed info,then calc enqueue tx hash
-        (bytes32 _queueHash, uint64 _crossLayerTxNum) = completeQueueInfo(_queueStartIndex, _queueNum, _batchDataPos);
-        _batchDataPos += _crossLayerTxNum * (32 + 32 + 8); //every crossLayerTx have 72 byte  spece to complete signature
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
-        bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHash));
+        bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
         _chain.append(inputHash);
         lastTimestamp = _timestamp;
         emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1, inputHash);
@@ -260,9 +225,9 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         return addressResolver.rollupInputChainContainer().get(_inputIndex);
     }
 
-    //    function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
-    //        require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
-    //        QueueTxInfo storage info = queuedTxInfos[_queueIndex];
-    //        return (info.transactionHash, info.timestamp);
-    //    }
+    function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {
+        require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
+        QueueTxInfo storage info = queuedTxInfos[_queueIndex];
+        return (info.transactionHash, info.timestamp);
+    }
 }

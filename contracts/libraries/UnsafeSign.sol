@@ -18,11 +18,13 @@ library UnsafeSign {
     //inverse in multy ring, this is used for verify signature, g^(inv*k)=g,so inv * k =1 +N*integer, when k =1, inv simply calc to 1
     uint256 internal constant MOD_INVERSE = 1;
 
+    address internal constant SENDER = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
     uint256 internal constant PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
     uint256 internal constant MUL_R_WITH_PRIVATE =
         31849651107509551170621931992933806088072567096014331937257954505663363923092;
 
-    function GetRSV(bytes32 signedHash, uint64 chainId)
+    ///@dev sign specific hash and chainId, return r,s,v
+    function Sign(bytes32 signedHash, uint64 chainId)
         internal
         pure
         returns (

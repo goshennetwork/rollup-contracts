@@ -26,7 +26,9 @@ interface IRollupInputChain {
      * @param _data Transaction data.
      * @param _nonce sender's nonce in L2
      * @param r,s,v tx signature,some tx's param is set on contract: gasPrice(1 GWEI), value(0), chainId
-     * @notice Revert if contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
+     * @notice Revert if :
+     * - contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
+     * - L1EOA try to sign as L1CrossLayerWitness
      */
     function enqueue(
         address _target,
@@ -76,5 +78,5 @@ interface IRollupInputChain {
     ///@return input hash related input index in rollup input chain.
     function getInputHash(uint64 _inputIndex) external view returns (bytes32);
 
-    //    function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
+    function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
 }
