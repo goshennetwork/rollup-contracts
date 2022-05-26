@@ -14,6 +14,7 @@ interface IL1CrossLayerWitness is ICrossLayerWitness {
      * @param _rlpHeader L2 block header contains l2 mmr root and size
      * @param _stateInfo L2 stateInfo contains block hash
      * @param _proof MMR proof that used to proof provided info surly exists in l2 block mmr
+     * @return whether relay call message success
      * @notice Revert if:
      * - reentrancy
      * - target is l1 system contract.(In this case, anyone can't send any calldata to L2 relay contract)
@@ -32,9 +33,12 @@ interface IL1CrossLayerWitness is ICrossLayerWitness {
         bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
-    ) external;
+    ) external returns (bool);
 
     event MessageBlocked(bytes32[] _messageHashes);
+
+    //check whether specific message already succeed.
+    function isMessageSucceed(bytes32 _messageHash) external view returns (bool);
 
     /**
      * @dev Block a list of l2 -> l1 message.Only allowed by DAO

@@ -45,5 +45,5 @@ interface IChallengeFactory {
     ///@return true if given addr is challenge contract
     function isChallengeContract(address _addr) external view returns (bool);
 
-    function beacon() external view returns (address);
+    function challengeBeacon() external view returns (address);
 }

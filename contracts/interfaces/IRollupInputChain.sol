@@ -60,7 +60,7 @@ interface IRollupInputChain {
     ///@return total queueNum
     function totalQueue() external view returns (uint64);
 
-    ///@return lastTimeStamp of RollupInputChain
+    ///@return lastTimestamp of RollupInputChain
     function lastTimestamp() external view returns (uint64);
 
     ///@return input hash related input index in rollup input chain.

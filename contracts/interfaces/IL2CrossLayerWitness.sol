@@ -13,6 +13,7 @@ interface IL2CrossLayerWitness is ICrossLayerWitness {
      * @param _messageIndex index in l1 merkle mountain range's leaf
      * @param _messageIndex l1 merkle mountain range root
      * @param _mmrSize l1 merkle mountain range tree size
+     * @return whether relay message call success
      * @notice Revert if:
      * - sender isn't L1CrossLayerWitness.
      * - message already relayed
@@ -24,7 +25,7 @@ interface IL2CrossLayerWitness is ICrossLayerWitness {
         uint64 _messageIndex,
         bytes32 _mmrRoot,
         uint64 _mmrSize
-    ) external;
+    ) external returns (bool);
 
     /**
      * @dev Relay L1 -> L2 message when previous relayed false
@@ -34,6 +35,7 @@ interface IL2CrossLayerWitness is ICrossLayerWitness {
      * @param _messageIndex index in l1 merkle mountain range's leaf
      * @param _proof Merkle mountain range inclusion proof
      * @param _mmrSize L1 merkle mountain range tree size
+     * @return whether return call success
      * @notice Revert if:
      * - Provided mmrSize have no related mmrRoot.(which means first relay message didn't successful finish or relay succeed)
      * - Provided _proof cant proof message indeed exist in l1 mmr root got by local recorded
@@ -46,5 +48,5 @@ interface IL2CrossLayerWitness is ICrossLayerWitness {
         uint64 _messageIndex,
         bytes32[] memory _proof,
         uint64 _mmrSize
-    ) external;
+    ) external returns (bool);
 }

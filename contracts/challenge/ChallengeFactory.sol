@@ -6,21 +6,27 @@ import "../interfaces/IAddressResolver.sol";
 import "./Challenge.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "../interfaces/IAddressManager.sol";
 
 contract ChallengeFactory is IChallengeFactory, Initializable {
     using Types for Types.StateInfo;
     mapping(address => bool) contracts;
     mapping(bytes32 => address) challengedStates;
     IAddressResolver resolver;
-    IChallenge challenge;
-    uint256 proposerTimeLimit;
-    address public override beacon;
-    //fixme: flows need more evaluation.
-    uint256 public constant minChallengerDeposit = 0.1 ether;
+    uint256 public blockLimitPerRound;
+    address public override challengeBeacon;
+    uint256 public challengerDeposit;
 
-    function initialize(address _beacon, uint256 _proposerTimeLimit) public initializer {
-        beacon = _beacon;
-        proposerTimeLimit = _proposerTimeLimit;
+    function initialize(
+        IAddressResolver _resolver,
+        address _beacon,
+        uint256 _blockLimitPerRound,
+        uint256 _challengerDeposit
+    ) public initializer {
+        resolver = _resolver;
+        challengeBeacon = _beacon;
+        blockLimitPerRound = _blockLimitPerRound;
+        challengerDeposit = _challengerDeposit;
     }
 
     function newChallange(
@@ -42,21 +48,21 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
             _parentStateInfo.blockHash
         );
         bytes memory _data;
-        address newChallenge = address(new BeaconProxy(beacon, _data));
+        address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
         contracts[newChallenge] = true;
         challengedStates[_hash] = newChallenge;
         IChallenge(newChallenge).create(
             _systemStartState,
             msg.sender,
-            proposerTimeLimit,
+            blockLimitPerRound,
             _challengedStateInfo,
-            minChallengerDeposit
+            challengerDeposit
         );
         emit ChallengeStarted(
             _challengedStateInfo.index,
             _challengedStateInfo.proposer,
             _systemStartState,
-            block.number + proposerTimeLimit,
+            block.number + blockLimitPerRound,
             newChallenge
         );
     }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/IDAO.sol";
 
 contract DAO is IDAO, OwnableUpgradeable {
@@ -31,5 +32,14 @@ contract DAO is IDAO, OwnableUpgradeable {
     function setChallengerWhitelist(address challenger, bool enabled) public onlyOwner {
         challengerWhitelist[challenger] = enabled;
         emit ChallengerWhitelistUpdated(challenger, enabled);
+    }
+
+    // used to transfer fee token
+    function transferERC20(
+        IERC20 token,
+        address to,
+        uint256 amount
+    ) public onlyOwner {
+        token.transfer(to, amount);
     }
 }

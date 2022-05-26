@@ -8,11 +8,9 @@ import "../interfaces/IAddressResolver.sol";
 contract ChainStorageContainer is IChainStorageContainer, Initializable {
     IAddressResolver addressResolver;
     bytes32[] chain;
-    // the last chain element time stamp, it is simply set with largest timestamp in current input batch.
-    uint64 public override lastTimestamp;
 
     //who can change the state of this container
-    string owner;
+    string public owner;
 
     function initialize(string memory _owner, address _addressResolver) public initializer {
         owner = _owner;
@@ -40,10 +38,6 @@ contract ChainStorageContainer is IChainStorageContainer, Initializable {
         assembly {
             sstore(chain.slot, _newSize)
         }
-    }
-
-    function setLastTimestamp(uint64 _timestamp) public onlyOwner {
-        lastTimestamp = _timestamp;
     }
 
     function get(uint64 _index) public view returns (bytes32) {
