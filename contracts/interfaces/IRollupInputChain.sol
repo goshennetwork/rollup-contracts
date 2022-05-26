@@ -20,7 +20,7 @@ interface IRollupInputChain {
 
     /**
      * @dev Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2.Normal EOA just need
-     to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by l2 system
+     to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
@@ -28,7 +28,7 @@ interface IRollupInputChain {
      * @param r,s,v tx signature,some tx's param is set on contract: gasPrice(1 GWEI), value(0), chainId
      * @notice Revert if :
      * - contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
-     * - L1EOA try to sign as L1CrossLayerWitness
+     * - Anyone who tries to use UnsafeSigner's private key to enqueue
      */
     function enqueue(
         address _target,
