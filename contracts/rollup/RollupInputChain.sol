@@ -16,12 +16,13 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
-    uint256 public constant GAS_PRICE = 1;
+    uint256 public constant GAS_PRICE = 1_000_000_000;
     uint256 public constant VALUE = 0;
+    uint64 public constant L2_CHAIN_ID = 1337;
+    address public immutable L1_CROSS_LAYER_WITNESS_EOA = UnsafeSign.SENDER;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
-    uint64 public l2ChainId;
     address public l1CrossLayerEOA;
 
     uint64 public override lastTimestamp;
@@ -41,15 +42,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
-        uint64 _maxCrossLayerTxGasLimit,
-        uint64 _l2ChainId,
-        address _l1CrossLayerEOA
+        uint64 _maxCrossLayerTxGasLimit
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
-        l2ChainId = _l2ChainId;
-        l1CrossLayerEOA = _l1CrossLayerEOA;
     }
 
     function enqueue(
@@ -63,31 +60,40 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     ) public {
         //sender used to event filter
         address sender;
-        bytes32 _signTxHash = calculateSignHash(_nonce, _gasLimit, _target, _data);
+
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         if (msg.sender == tx.origin) {
             sender = msg.sender;
             //make sure only L1CrossLayerWitness use unsafe sender
-            require(sender == UnsafeSign.SENDER, "malicious sender");
+            require(sender != UnsafeSign.SENDER, "malicious sender");
             require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
-            uint64 _pureV = v - 35 - ((l2ChainId * 2));
-            require(_pureV <= 28, "wrong v");
-            require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)));
         } else {
             sender = UnsafeSign.SENDER;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             _gasLimit = maxCrossLayerTxGasLimit;
-            //help sign L1CrissLayerWitness
-            (r, s, v) = UnsafeSign.Sign(_signTxHash, l2ChainId);
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
+        bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _target, _data);
+        bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
+        if (sender == UnsafeSign.SENDER) {
+            //L1CrossLayer need to sign
+            //help sign L1CrossLayerWitness
+            (r, s, v) = UnsafeSign.Sign(_signTxHash, L2_CHAIN_ID);
+        }
+        uint8 _pureV = 27;
+        if (_pureV - 35 - 2 * L2_CHAIN_ID == 1) {
+            _pureV = 28;
+        }
+        require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)), "wrong sign");
+        //now change rsv value in tx to calc tx's hash
+        _rlpList[6] = RLPWriter.writeUint(v);
+        _rlpList[7] = RLPWriter.writeUint(r);
+        _rlpList[8] = RLPWriter.writeUint(s);
         uint64 _now = uint64(block.timestamp);
-        queuedTxInfos.push(
-            QueueTxInfo({ timestamp: _now, transactionHash: keccak256(abi.encode(_signTxHash, r, s, v)) })
-        );
+        queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(RLPWriter.writeList(_rlpList)) }));
         //do not need to reveal default value
         emit TransactionEnqueued(
             uint64(queuedTxInfos.length - 1),
@@ -105,26 +111,23 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId
     //sender used to recognize tx from L1CrossLayerWitness
-    function calculateSignHash(
+    function getRlpList(
         uint64 _nonce,
         uint64 _gasLimit,
         address _target,
         bytes memory _data
-    ) public view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    RLPWriter.writeUint(uint256(_nonce)),
-                    RLPWriter.writeUint(GAS_PRICE),
-                    RLPWriter.writeUint(uint256(_gasLimit)),
-                    RLPWriter.writeAddress(_target),
-                    RLPWriter.writeUint(VALUE),
-                    RLPWriter.writeBytes(_data),
-                    RLPWriter.writeUint(l2ChainId),
-                    bytes1(0x80),
-                    bytes1(0x80)
-                )
-            );
+    ) internal pure returns (bytes[] memory) {
+        bytes[] memory list = new bytes[](9);
+        list[0] = RLPWriter.writeUint(uint256(_nonce));
+        list[1] = RLPWriter.writeUint(GAS_PRICE);
+        list[2] = RLPWriter.writeUint(uint256(_gasLimit));
+        list[3] = RLPWriter.writeAddress(_target);
+        list[4] = RLPWriter.writeUint(VALUE);
+        list[5] = RLPWriter.writeBytes(_data);
+        list[6] = RLPWriter.writeUint(L2_CHAIN_ID);
+        list[7] = abi.encodePacked(bytes1(0x80));
+        list[8] = abi.encodePacked(bytes1(0x80));
+        return list;
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
