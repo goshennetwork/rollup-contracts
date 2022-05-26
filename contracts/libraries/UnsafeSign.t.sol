@@ -6,22 +6,18 @@ import "./RLPWriter.sol";
 import "./console.sol";
 
 contract TestUnsafeSign {
-    function testSign() public {
-        for (uint256 i = 0; i < 100000; i++) {
-            bytes32 signedHash = keccak256(abi.encode(i, "test"));
-            (uint256 r, uint256 s, uint64 v) = UnsafeSign.Sign(signedHash, 1);
-            uint64 _pureV = v - 2 * 1 - 8;
-            require(_pureV <= 28, "invalid v");
-            address sender = ecrecover(signedHash, uint8(_pureV), bytes32(r), bytes32(s));
-            require(sender == UnsafeSign.SENDER, "wrong sender");
-        }
+    function testSign(bytes32 signedHash) public pure {
+        (uint256 r, uint256 s, uint64 v) = UnsafeSign.Sign(signedHash, 1);
+        uint64 _pureV = v - 2 * 1 - 8;
+        require(_pureV <= 28, "invalid v");
+        address sender = ecrecover(signedHash, uint8(_pureV), bytes32(r), bytes32(s));
+        require(sender == UnsafeSign.GADDR, "wrong sender");
     }
 
-    function testTx() public {
+    function testTx() public pure {
         bytes memory data = new bytes(0);
         bytes[] memory _rlpList = getRlpList(0, 0, address(0), data);
         bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
-        require(_signTxHash == keccak256(RLPWriter.writeList(_rlpList)));
         require(
             _signTxHash == bytes32(uint256(0x8c6115c6530a74eb5904bc51bcc0c8777c2e6144f20c04821ad703e301eef28c)),
             "wrong signed hash"

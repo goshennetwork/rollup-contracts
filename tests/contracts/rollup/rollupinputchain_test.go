@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common"

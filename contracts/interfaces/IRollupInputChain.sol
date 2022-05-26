@@ -9,12 +9,7 @@ interface IRollupInputChain {
         uint64 indexed queueIndex,
         address indexed from,
         address indexed to,
-        uint256 gaslimit,
-        bytes data,
-        uint64 nonce,
-        uint256 r,
-        uint256 s,
-        uint64 v,
+        bytes rlpTx,
         uint64 timestamp
     );
 

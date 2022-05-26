@@ -21,7 +21,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
       - run: npm install --global yarn && yarn
-      - run: yarn build
+      - run: yarn build && yarn abigen
       - run: ls
       - name: Inject insteadOf configuration for l2 private repo
         run: |

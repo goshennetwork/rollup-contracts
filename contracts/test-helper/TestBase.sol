@@ -48,7 +48,7 @@ contract TestBase {
             1 ether
         );
         rollupInputChain = new RollupInputChain();
-        rollupInputChain.initialize(address(addressManager), 15000000, 3000000);
+        rollupInputChain.initialize(address(addressManager), 15000000, 3000000, 1234);
         ChainStorageContainer stateStorageContainer = new ChainStorageContainer();
         stateStorageContainer.initialize(AddressName.ROLLUP_STATE_CHAIN, address(addressManager));
         address stateStorage = address(stateStorageContainer);

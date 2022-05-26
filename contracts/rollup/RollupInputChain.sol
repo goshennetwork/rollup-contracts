@@ -18,12 +18,10 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
     uint256 public constant GAS_PRICE = 1_000_000_000;
     uint256 public constant VALUE = 0;
-    uint64 public constant L2_CHAIN_ID = 1337;
-    address public immutable L1_CROSS_LAYER_WITNESS_EOA = UnsafeSign.SENDER;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
-    address public l1CrossLayerEOA;
+    uint64 public l2ChainID;
 
     uint64 public override lastTimestamp;
 
@@ -42,11 +40,13 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
-        uint64 _maxCrossLayerTxGasLimit
+        uint64 _maxCrossLayerTxGasLimit,
+        uint64 _l2ChainID
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
+        l2ChainID = _l2ChainID;
     }
 
     function enqueue(
@@ -65,10 +65,10 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         if (msg.sender == tx.origin) {
             sender = msg.sender;
             //make sure only L1CrossLayerWitness use unsafe sender
-            require(sender != UnsafeSign.SENDER, "malicious sender");
+            require(sender != Constants.L1_CROSS_LAYER_WITNESS, "malicious sender");
             require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         } else {
-            sender = UnsafeSign.SENDER;
+            sender = Constants.L1_CROSS_LAYER_WITNESS;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             _gasLimit = maxCrossLayerTxGasLimit;
@@ -78,33 +78,23 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
         bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _target, _data);
         bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
-        if (sender == UnsafeSign.SENDER) {
-            //L1CrossLayer need to sign
-            //help sign L1CrossLayerWitness
-            (r, s, v) = UnsafeSign.Sign(_signTxHash, L2_CHAIN_ID);
+        if (sender == Constants.L1_CROSS_LAYER_WITNESS) {
+            // L1CrossLayer need to sign
+            // help sign L1CrossLayerWitness
+            (r, s, v) = UnsafeSign.Sign(_signTxHash, l2ChainID);
         }
-        uint64 _pureV = v - 2 * L2_CHAIN_ID - 8;
+        uint64 _pureV = v - 2 * l2ChainID - 8;
         require(_pureV <= 28, "invalid v");
         require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)), "wrong sign");
         //now change rsv value in tx to calc tx's hash
         _rlpList[6] = RLPWriter.writeUint(v);
         _rlpList[7] = RLPWriter.writeUint(r);
         _rlpList[8] = RLPWriter.writeUint(s);
+        bytes memory _rlpTx = RLPWriter.writeList(_rlpList);
         uint64 _now = uint64(block.timestamp);
-        queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(RLPWriter.writeList(_rlpList)) }));
-        //do not need to reveal default value
-        emit TransactionEnqueued(
-            uint64(queuedTxInfos.length - 1),
-            sender,
-            _target,
-            _gasLimit,
-            _data,
-            _nonce,
-            r,
-            s,
-            v,
-            _now
-        );
+        queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(_rlpTx) }));
+
+        emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _rlpTx, _now);
     }
 
     //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId
@@ -114,7 +104,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint64 _gasLimit,
         address _target,
         bytes memory _data
-    ) internal pure returns (bytes[] memory) {
+    ) internal view returns (bytes[] memory) {
         bytes[] memory list = new bytes[](9);
         list[0] = RLPWriter.writeUint(uint256(_nonce));
         list[1] = RLPWriter.writeUint(GAS_PRICE);
@@ -122,7 +112,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         list[3] = RLPWriter.writeAddress(_target);
         list[4] = RLPWriter.writeUint(VALUE);
         list[5] = RLPWriter.writeBytes(_data);
-        list[6] = RLPWriter.writeUint(L2_CHAIN_ID);
+        list[6] = RLPWriter.writeUint(l2ChainID);
         list[7] = abi.encodePacked(bytes1(0x80));
         list[8] = abi.encodePacked(bytes1(0x80));
         return list;

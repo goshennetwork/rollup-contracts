@@ -61,44 +61,6 @@ func (_a *RollupInputChain) GASPRICE(block ...web3.BlockNumber) (retval0 *big.In
 	return
 }
 
-// L1CROSSLAYERWITNESSEOA calls the L1_CROSS_LAYER_WITNESS_EOA method in the solidity contract
-func (_a *RollupInputChain) L1CROSSLAYERWITNESSEOA(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("L1_CROSS_LAYER_WITNESS_EOA", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
-// L2CHAINID calls the L2_CHAIN_ID method in the solidity contract
-func (_a *RollupInputChain) L2CHAINID(block ...web3.BlockNumber) (retval0 uint64, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("L2_CHAIN_ID", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // MAXCROSSLAYERTXSIZE calls the MAX_CROSS_LAYER_TX_SIZE method in the solidity contract
 func (_a *RollupInputChain) MAXCROSSLAYERTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
@@ -235,12 +197,12 @@ func (_a *RollupInputChain) GetQueueTxInfo(queueIndex uint64, block ...web3.Bloc
 	return
 }
 
-// L1CrossLayerEOA calls the l1CrossLayerEOA method in the solidity contract
-func (_a *RollupInputChain) L1CrossLayerEOA(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+// L2ChainID calls the l2ChainID method in the solidity contract
+func (_a *RollupInputChain) L2ChainID(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("l1CrossLayerEOA", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("l2ChainID", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -362,8 +324,8 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxCrossLayerTxGasLimit uint64) *contract.Txn {
-	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxCrossLayerTxGasLimit)
+func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxCrossLayerTxGasLimit uint64, l2ChainID uint64) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxCrossLayerTxGasLimit, l2ChainID)
 }
 
 // events
