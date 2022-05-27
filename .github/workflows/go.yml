@@ -19,11 +19,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: bash ./.github/workflows/install-web3.bash
-      - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
-      - run: npm install --global yarn && yarn
-      - run: yarn build && yarn abigen
-      - run: ls
       - name: Inject insteadOf configuration for l2 private repo
         run: |
           git config --global url."https://${{ secrets.ROLLUP_ACCESS_TOKEN }}:x-oauth-basic@github.com/ontology-layer-2".insteadOf "https://github.com/ontology-layer-2"
@@ -31,6 +26,10 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.15
+      - run: bash ./.github/workflows/install-web3.bash
+      - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
+      - run: npm install --global yarn && yarn
+      - run: yarn build && yarn abigen
 
       - run: ls
       - name: Go Fmt & Test
