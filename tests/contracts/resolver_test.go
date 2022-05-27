@@ -10,7 +10,7 @@ import (
 )
 
 func TestResolver(t *testing.T) {
-	signer := SetupLocalSigner(LocalL1ChainEnv)
+	signer := SetupLocalSigner(LocalL1ChainEnv.ChainId, LocalL1ChainEnv.PrivKey)
 	addrMan := deploy.DeployL1Contract(signer, LocalL1ChainEnv.L1ChainConfig).AddressManager
 
 	receipt := addrMan.SetAddress("signer", signer.Address()).Sign(signer).SendTransaction(signer)

@@ -22,7 +22,11 @@ contract L2FeeCollector is Ownable {
     }
 
     // in case we can receive other tokens as fee
-    function withdrawERC20To(IERC20 token, address _to, uint256 _amount) public onlyOwner {
+    function withdrawERC20To(
+        IERC20 token,
+        address _to,
+        uint256 _amount
+    ) public onlyOwner {
         SafeERC20.safeTransfer(token, _to, _amount);
     }
 }
