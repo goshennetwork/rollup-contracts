@@ -51,10 +51,9 @@ interface IRollupInputChain {
      * - sender isn't staking
      * - queue_start_index not equal to pending queue index
      * - pending queue length beyond queue length locally(make sure can't attempt to append nonexistent queue)
-     * - first sequenced tx's timestamp smaller than or equal to  lastTimeStamp(make sure next sequenced tx timestamp larger than lastTimestamp)
-     * - last sequenced tx's timestamp smaller than last appended queue(to make sure last sequenced tx timestamp is largest)
-     * - last sequenced tx's timestamp larger than or equal to next pending queue timestamp(make sure next pending queue timestamp larger than lastTimestamp )
-     * - sequenced tx n timestamp not larger than sequenced tx n-1 timestamp(make sure all sequenced tx timestamp larger than lastTimestamp)
+     * - first sequenced tx's timestamp smaller than  lastTimeStamp or block.timestamp(make sure block.timestamp >= sequenced_tx_timestamp >= lastTimestamp)
+     * - txs' largest timestamp larger than next pending queue timestamp(block.timestamp queued_tx_timestamp >= lastTimestamp )
+     * - next lastTimestamp larger than next pending queue timestamp, which making sequencer stuck(make sure next_lastTimestamp <=pending_queue_timestamp)
      */
     function appendBatch() external;
 
