@@ -9,7 +9,7 @@ import (
 )
 
 var LocalChainEnv = &ChainEnv{
-	ChainId: 1234,
+	ChainId: 1,
 	RpcUrl:  "local",
 	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 	L1ChainConfig: &L1ChainDeployConfig{
@@ -18,7 +18,7 @@ var LocalChainEnv = &ChainEnv{
 		MaxCrossLayerTxGasLimit: 5000000,
 		StakingAmount:           web3.Ether(10),
 		L2CrossLayerWitness:     web3.Address{1, 2, 3, 4, 5, 6},
-		L2ChainId:               1337,
+		L2ChainId:               1234,
 		ChallengeConfig: &ChallengeConfig{
 			BlockLimitPerRound: 10,
 			ChallengerDeposit:  web3.Ether(1),

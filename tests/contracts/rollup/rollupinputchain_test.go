@@ -26,7 +26,7 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 	txdata.V = v
 	txdata.R = r
 	txdata.S = s
-	_s, err := types.NewEIP155Signer(big.NewInt(L2ChainID)).Sender(types.NewTx(txdata))
+	_s, err := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalChainEnv.L1ChainConfig.L2ChainId)).Sender(types.NewTx(txdata))
 	if err != nil {
 		panic(err)
 	}
