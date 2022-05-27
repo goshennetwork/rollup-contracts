@@ -5,7 +5,9 @@
 ### Install Tools
 
 forge: "https://github.com/gakonst/foundry"
+
 nodejs: "https://nodejs.org/en/"
+
 go: "https://go.dev/dl/"
 
 yarn:
