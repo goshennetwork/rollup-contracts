@@ -26,6 +26,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.18
+      - run: export GOBIN=$GOPATH/bin
       - run: bash ./.github/workflows/install-web3.bash
       - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
       - run: npm install --global yarn && yarn
