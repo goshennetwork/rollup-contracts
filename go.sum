@@ -276,8 +276,8 @@ github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfn
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
-github.com/laizy/web3 v0.1.8 h1:gzD24X0EJ/2IBdY2nrROtFAR6rxCv0EUeDty6sPBg5I=
-github.com/laizy/web3 v0.1.8/go.mod h1:B5Zo9xbrM+9rmQH3zy+AmyLqEYVUuRvK3XJGT5hrSKQ=
+github.com/laizy/web3 v0.1.9 h1:lBqZza/cjNj6MS1+8INLRTzJnCWtlaKCVHVdBsktzlk=
+github.com/laizy/web3 v0.1.9/go.mod h1:B5Zo9xbrM+9rmQH3zy+AmyLqEYVUuRvK3XJGT5hrSKQ=
 github.com/leanovate/gopter v0.2.9/go.mod h1:U2L/78B+KVFIx2VmW6onHJQzXtFb+p5y3y2Sh+Jxxv8=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=

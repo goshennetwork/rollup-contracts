@@ -9,14 +9,19 @@ import "../interfaces/IRollupInputChain.sol";
 import "../interfaces/IAddressResolver.sol";
 import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
+import "../libraries/RLPWriter.sol";
+import "../libraries/UnsafeSign.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
     uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
+    uint256 public constant GAS_PRICE = 1_000_000_000;
+    uint256 public constant VALUE = 0;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
+    uint64 public l2ChainID;
 
     uint64 public override lastTimestamp;
 
@@ -35,37 +40,82 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
-        uint64 _maxCrossLayerTxGasLimit
+        uint64 _maxCrossLayerTxGasLimit,
+        uint64 _l2ChainID
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
+        l2ChainID = _l2ChainID;
     }
 
     function enqueue(
         address _target,
         uint64 _gasLimit,
-        bytes memory _data
+        bytes memory _data,
+        uint64 _nonce,
+        uint256 r,
+        uint256 s,
+        uint64 v
     ) public {
-        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
+        //sender used to event filter
         address sender;
+
+        // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         if (msg.sender == tx.origin) {
             sender = msg.sender;
+            //make sure only L1CrossLayerWitness use unsafe sender
+            require(sender != Constants.L1_CROSS_LAYER_WITNESS, "malicious sender");
             require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
         } else {
+            sender = Constants.L1_CROSS_LAYER_WITNESS;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
-            sender = Constants.L1_CROSS_LAYER_WITNESS;
             _gasLimit = maxCrossLayerTxGasLimit;
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
-        // todo: maybe need more tx params, such as tip fee, value
-        bytes32 transactionHash = keccak256(abi.encodePacked(sender, _target, _gasLimit, _data));
+        bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _target, _data);
+        bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
+        if (sender == Constants.L1_CROSS_LAYER_WITNESS) {
+            // L1CrossLayer need to sign
+            // help sign L1CrossLayerWitness
+            (r, s, v) = UnsafeSign.Sign(_signTxHash, l2ChainID);
+        }
+        uint64 _pureV = v - 2 * l2ChainID - 8;
+        require(_pureV <= 28, "invalid v");
+        require(sender == ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)), "wrong sign");
+        //now change rsv value in tx to calc tx's hash
+        _rlpList[6] = RLPWriter.writeUint(v);
+        _rlpList[7] = RLPWriter.writeUint(r);
+        _rlpList[8] = RLPWriter.writeUint(s);
+        bytes memory _rlpTx = RLPWriter.writeList(_rlpList);
         uint64 _now = uint64(block.timestamp);
-        queuedTxInfos.push(QueueTxInfo({ transactionHash: transactionHash, timestamp: _now }));
-        emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _gasLimit, _data, _now);
+        queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(_rlpTx) }));
+
+        emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _rlpTx, _now);
+    }
+
+    //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId
+    //sender used to recognize tx from L1CrossLayerWitness
+    function getRlpList(
+        uint64 _nonce,
+        uint64 _gasLimit,
+        address _target,
+        bytes memory _data
+    ) internal view returns (bytes[] memory) {
+        bytes[] memory list = new bytes[](9);
+        list[0] = RLPWriter.writeUint(uint256(_nonce));
+        list[1] = RLPWriter.writeUint(GAS_PRICE);
+        list[2] = RLPWriter.writeUint(uint256(_gasLimit));
+        list[3] = RLPWriter.writeAddress(_target);
+        list[4] = RLPWriter.writeUint(VALUE);
+        list[5] = RLPWriter.writeBytes(_data);
+        list[6] = RLPWriter.writeUint(l2ChainID);
+        list[7] = abi.encodePacked(bytes1(0x80));
+        list[8] = abi.encodePacked(bytes1(0x80));
+        return list;
     }
 
     function calculateQueueTxHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {

@@ -524,11 +524,7 @@
           "Type": "web3.Address"
         },
         {
-          "Name": "gaslimit",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "data",
+          "Name": "rlpTx",
           "Type": "[]byte"
         },
         {
@@ -537,7 +533,7 @@
         }
       ],
       "IsEvent": true,
-      "EventID": "TransactionEnqueued(uint64,address,address,uint256,bytes,uint64)",
+      "EventID": "TransactionEnqueued(uint64,address,address,bytes,uint64)",
       "EventName": "TransactionEnqueuedEventID"
     },
     "TransferEvent": {

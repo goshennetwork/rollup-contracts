@@ -23,6 +23,7 @@ type L1ChainDeployConfig struct {
 	MaxEnqueueTxGasLimit    uint64
 	MaxCrossLayerTxGasLimit uint64
 	L2CrossLayerWitness     web3.Address
+	L2ChainId               uint64
 	StakingAmount           *big.Int
 	*ChallengeConfig
 }
@@ -109,12 +110,12 @@ func DeployStakingManager(signer *contract.Signer, dao, challengeFactory, rollup
 }
 
 func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
-	maxCrossLayerTxGasLimit uint64) *binding.RollupInputChain {
+	maxCrossLayerTxGasLimit uint64, l2ChainID uint64) *binding.RollupInputChain {
 	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
 	rollupInputChain.Contract().SetFrom(signer.Address())
-	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxCrossLayerTxGasLimit).Sign(signer).SendTransaction(signer)
+	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxCrossLayerTxGasLimit, l2ChainID).Sign(signer).SendTransaction(signer)
 
 	return rollupInputChain
 }
@@ -173,7 +174,7 @@ func DeployL1Contract(signer *contract.Signer, cfg *L1ChainDeployConfig) *L1Cont
 	inputChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupInputChain")
 	stateChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupStateChain")
 
-	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxCrossLayerTxGasLimit)
+	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxCrossLayerTxGasLimit, cfg.L2ChainId)
 	rollupStateChain := DeployRollupStateChain(signer, addrMan.Contract().Addr(), cfg.FraudProofWindow)
 
 	var feeToken *binding.ERC20
