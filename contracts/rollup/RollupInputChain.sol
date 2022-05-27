@@ -174,7 +174,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         assembly {
             _timestamp := shr(192, calldataload(_batchDataPos))
         }
-        require(_timestamp > lastTimestamp && _timestamp < block.timestamp, "wrong batch timestamp");
+        require(_timestamp >= lastTimestamp, "wrong batch timestamp");
         _batchDataPos += 8;
         for (uint64 i = 1; i < _batchNum; i++) {
             uint32 _timediff;
@@ -195,7 +195,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         if (_nextPendingQueueIndex < queuedTxInfos.length) {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
-        require(_timestamp < _nextTimestamp, "last batch timestamp too high");
+        require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
