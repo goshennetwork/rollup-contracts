@@ -18,6 +18,7 @@ UpgradeableBeacon.sol/*
 ProxyAdmin.sol/*
 TransparentUpgradeableProxy.sol/*
 DAO.sol/*
+L2FeeCollector.sol/*
 "
 prefix="out/"
 for file in $files ; do
