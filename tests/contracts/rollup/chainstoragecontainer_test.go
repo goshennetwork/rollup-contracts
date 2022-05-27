@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"testing"
 
 	"github.com/laizy/web3/utils"
@@ -10,9 +11,9 @@ import (
 )
 
 func TestChainSize(t *testing.T) {
-	chainEnv := contracts.LocalChainEnv
-	signer := contracts.SetupLocalSigner(chainEnv)
-	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	chainEnv := contracts.LocalL1ChainEnv
+	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
+	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
 
 	size, err := l1Chain.InputChainStorage.ChainSize()
 	utils.Ensure(err)
@@ -20,9 +21,9 @@ func TestChainSize(t *testing.T) {
 }
 
 func TestAppend(t *testing.T) {
-	chainEnv := contracts.LocalChainEnv
-	signer := contracts.SetupLocalSigner(chainEnv)
-	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	chainEnv := contracts.LocalL1ChainEnv
+	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
+	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
 
 	// not owner
 	element := common.BytesToHash([]byte("element"))

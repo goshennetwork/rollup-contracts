@@ -1,4 +1,4 @@
-package contracts
+package deploy
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 )
 
-type ChainEnv struct {
+type L1ChainEnv struct {
 	ChainId       uint64
 	RpcUrl        string
 	PrivKey       string

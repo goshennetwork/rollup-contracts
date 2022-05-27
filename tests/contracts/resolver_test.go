@@ -5,12 +5,13 @@ import (
 
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
+	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"gotest.tools/assert"
 )
 
 func TestResolver(t *testing.T) {
-	signer := SetupLocalSigner(LocalChainEnv)
-	addrMan := DeployL1Contract(signer, LocalChainEnv.L1ChainConfig).AddressManager
+	signer := SetupLocalSigner(LocalL1ChainEnv)
+	addrMan := deploy.DeployL1Contract(signer, LocalL1ChainEnv.L1ChainConfig).AddressManager
 
 	receipt := addrMan.SetAddress("signer", signer.Address()).Sign(signer).SendTransaction(signer)
 	assert.Equal(t, receipt.Status, uint64(1))
