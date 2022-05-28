@@ -57,7 +57,7 @@ contract RollupStateChain is IRollupStateChain, Initializable {
             _chain.append(_stateInfo.hash());
             _pendingIndex++;
         }
-        emit StateBatchAppended(_startAt, msg.sender, _now, _blockHashes);
+        emit StateBatchAppended(msg.sender, _startAt, _now, _blockHashes);
     }
 
     //must check not confirmed yet

@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 interface IChainStorageContainer {
     /// @dev Append element to chain
-    function append(bytes32 _element) external;
+    /// @return chain size
+    function append(bytes32 _element) external returns (uint64);
 
     /// @dev cut chain size
     /// @notice Revert if _newSize larger than chain size.
