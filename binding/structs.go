@@ -239,11 +239,11 @@ type SequencerWhitelistUpdatedEvent struct {
 	Raw *web3.Log
 }
 
-var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(uint64,address,uint64,bytes32[])"))
+var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(address,uint64,uint64,bytes32[])"))
 
 type StateBatchAppendedEvent struct {
-	StartIndex uint64
 	Proposer   web3.Address
+	StartIndex uint64
 	Timestamp  uint64
 	BlockHash  [][32]byte
 
@@ -266,13 +266,13 @@ type StateRollbackedEvent struct {
 	Raw *web3.Log
 }
 
-var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint256,uint256,uint256,bytes32)"))
+var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint64,uint64,uint64,bytes32)"))
 
 type TransactionAppendedEvent struct {
 	Proposer        web3.Address
-	StartQueueIndex *big.Int
-	QueueNum        *big.Int
-	ChainHeight     *big.Int
+	Index           uint64
+	StartQueueIndex uint64
+	QueueNum        uint64
 	InputHash       [32]byte
 
 	Raw *web3.Log

@@ -420,12 +420,12 @@
       "Name": "StateBatchAppendedEvent",
       "Fields": [
         {
-          "Name": "_startIndex",
-          "Type": "uint64"
-        },
-        {
           "Name": "_proposer",
           "Type": "web3.Address"
+        },
+        {
+          "Name": "_startIndex",
+          "Type": "uint64"
         },
         {
           "Name": "_timestamp",
@@ -437,7 +437,7 @@
         }
       ],
       "IsEvent": true,
-      "EventID": "StateBatchAppended(uint64,address,uint64,bytes32[])",
+      "EventID": "StateBatchAppended(address,uint64,uint64,bytes32[])",
       "EventName": "StateBatchAppendedEventID"
     },
     "StateInfo": {
@@ -488,16 +488,16 @@
           "Type": "web3.Address"
         },
         {
+          "Name": "index",
+          "Type": "uint64"
+        },
+        {
           "Name": "startQueueIndex",
-          "Type": "*big.Int"
+          "Type": "uint64"
         },
         {
           "Name": "queueNum",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "chainHeight",
-          "Type": "*big.Int"
+          "Type": "uint64"
         },
         {
           "Name": "inputHash",
@@ -505,7 +505,7 @@
         }
       ],
       "IsEvent": true,
-      "EventID": "TransactionAppended(address,uint256,uint256,uint256,bytes32)",
+      "EventID": "TransactionAppended(address,uint64,uint64,uint64,bytes32)",
       "EventName": "TransactionAppendedEventID"
     },
     "TransactionEnqueuedEvent": {

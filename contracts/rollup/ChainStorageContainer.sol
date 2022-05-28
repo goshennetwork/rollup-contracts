@@ -29,8 +29,9 @@ contract ChainStorageContainer is IChainStorageContainer, Initializable {
         return uint64(chain.length);
     }
 
-    function append(bytes32 _element) public onlyOwner {
+    function append(bytes32 _element) public onlyOwner returns (uint64) {
         chain.push(_element);
+        return uint64(chain.length);
     }
 
     function resize(uint64 _newSize) public onlyOwner {

@@ -37,9 +37,9 @@ interface IRollupInputChain {
 
     event TransactionAppended(
         address indexed proposer,
-        uint256 indexed startQueueIndex,
-        uint256 queueNum,
-        uint256 indexed chainHeight,
+        uint64 indexed index,
+        uint64 startQueueIndex,
+        uint64 queueNum,
         bytes32 inputHash
     );
 

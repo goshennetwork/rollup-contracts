@@ -199,9 +199,9 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
-        _chain.append(inputHash);
+        uint64 _chainSize = _chain.append(inputHash);
         lastTimestamp = _timestamp;
-        emit TransactionAppended(msg.sender, _queueStartIndex, _queueNum, _chain.chainSize() - 1, inputHash);
+        emit TransactionAppended(msg.sender, _chainSize - 1, _queueStartIndex, _queueNum, inputHash);
     }
 
     function chainHeight() public view returns (uint64) {

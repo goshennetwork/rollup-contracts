@@ -173,20 +173,20 @@ func (_a *RollupStateChain) FilterInitializedEvent(startBlock uint64, endBlock .
 	return res, nil
 }
 
-func (_a *RollupStateChain) StateBatchAppendedTopicFilter(startIndex []uint64, proposer []web3.Address) [][]web3.Hash {
-
-	var startIndexRule []interface{}
-	for _, _startIndexItem := range startIndex {
-		startIndexRule = append(startIndexRule, _startIndexItem)
-	}
+func (_a *RollupStateChain) StateBatchAppendedTopicFilter(proposer []web3.Address, startIndex []uint64) [][]web3.Hash {
 
 	var proposerRule []interface{}
 	for _, _proposerItem := range proposer {
 		proposerRule = append(proposerRule, _proposerItem)
 	}
 
+	var startIndexRule []interface{}
+	for _, _startIndexItem := range startIndex {
+		startIndexRule = append(startIndexRule, _startIndexItem)
+	}
+
 	var query [][]interface{}
-	query = append(query, []interface{}{StateBatchAppendedEventID}, startIndexRule, proposerRule)
+	query = append(query, []interface{}{StateBatchAppendedEventID}, proposerRule, startIndexRule)
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -194,8 +194,8 @@ func (_a *RollupStateChain) StateBatchAppendedTopicFilter(startIndex []uint64, p
 	return topics
 }
 
-func (_a *RollupStateChain) FilterStateBatchAppendedEvent(startIndex []uint64, proposer []web3.Address, startBlock uint64, endBlock ...uint64) ([]*StateBatchAppendedEvent, error) {
-	topic := _a.StateBatchAppendedTopicFilter(startIndex, proposer)
+func (_a *RollupStateChain) FilterStateBatchAppendedEvent(proposer []web3.Address, startIndex []uint64, startBlock uint64, endBlock ...uint64) ([]*StateBatchAppendedEvent, error) {
+	topic := _a.StateBatchAppendedTopicFilter(proposer, startIndex)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {

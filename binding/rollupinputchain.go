@@ -366,25 +366,20 @@ func (_a *RollupInputChain) FilterInitializedEvent(startBlock uint64, endBlock .
 	return res, nil
 }
 
-func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Address, startQueueIndex []*big.Int, chainHeight []*big.Int) [][]web3.Hash {
+func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Address, index []uint64) [][]web3.Hash {
 
 	var proposerRule []interface{}
 	for _, proposerItem := range proposer {
 		proposerRule = append(proposerRule, proposerItem)
 	}
 
-	var startQueueIndexRule []interface{}
-	for _, startQueueIndexItem := range startQueueIndex {
-		startQueueIndexRule = append(startQueueIndexRule, startQueueIndexItem)
-	}
-
-	var chainHeightRule []interface{}
-	for _, chainHeightItem := range chainHeight {
-		chainHeightRule = append(chainHeightRule, chainHeightItem)
+	var indexRule []interface{}
+	for _, indexItem := range index {
+		indexRule = append(indexRule, indexItem)
 	}
 
 	var query [][]interface{}
-	query = append(query, []interface{}{TransactionAppendedEventID}, proposerRule, startQueueIndexRule, chainHeightRule)
+	query = append(query, []interface{}{TransactionAppendedEventID}, proposerRule, indexRule)
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -392,8 +387,8 @@ func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Addre
 	return topics
 }
 
-func (_a *RollupInputChain) FilterTransactionAppendedEvent(proposer []web3.Address, startQueueIndex []*big.Int, chainHeight []*big.Int, startBlock uint64, endBlock ...uint64) ([]*TransactionAppendedEvent, error) {
-	topic := _a.TransactionAppendedTopicFilter(proposer, startQueueIndex, chainHeight)
+func (_a *RollupInputChain) FilterTransactionAppendedEvent(proposer []web3.Address, index []uint64, startBlock uint64, endBlock ...uint64) ([]*TransactionAppendedEvent, error) {
+	topic := _a.TransactionAppendedTopicFilter(proposer, index)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {
