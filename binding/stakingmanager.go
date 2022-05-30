@@ -42,6 +42,37 @@ func (_a *StakingManager) Contract() *contract.Contract {
 
 // calls
 
+// GetStakingInfo calls the getStakingInfo method in the solidity contract
+func (_a *StakingManager) GetStakingInfo(val0 web3.Address, block ...web3.BlockNumber) (retval0 uint8, retval1 *big.Int, retval2 *big.Int, retval3 [32]byte, retval4 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("getStakingInfo", web3.EncodeBlock(block...), val0)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["state"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+	if err = mapstructure.Decode(out["needConfirmedHeight"], &retval1); err != nil {
+		err = fmt.Errorf("failed to encode output at index 1")
+	}
+	if err = mapstructure.Decode(out["firstSlashTime"], &retval2); err != nil {
+		err = fmt.Errorf("failed to encode output at index 2")
+	}
+	if err = mapstructure.Decode(out["earliestChallengeBlockHash"], &retval3); err != nil {
+		err = fmt.Errorf("failed to encode output at index 3")
+	}
+	if err = mapstructure.Decode(out["earliestChallengeHeight"], &retval4); err != nil {
+		err = fmt.Errorf("failed to encode output at index 4")
+	}
+
+	return
+}
+
 // IsStaking calls the isStaking method in the solidity contract
 func (_a *StakingManager) IsStaking(who web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}

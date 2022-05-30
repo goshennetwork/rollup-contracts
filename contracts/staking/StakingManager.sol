@@ -14,7 +14,7 @@ contract StakingManager is IStakingManager, Initializable {
     IChallengeFactory challengeFactory;
     IRollupStateChain public rollupStateChain;
     IERC20 public override token;
-    mapping(address => StakingInfo) stakingInfos;
+    mapping(address => StakingInfo) public getStakingInfo;
     //price should never change, unless every stakingInfo record the relating info of price.
     uint256 public price;
 
@@ -33,7 +33,7 @@ contract StakingManager is IStakingManager, Initializable {
     }
 
     function deposit() external override {
-        StakingInfo storage senderStaking = stakingInfos[msg.sender];
+        StakingInfo storage senderStaking = getStakingInfo[msg.sender];
         require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
         require(token.transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
@@ -41,11 +41,11 @@ contract StakingManager is IStakingManager, Initializable {
     }
 
     function isStaking(address _who) external view override returns (bool) {
-        return stakingInfos[_who].state == StakingState.STAKING;
+        return getStakingInfo[_who].state == StakingState.STAKING;
     }
 
     function startWithdrawal() external override {
-        StakingInfo storage senderStake = stakingInfos[msg.sender];
+        StakingInfo storage senderStake = getStakingInfo[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
         senderStake.needConfirmedHeight = rollupStateChain.totalSubmittedState();
@@ -53,7 +53,7 @@ contract StakingManager is IStakingManager, Initializable {
     }
 
     function finalizeWithdrawal(Types.StateInfo memory _stateInfo) external override {
-        StakingInfo storage senderStake = stakingInfos[msg.sender];
+        StakingInfo storage senderStake = getStakingInfo[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
         _assertStateIsConfirmed(senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
@@ -66,7 +66,7 @@ contract StakingManager is IStakingManager, Initializable {
         bytes32 _blockHash,
         address _proposer
     ) external override {
-        StakingInfo storage proposerStake = stakingInfos[_proposer];
+        StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         //unstaked is not allowed
@@ -86,7 +86,7 @@ contract StakingManager is IStakingManager, Initializable {
     }
 
     function claim(address _proposer, Types.StateInfo memory _stateInfo) external override {
-        StakingInfo storage proposerStake = stakingInfos[_proposer];
+        StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //only challenge.
         require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
@@ -99,7 +99,7 @@ contract StakingManager is IStakingManager, Initializable {
     }
 
     function claimToGovernance(address _proposer, Types.StateInfo memory _stateInfo) external override {
-        StakingInfo storage proposerStake = stakingInfos[_proposer];
+        StakingInfo storage proposerStake = getStakingInfo[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
