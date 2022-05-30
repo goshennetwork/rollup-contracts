@@ -43,7 +43,7 @@ func (_a *StakingManager) Contract() *contract.Contract {
 // calls
 
 // GetStakingInfo calls the getStakingInfo method in the solidity contract
-func (_a *StakingManager) GetStakingInfo(val0 web3.Address, block ...web3.BlockNumber) (retval0 uint8, retval1 *big.Int, retval2 *big.Int, retval3 [32]byte, retval4 uint64, err error) {
+func (_a *StakingManager) GetStakingInfo(val0 web3.Address, block ...web3.BlockNumber) (retval0 uint8, retval1 uint64, retval2 uint64, retval3 uint64, retval4 [32]byte, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -63,10 +63,10 @@ func (_a *StakingManager) GetStakingInfo(val0 web3.Address, block ...web3.BlockN
 	if err = mapstructure.Decode(out["firstSlashTime"], &retval2); err != nil {
 		err = fmt.Errorf("failed to encode output at index 2")
 	}
-	if err = mapstructure.Decode(out["earliestChallengeBlockHash"], &retval3); err != nil {
+	if err = mapstructure.Decode(out["earliestChallengeHeight"], &retval3); err != nil {
 		err = fmt.Errorf("failed to encode output at index 3")
 	}
-	if err = mapstructure.Decode(out["earliestChallengeHeight"], &retval4); err != nil {
+	if err = mapstructure.Decode(out["earliestChallengeBlockHash"], &retval4); err != nil {
 		err = fmt.Errorf("failed to encode output at index 4")
 	}
 

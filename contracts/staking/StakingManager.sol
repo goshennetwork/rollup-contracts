@@ -72,7 +72,7 @@ contract StakingManager is IStakingManager, Initializable {
         //unstaked is not allowed
         require(proposerStake.state != StakingState.UNSTAKED, "unStaked unexpected");
         if (proposerStake.firstSlashTime == 0) {
-            proposerStake.firstSlashTime = block.timestamp;
+            proposerStake.firstSlashTime = uint64(block.timestamp);
         }
         require(
             proposerStake.earliestChallengeHeight == 0 || _chainHeight < proposerStake.earliestChallengeHeight,
