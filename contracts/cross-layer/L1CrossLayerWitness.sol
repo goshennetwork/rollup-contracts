@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import "../libraries/MerkleMountainRange.sol";
 import "../interfaces/IL1CrossLayerWitness.sol";
@@ -9,7 +10,7 @@ import "../interfaces/IAddressResolver.sol";
 import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
-contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
+contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpgradeable {
     using Types for Types.Block;
     using MerkleMountainRange for CompactMerkleTree;
     IAddressResolver addressResolver;
@@ -20,6 +21,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
     address private crossLayerMsgSender;
 
     function initialize(address _addressResolver) public initializer {
+        __Pausable_init();
         addressResolver = IAddressResolver(_addressResolver);
     }
 
@@ -36,7 +38,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
         bytes memory _rlpHeader,
         Types.StateInfo memory _stateInfo,
         bytes32[] memory _proof
-    ) public returns (bool) {
+    ) public whenNotPaused returns (bool) {
         require(crossLayerMsgSender == address(0), "reentrancy");
         require(_target != address(addressResolver.rollupInputChain()), "can't relay message to l1 system");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
@@ -59,7 +61,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
         return success;
     }
 
-    function sendMessage(address _target, bytes calldata _message) public {
+    function sendMessage(address _target, bytes calldata _message) public whenNotPaused {
         require(msg.sender != address(this), "wired situation");
         uint64 treeSize = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
@@ -102,6 +104,16 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable {
             blockedMessages[_messageHashes[i]] = false;
         }
         emit MessageAllowed(_messageHashes);
+    }
+
+    function pause() public {
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        _pause();
+    }
+
+    function unpause() public {
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        _unpause();
     }
 
     function mmrRoot() public view returns (bytes32) {
