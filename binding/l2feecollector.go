@@ -74,13 +74,23 @@ func (_a *L2FeeCollector) TransferOwnership(newOwner web3.Address) *contract.Txn
 }
 
 // WithdrawERC20 sends a withdrawERC20 transaction in the solidity contract
-func (_a *L2FeeCollector) WithdrawERC20(token web3.Address) *contract.Txn {
-	return _a.c.Txn("withdrawERC20", token)
+func (_a *L2FeeCollector) WithdrawERC20(token web3.Address, amount *big.Int) *contract.Txn {
+	return _a.c.Txn("withdrawERC20", token, amount)
+}
+
+// WithdrawERC20To sends a withdrawERC20To transaction in the solidity contract
+func (_a *L2FeeCollector) WithdrawERC20To(token web3.Address, to web3.Address, amount *big.Int) *contract.Txn {
+	return _a.c.Txn("withdrawERC20To", token, to, amount)
 }
 
 // WithdrawEth sends a withdrawEth transaction in the solidity contract
-func (_a *L2FeeCollector) WithdrawEth() *contract.Txn {
-	return _a.c.Txn("withdrawEth")
+func (_a *L2FeeCollector) WithdrawEth(amount *big.Int) *contract.Txn {
+	return _a.c.Txn("withdrawEth", amount)
+}
+
+// WithdrawEthTo sends a withdrawEthTo transaction in the solidity contract
+func (_a *L2FeeCollector) WithdrawEthTo(to web3.Address, amount *big.Int) *contract.Txn {
+	return _a.c.Txn("withdrawEthTo", to, amount)
 }
 
 // events

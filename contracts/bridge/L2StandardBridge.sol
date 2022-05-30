@@ -2,17 +2,13 @@
 // Copyright 2020-2021 Optimism
 pragma solidity ^0.8.9;
 
-/* Interface Imports */
 import "../interfaces/IL1StandardBridge.sol";
 import "../interfaces/IL1ERC20Bridge.sol";
 import "../interfaces/IL2ERC20Bridge.sol";
-
-/* Library Imports */
-import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import "../cross-layer/CrossLayerContext.sol";
-
-/* Contract Imports */
 import "../interfaces/IL2StandardERC20.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "../cross-layer/CrossLayerContext.sol";
 
 /**
  * @title L2StandardBridge
@@ -23,7 +19,7 @@ import "../interfaces/IL2StandardERC20.sol";
  * This contract also acts as a burner of the tokens intended for withdrawal, informing the L1
  * bridge to release L1 funds.
  */
-contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContext {
+contract L2StandardBridge is IL2ERC20Bridge, Initializable, CrossLayerContext {
     address public l1TokenBridge;
 
     function initialize(address _l2witness, address _l1TokenBridge) public {

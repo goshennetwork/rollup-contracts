@@ -10,7 +10,8 @@
     "format": "prettier --write 'contracts/**/*.sol'",
     "format-lint": "prettier --list-different 'contracts/**/*.sol'",
     "solhint": "solhint 'contracts/**/*.sol'",
-    "abigen": "bash scripts/abigen.bash"
+    "abigen": "bash scripts/abigen.bash",
+    "go": "bash scripts/build-go.bash"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",

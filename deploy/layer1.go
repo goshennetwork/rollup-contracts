@@ -8,29 +8,14 @@ import (
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
+	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
 type L1ChainEnv struct {
 	ChainId       uint64
 	RpcUrl        string
 	PrivKey       string
-	L1ChainConfig *L1ChainDeployConfig
-}
-
-type L1ChainDeployConfig struct {
-	FeeToken                web3.Address
-	FraudProofWindow        uint64 // block number
-	MaxEnqueueTxGasLimit    uint64
-	MaxCrossLayerTxGasLimit uint64
-	L2CrossLayerWitness     web3.Address
-	L2ChainId               uint64
-	StakingAmount           *big.Int
-	*ChallengeConfig
-}
-
-type ChallengeConfig struct {
-	BlockLimitPerRound uint64 // proposer
-	ChallengerDeposit  *big.Int
+	L1ChainConfig *config.L1ChainDeployConfig
 }
 
 type L1Contracts struct {
@@ -46,6 +31,25 @@ type L1Contracts struct {
 	ChallengeFactory    *binding.ChallengeFactory
 	FeeToken            *binding.ERC20
 	DAO                 *binding.DAO
+}
+
+func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
+	return &config.L1ContractAddressConfig{
+		AddressManager:      self.AddressManager.Contract().Addr(),
+		InputChainStorage:   self.InputChainStorage.Contract().Addr(),
+		StateChainStorage:   self.StateChainStorage.Contract().Addr(),
+		RollupInputChain:    self.RollupInputChain.Contract().Addr(),
+		RollupStateChain:    self.RollupStateChain.Contract().Addr(),
+		L1CrossLayerWitness: self.L1CrossLayerWitness.Contract().Addr(),
+		L1StandardBridge:    web3.Address{}, // todo
+		StakingManager:      self.StakingManager.Contract().Addr(),
+		ChallengeBeacon:     self.ChallengeBeacon.Contract().Addr(),
+		ChallengeLogic:      self.ChallengeLogic.Contract().Addr(),
+		ChallengeFactory:    self.ChallengeFactory.Contract().Addr(),
+		FeeToken:            self.FeeToken.Contract().Addr(),
+		DAO:                 self.DAO.Contract().Addr(),
+	}
+
 }
 
 func DeployChallengeLogic(signer *contract.Signer) *binding.Challenge {
@@ -167,7 +171,7 @@ func DeployAddressManager(signer *contract.Signer) *binding.AddressManager {
 }
 
 // TODO: using proxy
-func DeployL1Contract(signer *contract.Signer, cfg *L1ChainDeployConfig) *L1Contracts {
+func DeployL1Contract(signer *contract.Signer, cfg *config.L1ChainDeployConfig) *L1Contracts {
 	// deploy address manager
 	addrMan := DeployAddressManager(signer)
 	l1CrossLayerWitness := DeployL1CrossLayerWitness(signer, addrMan.Contract().Addr())
@@ -224,6 +228,7 @@ func DeployL1Contract(signer *contract.Signer, cfg *L1ChainDeployConfig) *L1Cont
 		InputChainStorage:   inputChainContainer,
 		StateChainStorage:   stateChainContainer,
 		RollupInputChain:    rollupInputChain,
+		RollupStateChain:    rollupStateChain,
 		L1CrossLayerWitness: l1CrossLayerWitness,
 		FeeToken:            feeToken,
 		ChallengeLogic:      challenge,
