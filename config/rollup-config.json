@@ -18,7 +18,9 @@
     "DAO": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82"
   },
   "L2Addresses": {
-
+    "L2CrossLayerWitness": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+    "L2StandardBridge": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+    "L2FeeCollector": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82"
   }
 }
 

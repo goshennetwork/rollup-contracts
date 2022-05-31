@@ -93,8 +93,8 @@ func (_a *L2StandardBridge) FinalizeETHDeposit(from web3.Address, to web3.Addres
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *L2StandardBridge) Initialize(witness web3.Address) *contract.Txn {
-	return _a.c.Txn("initialize", witness)
+func (_a *L2StandardBridge) Initialize(l2witness web3.Address, l1TokenBridge web3.Address) *contract.Txn {
+	return _a.c.Txn("initialize", l2witness, l1TokenBridge)
 }
 
 // Withdraw sends a withdraw transaction in the solidity contract

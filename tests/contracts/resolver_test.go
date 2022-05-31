@@ -11,7 +11,7 @@ import (
 
 func TestResolver(t *testing.T) {
 	signer := SetupLocalSigner(LocalL1ChainEnv.ChainId, LocalL1ChainEnv.PrivKey)
-	addrMan := deploy.DeployL1Contract(signer, LocalL1ChainEnv.L1ChainConfig).AddressManager
+	addrMan := deploy.DeployL1Contracts(signer, LocalL1ChainEnv.ChainConfig).AddressManager
 
 	receipt := addrMan.SetAddress("signer", signer.Address()).Sign(signer).SendTransaction(signer)
 	assert.Equal(t, receipt.Status, uint64(1))

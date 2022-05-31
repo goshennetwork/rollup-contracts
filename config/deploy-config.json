@@ -1,0 +1,24 @@
+{
+  "L1": {
+    "ChainId": 31337,
+    "RpcUrl": "http://127.0.0.1:8545/",
+    "PrivKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+    "ChainConfig": {
+      "FeeToken":  "0x0000000000000000000000000000000000000000",
+      "FraudProofWindow": 300,
+      "MaxEnqueueTxGasLimit" : 20000000,
+      "MaxCrossLayerTxGasLimit": 10000000,
+      "L2CrossLayerWitness":  "0x1111100000000000000000000000000000000000",
+      "StakingAmount":   1000000000,
+      "BlockLimitPerRound": 3,
+      "ChallengerDeposit": 100000000
+    }
+  },
+  "L2": {
+    "ChainId": 31337,
+    "RpcUrl": "http://127.0.0.1:8545/",
+    "PrivKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+    "ChainConfig": {
+    }
+  }
+}

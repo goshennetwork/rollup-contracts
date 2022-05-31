@@ -27,7 +27,7 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 	txdata.V = v
 	txdata.R = r
 	txdata.S = s
-	_s, err := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalL1ChainEnv.L1ChainConfig.L2ChainId)).Sender(types.NewTx(txdata))
+	_s, err := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalL1ChainEnv.ChainConfig.L2ChainId)).Sender(types.NewTx(txdata))
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 func TestEnqueue(t *testing.T) {
 	chainEnv := contracts.LocalL1ChainEnv
 	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
-	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	l1Chain := deploy.DeployL1Contracts(signer, chainEnv.ChainConfig)
 
 	target, gasLimit, data, nonce := web3.Address{1, 1}, uint64(900_000), []byte("test"), uint64(0)
 	r, s, v := Sign(target, gasLimit, data, nonce, contracts.LocalL1ChainEnv.PrivKey)
@@ -64,15 +64,15 @@ func TestEnqueue(t *testing.T) {
 	utils.Ensure(err)
 	size, err := l1Chain.L1CrossLayerWitness.TotalSize()
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.L1ChainConfig.L2CrossLayerWitness, chainEnv.L1ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg, size-1))
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness, chainEnv.ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg, size-1))
 }
 
 func TestAppendBatches(t *testing.T) {
 	chainEnv := contracts.LocalL1ChainEnv
 	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
-	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	l1Chain := deploy.DeployL1Contracts(signer, chainEnv.ChainConfig)
 
-	l1Chain.FeeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.L1ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
+	l1Chain.FeeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
 	l1Chain.StakingManager.Deposit().Sign(signer).SendTransaction(signer)
 	l1Chain.DAO.SetSequencerWhitelist(signer.Address(), true).Sign(signer).SendTransaction(signer)
 

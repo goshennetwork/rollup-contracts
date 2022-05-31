@@ -21,7 +21,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
  * and listening to it for newly finalized withdrawals.
  *
  */
-contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContext {
+contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContextUpgradeable {
     using SafeERC20 for IERC20;
 
     address public l2TokenBridge;
@@ -30,8 +30,8 @@ contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContext
     mapping(address => mapping(address => uint256)) public deposits;
 
     // slither-disable-next-line external-function
-    function initialize(address _l1witness, address _l2TokenBridge) public {
-        CrossLayerContext.initialize(_l1witness);
+    function initialize(address _l1witness, address _l2TokenBridge) public initializer {
+        __CrossLayerContext_init(_l1witness);
         l2TokenBridge = _l2TokenBridge;
     }
 

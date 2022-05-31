@@ -11,17 +11,17 @@ import (
 )
 
 var LocalL2ChainEnv = &deploy.L2ChainEnv{
-	ChainId:       1234,
-	RpcUrl:        "local",
-	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-	L2ChainConfig: &deploy.L2ChainDeployConfig{},
+	ChainId:     1234,
+	RpcUrl:      "local",
+	PrivKey:     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+	ChainConfig: &deploy.L2ChainDeployConfig{},
 }
 
 var LocalL1ChainEnv = &deploy.L1ChainEnv{
 	ChainId: 1,
 	RpcUrl:  "local",
 	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-	L1ChainConfig: &config.L1ChainDeployConfig{
+	ChainConfig: &config.L1ChainDeployConfig{
 		FraudProofWindow:        3,
 		MaxEnqueueTxGasLimit:    15000000,
 		MaxCrossLayerTxGasLimit: 5000000,

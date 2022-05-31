@@ -5,40 +5,89 @@ import (
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/ontio/ontology/common/log"
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	utils2 "github.com/ontology-layer-2/rollup-contracts/utils"
 	"github.com/urfave/cli/v2"
 )
 
+type DeployConfig struct {
+	L1 *deploy.L1ChainEnv
+	L2 *deploy.L2ChainEnv
+}
+
+func LoadDeployConfig(file string) *DeployConfig {
+	cfg := &DeployConfig{}
+	err := utils.LoadJsonFile(file, cfg)
+	utils.Ensure(err)
+	cfg.L1.ChainConfig.L2ChainId = cfg.L2.ChainId
+	return cfg
+}
+
 func DeployCmd() *cli.Command {
 	cmd := &cli.Command{
-		Name:  "deploy",
-		Usage: "deploy all contract to l1",
-		Action: func(ctx *cli.Context) error {
-			cfgFile := ctx.String(ConfigFlag.Name)
-			verbose := !ctx.Bool(QuietFlag.Name)
-			submit := ctx.Bool(SubmitFlag.Name)
-			return deployCmd(cfgFile, verbose, submit)
-		},
-		Flags: []cli.Flag{
-			ConfigFlag,
-			QuietFlag,
-			SubmitFlag,
-		},
+		Name:        "deploy",
+		Usage:       "deploy and initialize contracts",
+		Subcommands: deploySubCommands(),
 	}
 
 	return cmd
 }
 
-var SubmitFlag = &cli.BoolFlag{
-	Name:  "submit",
-	Usage: "submit transaction to remote chain",
+func deploySubCommands() []*cli.Command {
+	return []*cli.Command{
+		{
+			Name:  "l1",
+			Usage: "deploy all l1 contracts",
+			Action: func(ctx *cli.Context) error {
+				cfgFile := ctx.String(ConfigFlag.Name)
+				verbose := !ctx.Bool(QuietFlag.Name)
+				submit := ctx.Bool(flags.SubmitFlag.Name)
+				return deployL1Cmd(cfgFile, verbose, submit)
+			},
+			Flags: []cli.Flag{
+				ConfigFlag,
+				QuietFlag,
+				flags.SubmitFlag,
+			},
+		},
+		{
+			Name:  "l2",
+			Usage: "deploy all l2 contracts",
+			Action: func(ctx *cli.Context) error {
+				cfgFile := ctx.String(ConfigFlag.Name)
+				verbose := !ctx.Bool(QuietFlag.Name)
+				submit := ctx.Bool(flags.SubmitFlag.Name)
+				return deployL2Cmd(cfgFile, verbose, submit)
+			},
+			Flags: []cli.Flag{
+				ConfigFlag,
+				QuietFlag,
+				flags.SubmitFlag,
+			},
+		},
+		{
+			Name:  "l2init",
+			Usage: "initialize l2 token bridge",
+			Action: func(ctx *cli.Context) error {
+				cfgFile := ctx.String(flags.ConfigFlag.Name)
+				verbose := !ctx.Bool(QuietFlag.Name)
+				submit := ctx.Bool(flags.SubmitFlag.Name)
+				return initL2BridgeCmd(cfgFile, verbose, submit)
+			},
+			Flags: []cli.Flag{
+				flags.ConfigFlag,
+				QuietFlag,
+				flags.SubmitFlag,
+			},
+		},
+	}
 }
 
 var ConfigFlag = &cli.StringFlag{
 	Name:  "cfg",
 	Usage: "specify config file",
-	Value: "deployment-config.json",
+	Value: "deploy-config.json",
 }
 
 var QuietFlag = &cli.BoolFlag{
@@ -47,10 +96,9 @@ var QuietFlag = &cli.BoolFlag{
 	Usage:   "disable print deploy log",
 }
 
-func deployCmd(cfgFile string, verbose, submit bool) error {
-	conf := &deploy.L1ChainEnv{}
-	err := utils.LoadJsonFile(cfgFile, conf)
-	utils.Ensure(err)
+func deployL1Cmd(cfgFile string, verbose, submit bool) error {
+	cfg := LoadDeployConfig(cfgFile)
+	conf := cfg.L1
 	l1Client, err := jsonrpc.NewClient(conf.RpcUrl)
 	utils.Ensure(err)
 	chainId1, err := l1Client.Eth().ChainID()
@@ -61,9 +109,9 @@ func deployCmd(cfgFile string, verbose, submit bool) error {
 	}
 	signer := contract.NewSigner(conf.PrivKey, l1Client, chainId1.Uint64())
 	signer.Submit = submit
-	results := deploy.DeployL1Contract(signer, conf.L1ChainConfig)
+	results := deploy.DeployL1Contracts(signer, conf.ChainConfig)
 
-	utils2.AtomicWriteFile("address.json", utils.JsonString(results.Addresses()))
+	utils2.AtomicWriteFile("addressl1.json", utils.JsonString(results.Addresses()))
 
 	return nil
 }
