@@ -12,11 +12,12 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
+	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 )
 
 func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte, nonce uint64) web3.Hash {
-	key := contracts.LocalChainEnv.PrivKey
+	key := contracts.LocalL1ChainEnv.PrivKey
 	if sender == L1CrossLayerFakeSender {
 		key = L1CrossLayerFakeKey
 		fmt.Println(nonce)
@@ -26,7 +27,7 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 	txdata.V = v
 	txdata.R = r
 	txdata.S = s
-	_s, err := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalChainEnv.L1ChainConfig.L2ChainId)).Sender(types.NewTx(txdata))
+	_s, err := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalL1ChainEnv.L1ChainConfig.L2ChainId)).Sender(types.NewTx(txdata))
 	if err != nil {
 		panic(err)
 	}
@@ -37,12 +38,12 @@ func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data [
 }
 
 func TestEnqueue(t *testing.T) {
-	chainEnv := contracts.LocalChainEnv
-	signer := contracts.SetupLocalSigner(chainEnv)
-	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	chainEnv := contracts.LocalL1ChainEnv
+	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
+	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
 
 	target, gasLimit, data, nonce := web3.Address{1, 1}, uint64(900_000), []byte("test"), uint64(0)
-	r, s, v := Sign(target, gasLimit, data, nonce, contracts.LocalChainEnv.PrivKey)
+	r, s, v := Sign(target, gasLimit, data, nonce, contracts.LocalL1ChainEnv.PrivKey)
 	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data, nonce, r, s, v.Uint64()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 
@@ -67,9 +68,9 @@ func TestEnqueue(t *testing.T) {
 }
 
 func TestAppendBatches(t *testing.T) {
-	chainEnv := contracts.LocalChainEnv
-	signer := contracts.SetupLocalSigner(chainEnv)
-	l1Chain := contracts.DeployL1Contract(signer, chainEnv.L1ChainConfig)
+	chainEnv := contracts.LocalL1ChainEnv
+	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
+	l1Chain := deploy.DeployL1Contract(signer, chainEnv.L1ChainConfig)
 
 	l1Chain.FeeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.L1ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
 	l1Chain.StakingManager.Deposit().Sign(signer).SendTransaction(signer)

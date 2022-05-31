@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL v3
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
 import "../resolver/AddressManager.sol";
 import "../resolver/AddressName.sol";
 import "../staking/StakingManager.sol";
@@ -28,33 +31,115 @@ contract TestBase {
     DAO dao;
 
     function initialize() internal {
-        addressManager = new AddressManager();
-        addressManager.initialize();
-        l1CrossLayerWitness = new L1CrossLayerWitness();
-        l1CrossLayerWitness.initialize(address(addressManager));
-        l2CrossLayerWitness = new L2CrossLayerWitness();
-        feeToken = new TestERC20("test token", "test");
-        rollupStateChain = new RollupStateChain();
-        rollupStateChain.initialize(address(addressManager), fraudProofWindow);
-        challengerFactory = address(new MockChallengeFactory());
-        stakingManager = new StakingManager();
-        dao = new DAO();
-        dao.initialize();
-        stakingManager.initialize(
-            address(dao),
-            challengerFactory,
-            address(rollupStateChain),
-            address(feeToken),
-            1 ether
+        // deploy proxy admin
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
+
+        // deploy AddressManager
+        AddressManager addressManagerLogic = new AddressManager();
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(addressManagerLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(AddressManager.initialize.selector)
         );
-        rollupInputChain = new RollupInputChain();
-        rollupInputChain.initialize(address(addressManager), 15000000, 3000000, 1234);
+        addressManager = AddressManager(address(proxy));
+
+        // deploy L1CrossLayerWitness
+        L1CrossLayerWitness l1CrossLayerWitnessLogic = new L1CrossLayerWitness();
+        proxy = new TransparentUpgradeableProxy(
+            address(l1CrossLayerWitnessLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(L1CrossLayerWitness.initialize.selector, address(addressManager))
+        );
+        l1CrossLayerWitness = L1CrossLayerWitness(address(proxy));
+
+        // deploy L2CrossLayerWitness
+        L2CrossLayerWitness l2CrossLayerWitnessLogic = new L2CrossLayerWitness();
+        proxy = new TransparentUpgradeableProxy(
+            address(l2CrossLayerWitnessLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector, address(addressManager))
+        );
+        l2CrossLayerWitness = L2CrossLayerWitness(address(proxy));
+
+        feeToken = new TestERC20("test token", "test");
+
+        RollupStateChain rollupStateChainLogic = new RollupStateChain();
+        proxy = new TransparentUpgradeableProxy(
+            address(rollupStateChainLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(RollupStateChain.initialize.selector, address(addressManager), fraudProofWindow)
+        );
+        rollupStateChain = RollupStateChain(address(proxy));
+
+        // TODO: use normal challenge factory
+        challengerFactory = address(new MockChallengeFactory());
+
+        // deploy dao
+        DAO daoLogic = new DAO();
+        proxy = new TransparentUpgradeableProxy(
+            address(daoLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(DAO.initialize.selector)
+        );
+        dao = DAO(address(proxy));
+
+        // deploy staking manager
+        StakingManager stakingManagerLogic = new StakingManager();
+        proxy = new TransparentUpgradeableProxy(
+            address(stakingManagerLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                StakingManager.initialize.selector,
+                address(dao),
+                challengerFactory,
+                address(rollupStateChain),
+                address(feeToken),
+                1 ether
+            )
+        );
+        stakingManager = StakingManager(address(proxy));
+
+        // deploy RollupInputChain
+        RollupInputChain rollupInputChainLogic = new RollupInputChain();
+        proxy = new TransparentUpgradeableProxy(
+            address(rollupInputChainLogic),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                RollupInputChain.initialize.selector,
+                address(addressManager),
+                15000000,
+                3000000,
+                1234
+            )
+        );
+        rollupInputChain = RollupInputChain(address(proxy));
+
+        // deploy ChainStorageContainer
         ChainStorageContainer stateStorageContainer = new ChainStorageContainer();
-        stateStorageContainer.initialize(AddressName.ROLLUP_STATE_CHAIN, address(addressManager));
-        address stateStorage = address(stateStorageContainer);
+        proxy = new TransparentUpgradeableProxy(
+            address(stateStorageContainer),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                ChainStorageContainer.initialize.selector,
+                AddressName.ROLLUP_STATE_CHAIN,
+                address(addressManager)
+            )
+        );
+        address stateStorage = address(address(proxy));
+
+        // deploy ChainStorageContainer
         ChainStorageContainer inputStorageContainer = new ChainStorageContainer();
-        inputStorageContainer.initialize(AddressName.ROLLUP_INPUT_CHAIN, address(addressManager));
-        address inputStorage = address(inputStorageContainer);
+        proxy = new TransparentUpgradeableProxy(
+            address(inputStorageContainer),
+            address(proxyAdmin),
+            abi.encodeWithSelector(
+                ChainStorageContainer.initialize.selector,
+                AddressName.ROLLUP_INPUT_CHAIN,
+                address(addressManager)
+            )
+        );
+        address inputStorage = address(address(proxy));
+
         addressManager.setAddress(AddressName.ROLLUP_INPUT_CHAIN, address(rollupInputChain));
         addressManager.setAddress(AddressName.STAKING_MANAGER, address(stakingManager));
         addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN_CONTAINER, stateStorage);

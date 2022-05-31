@@ -26,11 +26,11 @@ func CompleteTxData(target web3.Address, gasLimit uint64, data []byte, nonce uin
 }
 
 func Sign(target web3.Address, gasLimit uint64, data []byte, nonce uint64, privateKey string) (*big.Int, *big.Int, *big.Int) {
-	signer := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalChainEnv.L1ChainConfig.L2ChainId))
+	signer := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalL1ChainEnv.L1ChainConfig.L2ChainId))
 	txData := CompleteTxData(target, gasLimit, data, nonce)
 	signedHash := signer.Hash(types.NewTx(txData))
 	//private can't same as 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, which use by L1CrossLayerWitness
-	r, s, v := GetRSV(signedHash, contracts.LocalChainEnv.L1ChainConfig.L2ChainId, privateKey)
+	r, s, v := GetRSV(signedHash, contracts.LocalL1ChainEnv.L1ChainConfig.L2ChainId, privateKey)
 	return new(big.Int).SetBytes(r), new(big.Int).SetBytes(s), new(big.Int).SetBytes(v)
 }
 
