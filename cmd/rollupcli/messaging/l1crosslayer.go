@@ -1,9 +1,9 @@
 package messaging
 
 import (
+	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
-	"github.com/ontio/ontology/common/log"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"

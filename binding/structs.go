@@ -239,13 +239,14 @@ type MessageRelayedEvent struct {
 	Raw *web3.Log
 }
 
-var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes)"))
+var MessageSentEventID = crypto.Keccak256Hash([]byte("MessageSent(uint64,address,address,bytes,bytes32)"))
 
 type MessageSentEvent struct {
 	MessageIndex uint64
 	Target       web3.Address
 	Sender       web3.Address
 	Message      []byte
+	MmrRoot      [32]byte
 
 	Raw *web3.Log
 }
