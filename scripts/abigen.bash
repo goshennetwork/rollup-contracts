@@ -7,6 +7,8 @@ Challenge.sol/*
 ERC20.sol/*
 L1CrossLayerWitness.sol/*
 L2CrossLayerWitness.sol/*
+L1StandardBridge.sol/*
+L2StandardBridge.sol/*
 RollupInputChain.sol/*
 RollupStateChain.sol/*
 StakingManager.sol/*

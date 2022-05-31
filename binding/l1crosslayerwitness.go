@@ -118,6 +118,25 @@ func (_a *L1CrossLayerWitness) MmrRoot(block ...web3.BlockNumber) (retval0 [32]b
 	return
 }
 
+// Paused calls the paused method in the solidity contract
+func (_a *L1CrossLayerWitness) Paused(block ...web3.BlockNumber) (retval0 bool, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("paused", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // SuccessRelayedMessages calls the successRelayedMessages method in the solidity contract
 func (_a *L1CrossLayerWitness) SuccessRelayedMessages(val0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
@@ -173,6 +192,11 @@ func (_a *L1CrossLayerWitness) Initialize(addressResolver web3.Address) *contrac
 	return _a.c.Txn("initialize", addressResolver)
 }
 
+// Pause sends a pause transaction in the solidity contract
+func (_a *L1CrossLayerWitness) Pause() *contract.Txn {
+	return _a.c.Txn("pause")
+}
+
 // RelayMessage sends a relayMessage transaction in the solidity contract
 func (_a *L1CrossLayerWitness) RelayMessage(target web3.Address, sender web3.Address, message []byte, messageIndex uint64, rlpHeader []byte, stateInfo StateInfo, proof [][32]byte) *contract.Txn {
 	return _a.c.Txn("relayMessage", target, sender, message, messageIndex, rlpHeader, stateInfo, proof)
@@ -181,6 +205,11 @@ func (_a *L1CrossLayerWitness) RelayMessage(target web3.Address, sender web3.Add
 // SendMessage sends a sendMessage transaction in the solidity contract
 func (_a *L1CrossLayerWitness) SendMessage(target web3.Address, message []byte) *contract.Txn {
 	return _a.c.Txn("sendMessage", target, message)
+}
+
+// Unpause sends a unpause transaction in the solidity contract
+func (_a *L1CrossLayerWitness) Unpause() *contract.Txn {
+	return _a.c.Txn("unpause")
 }
 
 // events
@@ -421,6 +450,78 @@ func (_a *L1CrossLayerWitness) FilterMessageSentEvent(messageIndex []uint64, tar
 			return nil, err
 		}
 		var evtItem MessageSentEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+func (_a *L1CrossLayerWitness) PausedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{PausedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *L1CrossLayerWitness) FilterPausedEvent(startBlock uint64, endBlock ...uint64) ([]*PausedEvent, error) {
+	topic := _a.PausedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*PausedEvent, 0)
+	evts := _a.c.Abi.Events["Paused"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem PausedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+func (_a *L1CrossLayerWitness) UnpausedTopicFilter() [][]web3.Hash {
+
+	var query [][]interface{}
+	query = append(query, []interface{}{UnpausedEventID})
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *L1CrossLayerWitness) FilterUnpausedEvent(startBlock uint64, endBlock ...uint64) ([]*UnpausedEvent, error) {
+	topic := _a.UnpausedTopicFilter()
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*UnpausedEvent, 0)
+	evts := _a.c.Abi.Events["Unpaused"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem UnpausedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

@@ -32,13 +32,13 @@ interface IStakingManager {
         // The user's state
         StakingState state;
         // After which confirmed state height the proposer can withdraw
-        uint256 needConfirmedHeight;
+        uint64 needConfirmedHeight;
         // The L1 time of the first successful challenge.
-        uint256 firstSlashTime;
-        // The earliest observed block hash for this bond which has had fraud
-        bytes32 earliestChallengeBlockHash;
+        uint64 firstSlashTime;
         // The state chain height
         uint64 earliestChallengeHeight;
+        // The earliest observed block hash for this bond which has had fraud
+        bytes32 earliestChallengeBlockHash;
     }
 
     /// The token address used for staking.

@@ -92,6 +92,32 @@ type DepositClaimedEvent struct {
 	Raw *web3.Log
 }
 
+var DepositFailedEventID = crypto.Keccak256Hash([]byte("DepositFailed(address,address,address,address,uint256,bytes)"))
+
+type DepositFailedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
+
+	Raw *web3.Log
+}
+
+var DepositFinalizedEventID = crypto.Keccak256Hash([]byte("DepositFinalized(address,address,address,address,uint256,bytes)"))
+
+type DepositFinalizedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
+
+	Raw *web3.Log
+}
+
 var DepositSlashedEventID = crypto.Keccak256Hash([]byte("DepositSlashed(address,address,uint256,bytes32)"))
 
 type DepositSlashedEvent struct {
@@ -118,6 +144,54 @@ type DisputeBranchSelectedEvent struct {
 	Challenger       web3.Address
 	NodeKey          []*big.Int
 	ExpireAfterBlock *big.Int
+
+	Raw *web3.Log
+}
+
+var ERC20DepositInitiatedEventID = crypto.Keccak256Hash([]byte("ERC20DepositInitiated(address,address,address,address,uint256,bytes)"))
+
+type ERC20DepositInitiatedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
+
+	Raw *web3.Log
+}
+
+var ERC20WithdrawalFinalizedEventID = crypto.Keccak256Hash([]byte("ERC20WithdrawalFinalized(address,address,address,address,uint256,bytes)"))
+
+type ERC20WithdrawalFinalizedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
+
+	Raw *web3.Log
+}
+
+var ETHDepositInitiatedEventID = crypto.Keccak256Hash([]byte("ETHDepositInitiated(address,address,uint256,bytes)"))
+
+type ETHDepositInitiatedEvent struct {
+	From   web3.Address
+	To     web3.Address
+	Amount *big.Int
+	Data   []byte
+
+	Raw *web3.Log
+}
+
+var ETHWithdrawalFinalizedEventID = crypto.Keccak256Hash([]byte("ETHWithdrawalFinalized(address,address,uint256,bytes)"))
+
+type ETHWithdrawalFinalizedEvent struct {
+	From   web3.Address
+	To     web3.Address
+	Amount *big.Int
+	Data   []byte
 
 	Raw *web3.Log
 }
@@ -200,6 +274,14 @@ var OwnershipTransferredEventID = crypto.Keccak256Hash([]byte("OwnershipTransfer
 type OwnershipTransferredEvent struct {
 	PreviousOwner web3.Address
 	NewOwner      web3.Address
+
+	Raw *web3.Log
+}
+
+var PausedEventID = crypto.Keccak256Hash([]byte("Paused(address)"))
+
+type PausedEvent struct {
+	Account web3.Address
 
 	Raw *web3.Log
 }
@@ -300,6 +382,14 @@ type TransferEvent struct {
 	Raw *web3.Log
 }
 
+var UnpausedEventID = crypto.Keccak256Hash([]byte("Unpaused(address)"))
+
+type UnpausedEvent struct {
+	Account web3.Address
+
+	Raw *web3.Log
+}
+
 var UpgradedEventID = crypto.Keccak256Hash([]byte("Upgraded(address)"))
 
 type UpgradedEvent struct {
@@ -322,6 +412,19 @@ var WithdrawStartedEventID = crypto.Keccak256Hash([]byte("WithdrawStarted(addres
 type WithdrawStartedEvent struct {
 	Proposer           web3.Address
 	NeedComfirmedBlock *big.Int
+
+	Raw *web3.Log
+}
+
+var WithdrawalInitiatedEventID = crypto.Keccak256Hash([]byte("WithdrawalInitiated(address,address,address,address,uint256,bytes)"))
+
+type WithdrawalInitiatedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
 
 	Raw *web3.Log
 }
