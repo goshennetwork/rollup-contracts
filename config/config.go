@@ -33,6 +33,7 @@ type L1ContractAddressConfig struct {
 type L2ContractAddressConfig struct {
 	L2CrossLayerWitness web3.Address
 	L2StandardBridge    web3.Address
+	L2FeeCollector      web3.Address
 }
 
 type L1ChainDeployConfig struct {
@@ -41,6 +42,7 @@ type L1ChainDeployConfig struct {
 	MaxEnqueueTxGasLimit    uint64
 	MaxCrossLayerTxGasLimit uint64
 	L2CrossLayerWitness     web3.Address
+	L2StandardBridge        web3.Address
 	L2ChainId               uint64
 	StakingAmount           *big.Int
 	*ChallengeConfig

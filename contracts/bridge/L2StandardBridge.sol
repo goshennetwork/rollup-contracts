@@ -19,11 +19,11 @@ import "../cross-layer/CrossLayerContext.sol";
  * This contract also acts as a burner of the tokens intended for withdrawal, informing the L1
  * bridge to release L1 funds.
  */
-contract L2StandardBridge is IL2ERC20Bridge, Initializable, CrossLayerContext {
+contract L2StandardBridge is IL2ERC20Bridge, Initializable, CrossLayerContextUpgradeable {
     address public l1TokenBridge;
 
-    function initialize(address _l2witness, address _l1TokenBridge) public {
-        CrossLayerContext.initialize(_l2witness);
+    function initialize(address _l2witness, address _l1TokenBridge) public initializer {
+        __CrossLayerContext_init(_l2witness);
         l1TokenBridge = _l1TokenBridge;
     }
 

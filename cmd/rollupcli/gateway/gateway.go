@@ -91,7 +91,7 @@ func DepositERC20Cmd(ctx *cli.Context) error {
 }
 
 func DepositEthCmd(ctx *cli.Context) error {
-	path := ctx.String("cfg")
+	path := ctx.String(flags.ConfigFlag.Name)
 	signer, conf, err := common.SetUpL1(path)
 	if err != nil {
 		return err

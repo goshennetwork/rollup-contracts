@@ -30,7 +30,7 @@ jobs:
       - run: bash ./.github/workflows/install-web3.bash
       - run: sudo curl -L -N "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar zxv -C /bin
       - run: npm install --global yarn && yarn
-      - run: yarn build && yarn abigen
+      - run: yarn build && yarn abigen && yarn go
 
       - run: ls
       - name: Go Fmt & Test

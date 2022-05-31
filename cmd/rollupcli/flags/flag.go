@@ -4,7 +4,7 @@ import "github.com/urfave/cli/v2"
 
 var AmountFlag = &cli.Float64Flag{
 	Name:     "amount",
-	Usage:    "amount in ether",
+	Usage:    "amount in ether, support float value",
 	Required: true,
 }
 
@@ -14,27 +14,9 @@ var TargetFlag = &cli.StringFlag{
 	Required: true,
 }
 
-var SenderFlag = &cli.StringFlag{
-	Name:     "sender",
-	Usage:    "sender contract address.",
-	Required: true,
-}
-
-var QueueIndexFlag = &cli.Uint64Flag{
-	Name:     "queueIndex",
-	Usage:    "queueIndex",
-	Required: true,
-}
-
 var MessageFlag = &cli.StringFlag{
 	Name:     "message",
 	Usage:    "hex message to send to the target.",
-	Required: true,
-}
-
-var GasLimitFlag = &cli.Uint64Flag{
-	Name:     "gasLimit",
-	Usage:    "gas limit for the provided message.",
 	Required: true,
 }
 
@@ -43,14 +25,10 @@ var ToFlag = &cli.StringFlag{
 	Usage: "l2 address to receive, default to sender",
 }
 
-var AddressFlag = &cli.StringFlag{
-	Name:  "address",
-	Usage: "address",
-}
-
 var SubmitFlag = &cli.BoolFlag{
-	Name:  "submit",
-	Usage: "submit transaction to remote chain",
+	Name:    "submit",
+	Aliases: []string{"s"},
+	Usage:   "submit transaction to remote chain",
 }
 
 var ConfigFlag = &cli.StringFlag{

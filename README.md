@@ -30,4 +30,29 @@ yarn build # build contracts
 yarn test # run contracts testcase
 yarn clean # clean built contracts
 yarn abigen # build go binding
+yarn go # build go cmd
+```
+
+### Rollup Cli Usage
+
+```shell
+cd build
+cp ../config/*-config.json .
+
+# deploy l2 contracts, addresses will save to addressl2.json
+./rollup deploy l2 -submit
+
+# copy  addressl2.json into rollup-config.json
+
+# deploy l1 contracts, addresses will save to addressl1.json
+./rollup deploy l1 -submit
+
+# copy addressl1.json into rollup-config.json
+
+# finish l2 bridge initialization
+./rollup deploy l2init -submit
+
+# deposit eth to l2 bridge
+./rollup gateway depositEth -amount 1.234 -submit
+
 ```

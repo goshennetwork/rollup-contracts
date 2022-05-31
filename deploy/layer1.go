@@ -12,10 +12,10 @@ import (
 )
 
 type L1ChainEnv struct {
-	ChainId       uint64
-	RpcUrl        string
-	PrivKey       string
-	L1ChainConfig *config.L1ChainDeployConfig
+	ChainId     uint64
+	RpcUrl      string
+	PrivKey     string
+	ChainConfig *config.L1ChainDeployConfig
 }
 
 type L1Contracts struct {
@@ -25,6 +25,7 @@ type L1Contracts struct {
 	RollupInputChain    *binding.RollupInputChain
 	RollupStateChain    *binding.RollupStateChain
 	L1CrossLayerWitness *binding.L1CrossLayerWitness
+	L1StandardBridge    *binding.L1StandardBridge
 	StakingManager      *binding.StakingManager
 	ChallengeBeacon     *binding.UpgradeableBeacon
 	ChallengeLogic      *binding.Challenge
@@ -41,7 +42,7 @@ func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
 		RollupInputChain:    self.RollupInputChain.Contract().Addr(),
 		RollupStateChain:    self.RollupStateChain.Contract().Addr(),
 		L1CrossLayerWitness: self.L1CrossLayerWitness.Contract().Addr(),
-		L1StandardBridge:    web3.Address{}, // todo
+		L1StandardBridge:    self.L1StandardBridge.Contract().Addr(),
 		StakingManager:      self.StakingManager.Contract().Addr(),
 		ChallengeBeacon:     self.ChallengeBeacon.Contract().Addr(),
 		ChallengeLogic:      self.ChallengeLogic.Contract().Addr(),
@@ -170,8 +171,21 @@ func DeployAddressManager(signer *contract.Signer) *binding.AddressManager {
 	return addrMan
 }
 
+func DeployL1StandardBridge(signer *contract.Signer, l1witness, l2bridge web3.Address) *binding.L1StandardBridge {
+	receipt := binding.DeployL1StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(receipt.Status == 1)
+	fmt.Println("deploy l1 standard bridge, address:", receipt.ContractAddress.String())
+
+	bridge := binding.NewL1StandardBridge(receipt.ContractAddress, signer.Client)
+	bridge.Contract().SetFrom(signer.Address())
+
+	bridge.Initialize(l1witness, l2bridge).Sign(signer).SendTransaction(signer)
+
+	return bridge
+}
+
 // TODO: using proxy
-func DeployL1Contract(signer *contract.Signer, cfg *config.L1ChainDeployConfig) *L1Contracts {
+func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig) *L1Contracts {
 	// deploy address manager
 	addrMan := DeployAddressManager(signer)
 	l1CrossLayerWitness := DeployL1CrossLayerWitness(signer, addrMan.Contract().Addr())
@@ -196,6 +210,8 @@ func DeployL1Contract(signer *contract.Signer, cfg *config.L1ChainDeployConfig) 
 
 	staking := DeployStakingManager(signer, dao.Contract().Addr(), factory.Contract().Addr(),
 		rollupStateChain.Contract().Addr(), feeToken.Contract().Addr(), cfg.StakingAmount)
+
+	bridge := DeployL1StandardBridge(signer, l1CrossLayerWitness.Contract().Addr(), cfg.L2StandardBridge)
 
 	names := []string{
 		"L1CrossLayerWitness",
@@ -230,6 +246,7 @@ func DeployL1Contract(signer *contract.Signer, cfg *config.L1ChainDeployConfig) 
 		RollupInputChain:    rollupInputChain,
 		RollupStateChain:    rollupStateChain,
 		L1CrossLayerWitness: l1CrossLayerWitness,
+		L1StandardBridge:    bridge,
 		FeeToken:            feeToken,
 		ChallengeLogic:      challenge,
 		ChallengeBeacon:     beacon,
