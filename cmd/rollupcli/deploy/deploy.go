@@ -1,10 +1,10 @@
 package deploy
 
 import (
+	"github.com/laizy/log"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
-	"github.com/ontio/ontology/common/log"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	utils2 "github.com/ontology-layer-2/rollup-contracts/utils"

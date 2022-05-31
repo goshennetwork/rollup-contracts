@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 interface ICrossLayerWitness {
     event MessageRelayFailed(bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
     event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
-    event MessageSent(uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes _message);
+    event MessageSent(uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes _message,
+        bytes32 _mmrRoot);
 
     /**
      * @dev Send L1->L2 tx to l2,record tx in local mmr

@@ -3,16 +3,17 @@ package main
 import (
 	"os"
 
-	"github.com/ontio/ontology/common/log"
+	"github.com/laizy/log"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/gateway"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/messaging"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/staking"
+	"github.com/ontology-layer-2/rollup-contracts/utils"
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	log.Init(os.Stdout, "./Log/")
+	utils.InitLog("./log/rollup.log")
 	app := &cli.App{
 		Name:  "rullup",
 		Usage: "rullup cli tool",
@@ -26,6 +27,6 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error())
 	}
 }

@@ -9,7 +9,7 @@ struct CompactMerkleTree {
 }
 
 library MerkleMountainRange {
-    function appendLeafHash(CompactMerkleTree storage tree, bytes32 leaf) internal {
+    function appendLeafHash(CompactMerkleTree storage tree, bytes32 leaf) internal returns (bytes32) {
         bytes32[] storage hashes = tree.hashes;
         uint64 size = uint64(hashes.length);
         for (uint256 s = tree.treeSize; s % 2 == 1; s = s >> 1) {
@@ -28,6 +28,7 @@ library MerkleMountainRange {
             _accum = keccak256(abi.encodePacked(tree.hashes[uint64(i)], _accum));
         }
         tree.rootHash = _accum;
+        return _accum;
     }
 
     function verifyLeafHashInclusion(

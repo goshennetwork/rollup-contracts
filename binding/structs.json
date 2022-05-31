@@ -474,10 +474,14 @@
         {
           "Name": "_message",
           "Type": "[]byte"
+        },
+        {
+          "Name": "_mmrRoot",
+          "Type": "[32]byte"
         }
       ],
       "IsEvent": true,
-      "EventID": "MessageSent(uint64,address,address,bytes)",
+      "EventID": "MessageSent(uint64,address,address,bytes,bytes32)",
       "EventName": "MessageSentEventID"
     },
     "MidStateRevealedEvent": {

@@ -65,7 +65,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
         require(msg.sender != address(this), "wired situation");
         uint64 treeSize = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
-        compactMerkleTree.appendLeafHash(_hash);
+        bytes32 _mmrRoot = compactMerkleTree.appendLeafHash(_hash);
         bytes memory _crossLayerCalldata = CrossLayerCodec.encodeL1ToL2CallData(
             _target,
             msg.sender,
@@ -83,7 +83,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
             0,
             0
         );
-        emit MessageSent(treeSize, _target, msg.sender, _message);
+        emit MessageSent(treeSize, _target, msg.sender, _message, _mmrRoot);
     }
 
     function isMessageSucceed(bytes32 _messageHash) public view returns (bool) {
