@@ -8,6 +8,7 @@
     "clean": "forge clean",
     "test": "forge test -vvv --root ./",
     "format": "prettier --write 'contracts/**/*.sol'",
+    "fmt": "prettier --write 'contracts/**/*.sol'",
     "format-lint": "prettier --list-different 'contracts/**/*.sol'",
     "solhint": "solhint 'contracts/**/*.sol'",
     "abigen": "bash scripts/abigen.bash",
