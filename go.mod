@@ -11,3 +11,5 @@ require (
 	github.com/urfave/cli/v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
 )
+
+replace github.com/laizy/web3 => ../../go/projects/go-web3

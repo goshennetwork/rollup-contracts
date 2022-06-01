@@ -86,5 +86,3 @@ func DeployL2Contracts(signer *contract.Signer, cfg *L2ChainDeployConfig) *L2Con
 		L2StandardBridge:    bridge,
 	}
 }
-
-// func BuildL2GenesisData(signer *contract.Signer)
