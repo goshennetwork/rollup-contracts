@@ -22,7 +22,7 @@ func main() {
 		Commands: []*cli.Command{
 			gateway.GatewayCommand(),
 			deploy.DeployCmd(),
-			messaging.L1CrossLayerWitnessCommand(),
+			messaging.CrossLayerWitnessCommand(),
 			staking.StakingCommand(),
 			genesis.GenesisCommand(),
 		},

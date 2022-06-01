@@ -10,9 +10,23 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func CrossLayerWitnessCommand() *cli.Command {
+	return &cli.Command{
+		Name:  "crosslayer",
+		Usage: "do cross layer interaction",
+		Subcommands: []*cli.Command{
+			L1CrossLayerWitnessCommand(),
+			L2CrossLayerWitnessCommand(),
+		},
+		Flags: []cli.Flag{
+			flags.ConfigFlag,
+		},
+	}
+}
+
 func L1CrossLayerWitnessCommand() *cli.Command {
 	return &cli.Command{
-		Name: "crosslayer",
+		Name: "l1",
 		Flags: []cli.Flag{
 			flags.ConfigFlag,
 		},
