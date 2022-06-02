@@ -83,7 +83,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
             0,
             0
         );
-        emit MessageSent(treeSize, _target, msg.sender, _message, _mmrRoot);
+        emit MessageSent(treeSize, _target, msg.sender, _mmrRoot, _message);
     }
 
     function isMessageSucceed(bytes32 _messageHash) public view returns (bool) {

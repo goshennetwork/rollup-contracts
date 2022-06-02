@@ -79,6 +79,6 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         uint64 _messageIndex = compactMerkleTree.treeSize;
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, _messageIndex, _message);
         bytes32 _mmrRoot = compactMerkleTree.appendLeafHash(_hash);
-        emit MessageSent(_messageIndex, _target, msg.sender, _message, _mmrRoot);
+        emit MessageSent(_messageIndex, _target, msg.sender, _mmrRoot, _message);
     }
 }

@@ -58,9 +58,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint256 s,
         uint64 v
     ) public {
-        //sender used to event filter
+        uint256 _gasPrice = GAS_PRICE;
         address sender;
-
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
         if (msg.sender == tx.origin) {
             sender = msg.sender;
@@ -72,11 +71,12 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             _gasLimit = maxCrossLayerTxGasLimit;
+            _gasPrice = 0;
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
 
-        bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _target, _data);
+        bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _gasPrice, _target, _data);
         bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
         if (sender == Constants.L1_CROSS_LAYER_WITNESS) {
             // L1CrossLayer need to sign
@@ -102,12 +102,13 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function getRlpList(
         uint64 _nonce,
         uint64 _gasLimit,
+        uint256 _gasPrice,
         address _target,
         bytes memory _data
     ) internal view returns (bytes[] memory) {
         bytes[] memory list = new bytes[](9);
         list[0] = RLPWriter.writeUint(uint256(_nonce));
-        list[1] = RLPWriter.writeUint(GAS_PRICE);
+        list[1] = RLPWriter.writeUint(_gasPrice);
         list[2] = RLPWriter.writeUint(uint256(_gasLimit));
         list[3] = RLPWriter.writeAddress(_target);
         list[4] = RLPWriter.writeUint(VALUE);

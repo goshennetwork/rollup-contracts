@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/genesis"
+
 	"github.com/laizy/log"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/gateway"
@@ -20,8 +22,9 @@ func main() {
 		Commands: []*cli.Command{
 			gateway.GatewayCommand(),
 			deploy.DeployCmd(),
-			messaging.L1CrossLayerWitnessCommand(),
+			messaging.CrossLayerWitnessCommand(),
 			staking.StakingCommand(),
+			genesis.GenesisCommand(),
 		},
 	}
 
