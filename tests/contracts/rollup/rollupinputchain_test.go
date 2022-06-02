@@ -18,11 +18,13 @@ import (
 
 func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte, nonce uint64) web3.Hash {
 	key := contracts.LocalL1ChainEnv.PrivKey
+	gasPrice := uint64(GasPrice)
 	if sender == L1CrossLayerFakeSender {
 		key = L1CrossLayerFakeKey
 		fmt.Println(nonce)
+		gasPrice = 0
 	}
-	txdata := CompleteTxData(target, gasLimit, data, nonce)
+	txdata := CompleteTxData(target, gasPrice, gasLimit, data, nonce)
 	r, s, v := Sign(target, gasLimit, data, nonce, key)
 	txdata.V = v
 	txdata.R = r
