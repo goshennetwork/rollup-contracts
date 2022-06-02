@@ -25,9 +25,9 @@ func CompleteTxData(target web3.Address, gasPrice, gasLimit uint64, data []byte,
 	return &types.LegacyTx{To: &to, Gas: gasLimit, Data: data, Nonce: nonce, GasPrice: big.NewInt(0).SetUint64(gasPrice)}
 }
 
-func Sign(target web3.Address, gasLimit uint64, data []byte, nonce uint64, privateKey string) (*big.Int, *big.Int, *big.Int) {
+func Sign(target web3.Address, gasPrice, gasLimit uint64, data []byte, nonce uint64, privateKey string) (*big.Int, *big.Int, *big.Int) {
 	signer := types.NewEIP155Signer(new(big.Int).SetUint64(contracts.LocalL1ChainEnv.ChainConfig.L2ChainId))
-	txData := CompleteTxData(target, 0, gasLimit, data, nonce)
+	txData := CompleteTxData(target, gasPrice, gasLimit, data, nonce)
 	signedHash := signer.Hash(types.NewTx(txData))
 	//private can't same as 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, which use by L1CrossLayerWitness
 	r, s, v := GetRSV(signedHash, contracts.LocalL1ChainEnv.ChainConfig.L2ChainId, privateKey)
