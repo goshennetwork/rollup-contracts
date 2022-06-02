@@ -472,16 +472,16 @@
           "Type": "web3.Address"
         },
         {
-          "Name": "_message",
-          "Type": "[]byte"
-        },
-        {
           "Name": "_mmrRoot",
           "Type": "[32]byte"
+        },
+        {
+          "Name": "_message",
+          "Type": "[]byte"
         }
       ],
       "IsEvent": true,
-      "EventID": "MessageSent(uint64,address,address,bytes,bytes32)",
+      "EventID": "MessageSent(uint64,address,address,bytes32,bytes)",
       "EventName": "MessageSentEventID"
     },
     "MidStateRevealedEvent": {

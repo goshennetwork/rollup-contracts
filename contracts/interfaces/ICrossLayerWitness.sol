@@ -8,8 +8,8 @@ interface ICrossLayerWitness {
         uint64 indexed _messageIndex,
         address indexed _target,
         address indexed _sender,
-        bytes _message,
-        bytes32 _mmrRoot
+        bytes32 _mmrRoot,
+        bytes _message
     );
 
     /**
