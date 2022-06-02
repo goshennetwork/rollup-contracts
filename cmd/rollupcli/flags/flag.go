@@ -16,6 +16,7 @@ var TargetFlag = &cli.StringFlag{
 
 var MessageFlag = &cli.StringFlag{
 	Name:     "message",
+	Aliases:  []string{"m"},
 	Usage:    "hex message to send to the target.",
 	Required: true,
 }

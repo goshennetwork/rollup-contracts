@@ -4,6 +4,7 @@ import (
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
+	"github.com/laizy/web3/utils/common/hexutil"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
@@ -39,12 +40,12 @@ func l2SendMessageCmd(ctx *cli.Context) error {
 		return err
 	}
 	target := ctx.String(flags.TargetFlag.Name)
-	mesage := ctx.String(flags.MessageFlag.Name)
+	message := ctx.String(flags.MessageFlag.Name)
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 
 	witness := binding.NewL2CrossLayerWitness(conf.L2Addresses.L2CrossLayerWitness, signer.Client)
 	witness.Contract().SetFrom(signer.Address())
-	receipt := witness.SendMessage(web3.HexToAddress(target), web3.Hex2Bytes(mesage)).Sign(signer).SendTransaction(signer)
+	receipt := witness.SendMessage(web3.HexToAddress(target), hexutil.MustDecode(message)).Sign(signer).SendTransaction(signer)
 	log.Infof("Sends a cross layer message, receipt:%s", utils.JsonString(receipt.Thin()))
 	return nil
 }
