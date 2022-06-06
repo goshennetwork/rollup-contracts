@@ -18,14 +18,13 @@ library Types {
     function decodeMMRFromRlpHeader(bytes memory header) internal pure returns (bytes32 mmrRoot, uint64 mmrSize) {
         Slice memory rawRlp = BytesSlice.fromBytes(header);
         Slice[] memory fields = rawRlp.readList();
-        require(fields.length >= 14);
-        Slice memory mmrRlp = fields[13];
-        bytes memory mmr = mmrRlp.readBytes();
-        require(mmr.length == 32 + 8);
-        assembly {
-            mmrRoot := mload(add(mmr, 32))
-            mmrSize := mload(add(mmr, 40))
-        }
+        require(fields.length >= 15);
+        bytes memory mmrRootField = fields[13].readBytes();
+        require(mmrRootField.length == 32, "ill mmrRoot length");
+        mmrRoot = bytes32(mmrRootField);
+        bytes memory mmrSizeField = fields[14].readBytes();
+        require(mmrSizeField.length <= 8, "ill mmrSize length");
+        mmrSize = uint64(bytes8(mmrSizeField));
     }
 
     function encode(Block memory _block) internal pure returns (bytes memory) {
