@@ -90,9 +90,10 @@ contract TestCrossLayerWitness {
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
-        bytes[] memory list = new bytes[](14);
-        list[13] = abi.encodePacked(_trees.rootHash, _trees.treeSize);
-        bytes[] memory encodedList = new bytes[](14);
+        bytes[] memory list = new bytes[](15);
+        list[13] = abi.encodePacked(_trees.rootHash);
+        list[14] = abi.encodePacked(_trees.treeSize);
+        bytes[] memory encodedList = new bytes[](15);
         for (uint256 i = 0; i < list.length; i++) {
             encodedList[i] = RLPWriter.writeBytes(list[i]);
         }
