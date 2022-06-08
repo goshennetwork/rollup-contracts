@@ -22,9 +22,9 @@ library Types {
         bytes memory mmrRootField = fields[13].readBytes();
         require(mmrRootField.length == 32, "ill mmrRoot length");
         mmrRoot = bytes32(mmrRootField);
-        bytes memory mmrSizeField = fields[14].readBytes();
-        require(mmrSizeField.length <= 8, "ill mmrSize length");
-        mmrSize = uint64(bytes8(mmrSizeField));
+        uint256 mmrSizeField = fields[14].readUint256();
+        require(mmrSizeField <= type(uint64).max, "ill mmrSize");
+        mmrSize = uint64(mmrSizeField);
     }
 
     function encode(Block memory _block) internal pure returns (bytes memory) {
