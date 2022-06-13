@@ -19,6 +19,10 @@ import "../dao/DAO.sol";
 
 contract TestBase {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+
+    using MerkleMountainRange for CompactMerkleTree;
+    CompactMerkleTree _trees;
+
     AddressManager addressManager;
     RollupStateChain rollupStateChain;
     RollupInputChain rollupInputChain;
@@ -26,14 +30,15 @@ contract TestBase {
     L2CrossLayerWitness l2CrossLayerWitness;
     TestERC20 feeToken;
     StakingManager stakingManager;
+    ProxyAdmin proxyAdmin;
     uint256 constant fraudProofWindow = 3;
     address challengerFactory;
     DAO dao;
 
     function initialize() internal {
         // deploy proxy admin
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
 
+        proxyAdmin = new ProxyAdmin();
         // deploy AddressManager
         AddressManager addressManagerLogic = new AddressManager();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -150,6 +155,44 @@ contract TestBase {
         addressManager.setAddress(AddressName.DAO, address(dao));
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
     }
+
+
+    function init(address target, address sender, bytes memory signatureWithData) internal {
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
+            target,
+            sender,
+            0,
+            signatureWithData
+        );
+        MerkleMountainRange.appendLeafHash(_trees, _hash);
+        bytes32[] memory _proof;
+        bytes[] memory list = new bytes[](15);
+        list[13] = abi.encodePacked(_trees.rootHash);
+        list[14] = abi.encodePacked(_trees.treeSize);
+        bytes[] memory encodedList = new bytes[](15);
+        for (uint256 i = 0; i < list.length; i++) {
+            encodedList[i] = RLPWriter.writeBytes(list[i]);
+        }
+        bytes memory rlpData = RLPWriter.writeList(encodedList);
+        Types.StateInfo memory stateInfo;
+        stateInfo.blockHash = keccak256(rlpData);
+        vm.startPrank(address(rollupStateChain));
+        addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
+        vm.warp(3);
+        vm.stopPrank();
+        vm.startPrank(address(addressManager));
+        bool success = l1CrossLayerWitness.relayMessage(
+            target,
+            sender,
+            signatureWithData,
+            0,
+            rlpData,
+            stateInfo,
+            _proof
+        );
+        require(success, "call relayMessage failed");
+    }
+
 }
 
 contract MockChallengeFactory {
