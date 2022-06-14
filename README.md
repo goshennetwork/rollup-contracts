@@ -28,6 +28,7 @@ yarn # install dependences
 yarn format # format contracts code
 yarn build # build contracts
 yarn test # run contracts testcase
+yarn gasnap # run contracts testcase and generate gas snapshot file
 yarn clean # clean built contracts
 yarn abigen # build go binding
 yarn go # build go cmd
