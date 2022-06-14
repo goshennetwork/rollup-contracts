@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	GasPrice            = 1_000_000_000
+	GasPrice            = 0
 	L1CrossLayerFakeKey = "0x01"
 )
 

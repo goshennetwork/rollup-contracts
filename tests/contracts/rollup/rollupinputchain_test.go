@@ -43,8 +43,9 @@ func TestEnqueue(t *testing.T) {
 	chainEnv := contracts.LocalL1ChainEnv
 	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
 	l1Chain := deploy.DeployL1Contracts(signer, chainEnv.ChainConfig)
-
-	target, gasLimit, data, nonce := web3.Address{1, 1}, uint64(900_000), []byte("test"), uint64(0)
+	nonce, err := l1Chain.RollupInputChain.GetNonceByAddress(signer.Address())
+	utils.Ensure(err)
+	target, gasLimit, data := web3.Address{1, 1}, uint64(900_000), []byte("test")
 	r, s, v := Sign(target, GasPrice, gasLimit, data, nonce, contracts.LocalL1ChainEnv.PrivKey)
 	receipt := l1Chain.RollupInputChain.Enqueue(target, gasLimit, data, nonce, r, s, v.Uint64()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
