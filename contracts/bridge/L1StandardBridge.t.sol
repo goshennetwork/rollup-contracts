@@ -1,20 +1,17 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import "../bridge/L1StandardBridge.sol";
 import "../test-helper/TestBase.sol";
 import "../test-helper/TestERC20.sol";
 
-
 contract TestL1StandardBridge is TestBase {
-
-
     L1StandardBridge l1StandardBridge;
     TestERC20 testErc20;
     address mockL2Token = address(0x666666);
     address l2MockBridgeAddr = address(0x1111);
     address sender = address(0x88888);
     address toAddr = address(0x99999);
-
 
     function setUp() public {
         initialize();
@@ -32,20 +29,18 @@ contract TestL1StandardBridge is TestBase {
         vm.stopPrank();
     }
 
-
     function testDepositETH() public {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
-        l1StandardBridge.depositETH{value : 10}("0x01");
+        l1StandardBridge.depositETH{ value: 10 }("0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testDepositETH failed");
         require(l1StandardBridgeBal == 10, "testDepositETH failed");
     }
 
-
-    function testDepositETH2() public {
+    function testDepositETHWithZeroValue() public {
         // test deposit amount == 0
         vm.startPrank(sender, sender);
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
@@ -57,40 +52,36 @@ contract TestL1StandardBridge is TestBase {
         require(l1StandardBridgeBal == l1StandardBridgeAfterBal, "testDepositETH failed");
     }
 
-
     function testFailDepositETH() public {
         // test amount > sender.balance
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
-        l1StandardBridge.depositETH{value : 20}("0x01");
+        l1StandardBridge.depositETH{ value: 20 }("0x01");
     }
-
 
     function testDepositETHTo() public {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
-        l1StandardBridge.depositETHTo{value : 10}(toAddr, "0x01");
+        l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testDepositETH failed");
         require(l1StandardBridgeBal == 10, "testDepositETH failed");
     }
 
-
-    function testDepositETHTo2() public {
+    function testDepositETHToWithZeroValue() public {
         // test toAddr = address(0)
         toAddr = address(0);
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
-        l1StandardBridge.depositETHTo{value : 10}(toAddr, "0x01");
+        l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testDepositETH failed");
         require(l1StandardBridgeBal == 10, "testDepositETH failed");
     }
-
 
     function testDepositERC20() public {
         vm.startPrank(sender, sender);
@@ -103,8 +94,7 @@ contract TestL1StandardBridge is TestBase {
         require(l1StandardBridgeAfterBal - 1 ether == l1StandardBridgeBal, "DepositERC20 failed");
     }
 
-
-    function testDepositERC202() public {
+    function testDepositERC20WithZeroValue() public {
         // test amount == 0
         vm.startPrank(sender, sender);
         uint256 senderBal = testErc20.balanceOf(sender);
@@ -116,14 +106,12 @@ contract TestL1StandardBridge is TestBase {
         require(l1StandardBridgeAfterBal == l1StandardBridgeBal, "DepositERC20 failed");
     }
 
-
     function testFailDepositERC20() public {
         // test amount > sender.balance
         vm.startPrank(sender, sender);
         uint256 senderBal = testErc20.balanceOf(sender);
         l1StandardBridge.depositERC20(address(testErc20), mockL2Token, senderBal + 1, "0x01");
     }
-
 
     function testDepositERC20To() public {
         vm.startPrank(sender, sender);
@@ -155,26 +143,37 @@ contract TestL1StandardBridge is TestBase {
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, senderBal + 1, "0x01");
     }
 
-
     function testFinalizeETHWithdrawal() public {
         vm.deal(address(l1StandardBridge), 10 ether);
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 toAddrBal = toAddr.balance;
-        bytes memory signatureWithData = abi.encodeWithSignature("finalizeETHWithdrawal(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01");
-        init(address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
+        bytes memory signatureWithData = abi.encodeWithSignature(
+            "finalizeETHWithdrawal(address,address,uint256,bytes)",
+            sender,
+            toAddr,
+            1 ether,
+            "0x01"
+        );
+        callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
         uint256 l1StandardBridgeAfterBal = address(l1StandardBridge).balance;
         uint256 toAddrAfterBal = toAddr.balance;
         require(toAddrBal + 1 ether == toAddrAfterBal, "testFinalizeETHWithdrawal failed");
         require(l1StandardBridgeBal - 1 ether == l1StandardBridgeAfterBal, "testFinalizeETHWithdrawal failed");
     }
 
-
-    function testFailFinalizeETHWithdrawal() public {
+    function testFailFinalizeETHWithdrawalWithL1BridgeETHNotEnough() public {
         // l1StandardBridge ETH not enough   tx revert
-        bytes memory signatureWithData = abi.encodeWithSignature("finalizeETHWithdrawal(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01");
-        init(address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
+        uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
+        require(l1StandardBridgeBal < 1 ether, "l1StandardBridgeBal failed");
+        bytes memory signatureWithData = abi.encodeWithSignature(
+            "finalizeETHWithdrawal(address,address,uint256,bytes)",
+            sender,
+            toAddr,
+            1 ether,
+            "0x01"
+        );
+        callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
     }
-
 
     function testFinalizeERC20Withdrawal() public {
         vm.startPrank(sender);
@@ -187,17 +186,23 @@ contract TestL1StandardBridge is TestBase {
         vm.stopPrank();
         uint256 l1StandardBridgeBal = testErc20.balanceOf(address(l1StandardBridge));
         uint256 toAddrBal = testErc20.balanceOf(toAddr);
-        bytes memory signatureWithData = abi.encodeWithSignature("finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
-            address(testErc20), mockL2Token, sender, toAddr, 1 ether, "0x01");
-        init(address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
+        bytes memory signatureWithData = abi.encodeWithSignature(
+            "finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
+            address(testErc20),
+            mockL2Token,
+            sender,
+            toAddr,
+            1 ether,
+            "0x01"
+        );
+        callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
         uint256 l1StandardBridgeAfterBal = testErc20.balanceOf(address(l1StandardBridge));
         uint256 toAddrAfterBal = testErc20.balanceOf(toAddr);
         require(toAddrBal + 1 ether == toAddrAfterBal, "testFinalizeERC20Withdrawal failed");
         require(l1StandardBridgeBal - 1 ether == l1StandardBridgeAfterBal, "testFinalizeERC20Withdrawal failed");
     }
 
-
-    function testFailFinalizeERC20Withdrawal() public {
+    function testFailFinalizeERC20WithdrawalWithL1BridgeERC20TokenNotEnough() public {
         // test l1StandardBridge testErc20 Token not enough
         vm.startPrank(sender, sender);
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, 10 ether, "0x01");
@@ -209,13 +214,19 @@ contract TestL1StandardBridge is TestBase {
         uint256 deposit = l1StandardBridge.deposits(address(testErc20), mockL2Token);
         require(deposit >= 10 ether, "DepositERC20To failed");
         vm.stopPrank();
-        bytes memory signatureWithData = abi.encodeWithSignature("finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
-            address(testErc20), mockL2Token, sender, toAddr, 1.5 ether, "0x01");
-        init(address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
+        bytes memory signatureWithData = abi.encodeWithSignature(
+            "finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
+            address(testErc20),
+            mockL2Token,
+            sender,
+            toAddr,
+            1.5 ether,
+            "0x01"
+        );
+        callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
     }
 
-
-    function testFailFinalizeERC20Withdrawal2() public {
+    function testFailFinalizeERC20WithdrawalWithDepositNotEnough() public {
         // test l1StandardBridge.deposits(address(testErc20), mockL2Token) < amount
         vm.startPrank(sender, sender);
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, 1 ether, "0x01");
@@ -225,10 +236,15 @@ contract TestL1StandardBridge is TestBase {
         uint256 deposit = l1StandardBridge.deposits(address(testErc20), mockL2Token);
         require(deposit >= 1 ether, "DepositERC20To failed");
         vm.stopPrank();
-        bytes memory signatureWithData = abi.encodeWithSignature("finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
-            address(testErc20), mockL2Token, sender, toAddr, 1.5 ether, "0x01");
-        init(address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
+        bytes memory signatureWithData = abi.encodeWithSignature(
+            "finalizeERC20Withdrawal(address,address,address,address,uint256,bytes)",
+            address(testErc20),
+            mockL2Token,
+            sender,
+            toAddr,
+            1.5 ether,
+            "0x01"
+        );
+        callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
     }
-
-
 }

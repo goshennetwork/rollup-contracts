@@ -156,14 +156,13 @@ contract TestBase {
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
     }
 
-
-    function init(address target, address sender, bytes memory signatureWithData) internal {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            target,
-            sender,
-            0,
-            signatureWithData
-        );
+    function callRelayMessage(
+        uint8 witnessType,
+        address target,
+        address sender,
+        bytes memory signatureWithData
+    ) internal {
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(target, sender, 0, signatureWithData);
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
         bytes[] memory list = new bytes[](15);
@@ -180,19 +179,24 @@ contract TestBase {
         addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
         vm.warp(3);
         vm.stopPrank();
-        vm.startPrank(address(addressManager));
-        bool success = l1CrossLayerWitness.relayMessage(
-            target,
-            sender,
-            signatureWithData,
-            0,
-            rlpData,
-            stateInfo,
-            _proof
-        );
-        require(success, "call relayMessage failed");
+        if (witnessType == 1) {
+            vm.startPrank(address(addressManager));
+            bool success = l1CrossLayerWitness.relayMessage(
+                target,
+                sender,
+                signatureWithData,
+                0,
+                rlpData,
+                stateInfo,
+                _proof
+            );
+            require(success, "call l1 relayMessage failed");
+        } else if (witnessType == 2) {
+            vm.startPrank(Constants.L1_CROSS_LAYER_WITNESS);
+            bool success = l2CrossLayerWitness.relayMessage(target, sender, signatureWithData, 0, bytes32(0), 0);
+            require(success, "call l2 relayMessage failed");
+        }
     }
-
 }
 
 contract MockChallengeFactory {
