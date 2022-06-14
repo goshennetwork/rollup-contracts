@@ -18,6 +18,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
     uint256 public constant GAS_PRICE = 0;
     uint256 public constant VALUE = 0;
+    uint64 public constant INITIAL_ENQUEUE_NONCE = 1 << 63;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
@@ -67,8 +68,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             //make sure only L1CrossLayerWitness use unsafe sender
             require(sender != Constants.L1_CROSS_LAYER_WITNESS, "malicious sender");
             require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
-            uint64 pendingNonce = nonces[sender];
-            pendingNonce = pendingNonce == 0 ? 1 << 63 : pendingNonce;
+            uint64 pendingNonce = getNonceByAddress(sender);
             require(_nonce == pendingNonce, "wrong nonce");
             nonces[sender] = _nonce + 1;
         } else {
@@ -226,5 +226,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_queueIndex < queuedTxInfos.length, "queue index over capacity");
         QueueTxInfo storage info = queuedTxInfos[_queueIndex];
         return (info.transactionHash, info.timestamp);
+    }
+
+    function getNonceByAddress(address _sender) public view returns (uint64) {
+        uint64 _nonce = nonces[_sender];
+        _nonce = _nonce == 0 ? INITIAL_ENQUEUE_NONCE : _nonce;
+        return _nonce;
     }
 }

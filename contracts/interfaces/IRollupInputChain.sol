@@ -73,4 +73,7 @@ interface IRollupInputChain {
     function getInputHash(uint64 _inputIndex) external view returns (bytes32);
 
     function getQueueTxInfo(uint64 _queueIndex) external view returns (bytes32, uint64);
+
+    /// @return sender's nonce
+    function getNonceByAddress(address _sender) external view returns (uint64);
 }
