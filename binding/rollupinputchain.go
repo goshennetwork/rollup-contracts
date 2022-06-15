@@ -61,6 +61,25 @@ func (_a *RollupInputChain) GASPRICE(block ...web3.BlockNumber) (retval0 *big.In
 	return
 }
 
+// INITIALENQUEUENONCE calls the INITIAL_ENQUEUE_NONCE method in the solidity contract
+func (_a *RollupInputChain) INITIALENQUEUENONCE(block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("INITIAL_ENQUEUE_NONCE", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // MAXCROSSLAYERTXSIZE calls the MAX_CROSS_LAYER_TX_SIZE method in the solidity contract
 func (_a *RollupInputChain) MAXCROSSLAYERTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
@@ -162,6 +181,25 @@ func (_a *RollupInputChain) GetInputHash(inputIndex uint64, block ...web3.BlockN
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("getInputHash", web3.EncodeBlock(block...), inputIndex)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// GetNonceByAddress calls the getNonceByAddress method in the solidity contract
+func (_a *RollupInputChain) GetNonceByAddress(sender web3.Address, block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("getNonceByAddress", web3.EncodeBlock(block...), sender)
 	if err != nil {
 		return
 	}
