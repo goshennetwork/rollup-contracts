@@ -8,8 +8,9 @@ import (
 // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
 // batchLeftTimeDiff([]uint32) + batchesData
 type RollupInputBatches struct {
-	QueueNum          uint64
+	BatchIndex        uint64
 	QueueStart        uint64
+	QueueNum          uint64
 	BatchNum          uint64
 	Batch0Time        uint64
 	BatchLeftTimeDiff []uint32
@@ -24,8 +25,9 @@ func (self *RollupInputBatches) Calldata() []byte {
 
 func (self *RollupInputBatches) Encode() []byte {
 	sink := codec.NewZeroCopySink(nil)
-	sink.WriteUint64BE(self.QueueNum)
+	sink.WriteUint64BE(self.BatchIndex)
 	sink.WriteUint64BE(self.QueueStart)
+	sink.WriteUint64BE(self.QueueNum)
 	sink.WriteUint64BE(self.BatchNum)
 	sink.WriteUint64BE(self.Batch0Time)
 	for _, diff := range self.BatchLeftTimeDiff {
