@@ -26,7 +26,7 @@ contract TestBase {
     AddressManager addressManager;
     RollupStateChain rollupStateChain;
     RollupInputChain rollupInputChain;
-    L1CrossLayerWitness l1CrossLayerWitness;
+    TestMockL1CrossLayerWitness l1CrossLayerWitness;
     L2CrossLayerWitness l2CrossLayerWitness;
     TestERC20 feeToken;
     StakingManager stakingManager;
@@ -49,13 +49,13 @@ contract TestBase {
         addressManager = AddressManager(address(proxy));
 
         // deploy L1CrossLayerWitness
-        L1CrossLayerWitness l1CrossLayerWitnessLogic = new L1CrossLayerWitness();
+        TestMockL1CrossLayerWitness l1CrossLayerWitnessLogic = new TestMockL1CrossLayerWitness();
         proxy = new TransparentUpgradeableProxy(
             address(l1CrossLayerWitnessLogic),
             address(proxyAdmin),
             abi.encodeWithSelector(L1CrossLayerWitness.initialize.selector, address(addressManager))
         );
-        l1CrossLayerWitness = L1CrossLayerWitness(address(proxy));
+        l1CrossLayerWitness = TestMockL1CrossLayerWitness(address(proxy));
 
         // deploy L2CrossLayerWitness
         L2CrossLayerWitness l2CrossLayerWitnessLogic = new L2CrossLayerWitness();
@@ -202,5 +202,17 @@ contract TestBase {
 contract MockChallengeFactory {
     function isChallengeContract(address _addr) external view returns (bool) {
         return _addr == address(this);
+    }
+}
+
+contract TestMockL1CrossLayerWitness is L1CrossLayerWitness {
+    function mockSetSuccessRelayedMessages(bytes32 hash) public returns (bool) {
+        successRelayedMessages[hash] = true;
+        return true;
+    }
+
+    function mockSetBlockedMessages(bytes32 hash) public returns (bool) {
+        blockedMessages[hash] = true;
+        return true;
     }
 }
