@@ -15,7 +15,7 @@ contract TestRollupStateChain is TestBase {
 
     function setUp() public {
         vm.startPrank(sender);
-        super.initialize();
+        super._initialize();
         dao.setProposerWhitelist(sender, true);
         dao.setSequencerWhitelist(sender, true);
         feeToken.approve(address(stakingManager), stakingManager.price());

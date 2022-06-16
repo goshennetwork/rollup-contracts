@@ -14,7 +14,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
     address toAddr = address(0x99999);
 
     function setUp() public {
-        initialize();
+        _initialize();
         vm.startPrank(sender);
         L1StandardBridge l1StandardBridgeLogic = new L1StandardBridge();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(

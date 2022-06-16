@@ -27,7 +27,7 @@ contract TestBase {
     RollupStateChain rollupStateChain;
     RollupInputChain rollupInputChain;
     TestMockL1CrossLayerWitness l1CrossLayerWitness;
-    L2CrossLayerWitness l2CrossLayerWitness;
+    TestMockL2CrossLayerWitness l2CrossLayerWitness;
     TestERC20 feeToken;
     StakingManager stakingManager;
     ProxyAdmin proxyAdmin;
@@ -35,7 +35,7 @@ contract TestBase {
     address challengerFactory;
     DAO dao;
 
-    function initialize() internal {
+    function _initialize() internal {
         // deploy proxy admin
 
         proxyAdmin = new ProxyAdmin();
@@ -58,13 +58,13 @@ contract TestBase {
         l1CrossLayerWitness = TestMockL1CrossLayerWitness(address(proxy));
 
         // deploy L2CrossLayerWitness
-        L2CrossLayerWitness l2CrossLayerWitnessLogic = new L2CrossLayerWitness();
+        TestMockL2CrossLayerWitness l2CrossLayerWitnessLogic = new TestMockL2CrossLayerWitness();
         proxy = new TransparentUpgradeableProxy(
             address(l2CrossLayerWitnessLogic),
             address(proxyAdmin),
             abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector, address(addressManager))
         );
-        l2CrossLayerWitness = L2CrossLayerWitness(address(proxy));
+        l2CrossLayerWitness = TestMockL2CrossLayerWitness(address(proxy));
 
         feeToken = new TestERC20("test token", "test");
 
@@ -213,6 +213,18 @@ contract TestMockL1CrossLayerWitness is L1CrossLayerWitness {
 
     function mockSetBlockedMessages(bytes32 hash) public returns (bool) {
         blockedMessages[hash] = true;
+        return true;
+    }
+}
+
+contract TestMockL2CrossLayerWitness is L2CrossLayerWitness {
+    function mockSetSuccessRelayedMessages(bytes32 hash) public returns (bool) {
+        successRelayedMessages[hash] = true;
+        return true;
+    }
+
+    function mockSetMmrRoot(uint64 size, bytes32 hash) public returns (bool) {
+        mmrRoots[size] = hash;
         return true;
     }
 }

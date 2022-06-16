@@ -2,14 +2,14 @@ pragma solidity ^0.8.0;
 
 import "../test-helper/TestBase.sol";
 
-contract TestL2FeeCollector is TestBase, L1CrossLayerWitness {
+contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
     using MerkleMountainRange for CompactMerkleTree;
 
     CompactMerkleTree _compactMerkleTree;
     address sender = address(0x7878);
 
     function setUp() public {
-        initialize();
+        _initialize();
     }
 
     function testCrossLayerSender() public {
