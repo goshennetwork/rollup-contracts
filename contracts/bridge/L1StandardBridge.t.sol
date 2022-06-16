@@ -5,7 +5,7 @@ import "../bridge/L1StandardBridge.sol";
 import "../test-helper/TestBase.sol";
 import "../test-helper/TestERC20.sol";
 
-contract TestL1StandardBridge is TestBase {
+contract TestL1StandardBridge is TestBase, L1StandardBridge {
     L1StandardBridge l1StandardBridge;
     TestERC20 testErc20;
     address mockL2Token = address(0x666666);
@@ -33,11 +33,14 @@ contract TestL1StandardBridge is TestBase {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
-        l1StandardBridge.depositETH{ value: 10 }("0x01");
+        uint256 amount = 10;
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ETHDepositInitiated(sender, sender, amount, "0x01");
+        l1StandardBridge.depositETH{ value: amount }("0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
-        require(senderBal - senderAfterBal == 10, "testDepositETH failed");
-        require(l1StandardBridgeBal == 10, "testDepositETH failed");
+        require(senderBal - senderAfterBal == amount, "testDepositETH failed");
+        require(l1StandardBridgeBal == amount, "testDepositETH failed");
     }
 
     function testDepositETHWithZeroValue() public {
@@ -45,6 +48,8 @@ contract TestL1StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ETHDepositInitiated(sender, sender, 0, "0x01");
         l1StandardBridge.depositETH("0x01");
         uint256 l1StandardBridgeAfterBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -63,6 +68,8 @@ contract TestL1StandardBridge is TestBase {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ETHDepositInitiated(sender, toAddr, 10, "0x01");
         l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -76,6 +83,8 @@ contract TestL1StandardBridge is TestBase {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ETHDepositInitiated(sender, toAddr, 10, "0x01");
         l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -87,6 +96,8 @@ contract TestL1StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 senderBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeBal = testErc20.balanceOf(address(l1StandardBridge));
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20DepositInitiated(address(testErc20), mockL2Token, sender, sender, 1 ether, "0x01");
         l1StandardBridge.depositERC20(address(testErc20), mockL2Token, 1 ether, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeAfterBal = testErc20.balanceOf(address(l1StandardBridge));
@@ -99,6 +110,8 @@ contract TestL1StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 senderBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeBal = testErc20.balanceOf(address(l1StandardBridge));
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20DepositInitiated(address(testErc20), mockL2Token, sender, sender, 0, "0x01");
         l1StandardBridge.depositERC20(address(testErc20), mockL2Token, 0, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeAfterBal = testErc20.balanceOf(address(l1StandardBridge));
@@ -118,8 +131,12 @@ contract TestL1StandardBridge is TestBase {
         uint256 senderBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeBal = testErc20.balanceOf(address(l1StandardBridge));
         // amount == 0
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20DepositInitiated(address(testErc20), mockL2Token, sender, toAddr, 0, "0x01");
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, 0 ether, "0x01");
         // amount == 0.5 ether
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20DepositInitiated(address(testErc20), mockL2Token, sender, toAddr, 0.5 ether, "0x01");
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, 0.5 ether, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeAfterBal = testErc20.balanceOf(address(l1StandardBridge));
@@ -127,6 +144,8 @@ contract TestL1StandardBridge is TestBase {
         require(l1StandardBridgeAfterBal - 0.5 ether == l1StandardBridgeBal, "DepositERC20To failed2");
         uint256 deposit = l1StandardBridge.deposits(address(testErc20), mockL2Token);
         require(deposit == 0.5 ether, "DepositERC20To failed");
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20DepositInitiated(address(testErc20), mockL2Token, sender, toAddr, 1.5 ether, "0x01");
         l1StandardBridge.depositERC20To(address(testErc20), mockL2Token, toAddr, 1.5 ether, "0x01");
         uint256 senderAfterBal2 = testErc20.balanceOf(sender);
         uint256 l1StandardBridgeAfterBal2 = testErc20.balanceOf(address(l1StandardBridge));
@@ -154,6 +173,8 @@ contract TestL1StandardBridge is TestBase {
             1 ether,
             "0x01"
         );
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ETHWithdrawalFinalized(sender, toAddr, 1 ether, "0x01");
         callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
         uint256 l1StandardBridgeAfterBal = address(l1StandardBridge).balance;
         uint256 toAddrAfterBal = toAddr.balance;
@@ -195,6 +216,8 @@ contract TestL1StandardBridge is TestBase {
             1 ether,
             "0x01"
         );
+        vm.expectEmit(true, true, true, true, address(l1StandardBridge));
+        emit ERC20WithdrawalFinalized(address(testErc20), mockL2Token, sender, toAddr, 1 ether, "0x01");
         callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
         uint256 l1StandardBridgeAfterBal = testErc20.balanceOf(address(l1StandardBridge));
         uint256 toAddrAfterBal = testErc20.balanceOf(toAddr);

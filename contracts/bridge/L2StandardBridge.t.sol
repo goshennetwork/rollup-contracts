@@ -5,7 +5,7 @@ import "../bridge/L2StandardBridge.sol";
 import "../test-helper/TestBase.sol";
 import "../token/L2StandardERC20.sol";
 
-contract TestL2StandardBridge is TestBase {
+contract TestL2StandardBridge is TestBase, L2StandardBridge {
     L2StandardBridge l2StandardBridge;
     L2StandardERC20 testErc20;
     address mockL1Token = address(0x666666);
@@ -34,6 +34,8 @@ contract TestL2StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(address(0), address(0), sender, sender, 1 ether, "0x01");
         l2StandardBridge.withdrawETH{ value: 1 ether }("0x01");
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -46,6 +48,8 @@ contract TestL2StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(address(0), address(0), sender, sender, 0, "0x01");
         l2StandardBridge.withdrawETH("0x01");
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -65,6 +69,8 @@ contract TestL2StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
         l2StandardBridge.withdrawETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -78,6 +84,8 @@ contract TestL2StandardBridge is TestBase {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
         uint256 senderBal = sender.balance;
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
         l2StandardBridge.withdrawETHTo{ value: 10 }(toAddr, "0x01");
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
@@ -93,6 +101,8 @@ contract TestL2StandardBridge is TestBase {
         uint256 senderBal = testErc20.balanceOf(sender);
         uint256 l2StandardBridgeBal = testErc20.balanceOf(address(l2StandardBridge));
         require(l2StandardBridgeBal == 0, "testWithdraw failed");
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(mockL1Token, address(testErc20), sender, sender, 1 ether, "0x01");
         l2StandardBridge.withdraw(address(testErc20), 1 ether, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         uint256 l2StandardBridgeAfterBal = testErc20.balanceOf(address(l2StandardBridge));
@@ -106,6 +116,8 @@ contract TestL2StandardBridge is TestBase {
         uint256 senderBal = testErc20.balanceOf(sender);
         uint256 l2StandardBridgeBal = testErc20.balanceOf(address(l2StandardBridge));
         require(l2StandardBridgeBal == 0, "testWithdraw failed");
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(mockL1Token, address(testErc20), sender, sender, 0, "0x01");
         l2StandardBridge.withdraw(address(testErc20), 0, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         uint256 l2StandardBridgeAfterBal = testErc20.balanceOf(address(l2StandardBridge));
@@ -127,6 +139,8 @@ contract TestL2StandardBridge is TestBase {
         vm.startPrank(sender, sender);
         uint256 senderBal = testErc20.balanceOf(sender);
         require(senderBal >= 10 ether);
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit WithdrawalInitiated(mockL1Token, address(testErc20), sender, toAddr, 10 ether, "0x01");
         l2StandardBridge.withdrawTo(address(testErc20), toAddr, 10 ether, "0x01");
         uint256 senderAfterBal = testErc20.balanceOf(sender);
         require(senderBal - 10 ether == senderAfterBal, "testWithdrawTo failed");
@@ -151,6 +165,8 @@ contract TestL2StandardBridge is TestBase {
             1 ether,
             "0x01"
         );
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit DepositFinalized(address(0), address(0), sender, toAddr, 1 ether, "0x01");
         callRelayMessage(2, address(l2StandardBridge), l1MockBridgeAddr, signatureWithData);
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 toAddrAfterBal = toAddr.balance;
@@ -198,6 +214,8 @@ contract TestL2StandardBridge is TestBase {
             1 ether,
             "0x01"
         );
+        vm.expectEmit(true, true, true, true, address(l2StandardBridge));
+        emit DepositFinalized(mockL1Token, address(testErc20), sender, toAddr, 1 ether, "0x01");
         callRelayMessage(2, address(l2StandardBridge), l1MockBridgeAddr, signatureWithData);
         uint256 toAddrAfterBal = testErc20.balanceOf(toAddr);
         require(toAddrBal + 1 ether == toAddrAfterBal, "testFinalizeERC20Deposit failed");
@@ -216,15 +234,6 @@ contract TestL2StandardBridge is TestBase {
         );
         callRelayMessage(2, address(l2StandardBridge), l1MockBridgeAddr, signatureWithData);
     }
-
-    event DepositFailed(
-        address indexed _l1Token,
-        address indexed _l2Token,
-        address indexed _from,
-        address _to,
-        uint256 _amount,
-        bytes _data
-    );
 
     function testFinalizeERC20DepositWithWrongL1TokenAddr() public {
         mockL1Token = address(0x08989);
