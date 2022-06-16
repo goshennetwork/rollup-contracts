@@ -81,8 +81,8 @@ func TestAppendBatches(t *testing.T) {
 
 	batches := &binding.RollupInputBatches{
 		BatchIndex:  0,
-		QueueStart:  0,
 		QueueNum:    0,
+		QueueStart:  0,
 		BatchNum:    1,
 		Batch0Time:  uint64(1),
 		BatchesData: common.Hash{}.Bytes(),

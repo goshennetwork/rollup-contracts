@@ -150,7 +150,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         return result;
     }
 
-    // format: batchIndex(uint64) + queueStartIndex(uint64) + queueNum(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
+    // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
     // subBatchLeftTimeDiff([]uint32) + subBatchesData
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
@@ -161,11 +161,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             _batchIndex := shr(192, calldataload(4))
         }
         require(_batchIndex == chainHeight(), "wrong batch index");
-        uint64 _queueStartIndex;
         uint64 _queueNum;
+        uint64 _queueStartIndex;
         assembly {
-            _queueStartIndex := shr(192, calldataload(12))
-            _queueNum := shr(192, calldataload(20))
+            _queueNum := shr(192, calldataload(12))
+            _queueStartIndex := shr(192, calldataload(20))
         }
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
@@ -195,7 +195,6 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             _timestamp += uint64(_timediff);
             _batchDataPos += 4;
         }
-
         if (_nextPendingQueueIndex > 0) {
             uint64 _lastIncludedQueueTime = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
             if (_timestamp < _lastIncludedQueueTime) {
@@ -209,7 +208,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
-        bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
+        bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
         _chain.append(inputHash);
         lastTimestamp = _timestamp;
         emit TransactionAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, inputHash);
