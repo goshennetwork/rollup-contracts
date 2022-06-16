@@ -150,24 +150,29 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         return result;
     }
 
-    // format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
-    // batchLeftTimeDiff([]uint32) + batchesData
+    // format: batchIndex(uint64) + queueStartIndex(uint64) + queueNum(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
+    // subBatchLeftTimeDiff([]uint32) + subBatchesData
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
-        uint64 _queueNum;
-        uint64 _queueStartIndex;
+        uint64 _batchIndex;
         assembly {
-            _queueNum := shr(192, calldataload(4))
+            _batchIndex := shr(192, calldataload(4))
+        }
+        require(_batchIndex == chainHeight(), "wrong batch index");
+        uint64 _queueStartIndex;
+        uint64 _queueNum;
+        assembly {
             _queueStartIndex := shr(192, calldataload(12))
+            _queueNum := shr(192, calldataload(20))
         }
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        uint64 _batchDataPos = 4 + 8 + 8;
-        //4byte function selector, 2 uint64
+        uint64 _batchDataPos = 4 + 8 + 8 + 8;
+        //4byte function selector, 3 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         //check sequencer timestamp
         uint64 _batchNum;
@@ -205,9 +210,9 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         //input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[4:]), _queueHashes));
-        uint64 _chainSize = _chain.append(inputHash);
+        _chain.append(inputHash);
         lastTimestamp = _timestamp;
-        emit TransactionAppended(msg.sender, _chainSize - 1, _queueStartIndex, _queueNum, inputHash);
+        emit TransactionAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, inputHash);
     }
 
     function chainHeight() public view returns (uint64) {
