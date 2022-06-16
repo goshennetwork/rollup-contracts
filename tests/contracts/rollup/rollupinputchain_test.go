@@ -80,8 +80,9 @@ func TestAppendBatches(t *testing.T) {
 	l1Chain.DAO.SetSequencerWhitelist(signer.Address(), true).Sign(signer).SendTransaction(signer)
 
 	batches := &binding.RollupInputBatches{
-		QueueNum:    0,
+		BatchIndex:  0,
 		QueueStart:  0,
+		QueueNum:    0,
 		BatchNum:    1,
 		Batch0Time:  uint64(1),
 		BatchesData: common.Hash{}.Bytes(),
