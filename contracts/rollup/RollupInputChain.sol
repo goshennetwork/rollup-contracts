@@ -153,7 +153,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     }
 
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
-    // subBatchLeftTimeDiff([]uint32) + subBatchesData
+    // subBatchLeftTimeDiff([]uint32) + batchesData
+    // batchesData: version(0) + rlp([][]transaction)
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
