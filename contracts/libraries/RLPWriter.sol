@@ -108,9 +108,9 @@ library RLPWriter {
      * @return RLP encoded bytes.
      */
     function _toBinary(uint256 _x) internal pure returns (bytes memory) {
-        uint len = lenBytes(_x);
+        uint256 len = lenBytes(_x);
         bytes memory res = new bytes(32);
-        _x = _x << (32-len)*8;
+        _x = _x << ((32 - len) * 8);
         assembly {
             mstore(add(res, 32), _x)
             mstore(res, len)
@@ -119,25 +119,25 @@ library RLPWriter {
     }
 
     // returns the minimum number of bytes required to represent x; the result is 0 for x == 0.
-    function lenBytes( uint256 _x) private pure returns (uint) {
-        uint n = 0;
-        if (_x >= 1<<128) {
+    function lenBytes(uint256 _x) private pure returns (uint256) {
+        uint256 n = 0;
+        if (_x >= 1 << 128) {
             n += 16;
             _x >>= 128;
         }
-        if (_x >= 1<<64) {
+        if (_x >= 1 << 64) {
             n += 8;
             _x >>= 64;
         }
-        if (_x >= 1<<32) {
+        if (_x >= 1 << 32) {
             n += 4;
             _x >>= 32;
         }
-        if (_x >= 1<<16) {
+        if (_x >= 1 << 16) {
             n += 2;
             _x >>= 16;
         }
-        if (_x >= 1<<8) {
+        if (_x >= 1 << 8) {
             n += 1;
             _x >>= 8;
         }
