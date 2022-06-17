@@ -156,6 +156,25 @@ func (_a *RollupInputChain) VALUE(block ...web3.BlockNumber) (retval0 *big.Int, 
 	return
 }
 
+// VERSION calls the VERSION method in the solidity contract
+func (_a *RollupInputChain) VERSION(block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("VERSION", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // ChainHeight calls the chainHeight method in the solidity contract
 func (_a *RollupInputChain) ChainHeight(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}

@@ -33,6 +33,7 @@ func (self *RollupInputBatches) Encode() []byte {
 	for _, diff := range self.BatchLeftTimeDiff {
 		sink.WriteUint32BE(diff)
 	}
+	sink.WriteUint64BE(0) //version 0
 	sink.WriteBytes(self.BatchesData)
 	return sink.Bytes()
 }
