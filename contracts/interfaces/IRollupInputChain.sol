@@ -50,6 +50,7 @@ interface IRollupInputChain {
      * append a batches of sequenced tx to input chain.Only staking sender permitted
      * @dev The info is in calldata,format as: // format: batchIndex(uint64) + batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64)  + subBatchNum(uint64) + subBatch0Time(uint64) +
     // subBatchLeftTimeDiff([]uint32) + subBatchesData
+    // batchesData: version(0) + rlp([][]transaction)
      *
      * @notice Revert if:
      * - sender isn't staking
