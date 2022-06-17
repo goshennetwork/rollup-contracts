@@ -19,6 +19,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant GAS_PRICE = 0;
     uint256 public constant VALUE = 0;
     uint64 public constant INITIAL_ENQUEUE_NONCE = 1 << 63;
+    uint64 public constant VERSION = 0;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxCrossLayerTxGasLimit;
@@ -153,7 +154,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     }
 
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
-    // subBatchLeftTimeDiff([]uint32) + subBatchesData
+    // subBatchLeftTimeDiff([]uint32) + version(uint64) + subBatchesData
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
@@ -208,6 +209,12 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
         }
         require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
+        uint64 version;
+        assembly {
+            version := mload(shr(192, calldataload(_batchDataPos)))
+        }
+        require(version == VERSION, "wrong version");
+        _batchDataPos += 8;
         require(_batchDataPos + 32 <= msg.data.length, "wrong length");
         // ignore batch index; record input msgdata hash, queue hash
         bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
