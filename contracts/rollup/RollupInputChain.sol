@@ -77,6 +77,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
             _gasLimit = maxCrossLayerTxGasLimit;
             _gasPrice = 0;
+            //fix to keep up with enqueue nonce
+            _nonce += INITIAL_ENQUEUE_NONCE;
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
         require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");

@@ -19,10 +19,13 @@ interface IRollupInputChain {
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
-     * @param _nonce sender's nonce in L2
+     * @param _nonce sender's nonce in L2, start from 1<<63 now
      * @param r,s,v tx signature,some tx's param is set on contract: gasPrice(1 GWEI), value(0), chainId
      * @notice Revert if :
      * - contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
+     * - call data size overhead
+     * - nonce not consistent with recorded nonce in local contract
+     *
      * - Anyone who tries to use UnsafeSigner's private key to enqueue
      */
     function enqueue(
