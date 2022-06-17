@@ -19,7 +19,10 @@ import (
 func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte, nonce uint64) web3.Hash {
 	key := contracts.LocalL1ChainEnv.PrivKey
 	gasPrice := uint64(GasPrice)
-	if sender == L1CrossLayerFakeSender {
+	if sender == L1CrossLayerFakeSender { //fix if just provided index in L1CrossLayer Contract
+		if nonce < contracts.INIT_ENQUEUE_NONCE {
+			nonce += contracts.INIT_ENQUEUE_NONCE
+		}
 		key = L1CrossLayerFakeKey
 		fmt.Println(nonce)
 		gasPrice = 0
