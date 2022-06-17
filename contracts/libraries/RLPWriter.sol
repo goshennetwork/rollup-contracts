@@ -104,25 +104,46 @@ library RLPWriter {
 
     /**
      * Encode integer in big endian binary form with no leading zeroes.
-     * @notice TODO: This should be optimized with assembly to save gas costs.
      * @param _x The integer to encode.
      * @return RLP encoded bytes.
      */
-    function _toBinary(uint256 _x) private pure returns (bytes memory) {
-        bytes memory b = abi.encodePacked(_x);
-
-        uint256 i = 0;
-        for (; i < 32; i++) {
-            if (b[i] != 0) {
-                break;
-            }
+    function _toBinary(uint256 _x) internal pure returns (bytes memory) {
+        uint len = lenBytes(_x);
+        bytes memory res = new bytes(32);
+        _x = _x << (32-len)*8;
+        assembly {
+            mstore(add(res, 32), _x)
+            mstore(res, len)
         }
-
-        bytes memory res = new bytes(32 - i);
-        for (uint256 j = 0; j < res.length; j++) {
-            res[j] = b[i++];
-        }
-
         return res;
+    }
+
+    // returns the minimum number of bytes required to represent x; the result is 0 for x == 0.
+    function lenBytes( uint256 _x) private pure returns (uint) {
+        uint n = 0;
+        if (_x >= 1<<128) {
+            n += 16;
+            _x >>= 128;
+        }
+        if (_x >= 1<<64) {
+            n += 8;
+            _x >>= 64;
+        }
+        if (_x >= 1<<32) {
+            n += 4;
+            _x >>= 32;
+        }
+        if (_x >= 1<<16) {
+            n += 2;
+            _x >>= 16;
+        }
+        if (_x >= 1<<8) {
+            n += 1;
+            _x >>= 8;
+        }
+        if (_x > 0) {
+            n += 1;
+        }
+        return n;
     }
 }

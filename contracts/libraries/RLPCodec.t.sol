@@ -108,4 +108,30 @@ contract RLPCodecTest {
             hex"F83C836161618362626283636363836464648365656583666666836767678368686883696969836A6A6A836B6B6B836C6C6C836D6D6D836E6E6E836F6F6F66"
         );
     }
+
+    function testToBinary(uint value) public {
+        bytes memory val1 = _toBinary(value);
+        bytes memory val2 = RLPWriter._toBinary(value);
+        require(keccak256(val1) == keccak256(val2));
+    }
+
+    function _toBinary(uint256 _x) internal pure returns (bytes memory) {
+        bytes memory b = abi.encodePacked(_x);
+
+        uint256 i = 0;
+        for (; i < 32; i++) {
+            if (b[i] != 0) {
+                break;
+            }
+        }
+
+        bytes memory res = new bytes(32 - i);
+        for (uint256 j = 0; j < res.length; j++) {
+            res[j] = b[i++];
+        }
+
+        return res;
+    }
+
+
 }
