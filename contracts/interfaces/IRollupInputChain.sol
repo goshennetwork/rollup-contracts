@@ -19,10 +19,13 @@ interface IRollupInputChain {
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
-     * @param _nonce sender's nonce in L2
+     * @param _nonce sender's nonce in L2, start from 1<<63 now
      * @param r,s,v tx signature,some tx's param is set on contract: gasPrice(1 GWEI), value(0), chainId
      * @notice Revert if :
      * - contract caller isn't l1CrossLayerWitness contract(make sure L1 contract can't act as L2 EOA)
+     * - call data size overhead
+     * - nonce not consistent with recorded nonce in local contract
+     *
      * - Anyone who tries to use UnsafeSigner's private key to enqueue
      */
     function enqueue(
@@ -45,10 +48,12 @@ interface IRollupInputChain {
 
     /**
      * append a batches of sequenced tx to input chain.Only staking sender permitted
-     * @dev The info is in calldata,format as:
-     *  uint64 (num_queue) || uint64 (queue_start_index)||uint64 (num_sequenced) || [uint64,uint64...] (timestamp)) || uint64 (batch_version) [batch_sequenced,batch...]
+     * @dev The info is in calldata,format as: // format: batchIndex(uint64) + batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64)  + subBatchNum(uint64) + subBatch0Time(uint64) +
+    // subBatchLeftTimeDiff([]uint32) + subBatchesData
+     *
      * @notice Revert if:
      * - sender isn't staking
+     * - batchIndex not equal to pending batch index
      * - queue_start_index not equal to pending queue index
      * - pending queue length beyond queue length locally(make sure can't attempt to append nonexistent queue)
      * - first sequenced tx's timestamp smaller than  lastTimeStamp or block.timestamp(make sure block.timestamp >= sequenced_tx_timestamp >= lastTimestamp)

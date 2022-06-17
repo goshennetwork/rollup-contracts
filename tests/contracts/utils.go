@@ -10,6 +10,8 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 )
 
+const INIT_ENQUEUE_NONCE = 1 << 63
+
 var LocalL2ChainEnv = &deploy.L2ChainEnv{
 	ChainId:     1234,
 	RpcUrl:      "local",
