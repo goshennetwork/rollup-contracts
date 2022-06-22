@@ -18,7 +18,6 @@ import (
 )
 
 func main() {
-	var l2 = flag.String("l2", "http://localhost:23333", "set l2 client url")
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
 	flag.Parse()
 	var cfg config.RollupCliConfig
@@ -47,7 +46,7 @@ func main() {
 	inputChain := binding.NewRollupInputChain(cfg.L1Addresses.RollupInputChain, l1client)
 	stateChain.Contract().SetFrom(signer.Address())
 	inputChain.Contract().SetFrom(signer.Address())
-	l2Client, err := jsonrpc.NewClient(*l2)
+	l2Client, err := jsonrpc.NewClient(cfg.L2Rpc)
 	utils.Ensure(err)
 	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain)
 	uploader.Start()
