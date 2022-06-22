@@ -12,6 +12,19 @@ import "../test-helper/TestBase.sol";
 
 contract TestStakingManager is TestBase {
     address sender = address(0x7777);
+    address toAddr = address(0x8989);
+    uint256 amount = 0.5 ether;
+
+    //    proposer deposit for staking.
+    event Deposited(address indexed proposer, uint256 amount);
+    //proposer start withdraw.
+    event WithdrawStarted(address indexed proposer, uint256 needComfirmedBlock);
+    //proposer finalize withdraw.
+    event WithdrawFinalized(address indexed proposer, uint256 amount);
+    //challenger slash the proposer
+    event DepositSlashed(address indexed proposer, address indexed challenger, uint256 blockHeight, bytes32 _blockHash);
+    //challenger or DAO gets deposit.
+    event DepositClaimed(address indexed proposer, address indexed receiver, uint256 amount);
 
     function setUp() public {
         vm.startPrank(sender);
@@ -21,24 +34,65 @@ contract TestStakingManager is TestBase {
 
     function testDeposit() public {
         vm.startPrank(sender);
+        require(!stakingManager.isStaking(sender), "not staking");
         feeToken.approve(address(stakingManager), stakingManager.price());
+        vm.expectEmit(true, true, true, true, address(stakingManager));
+        emit Deposited(sender, stakingManager.price());
         stakingManager.deposit();
         require(stakingManager.isStaking(sender), "not staking");
+        vm.expectRevert("only unstacked user can deposit");
+        stakingManager.deposit();
+        feeToken.transfer(toAddr, amount);
+        require(feeToken.balanceOf(toAddr) == amount);
+        vm.stopPrank();
+        vm.startPrank(toAddr);
+        feeToken.approve(address(stakingManager), stakingManager.price());
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
+        stakingManager.deposit();
     }
 
     function testWithdraw() public {
         vm.startPrank(sender);
         feeToken.approve(address(stakingManager), stakingManager.price());
-        stakingManager.deposit();
+        vm.expectRevert("not in staking");
         stakingManager.startWithdrawal();
+        stakingManager.deposit();
+        Types.StateInfo memory stateInfo;
+        vm.expectRevert("not in withdrawing");
+        stakingManager.finalizeWithdrawal(stateInfo);
+        uint256 needConfirmedHeight = stakingManager.rollupStateChain().totalSubmittedState();
+        vm.expectEmit(true, true, true, true, address(stakingManager));
+        emit WithdrawStarted(sender, needConfirmedHeight);
+        stakingManager.startWithdrawal();
+        vm.expectRevert("not in staking");
+        stakingManager.startWithdrawal();
+        vm.expectRevert("incorrect state info");
+        stakingManager.finalizeWithdrawal(stateInfo);
         vm.stopPrank();
         vm.startPrank(address(rollupStateChain));
-
-        Types.StateInfo memory stateInfo;
         addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
-        vm.warp(fraudProofWindow);
         vm.stopPrank();
         vm.startPrank(sender);
+        vm.expectRevert("provided state not confirmed");
+        stakingManager.finalizeWithdrawal(stateInfo);
+        vm.stopPrank();
+        vm.startPrank(address(rollupStateChain));
+        stateInfo.index = 1;
+        addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
+        vm.stopPrank();
+        vm.startPrank(sender);
+        vm.warp(fraudProofWindow);
+        vm.expectRevert("should provide wanted state info");
+        stakingManager.finalizeWithdrawal(stateInfo);
+        vm.stopPrank();
+        vm.startPrank(address(rollupStateChain));
+        stateInfo.index = 0;
+        addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
+        vm.stopPrank();
+        vm.startPrank(sender);
+        vm.warp(fraudProofWindow);
+        vm.expectEmit(true, true, true, true, address(stakingManager));
+        emit WithdrawFinalized(sender, stakingManager.price());
         stakingManager.finalizeWithdrawal(stateInfo);
     }
 
