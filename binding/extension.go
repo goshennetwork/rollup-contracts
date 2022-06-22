@@ -47,7 +47,7 @@ func (self *RollupInputBatches) Encode() []byte {
 	sink.WriteUint64BE(self.QueueNum).WriteUint64BE(self.QueueStart)
 	batchNum := uint64(len(self.SubBatches))
 	if batchNum < 1 {
-		panic(1)
+		return sink.Bytes()
 	}
 	sink.WriteUint64BE(batchNum).WriteUint64BE(self.SubBatches[0].Timestamp)
 	txes := [][]*types.Transaction{self.SubBatches[0].Txs}
