@@ -13,18 +13,11 @@ import (
 	"github.com/laizy/web3/utils/codec"
 )
 
-// AppendBatch sends a appendBatch transaction in the solidity contract
-func (_a *RollupInputChain) AppendInputBatches(batches *RollupInputBatches) *contract.Txn {
-	txn := _a.c.Txn("appendBatch")
-	txn.Data = batches.Calldata()
-
-	return txn
-}
-
-// format: queueNum(uint64) + queueStart(uint64) + batchNum(uint64) + batch0Time(uint64) +
-// batchLeftTimeDiff([]uint32) + batchesData
+// format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
+// subBatchLeftTimeDiff([]uint32) + batchesData
 // batchesData: version(0) + rlp([][]transaction)
 type RollupInputBatches struct {
+	//BatchIndex ignored when calc hash, because its useless in l2 system
 	BatchIndex uint64
 	QueueNum   uint64
 	QueueStart uint64
@@ -37,8 +30,16 @@ type SubBatch struct {
 }
 
 func (self *RollupInputBatches) Calldata() []byte {
+	//function appendBatch() public
 	funcSelecter := RollupInputChainAbi().Methods["appendBatch"].ID()
 	return append(funcSelecter, self.Encode()...)
+}
+
+// AppendBatch sends a appendBatch transaction in the solidity contract
+func (_a *RollupInputChain) AppendInputBatches(batchCode []byte) *contract.Txn {
+	txn := _a.c.Txn("appendBatch")
+	txn.Data = append(RollupInputChainAbi().Methods["appendBatch"].ID(), batchCode...)
+	return txn
 }
 
 func (self *RollupInputBatches) Encode() []byte {
@@ -69,8 +70,9 @@ func (self *RollupInputBatches) Encode() []byte {
 	return sink.Bytes()
 }
 
+// InputBatchHash get input hash, ignore first 8 byte
 func (self *RollupInputBatches) InputBatchHash() web3.Hash {
-	return crypto.Keccak256Hash(self.Encode()[8:]) // exclude batch index
+	return crypto.Keccak256Hash(self.Encode()[8:])
 }
 
 func (self *RollupInputBatches) InputHash(queueHash web3.Hash) web3.Hash {
@@ -89,10 +91,14 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 	self.QueueNum = reader.ReadUint64BE()
 	self.QueueStart = reader.ReadUint64BE()
 	batchNum := reader.ReadUint64BE()
-	batchTime := reader.ReadUint64BE()
 	if batchNum == 0 {
-		return fmt.Errorf("no batch")
+		//check length
+		if reader.Len() != 0 {
+			return fmt.Errorf("wrong b length")
+		}
+		return nil
 	}
+	batchTime := reader.ReadUint64BE()
 	batchesTime := []uint64{batchTime}
 	for i := uint64(0); i < batchNum-1; i++ {
 		batchTime = safeAdd(batchTime, uint64(reader.ReadUint32BE()))
@@ -128,5 +134,44 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 		})
 	}
 
+	return nil
+}
+
+//PrepareWhiteList prepare white list when want to be a sequencer and proposer
+func PrepareWhiteList(stakingManager *StakingManager, dao *DAO, addr web3.Address, signer *contract.Signer) error {
+
+	did, err := stakingManager.IsStaking(addr, web3.Latest)
+	if err != nil {
+		return err
+	}
+	if !did {
+		if addr != signer.Address() {
+			return fmt.Errorf("can't help others staking")
+		}
+		receipt := stakingManager.Deposit().Sign(signer).SendTransaction(signer)
+		if receipt.IsReverted() {
+			return fmt.Errorf("deposite failed: %s", utils.JsonString(receipt))
+		}
+	}
+	is, err := dao.ProposerWhitelist(addr)
+	if err != nil {
+		return err
+	}
+	if !is {
+		receipt := dao.SetProposerWhitelist(addr, true).Sign(signer).SendTransaction(signer)
+		if receipt.IsReverted() {
+			return fmt.Errorf("set proposer white list failed: %s", utils.JsonString(receipt))
+		}
+	}
+	is, err = dao.SequencerWhitelist(addr)
+	if err != nil {
+		return err
+	}
+	if !is {
+		receipt := dao.SetSequencerWhitelist(addr, true).Sign(signer).SendTransaction(signer)
+		if receipt.IsReverted() {
+			return fmt.Errorf("set sequencer whitelist failed: %s", utils.JsonString(receipt))
+		}
+	}
 	return nil
 }

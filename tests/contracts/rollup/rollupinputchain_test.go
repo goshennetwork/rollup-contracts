@@ -92,7 +92,7 @@ func TestAppendBatches(t *testing.T) {
 			},
 		},
 	}
-	receipt := l1Chain.RollupInputChain.AppendInputBatches(batches).Sign(signer).SendTransaction(signer)
+	receipt := l1Chain.RollupInputChain.AppendInputBatches(batches.Encode()).Sign(signer).SendTransaction(signer)
 
 	fmt.Println(utils.JsonString(receipt))
 
