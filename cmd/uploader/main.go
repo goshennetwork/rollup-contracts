@@ -94,7 +94,7 @@ func (self *UploadBackend) runTxTask() {
 		err = batch.Decode(batchCode)
 		utils.Ensure(err)
 		log.Infof("start upload input batch: %s", utils.JsonString(batch))
-		receipt := self.inputChain.AppendInputBatches(&batch).Sign(self.signer).SendTransaction(self.signer)
+		receipt := self.inputChain.AppendInputBatches(batch.Encode()).Sign(self.signer).SendTransaction(self.signer)
 		if receipt.IsReverted() {
 			log.Errorf("append input batch failed: %s", utils.JsonString(receipt))
 		}
