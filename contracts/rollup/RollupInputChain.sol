@@ -182,39 +182,45 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         assembly {
             _batchNum := shr(192, calldataload(_batchDataPos))
         }
-        require(_batchNum > 0, "no batch");
         _batchDataPos += 8;
+        bytes32 _inputHash;
         uint64 _timestamp;
-        assembly {
-            _timestamp := shr(192, calldataload(_batchDataPos))
-        }
-        require(_timestamp >= lastTimestamp, "wrong batch timestamp");
-        _batchDataPos += 8;
-        for (uint64 i = 1; i < _batchNum; i++) {
-            uint32 _timediff;
+        if (_batchNum == 0) {
+            require(_queueNum > 0, "nothing to append");
+            require(msg.data.length == _batchDataPos, "wrong calldata");
+            _timestamp = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
+            _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
+        } else {
             assembly {
-                _timediff := shr(224, calldataload(_batchDataPos))
+                _timestamp := shr(192, calldataload(_batchDataPos))
             }
-            _timestamp += uint64(_timediff);
-            _batchDataPos += 4;
-        }
-        if (_nextPendingQueueIndex > 0) {
-            uint64 _lastIncludedQueueTime = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
-            if (_timestamp < _lastIncludedQueueTime) {
-                _timestamp = _lastIncludedQueueTime;
+            require(_timestamp >= lastTimestamp, "wrong batch timestamp");
+            _batchDataPos += 8;
+            for (uint64 i = 1; i < _batchNum; i++) {
+                uint32 _timediff;
+                assembly {
+                    _timediff := shr(224, calldataload(_batchDataPos))
+                }
+                _timestamp += uint64(_timediff);
+                _batchDataPos += 4;
             }
+            if (_nextPendingQueueIndex > 0) {
+                uint64 _lastIncludedQueueTime = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
+                if (_timestamp < _lastIncludedQueueTime) {
+                    _timestamp = _lastIncludedQueueTime;
+                }
+            }
+            uint64 _nextTimestamp = uint64(block.timestamp);
+            if (_nextPendingQueueIndex < queuedTxInfos.length) {
+                _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
+            }
+            require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
+            // ignore batch index; record input msgdata hash, queue hash
+            _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
         }
-        uint64 _nextTimestamp = uint64(block.timestamp);
-        if (_nextPendingQueueIndex < queuedTxInfos.length) {
-            _nextTimestamp = queuedTxInfos[_nextPendingQueueIndex].timestamp;
-        }
-        require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
-        require(_batchDataPos + 32 <= msg.data.length, "wrong length");
-        // ignore batch index; record input msgdata hash, queue hash
-        bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
-        _chain.append(inputHash);
+        _chain.append(_inputHash);
         lastTimestamp = _timestamp;
-        emit TransactionAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, inputHash);
+        emit TransactionAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
     }
 
     function chainHeight() public view returns (uint64) {
