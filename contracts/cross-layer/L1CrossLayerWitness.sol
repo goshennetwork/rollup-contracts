@@ -11,7 +11,6 @@ import "../libraries/Types.sol";
 import "./CrossLayerCodec.sol";
 
 contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpgradeable {
-    using Types for Types.Block;
     using MerkleMountainRange for CompactMerkleTree;
     IAddressResolver addressResolver;
 

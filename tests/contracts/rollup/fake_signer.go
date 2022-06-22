@@ -3,18 +3,15 @@ package rollup
 import (
 	"math/big"
 
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
-
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-
-	"github.com/laizy/web3"
-
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/laizy/web3"
+	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 )
 
 const (
-	GasPrice            = 0
+	GasPrice            = 1_000_000_000
 	L1CrossLayerFakeKey = "0x01"
 )
 
