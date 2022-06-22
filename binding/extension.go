@@ -36,9 +36,10 @@ func (self *RollupInputBatches) Calldata() []byte {
 }
 
 // AppendBatch sends a appendBatch transaction in the solidity contract
-func (_a *RollupInputChain) AppendInputBatches(batchCode []byte) *contract.Txn {
+func (_a *RollupInputChain) AppendInputBatches(batches *RollupInputBatches) *contract.Txn {
 	txn := _a.c.Txn("appendBatch")
-	txn.Data = append(RollupInputChainAbi().Methods["appendBatch"].ID(), batchCode...)
+	txn.Data = batches.Calldata()
+
 	return txn
 }
 
@@ -134,44 +135,5 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 		})
 	}
 
-	return nil
-}
-
-//PrepareWhiteList prepare white list when want to be a sequencer and proposer
-func PrepareWhiteList(stakingManager *StakingManager, dao *DAO, addr web3.Address, signer *contract.Signer) error {
-
-	did, err := stakingManager.IsStaking(addr, web3.Latest)
-	if err != nil {
-		return err
-	}
-	if !did {
-		if addr != signer.Address() {
-			return fmt.Errorf("can't help others staking")
-		}
-		receipt := stakingManager.Deposit().Sign(signer).SendTransaction(signer)
-		if receipt.IsReverted() {
-			return fmt.Errorf("deposite failed: %s", utils.JsonString(receipt))
-		}
-	}
-	is, err := dao.ProposerWhitelist(addr)
-	if err != nil {
-		return err
-	}
-	if !is {
-		receipt := dao.SetProposerWhitelist(addr, true).Sign(signer).SendTransaction(signer)
-		if receipt.IsReverted() {
-			return fmt.Errorf("set proposer white list failed: %s", utils.JsonString(receipt))
-		}
-	}
-	is, err = dao.SequencerWhitelist(addr)
-	if err != nil {
-		return err
-	}
-	if !is {
-		receipt := dao.SetSequencerWhitelist(addr, true).Sign(signer).SendTransaction(signer)
-		if receipt.IsReverted() {
-			return fmt.Errorf("set sequencer whitelist failed: %s", utils.JsonString(receipt))
-		}
-	}
 	return nil
 }
