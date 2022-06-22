@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
-	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
@@ -83,12 +82,15 @@ func TestAppendBatches(t *testing.T) {
 	l1Chain.DAO.SetSequencerWhitelist(signer.Address(), true).Sign(signer).SendTransaction(signer)
 
 	batches := &binding.RollupInputBatches{
-		BatchIndex:  0,
-		QueueNum:    0,
-		QueueStart:  0,
-		BatchNum:    1,
-		Batch0Time:  uint64(1),
-		BatchesData: common.Hash{}.Bytes(),
+		BatchIndex: 0,
+		QueueNum:   0,
+		QueueStart: 0,
+		SubBatches: []*binding.SubBatch{
+			{
+				0,
+				nil,
+			},
+		},
 	}
 	receipt := l1Chain.RollupInputChain.AppendInputBatches(batches).Sign(signer).SendTransaction(signer)
 
