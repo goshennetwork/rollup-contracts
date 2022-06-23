@@ -49,7 +49,7 @@ func (self *RollupInputBatches) Encode() []byte {
 	sink.WriteUint64BE(self.QueueNum).WriteUint64BE(self.QueueStart)
 	batchNum := uint64(len(self.SubBatches))
 	if batchNum < 1 {
-		return sink.Bytes()
+		return sink.WriteUint64BE(0).Bytes()
 	}
 	sink.WriteUint64BE(batchNum).WriteUint64BE(self.SubBatches[0].Timestamp)
 	txes := [][]*types.Transaction{self.SubBatches[0].Txs}
@@ -97,7 +97,7 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 		if reader.Len() != 0 {
 			return fmt.Errorf("wrong b length")
 		}
-		return nil
+		return reader.Error()
 	}
 	batchTime := reader.ReadUint64BE()
 	batchesTime := []uint64{batchTime}
