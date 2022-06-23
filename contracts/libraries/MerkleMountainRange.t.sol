@@ -54,16 +54,6 @@ contract MMRTest {
         }
     }
 
-    function testZeroCopyAndAbiEncodePacked() public view {
-        address target = 0xEC9C107cf2D52B4E771301c3d702196D2e163bDC;
-        address msgSender = 0x9A2900E4b204E31dD58eCc8F276808169D8E4A1b;
-        uint64 msgIndex = 777777777;
-        bytes memory content = "asdfafdfasfasdfaddfadjfatjydfagjfgajkdakljfakdlgajkhgasjhgajg";
-        bytes memory data = abi.encodePacked(target, msgSender, msgIndex, content);
-        console.logBytes(data);
-        console.logBytes32(keccak256(data));
-    }
-
     function testVerify() public {
         // m=5, n=10
         MerkleMountainRange.appendLeafHash(
