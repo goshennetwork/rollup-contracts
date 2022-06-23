@@ -60,52 +60,42 @@ contract MMRTest {
             _trees,
             bytes32(0x656c98d56eadba8c4938fd4153bb51fd2c32f068c78594342e39fd8c1b632332)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0xc5078ae0bc75a0052209ebf1e0638ff2b824e3892e12f7d2863e7c62a3fe502e)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0xc2d9dcb829a4a878e5a18c6f3a4f25926dd1f1e51c3ed08d4b15e6474f179955)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0x99e57d9f68afe3e6fabf0f2b37b930a33d8631c23e653f03b62cd4745194eed4)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0xbfd88be2f23b6aa4d412e75ff774853b90ad8b4267ca99d2714dde4a706ecefa)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0xa91fdaa6209a0ab99d30f19f1327c55e12a5ac41f559fe9a6220c7abc00584a2)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0x9de0720cb4d747cad3702f50a6cdb35cf2f2738ab0843eacd6b4d158c0390bef)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0x867d11d93c3e54a3af819243a8813354286aeeb155835d7dda1754c95334a244)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0x4942f139a43e6502fbe3d6c72b1cd07c1c4daba4e0a77cd6cdc88ec1777045af)
         );
-        console.logBytes32(_trees.rootHash);
         MerkleMountainRange.appendLeafHash(
             _trees,
             bytes32(0x33004dc58f858443ceacfab70224ac91f2aebca48ab56ff258aee157fc825806)
         );
-        console.logBytes32(_trees.rootHash);
         bytes32[] memory _proof = new bytes32[](4);
         _proof[0] = bytes32(0xbfd88be2f23b6aa4d412e75ff774853b90ad8b4267ca99d2714dde4a706ecefa);
         _proof[1] = bytes32(0xecd38a5aa1d25ac31d019fce384d9502ac6abb9b04834998041fc094bd017acb);
