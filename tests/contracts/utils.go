@@ -24,12 +24,12 @@ var LocalL1ChainEnv = &deploy.L1ChainEnv{
 	RpcUrl:  "local",
 	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 	ChainConfig: &config.L1ChainDeployConfig{
-		FraudProofWindow:        3,
-		MaxEnqueueTxGasLimit:    15000000,
-		MaxCrossLayerTxGasLimit: 5000000,
-		StakingAmount:           web3.Ether(10),
-		L2CrossLayerWitness:     web3.Address{1, 2, 3, 4, 5, 6},
-		L2ChainId:               LocalL2ChainEnv.ChainId,
+		FraudProofWindow:         3,
+		MaxEnqueueTxGasLimit:     15000000,
+		MaxWitnessTxExecGasLimit: 5000000,
+		StakingAmount:            web3.Ether(10),
+		L2CrossLayerWitness:      web3.Address{1, 2, 3, 4, 5, 6},
+		L2ChainId:                LocalL2ChainEnv.ChainId,
 		ChallengeConfig: &config.ChallengeConfig{
 			BlockLimitPerRound: 10,
 			ChallengerDeposit:  web3.Ether(1),

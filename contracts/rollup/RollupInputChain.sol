@@ -13,15 +13,16 @@ import "../libraries/RLPWriter.sol";
 import "../libraries/UnsafeSign.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
-    uint256 public constant MIN_ROLLUP_TX_GAS = 100000;
-    uint256 public constant MAX_ROLLUP_TX_SIZE = 50000;
-    uint256 public constant MAX_CROSS_LAYER_TX_SIZE = 10000;
-    uint256 public constant GAS_PRICE = 0;
+    uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
+    uint256 public constant MAX_ENQUEUE_TX_SIZE = 30000; // l2 node set to 32KB
+    uint256 public constant MAX_WITNESS_TX_SIZE = 10000;
+    uint256 public constant GAS_PRICE = 1_000_000_000;
     uint256 public constant VALUE = 0;
     uint64 public constant INITIAL_ENQUEUE_NONCE = 1 << 63;
+    uint64 public constant INTRINSIC_GAS_FACTOR = 100;
 
     uint64 public maxEnqueueTxGasLimit;
-    uint64 public maxCrossLayerTxGasLimit;
+    uint64 public maxWitnessTxExecGasLimit; // ~ 300w
     uint64 public l2ChainID;
     mapping(address => uint64) nonces;
 
@@ -29,7 +30,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     IAddressResolver addressResolver;
 
-    //store L1 -> L2 tx
+    // store L1 -> L2 tx
     struct QueueTxInfo {
         bytes32 transactionHash;
         uint64 timestamp;
@@ -42,12 +43,12 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
-        uint64 _maxCrossLayerTxGasLimit,
+        uint64 _maxWitnessTxExecGasLimit,
         uint64 _l2ChainID
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
-        maxCrossLayerTxGasLimit = _maxCrossLayerTxGasLimit;
+        maxWitnessTxExecGasLimit = _maxWitnessTxExecGasLimit;
         l2ChainID = _l2ChainID;
     }
 
@@ -63,25 +64,25 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint256 _gasPrice = GAS_PRICE;
         address sender;
         // L1 EOA is equal to L2 EOA, but L1 contract is not except L1CrossLayerWitness
+        uint256 _maxTxSize = MAX_ENQUEUE_TX_SIZE;
         if (msg.sender == tx.origin) {
             sender = msg.sender;
-            //make sure only L1CrossLayerWitness use unsafe sender
+            // make sure only L1CrossLayerWitness use unsafe sender
             require(sender != Constants.L1_CROSS_LAYER_WITNESS, "malicious sender");
-            require(_data.length <= MAX_ROLLUP_TX_SIZE, "too large Tx data size");
             uint64 pendingNonce = getNonceByAddress(sender);
             require(_nonce == pendingNonce, "wrong nonce");
             nonces[sender] = _nonce + 1;
         } else {
             sender = Constants.L1_CROSS_LAYER_WITNESS;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
-            require(_data.length <= MAX_CROSS_LAYER_TX_SIZE, "too large cross layer Tx data size");
-            _gasLimit = maxCrossLayerTxGasLimit;
+            _maxTxSize = MAX_WITNESS_TX_SIZE;
+            _gasLimit = maxWitnessTxExecGasLimit + uint64(16 * INTRINSIC_GAS_FACTOR * _data.length);
             _gasPrice = 0;
-            //fix to keep up with enqueue nonce
-            _nonce += INITIAL_ENQUEUE_NONCE;
+            _nonce = getNonceByAddress(sender);
+            nonces[sender] = _nonce + 1;
         }
         require(_gasLimit <= maxEnqueueTxGasLimit, "too high Tx gas limit");
-        require(_gasLimit >= MIN_ROLLUP_TX_GAS, "too low Tx gas limit");
+        require(_gasLimit >= MIN_ENQUEUE_TX_GAS, "too low Tx gas limit");
 
         bytes[] memory _rlpList = getRlpList(_nonce, _gasLimit, _gasPrice, _target, _data);
         bytes32 _signTxHash = keccak256(RLPWriter.writeList(_rlpList));
@@ -98,6 +99,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         _rlpList[7] = RLPWriter.writeUint(r);
         _rlpList[8] = RLPWriter.writeUint(s);
         bytes memory _rlpTx = RLPWriter.writeList(_rlpList);
+        require(_rlpTx.length <= _maxTxSize, "too large tx data size");
         uint64 _now = uint64(block.timestamp);
         queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(_rlpTx) }));
 

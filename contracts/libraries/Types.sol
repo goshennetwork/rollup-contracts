@@ -7,12 +7,6 @@ import "./BytesSlice.sol";
 
 library Types {
     using RLPReader for Slice;
-    ///block info,need fix
-    struct Block {
-        ///....more
-        bytes32 mmrRoot;
-        uint64 mmrSize;
-    }
 
     // mmr info is stored in header's seal field
     function decodeMMRFromRlpHeader(bytes memory header) internal pure returns (bytes32 mmrRoot, uint64 mmrSize) {
@@ -25,14 +19,6 @@ library Types {
         uint256 mmrSizeField = fields[14].readUint256();
         require(mmrSizeField <= type(uint64).max, "ill mmrSize");
         mmrSize = uint64(mmrSizeField);
-    }
-
-    function encode(Block memory _block) internal pure returns (bytes memory) {
-        return abi.encodePacked(_block.mmrRoot, _block.mmrSize);
-    }
-
-    function hash(Block memory _block) internal pure returns (bytes32) {
-        return keccak256(encode(_block));
     }
 
     struct StateInfo {

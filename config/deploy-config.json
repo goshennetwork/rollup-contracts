@@ -7,7 +7,7 @@
       "FeeToken":  "0x0000000000000000000000000000000000000000",
       "FraudProofWindow": 300,
       "MaxEnqueueTxGasLimit" : 20000000,
-      "MaxCrossLayerTxGasLimit": 10000000,
+      "MaxWitnessTxExecGasLimit": 10000000,
       "L2CrossLayerWitness":  "0x1111100000000000000000000000000000000000",
       "StakingAmount":   1000000000,
       "BlockLimitPerRound": 3,

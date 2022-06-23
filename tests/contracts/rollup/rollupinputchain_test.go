@@ -67,9 +67,11 @@ func TestEnqueue(t *testing.T) {
 
 	txHash, _, err = l1Chain.RollupInputChain.GetQueueTxInfo(1)
 	utils.Ensure(err)
-	size, err := l1Chain.L1CrossLayerWitness.TotalSize()
+	nonce, err = l1Chain.RollupInputChain.GetNonceByAddress(L1CrossLayerFakeSender)
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness, chainEnv.ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg, size-1))
+	gasLimit = chainEnv.ChainConfig.MaxWitnessTxExecGasLimit + uint64(len(crossLayerMsg)*1600)
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness,
+		gasLimit, crossLayerMsg, nonce-1))
 }
 
 func TestAppendBatches(t *testing.T) {
