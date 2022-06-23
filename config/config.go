@@ -37,14 +37,14 @@ type L2ContractAddressConfig struct {
 }
 
 type L1ChainDeployConfig struct {
-	FeeToken                web3.Address
-	FraudProofWindow        uint64 // block number
-	MaxEnqueueTxGasLimit    uint64
-	MaxCrossLayerTxGasLimit uint64
-	L2CrossLayerWitness     web3.Address
-	L2StandardBridge        web3.Address
-	L2ChainId               uint64
-	StakingAmount           *big.Int
+	FeeToken                 web3.Address
+	FraudProofWindow         uint64 // block number
+	MaxEnqueueTxGasLimit     uint64
+	MaxWitnessTxExecGasLimit uint64
+	L2CrossLayerWitness      web3.Address
+	L2StandardBridge         web3.Address
+	L2ChainId                uint64
+	StakingAmount            *big.Int
 	*ChallengeConfig
 }
 

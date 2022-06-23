@@ -69,7 +69,7 @@ func TestEnqueue(t *testing.T) {
 	utils.Ensure(err)
 	size, err := l1Chain.L1CrossLayerWitness.TotalSize()
 	utils.Ensure(err)
-	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness, chainEnv.ChainConfig.MaxCrossLayerTxGasLimit, crossLayerMsg, size-1))
+	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness, chainEnv.ChainConfig.MaxWitnessTxExecGasLimit, crossLayerMsg, size-1))
 }
 
 func TestAppendBatches(t *testing.T) {

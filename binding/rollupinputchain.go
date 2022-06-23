@@ -80,12 +80,12 @@ func (_a *RollupInputChain) INITIALENQUEUENONCE(block ...web3.BlockNumber) (retv
 	return
 }
 
-// MAXCROSSLAYERTXSIZE calls the MAX_CROSS_LAYER_TX_SIZE method in the solidity contract
-func (_a *RollupInputChain) MAXCROSSLAYERTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+// INTRINSICGASFACTOR calls the INTRINSIC_GAS_FACTOR method in the solidity contract
+func (_a *RollupInputChain) INTRINSICGASFACTOR(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("MAX_CROSS_LAYER_TX_SIZE", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("INTRINSIC_GAS_FACTOR", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -99,12 +99,12 @@ func (_a *RollupInputChain) MAXCROSSLAYERTXSIZE(block ...web3.BlockNumber) (retv
 	return
 }
 
-// MAXROLLUPTXSIZE calls the MAX_ROLLUP_TX_SIZE method in the solidity contract
-func (_a *RollupInputChain) MAXROLLUPTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+// MAXENQUEUETXSIZE calls the MAX_ENQUEUE_TX_SIZE method in the solidity contract
+func (_a *RollupInputChain) MAXENQUEUETXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("MAX_ROLLUP_TX_SIZE", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("MAX_ENQUEUE_TX_SIZE", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -118,12 +118,31 @@ func (_a *RollupInputChain) MAXROLLUPTXSIZE(block ...web3.BlockNumber) (retval0 
 	return
 }
 
-// MINROLLUPTXGAS calls the MIN_ROLLUP_TX_GAS method in the solidity contract
-func (_a *RollupInputChain) MINROLLUPTXGAS(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+// MAXWITNESSTXSIZE calls the MAX_WITNESS_TX_SIZE method in the solidity contract
+func (_a *RollupInputChain) MAXWITNESSTXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("MIN_ROLLUP_TX_GAS", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("MAX_WITNESS_TX_SIZE", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// MINENQUEUETXGAS calls the MIN_ENQUEUE_TX_GAS method in the solidity contract
+func (_a *RollupInputChain) MINENQUEUETXGAS(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("MIN_ENQUEUE_TX_GAS", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -273,12 +292,12 @@ func (_a *RollupInputChain) LastTimestamp(block ...web3.BlockNumber) (retval0 ui
 	return
 }
 
-// MaxCrossLayerTxGasLimit calls the maxCrossLayerTxGasLimit method in the solidity contract
-func (_a *RollupInputChain) MaxCrossLayerTxGasLimit(block ...web3.BlockNumber) (retval0 uint64, err error) {
+// MaxEnqueueTxGasLimit calls the maxEnqueueTxGasLimit method in the solidity contract
+func (_a *RollupInputChain) MaxEnqueueTxGasLimit(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("maxCrossLayerTxGasLimit", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("maxEnqueueTxGasLimit", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -292,12 +311,12 @@ func (_a *RollupInputChain) MaxCrossLayerTxGasLimit(block ...web3.BlockNumber) (
 	return
 }
 
-// MaxEnqueueTxGasLimit calls the maxEnqueueTxGasLimit method in the solidity contract
-func (_a *RollupInputChain) MaxEnqueueTxGasLimit(block ...web3.BlockNumber) (retval0 uint64, err error) {
+// MaxWitnessTxExecGasLimit calls the maxWitnessTxExecGasLimit method in the solidity contract
+func (_a *RollupInputChain) MaxWitnessTxExecGasLimit(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("maxEnqueueTxGasLimit", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("maxWitnessTxExecGasLimit", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -362,8 +381,8 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxCrossLayerTxGasLimit uint64, l2ChainID uint64) *contract.Txn {
-	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxCrossLayerTxGasLimit, l2ChainID)
+func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID)
 }
 
 // events
