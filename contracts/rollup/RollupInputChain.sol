@@ -160,6 +160,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function appendBatch() public {
         require(addressResolver.dao().sequencerWhitelist(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
         IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
         uint64 _batchIndex;
         assembly {
