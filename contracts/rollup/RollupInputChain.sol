@@ -76,7 +76,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             sender = Constants.L1_CROSS_LAYER_WITNESS;
             require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             _maxTxSize = MAX_WITNESS_TX_SIZE;
-            _gasLimit = maxWitnessTxExecGasLimit + uint64(16*INTRINSIC_GAS_FACTOR*_data.length);
+            _gasLimit = maxWitnessTxExecGasLimit + uint64(16 * INTRINSIC_GAS_FACTOR * _data.length);
             _gasPrice = 0;
             _nonce = getNonceByAddress(sender);
             nonces[sender] = _nonce + 1;
