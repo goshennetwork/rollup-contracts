@@ -9,7 +9,8 @@ import (
 
 func CrossLayerMessageHash(target, sender web3.Address, msgIndex uint64, msg []byte) web3.Hash {
 	sink := codec.NewZeroCopySink(nil)
-	sink.WriteAddress(target).WriteAddress(sender).WriteUint64BE(msgIndex).WriteBytes(msg)
+	var padding [24]byte
+	sink.WriteAddress(target).WriteAddress(sender).WriteBytes(padding[:]).WriteUint64BE(msgIndex).WriteBytes(msg)
 	return crypto.Keccak256Hash(sink.Bytes())
 }
 
