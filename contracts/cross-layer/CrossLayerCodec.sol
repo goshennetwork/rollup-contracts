@@ -12,7 +12,9 @@ library CrossLayerCodec {
         uint64 _messageIndex,
         bytes memory _message
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_target, _sender, _messageIndex, _message));
+        // @notice we encode _messageIndex as uint256 to let the total encoded data size > 64byte
+        // so when appended in MMR, it can be distinguished from the inner node.
+        return keccak256(abi.encodePacked(_target, _sender, uint256(_messageIndex), _message));
     }
 
     function encodeL1ToL2CallData(
