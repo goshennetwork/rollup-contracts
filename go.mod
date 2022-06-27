@@ -8,6 +8,8 @@ require (
 	github.com/laizy/web3 v0.1.14-0.20220620104024-85b01dc47518
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1
+	github.com/stretchr/testify v1.7.0
+	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/urfave/cli/v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
 )
