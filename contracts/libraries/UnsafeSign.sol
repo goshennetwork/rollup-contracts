@@ -64,16 +64,16 @@ library UnsafeSign {
         uint256 order = ORDER; // cache here to reduce code size
         uint256 e = uint256(signedHash) % order;
         // make sure not overflow
-        uint256 s = GX*2;
-    unchecked {
-        if (s + e < s) {
-            // overflow use inverse num
-            s = order - ((order - s) + (order - e));
-        } else {
-            //not overflow just calc
-            s = (s + e) % order;
+        uint256 s = GX * 2;
+        unchecked {
+            if (s + e < s) {
+                // overflow use inverse num
+                s = order - ((order - s) + (order - e));
+            } else {
+                //not overflow just calc
+                s = (s + e) % order;
+            }
         }
-    }
         uint64 v = 27;
         if (s > HALF_ORDER) {
             // s is the scale of the curve(just like private key), so when s beyond half order, just use inverse element
