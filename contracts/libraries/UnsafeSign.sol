@@ -12,6 +12,8 @@ library UnsafeSign {
 
     // the address of G
     address internal constant GADDR = address(0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf);
+    // the address of G*2
+    address internal constant G2ADDR = address(0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF);
 
     ///@dev sign specific hash and chainId, return r,s,v
     function Sign(bytes32 signedHash, uint64 chainId)
@@ -27,6 +29,42 @@ library UnsafeSign {
         uint256 e = uint256(signedHash) % order;
         // make sure not overflow
         uint256 s = GX;
+        unchecked {
+            if (s + e < s) {
+                // overflow use inverse num
+                s = order - ((order - s) + (order - e));
+            } else {
+                //not overflow just calc
+                s = (s + e) % order;
+            }
+        }
+        uint64 v = 27;
+        if (s > HALF_ORDER) {
+            // s is the scale of the curve(just like private key), so when s beyond half order, just use inverse element
+            v = 28;
+            s = order - s;
+        }
+        // only happen when pv*r+e=order*integer
+        require(s != 0, "zero s");
+        // now add chainId
+        v += 8 + chainId * 2;
+        return (GX, s, v);
+    }
+
+    /// sign specific hash and chainId with privkey == 2, return r,s,v
+    function Sign2(bytes32 signedHash, uint64 chainId)
+        internal
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint64
+        )
+    {
+        uint256 order = ORDER; // cache here to reduce code size
+        uint256 e = uint256(signedHash) % order;
+        // make sure not overflow
+        uint256 s = GX * 2;
         unchecked {
             if (s + e < s) {
                 // overflow use inverse num

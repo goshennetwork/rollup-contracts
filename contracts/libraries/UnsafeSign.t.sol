@@ -54,4 +54,12 @@ contract TestUnsafeSign {
         list[8] = abi.encodePacked(bytes1(0x80));
         return list;
     }
+
+    function testSign2(bytes32 signedHash) public pure {
+        (uint256 r, uint256 s, uint64 v) = UnsafeSign.Sign2(signedHash, 1);
+        uint64 _pureV = v - 2 * 1 - 8;
+        require(_pureV <= 28, "invalid v");
+        address sender = ecrecover(signedHash, uint8(_pureV), bytes32(r), bytes32(s));
+        require(sender == UnsafeSign.G2ADDR, "wrong sender");
+    }
 }
