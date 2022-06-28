@@ -2,11 +2,11 @@ package deploy
 
 import (
 	"fmt"
-	"github.com/ontology-layer-2/rollup-contracts/config"
 	"testing"
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
+	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
 func TestBuildL2GenesisData(t *testing.T) {

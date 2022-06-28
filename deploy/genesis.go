@@ -1,8 +1,6 @@
 package deploy
 
 import (
-	"github.com/laizy/web3/utils/u256"
-	"github.com/ontology-layer-2/rollup-contracts/config"
 	"math/big"
 
 	"github.com/laizy/web3"
@@ -12,6 +10,8 @@ import (
 	"github.com/laizy/web3/jsonrpc/transport"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common/hexutil"
+	"github.com/laizy/web3/utils/u256"
+	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
 type GenesisAccount struct {

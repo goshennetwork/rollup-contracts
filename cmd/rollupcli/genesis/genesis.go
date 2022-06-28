@@ -6,7 +6,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	utils2 "github.com/ontology-layer-2/rollup-contracts/utils"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 var OutFile = &cli.StringFlag{
