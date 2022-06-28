@@ -5,6 +5,7 @@ import "../interfaces/IChallengeFactory.sol";
 import "../interfaces/IAddressResolver.sol";
 import "./Challenge.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IAddressManager.sol";
 

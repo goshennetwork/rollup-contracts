@@ -109,7 +109,7 @@ contract RLPCodecTest {
         );
     }
 
-    function testToBinary(uint256 value) public {
+    function testToBinary(uint256 value) public pure {
         bytes memory val1 = _toBinary(value);
         bytes memory val2 = RLPWriter._toBinary(value);
         require(keccak256(val1) == keccak256(val2));

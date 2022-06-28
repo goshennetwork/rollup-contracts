@@ -37,15 +37,15 @@ func initL2BridgeCmd(cfgFile string, verbose, submit bool) error {
 		return err
 	}
 	signer.Submit = submit
-	l2Witness := conf.L2Addresses.L2CrossLayerWitness
+	l2Witness := conf.L2Genesis.L2CrossLayerWitness
 	l1bridge := conf.L1Addresses.L1StandardBridge
 	if l2Witness.IsZero() || l1bridge.IsZero() {
 		log.Error("need set l2 witness or l1 bridge")
 		return nil
 	}
-	bridge := binding.NewL2StandardBridge(conf.L2Addresses.L2StandardBridge, signer.Client)
+	bridge := binding.NewL2StandardBridge(conf.L2Genesis.L2StandardBridge, signer.Client)
 	bridge.Contract().SetFrom(signer.Address())
-	bridge.Initialize(conf.L2Addresses.L2CrossLayerWitness, conf.L1Addresses.L1StandardBridge).Sign(signer).SendTransaction(signer)
+	bridge.Initialize(conf.L2Genesis.L2CrossLayerWitness, conf.L1Addresses.L1StandardBridge).Sign(signer).SendTransaction(signer)
 
 	return nil
 }

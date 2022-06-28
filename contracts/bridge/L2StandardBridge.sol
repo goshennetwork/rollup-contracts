@@ -7,7 +7,6 @@ import "../interfaces/IL1ERC20Bridge.sol";
 import "../interfaces/IL2ERC20Bridge.sol";
 import "../interfaces/IL2StandardERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../cross-layer/CrossLayerContext.sol";
 
 /**
@@ -19,7 +18,7 @@ import "../cross-layer/CrossLayerContext.sol";
  * This contract also acts as a burner of the tokens intended for withdrawal, informing the L1
  * bridge to release L1 funds.
  */
-contract L2StandardBridge is IL2ERC20Bridge, Initializable, CrossLayerContextUpgradeable {
+contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
     address public l1TokenBridge;
 
     function initialize(address _l2witness, address _l1TokenBridge) public initializer {

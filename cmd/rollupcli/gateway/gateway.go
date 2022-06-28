@@ -135,7 +135,7 @@ func WithdrawToERC20Cmd(ctx *cli.Context) error {
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
-	WithdrawToERC20ToL1(signer, conf.L2Addresses.L2StandardBridge, web3.HexToAddress(to), web3.HexToAddress(l2Token), withDrawAmt)
+	WithdrawToERC20ToL1(signer, conf.L2Genesis.L2StandardBridge, web3.HexToAddress(to), web3.HexToAddress(l2Token), withDrawAmt)
 	return nil
 }
 

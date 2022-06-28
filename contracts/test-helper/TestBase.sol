@@ -57,7 +57,7 @@ contract TestBase {
         proxy = new TransparentUpgradeableProxy(
             address(l2CrossLayerWitnessLogic),
             address(proxyAdmin),
-            abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector, address(addressManager))
+            abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector)
         );
         l2CrossLayerWitness = L2CrossLayerWitness(address(proxy));
 
