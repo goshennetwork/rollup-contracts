@@ -7,7 +7,7 @@ import (
 	"github.com/laizy/web3/utils/common"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestChainSize(t *testing.T) {

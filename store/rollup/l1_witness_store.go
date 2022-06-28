@@ -23,11 +23,8 @@ func NewL1WitnessStore(db schema.KeyValueDB, tree *merkle.CompactMerkleTree) *L1
 }
 
 func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) {
-	sink := codec.NewZeroCopySink(nil)
 	for _, msg := range msgs {
-		self.compactMerkleTree.AppendHash(getMsgHash(sink, msg))
-		sink.Reset()
-
+		self.compactMerkleTree.AppendHash(msg.MsgHash())
 		key := genL1SentMessageKey(msg.MessageIndex)
 		self.store.Put(key, codec.SerializeToBytes(&schema.CrossLayerSentMessage{
 			BlockNumber:  msg.Raw.BlockNumber,
@@ -38,6 +35,17 @@ func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) {
 			Message:      msg.Message,
 		}))
 	}
+}
+
+func (self *L1WitnessStore) GetL1CompactMerkleTree() (uint64, []web3.Hash, error) {
+	v, err := self.store.Get(schema.L1CompactMerkleTreeKey)
+	if err != nil {
+		return 0, []web3.Hash{}, err
+	}
+	if len(v) == 0 {
+		return 0, []web3.Hash{}, nil
+	}
+	return schema.DeserializeCompactMerkleTree(v)
 }
 
 func (self *L1WitnessStore) GetL1MMRProof(msgIndex uint64, size uint64) ([]web3.Hash, error) {

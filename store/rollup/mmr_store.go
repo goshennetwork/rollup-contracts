@@ -1,34 +1,50 @@
 package rollup
 
 import (
-	"encoding/binary"
-
-	"github.com/laizy/web3/evm/storage"
-	"github.com/laizy/web3/evm/storage/overlaydb"
+	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
+	"github.com/ontology-layer-2/rollup-contracts/merkle"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
-type StateChain struct {
-	store schema.KeyValueDB
+type MMR struct {
+	dataPrefix byte
+	treeKey    []byte
+	store      schema.KeyValueDB
+	tree       *merkle.CompactMerkleTree
 }
 
-func NewStateStore(db schema.KeyValueDB) *StateChain {
-	return &StateChain{
-		store: db,
+func NewL1MMR(db schema.KeyValueDB) *MMR {
+	return &MMR{
+		dataPrefix: schema.L1MMRDataPrefix,
+		treeKey:    schema.L1CompactMerkleTreeKey,
+		store:      db,
 	}
 }
 
-func NewStateMemStore() *StateChain {
-	return &StateChain{
-		store: overlaydb.NewOverlayDB(storage.NewFakeDB()),
+func NewL2MMR(db schema.KeyValueDB) *MMR {
+	return &MMR{
+		dataPrefix: schema.L2MMRDataPrefix,
+		treeKey:    schema.L2CompactMerkleTreeKey,
+		store:      db,
 	}
+}
+
+func (self *MMR) GetL1CompactMerkleTree() (uint64, []web3.Hash, error) {
+	v, err := self.store.Get(schema.L1CompactMerkleTreeKey)
+	if err != nil {
+		return 0, []web3.Hash{}, err
+	}
+	if len(v) == 0 {
+		return 0, []web3.Hash{}, nil
+	}
+	return schema.DeserializeCompactMerkleTree(v)
 }
 
 // update info in memory
-func (self *StateChain) StoreBatchInfo(states ...*binding.StateBatchAppendedEvent) {
+func (self *MMR) StoreBatchInfo(states ...*binding.StateBatchAppendedEvent) {
 	info := self.GetInfo()
 	for _, state := range states {
 		blockNumber := state.Raw.BlockNumber
@@ -45,14 +61,14 @@ func (self *StateChain) StoreBatchInfo(states ...*binding.StateBatchAppendedEven
 	self.StoreInfo(info)
 }
 
-func (self *StateChain) putStateBatchInfo(states *binding.StateBatchAppendedEvent) {
+func (self *MMR) putStateBatchInfo(states *binding.StateBatchAppendedEvent) {
 	for i, v := range states.BlockHash {
 		index := states.StartIndex + uint64(i)
 		self.store.Put(genStateBatchKey(index), codec.SerializeToBytes(&schema.RollupStateBatchInfo{Index: index, Proposer: states.Proposer, Timestamp: states.Timestamp, BlockHash: v}))
 	}
 }
 
-func (self *StateChain) GetState(index uint64) (*schema.RollupStateBatchInfo, error) {
+func (self *MMR) GetState(index uint64) (*schema.RollupStateBatchInfo, error) {
 	v, err := self.store.Get(genStateBatchKey(index))
 	if err != nil {
 		return nil, err
@@ -67,7 +83,7 @@ func (self *StateChain) GetState(index uint64) (*schema.RollupStateBatchInfo, er
 	return codecs, nil
 }
 
-func (self *StateChain) GetLastL1BlockHeight() (uint64, error) {
+func (self *MMR) GetLastL1BlockHeight() (uint64, error) {
 	v, err := self.store.Get(schema.RollupStateLastL1BlockHeightKey)
 	if err != nil {
 		return 0, err
@@ -78,29 +94,26 @@ func (self *StateChain) GetLastL1BlockHeight() (uint64, error) {
 	return codec.NewZeroCopySource(v).ReadUint64()
 }
 
-func (self *StateChain) StoreLastL1BlockHeight(lastEndHeight uint64) {
+func (self *MMR) StoreLastL1BlockHeight(lastEndHeight uint64) {
 	self.store.Put(schema.RollupStateLastL1BlockHeightKey, codec.NewZeroCopySink(nil).WriteUint64(lastEndHeight).Bytes())
 }
 
-func (self *StateChain) StoreInfo(info *schema.StateChainInfo) {
-	self.store.Put(schema.CurrentRollupStateChainInfoKey, codec.SerializeToBytes(info))
+func (self *MMR) StoreInfo(info *schema.MMRInfo) {
+	self.store.Put(schema.CurrentRollupMMRInfoKey, codec.SerializeToBytes(info))
 }
 
-func (self *StateChain) GetInfo() *schema.StateChainInfo {
-	v, err := self.store.Get(schema.CurrentRollupStateChainInfoKey)
-	utils.Ensure(err)
-	if len(v) == 0 { // not exist
-		return &schema.StateChainInfo{TotalSize: 0}
-	}
-	info := new(schema.StateChainInfo)
-	err = info.Deserialization(codec.NewZeroCopySource(v))
-	utils.Ensure(err)
-	return info
+type MMRHashStore struct {
+	store schema.KeyValueDB
 }
 
-func genStateBatchKey(batchIndex uint64) []byte {
-	var b [9]byte
-	b[0] = schema.StateBatchPrefix
-	binary.BigEndian.PutUint64(b[1:], batchIndex)
-	return b[:]
+func (self *MMRHashStore) Append(hash []web3.Hash) error {
+
+}
+
+// HashStore is an interface for persist hash
+type HashStore interface {
+	Append(hash []web3.Hash) error
+	Flush() error
+	Close()
+	GetHash(pos uint64) (web3.Hash, error)
 }
