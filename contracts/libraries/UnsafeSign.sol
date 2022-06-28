@@ -61,20 +61,29 @@ library UnsafeSign {
             uint64
         )
     {
-        (uint256 r, uint256 s, uint64 v) = Sign(signedHash, chainId);
         uint256 order = ORDER; // cache here to reduce code size
+        uint256 e = uint256(signedHash) % order;
         // make sure not overflow
-        unchecked {
-            if (s + GX < s) {
-                // overflow use inverse num
-                s = order - ((order - s) + (order - GX));
-            } else {
-                //not overflow just calc
-                s = (s + GX) % order;
-            }
+        uint256 s = GX*2;
+    unchecked {
+        if (s + e < s) {
+            // overflow use inverse num
+            s = order - ((order - s) + (order - e));
+        } else {
+            //not overflow just calc
+            s = (s + e) % order;
         }
+    }
+        uint64 v = 27;
+        if (s > HALF_ORDER) {
+            // s is the scale of the curve(just like private key), so when s beyond half order, just use inverse element
+            v = 28;
+            s = order - s;
+        }
+        // only happen when pv*r+e=order*integer
         require(s != 0, "zero s");
-
-        return (r, s, v);
+        // now add chainId
+        v += 8 + chainId * 2;
+        return (GX, s, v);
     }
 }
