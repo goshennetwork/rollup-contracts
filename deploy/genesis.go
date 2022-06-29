@@ -28,14 +28,12 @@ func BuildL2GenesisData(cfg *config.L2GenesisConfig, l1TokenBridge web3.Address)
 	signer, local := SetupLocalSigner(0, privKey)
 
 	collector := DeployL2FeeCollector(signer, cfg.FeeCollectorOwner)
-	proxyAdmin := DeployProxyAdmin(signer)
-	witness, witnessLogic := DeployL2CrossLayerWitness(signer, proxyAdmin.Contract().Addr())
-	bridge, bridgeLogic := DeployL2TokenBridge(signer, proxyAdmin.Contract().Addr())
+	witness, witnessLogic := DeployL2CrossLayerWitness(signer, cfg.FeeCollectorOwner)
+	bridge, bridgeLogic := DeployL2TokenBridge(signer, cfg.FeeCollectorOwner)
 	bridge.Initialize(witness.Contract().Addr(), l1TokenBridge).Sign(signer).SendTransaction(signer)
 
 	overlay := local.Executor.OverlayDB
 	statedb := storage.NewStateDB(storage.NewCacheDB(overlay))
-	genesisAccts[cfg.ProxyAdmin] = getContractData(statedb, proxyAdmin.Contract().Addr())
 	genesisAccts[cfg.L2FeeCollector] = getContractData(statedb, collector.Contract().Addr())
 	genesisAccts[cfg.L2CrossLayerWitness] = getContractData(statedb, witness.Contract().Addr())
 	genesisAccts[cfg.L2CrossLayerWitnessLogic] = getContractData(statedb, witnessLogic.Contract().Addr())

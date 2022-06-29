@@ -20,7 +20,7 @@
   "L2Genesis": {
     "FeeCollectorOwner": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
     "BridgeBalance": 1000000000,
-    "ProxyAdmin": "0x1000000000000000000000000000000000000001",
+    "ProxyAdmin": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
     "L2CrossLayerWitness": "0x2210000000000000000000000000000000000221",
     "L2StandardBridge": "0xbde0000000000000000000000000000000000bde",
     "L2CrossLayerWitnessLogic": "0x221c0de00000000000000000000000000221c0de",
