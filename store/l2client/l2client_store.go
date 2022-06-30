@@ -42,25 +42,6 @@ func (self *Store) StoreHeadExecutedQueueBlock(headQueue *schema.ChainedEnqueueB
 	self.store.Put(schema.CurrentQueueBlockKey, codec.SerializeToBytes(headQueue))
 }
 
-func (self *Store) StoreExecutedQueue(blockNumber uint64, totalQueueChain *schema.ChainedEnqueueBlockInfo) {
-	self.store.Put(genBlockNumberKey(blockNumber), codec.SerializeToBytes(totalQueueChain))
-}
-
-func (self *Store) StoreTotalUploadedBlock(blockNumber uint64) {
-	self.store.Put(schema.TotalUploadedBlock, codec.NewZeroCopySink(nil).WriteUint64(blockNumber).Bytes())
-}
-
-func (self *Store) GetTotalUploadedBlock() uint64 {
-	b, err := self.store.Get(schema.TotalUploadedBlock)
-	utils.Ensure(err)
-	if len(b) == 0 { //not exist
-		return 0
-	}
-	v, err := codec.NewZeroCopySource(b).ReadUint64()
-	utils.Ensure(err)
-	return v
-}
-
 func (self *Store) StoreTotalCheckedBatchNum(batchNum uint64) {
 	self.store.Put(schema.L2ClientCheckBatchNumKey, codec.NewZeroCopySink(nil).WriteUint64(batchNum).Bytes())
 }
@@ -76,12 +57,12 @@ func (self *Store) GetTotalCheckedBatchNum() uint64 {
 	return d
 }
 
-func (self *Store) StoreCheckedBlockNum(batchNum, blockNum uint64) {
-	self.store.Put(genBatchNumKey(batchNum), codec.NewZeroCopySink(nil).WriteUint64(blockNum).Bytes())
+func (self *Store) StoreCheckedBlockNum(batchIndex, blockNum uint64) {
+	self.store.Put(genBatchIndexKey(batchIndex), codec.NewZeroCopySink(nil).WriteUint64(blockNum).Bytes())
 }
 
-func (self *Store) GetTotalCheckedBlockNum(batchNum uint64) uint64 {
-	v, err := self.store.Get(genBatchNumKey(batchNum))
+func (self *Store) GetTotalCheckedBlockNum(batchIndex uint64) uint64 {
+	v, err := self.store.Get(genBatchIndexKey(batchIndex))
 	utils.Ensure(err)
 	if len(v) == 0 { //genesis block do not need to check
 		return 1
@@ -91,16 +72,9 @@ func (self *Store) GetTotalCheckedBlockNum(batchNum uint64) uint64 {
 	return d
 }
 
-func genBatchNumKey(batchNum uint64) []byte {
+func genBatchIndexKey(batchIndex uint64) []byte {
 	var b [9]byte
 	b[0] = schema.L2ClientCheckBlockNumPrefix
-	binary.BigEndian.PutUint64(b[1:], batchNum)
-	return b[:]
-}
-
-func genBlockNumberKey(blockNumber uint64) []byte {
-	var b [9]byte
-	b[0] = schema.L2ClientExecutedQueuePrefix
-	binary.BigEndian.PutUint64(b[1:], blockNumber)
+	binary.BigEndian.PutUint64(b[1:], batchIndex)
 	return b[:]
 }
