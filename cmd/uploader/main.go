@@ -101,7 +101,7 @@ loop:
 			num = 512
 		}
 		pendingStates := make([][32]byte, num)
-		
+
 		for i, _ := range pendingStates {
 			index := l1StateNum + uint64(i)
 			l2State, err := self.l2client.L2().GetRollupStateHash(index)
