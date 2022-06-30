@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -71,7 +72,56 @@ func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer
 
 func (self *UploadBackend) Start() error {
 	go self.runTxTask()
+	go self.runStateTask()
 	return nil
+}
+
+func (self *UploadBackend) runStateTask() {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+loop:
+	for range ticker.C {
+		clientInfo, err := self.l2client.L2().GlobalInfo()
+		if err != nil {
+			log.Error("get global info", "err", err)
+			continue
+		}
+		l1StateNum, err := self.stateChain.TotalSubmittedState()
+		if err != nil {
+			log.Error("get l1 total submitted state", "err", err)
+			continue
+		}
+		if clientInfo.L2CheckedBatchNum <= l1StateNum {
+			log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", clientInfo.L2CheckedBatchNum)
+			continue
+		}
+		num := clientInfo.L2CheckedBatchNum - l1StateNum
+		if num > 512 { // limit num
+			num = 512
+		}
+		pendingStates := make([][32]byte, num)
+		
+		for i, _ := range pendingStates {
+			index := l1StateNum + uint64(i)
+			l2State, err := self.l2client.L2().GetRollupStateHash(index)
+			if err != nil {
+				log.Error("get state", "err", err)
+				continue loop
+			}
+			if bytes.Equal(l2State.Bytes(), web3.Hash{}.Bytes()) {
+				log.Warn("empty hash found", "batchIndex", index)
+				continue loop
+			}
+			pendingStates[i] = l2State
+		}
+		log.Info("try to append state...", "start", l1StateNum, "end", clientInfo.L2CheckedBatchNum-1)
+		receipt := self.stateChain.AppendStateBatch(pendingStates, l1StateNum).Sign(self.signer).SendTransaction(self.signer)
+		if receipt.IsReverted() {
+			log.Error("append state batch failed", "start", l1StateNum)
+		}
+	}
+
 }
 
 //fixme: now only support one sequencer.
