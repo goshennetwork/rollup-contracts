@@ -7,9 +7,7 @@ import "../libraries/console.sol";
 
 contract TestRollupInputChain is TestBase, RollupInputChain {
     address sender = address(0x7777);
-    uint64 constant txBaseSize = 213;
     uint64 constant txNumPerBlock = 1;
-    uint64 constant BaseTxNum = 50;
 
     function setUp() public {
         vm.startPrank(sender);
@@ -112,9 +110,11 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             data
         );
         vm.startPrank(sender, sender);
+        uint256 gas = gasleft();
         (bool success, ) = address(rollupInputChain).call(
             abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
         );
+        console.logUint(gas - gasleft());
         require(success, "failed");
         vm.stopPrank();
     }
