@@ -18,8 +18,7 @@ const (
 	L1WitnessSentMessageKey = 0x0C // maybe duplicated with TransactionEnqueued
 	L2WitnessSentMessageKey = 0x0D
 
-	L2ClientExecutedQueuePrefix = 0x10 //l2 block number -> executed queueNum
-	L2ClientCheckBlockNumPrefix = 0x11 //batch num -> checked l2 block num
+	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
 
 	AddressNamePrefix = 0x20 // name -> address
 )
@@ -34,7 +33,6 @@ var (
 	L1CompactMerkleTreeKey             = []byte{0x16}
 	L2CompactMerkleTreeKey             = []byte{0x17}
 
-	TotalUploadedBlock       = []byte{0x20} //->total uploaded l2 block size
-	L2ClientCheckBatchNumKey = []byte{0x21} //-> checked batch num
-	CurrentQueueBlockKey     = []byte{0x22} //-> head queue block
+	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
+	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block
 )
