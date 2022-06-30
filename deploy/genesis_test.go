@@ -14,6 +14,7 @@ func TestBuildL2GenesisData(t *testing.T) {
 		FeeCollectorOwner: web3.Address{1, 2, 3},
 		BridgeBalance:     10000000000,
 		L2ContractAddressConfig: &config.L2ContractAddressConfig{
+			ProxyAdmin:               web3.Address{1, 2, 3},
 			L2FeeCollector:           web3.Address{4, 5, 6},
 			L2CrossLayerWitness:      web3.Address{7, 8, 9},
 			L2CrossLayerWitnessLogic: web3.Address{10, 11, 12},
