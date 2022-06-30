@@ -6,13 +6,11 @@ pragma solidity ^0.8.9;
 import "../interfaces/IL1StandardBridge.sol";
 import "../interfaces/IL1ERC20Bridge.sol";
 import "../interfaces/IL2ERC20Bridge.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /* Library Imports */
 import "../cross-layer/CrossLayerContext.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 /**
  * @title L1StandardBridge
@@ -21,8 +19,8 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
  * and listening to it for newly finalized withdrawals.
  *
  */
-contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContextUpgradeable {
-    using SafeERC20 for IERC20;
+contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     address public l2TokenBridge;
 
@@ -127,9 +125,9 @@ contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContext
         // withdrawals. safeTransferFrom also checks if the contract has code, so this will fail if
         // _from is an EOA or address(0).
         // slither-disable-next-line reentrancy-events, reentrancy-benign
-        uint256 _origin = IERC20(_l1Token).balanceOf(address(this));
-        IERC20(_l1Token).safeTransferFrom(_from, address(this), _amount);
-        uint256 _current = IERC20(_l1Token).balanceOf(address(this));
+        uint256 _origin = IERC20Upgradeable(_l1Token).balanceOf(address(this));
+        IERC20Upgradeable(_l1Token).safeTransferFrom(_from, address(this), _amount);
+        uint256 _current = IERC20Upgradeable(_l1Token).balanceOf(address(this));
         _amount = _current - _origin;
 
         // Construct calldata for _l2Token.finalizeDeposit(_to, _amount)
@@ -183,7 +181,7 @@ contract L1StandardBridge is IL1StandardBridge, Initializable, CrossLayerContext
 
         // When a withdrawal is finalized on L1, the L1 Bridge transfers the funds to the withdrawer
         // slither-disable-next-line reentrancy-events
-        IERC20(_l1Token).safeTransfer(_to, _amount);
+        IERC20Upgradeable(_l1Token).safeTransfer(_to, _amount);
 
         // slither-disable-next-line reentrancy-events
         emit ERC20WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);

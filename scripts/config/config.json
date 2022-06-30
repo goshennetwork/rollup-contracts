@@ -1,0 +1,24 @@
+{
+  "fraudProofWindow": 3,
+  "blockLimitPerRound": 5000,
+  "challengerDeposit": "1",
+  "stakingPrice": "1",
+  "maxTxGasLimit": 15000000,
+  "maxCrossLayerTxGasLimit": 3000000,
+  "l2ChainId": 1234,
+  "l2TokenBridge": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "l2CrossLayerWitness": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "imageStateRoot": "0xbfae90dd78c078392e850efac1f8d84ddd5990618b7f00c4ac8db3253e674679",
+  "addressName": {
+    "DAO": "DAO",
+    "ROLLUP_INPUT_CHAIN": "RollupInputChain",
+    "ROLLUP_INPUT_CHAIN_CONTAINER": "RollupInputChainContainer",
+    "ROLLUP_STATE_CHAIN": "RollupStateChain",
+    "ROLLUP_STATE_CHAIN_CONTAINER": "RollupStateChainContainer",
+    "STAKING_MANAGER": "StakingManager",
+    "CHALLENGE_FACTORY": "ChallengeFactory",
+    "L1_CROSS_LAYER_WITNESS": "L1CrossLayerWitness",
+    "L2_CROSS_LAYER_WITNESS": "L2CrossLayerWitness",
+    "STATE_TRANSITION": "StateTransition"
+  }
+}

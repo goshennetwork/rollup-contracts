@@ -11,7 +11,7 @@ type RollupCliConfig struct {
 	L2Rpc       string
 	PrivKey     string
 	L1Addresses *L1ContractAddressConfig
-	L2Addresses *L2ContractAddressConfig
+	L2Genesis   *L2GenesisConfig
 }
 
 type L1ContractAddressConfig struct {
@@ -30,10 +30,20 @@ type L1ContractAddressConfig struct {
 	DAO                 web3.Address
 }
 
+type L2GenesisConfig struct {
+	FeeCollectorOwner web3.Address
+	BridgeBalance     uint64 // ether amount
+	*L2ContractAddressConfig
+}
+
 type L2ContractAddressConfig struct {
+	ProxyAdmin          web3.Address
 	L2CrossLayerWitness web3.Address
 	L2StandardBridge    web3.Address
 	L2FeeCollector      web3.Address
+
+	L2CrossLayerWitnessLogic web3.Address
+	L2StandardBridgeLogic    web3.Address
 }
 
 type L1ChainDeployConfig struct {

@@ -13,7 +13,7 @@ import (
 )
 
 func SetUpL1(cfgPath string) (*contract.Signer, *config.RollupCliConfig, error) {
-	conf, err := loadConf(cfgPath)
+	conf, err := LoadConf(cfgPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -21,7 +21,7 @@ func SetUpL1(cfgPath string) (*contract.Signer, *config.RollupCliConfig, error) 
 }
 
 func SetUpL2(cfgPath string) (*contract.Signer, *config.RollupCliConfig, error) {
-	conf, err := loadConf(cfgPath)
+	conf, err := LoadConf(cfgPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -48,7 +48,7 @@ func getSigner(conf *config.RollupCliConfig, client *jsonrpc.Client) *contract.S
 	return signer
 }
 
-func loadConf(cfgPath string) (*config.RollupCliConfig, error) {
+func LoadConf(cfgPath string) (*config.RollupCliConfig, error) {
 	conf := &config.RollupCliConfig{}
 	err := utils.LoadJsonFile(cfgPath, conf)
 	if err != nil {
@@ -70,7 +70,7 @@ func registerAbiAndContract(conf *config.RollupCliConfig) {
 	}
 
 	var l2AddrMap map[string]string
-	err = json.Unmarshal([]byte(utils.JsonStr(conf.L2Addresses)), &l2AddrMap)
+	err = json.Unmarshal([]byte(utils.JsonStr(conf.L2Genesis.L2ContractAddressConfig)), &l2AddrMap)
 	utils.Ensure(err)
 	for name, addr := range l2AddrMap {
 		registry.Instance().RegisterContractAlias(web3.HexToAddress(addr), name)

@@ -10,7 +10,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 func GatewayCommand() *cli.Command {
@@ -135,7 +135,7 @@ func WithdrawToERC20Cmd(ctx *cli.Context) error {
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
-	WithdrawToERC20ToL1(signer, conf.L2Addresses.L2StandardBridge, web3.HexToAddress(to), web3.HexToAddress(l2Token), withDrawAmt)
+	WithdrawToERC20ToL1(signer, conf.L2Genesis.L2StandardBridge, web3.HexToAddress(to), web3.HexToAddress(l2Token), withDrawAmt)
 	return nil
 }
 

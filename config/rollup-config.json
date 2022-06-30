@@ -17,10 +17,15 @@
     "FeeToken": "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
     "DAO": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82"
   },
-  "L2Addresses": {
-    "L2CrossLayerWitness": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
-    "L2StandardBridge": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
-    "L2FeeCollector": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82"
+  "L2Genesis": {
+    "FeeCollectorOwner": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+    "BridgeBalance": 1000000000,
+    "ProxyAdmin": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+    "L2CrossLayerWitness": "0x2210000000000000000000000000000000000221",
+    "L2StandardBridge": "0xbde0000000000000000000000000000000000bde",
+    "L2CrossLayerWitnessLogic": "0x221c0de00000000000000000000000000221c0de",
+    "L2StandardBridgeLogic": "0xbdec0de00000000000000000000000000bdec0de",
+    "L2FeeCollector": "0xfee0000000000000000000000000000000000fee"
   }
 }
 

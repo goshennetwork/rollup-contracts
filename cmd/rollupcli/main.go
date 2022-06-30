@@ -10,7 +10,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/messaging"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/staking"
 	"github.com/ontology-layer-2/rollup-contracts/utils"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 func main() {

@@ -10,6 +10,8 @@ import (
 	"github.com/laizy/web3/jsonrpc/transport"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common/hexutil"
+	"github.com/laizy/web3/utils/u256"
+	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
 type GenesisAccount struct {
@@ -19,26 +21,27 @@ type GenesisAccount struct {
 	Nonce   hexutil.Uint64          `json:"nonce,omitempty"`
 }
 
-type GenesisConfig struct {
-	FeeCollectorOwner   web3.Address
-	FeeCollector        web3.Address
-	L2CrossLayerWitness web3.Address
-	WitnessBalance      *big.Int
-}
-
-func BuildL2GenesisData(cfg *GenesisConfig) map[web3.Address]*GenesisAccount {
+func BuildL2GenesisData(cfg *config.L2GenesisConfig, l1TokenBridge web3.Address) map[web3.Address]*GenesisAccount {
 	genesisAccts := make(map[web3.Address]*GenesisAccount)
 	setBalanceForBuiltins(genesisAccts)
 	privKey := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	signer, local := SetupLocalSigner(0, privKey)
+
 	collector := DeployL2FeeCollector(signer, cfg.FeeCollectorOwner)
-	witness := DeployL2CrossLayerWitness(signer)
+	witness, witnessLogic := DeployL2CrossLayerWitness(signer, cfg.ProxyAdmin)
+	bridge, bridgeLogic := DeployL2TokenBridge(signer, cfg.ProxyAdmin)
+	bridge.Initialize(witness.Contract().Addr(), l1TokenBridge).Sign(signer).SendTransaction(signer)
+
 	overlay := local.Executor.OverlayDB
 	statedb := storage.NewStateDB(storage.NewCacheDB(overlay))
-	genesisAccts[cfg.FeeCollector] = getContractData(statedb, collector.Contract().Addr())
+	genesisAccts[cfg.L2FeeCollector] = getContractData(statedb, collector.Contract().Addr())
 	genesisAccts[cfg.L2CrossLayerWitness] = getContractData(statedb, witness.Contract().Addr())
-	if cfg.WitnessBalance != nil {
-		genesisAccts[cfg.L2CrossLayerWitness].Balance = (*hexutil.Big)(cfg.WitnessBalance)
+	genesisAccts[cfg.L2CrossLayerWitnessLogic] = getContractData(statedb, witnessLogic.Contract().Addr())
+	genesisAccts[cfg.L2StandardBridge] = getContractData(statedb, bridge.Contract().Addr())
+	genesisAccts[cfg.L2StandardBridgeLogic] = getContractData(statedb, bridgeLogic.Contract().Addr())
+	if cfg.BridgeBalance != 0 {
+		genesisAccts[cfg.L2StandardBridge].Balance =
+			(*hexutil.Big)(u256.New(cfg.BridgeBalance).Mul(web3.Ether(1)).ToBigInt())
 	}
 
 	return genesisAccts
@@ -61,6 +64,7 @@ func getContractData(statedb *storage.StateDB, address web3.Address) *GenesisAcc
 	return fee
 }
 
+// TODO: remove this after mainnet launch
 func setBalanceForBuiltins(genesisAccts map[web3.Address]*GenesisAccount) {
 	builtin := web3.Address{}
 	for i := 0; i < 256; i++ {

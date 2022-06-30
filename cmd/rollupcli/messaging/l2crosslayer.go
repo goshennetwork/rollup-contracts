@@ -8,7 +8,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
-	"github.com/urfave/cli/v2"
+	cli "github.com/urfave/cli/v2"
 )
 
 func L2CrossLayerWitnessCommand() *cli.Command {
@@ -43,7 +43,7 @@ func l2SendMessageCmd(ctx *cli.Context) error {
 	message := ctx.String(flags.MessageFlag.Name)
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 
-	witness := binding.NewL2CrossLayerWitness(conf.L2Addresses.L2CrossLayerWitness, signer.Client)
+	witness := binding.NewL2CrossLayerWitness(conf.L2Genesis.L2CrossLayerWitness, signer.Client)
 	witness.Contract().SetFrom(signer.Address())
 	receipt := witness.SendMessage(web3.HexToAddress(target), hexutil.MustDecode(message)).Sign(signer).SendTransaction(signer)
 	log.Infof("Sends a cross layer message, receipt:%s", utils.JsonString(receipt.Thin()))
