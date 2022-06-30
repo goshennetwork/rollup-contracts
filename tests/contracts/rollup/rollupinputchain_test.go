@@ -69,7 +69,7 @@ func TestEnqueue(t *testing.T) {
 	utils.Ensure(err)
 	nonce, err = l1Chain.RollupInputChain.GetNonceByAddress(L1CrossLayerFakeSender)
 	utils.Ensure(err)
-	gasLimit = chainEnv.ChainConfig.MaxWitnessTxExecGasLimit + uint64(len(crossLayerMsg)*1600)
+	gasLimit = chainEnv.ChainConfig.MaxWitnessTxExecGasLimit
 	utils.EnsureTrue(txHash == EnqueueTransactionHash(L1CrossLayerFakeSender, chainEnv.ChainConfig.L2CrossLayerWitness,
 		gasLimit, crossLayerMsg, nonce-1))
 }
