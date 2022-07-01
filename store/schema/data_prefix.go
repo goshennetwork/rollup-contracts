@@ -32,6 +32,7 @@ var (
 	AddressManagerLastL1BlockHeightKey = []byte{0x15}
 	L1CompactMerkleTreeKey             = []byte{0x16}
 	L2CompactMerkleTreeKey             = []byte{0x17}
+	LastSyncedL2HeightKey              = []byte{0x18}
 
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block

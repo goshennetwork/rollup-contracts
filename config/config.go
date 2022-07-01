@@ -6,12 +6,44 @@ import (
 	"github.com/laizy/web3"
 )
 
+const (
+	ADDRESS_MANAGER = "AddressManager"
+
+	///DAO
+	DAO = "DAO"
+	///RollupInputChain
+	ROLLUP_INPUT_CHAIN = "RollupInputChain"
+	///ChainStorageContainer of RollupInputChain
+	ROLLUP_INPUT_CHAIN_CONTAINER = "RollupInputChainContainer"
+	///RollupStateChain
+	ROLLUP_STATE_CHAIN = "RollupStateChain"
+	///ChainStorageContainer of RollupStateChain
+	ROLLUP_STATE_CHAIN_CONTAINER = "RollupStateChainContainer"
+	///StakingManager
+	STAKING_MANAGER = "StakingManager"
+	///ChallengeFactory
+	CHALLENGE_FACTORY = "ChallengeFactory"
+	///L1CrossLayerWitness
+	L1_CROSS_LAYER_WITNESS = "L1CrossLayerWitness"
+	///L2CrossLayerWitness
+	L2_CROSS_LAYER_WITNESS = "L2CrossLayerWitness"
+)
+
+const (
+	DefaultRollupConfigName = "rollup-config.json"
+	DefaultSyncDbName       = "sync-db"
+	DefaultL1MMRFile        = "l1tree.db"
+	DefaultL2MMRFile        = "l2tree.db"
+)
+
 type RollupCliConfig struct {
-	L1Rpc       string
-	L2Rpc       string
-	PrivKey     string
-	L1Addresses *L1ContractAddressConfig
-	L2Genesis   *L2GenesisConfig
+	L1Rpc              string
+	L2Rpc              string
+	PrivKey            string
+	DeployOnL1Height   uint64
+	MinConfirmBlockNum uint64
+	L1Addresses        *L1ContractAddressConfig
+	L2Genesis          *L2GenesisConfig
 }
 
 type L1ContractAddressConfig struct {

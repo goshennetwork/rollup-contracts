@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 
@@ -15,14 +16,18 @@ import (
 
 func main() {
 	utils2.InitLog("./rollup-sync.log")
-
-	var cfg config.SyncConfig
-	utils.Ensure(utils.LoadJsonFile(config.DefaultSyncConfigName, &cfg))
-	db, err := leveldbstore.NewLevelDBStore(cfg.DbDir)
+	var dbDir = flag.String("dbDir", config.DefaultSyncDbName, "set sync db name")
+	flag.Parse()
+	var cfg config.RollupCliConfig
+	utils.Ensure(utils.LoadJsonFile(config.DefaultRollupConfigName, &cfg))
+	db, err := leveldbstore.NewLevelDBStore(*dbDir)
 	utils.Ensure(err)
-	client, err := jsonrpc.NewClient(cfg.L1RpcUrl)
+	l1client, err := jsonrpc.NewClient(cfg.L1Rpc)
 	utils.Ensure(err)
-	syncService := sync_service.NewSyncService(db, client, &cfg)
+	l2client, err := jsonrpc.NewClient(cfg.L1Rpc)
+	utils.Ensure(err)
+	utils.Ensure(err)
+	syncService := sync_service.NewSyncService(db, l1client, l2client, &cfg, *dbDir)
 	syncService.Start()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)

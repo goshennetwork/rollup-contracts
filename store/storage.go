@@ -122,6 +122,20 @@ func (self *StorageWriter) GetLastSyncedL1Height() uint64 {
 	return height
 }
 
+func (self *StorageWriter) SetLastSyncedL2Height(height uint64) {
+	self.overlay.Put(schema.LastSyncedL2HeightKey, codec.NewZeroCopySink(nil).WriteUint64(height).Bytes())
+}
+func (self *StorageWriter) GetLastSyncedL2Height() uint64 {
+	v, err := self.overlay.Get(schema.LastSyncedL2HeightKey)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return 0
+	}
+	height, err := codec.NewZeroCopySource(v).ReadUint64()
+	utils.Ensure(err)
+
+	return height
+}
 func (self *StorageWriter) GetL1CompactMerkleTree() (uint64, []web3.Hash, error) {
 	v, err := self.overlay.Get(schema.L1CompactMerkleTreeKey)
 	if err != nil {
