@@ -15,19 +15,23 @@ import (
 )
 
 type SyncService struct {
-	conf   *config.SyncConfig
-	client *jsonrpc.Client
-	db     *store.Storage
-	quit   chan struct{}
+	conf             *config.RollupCliConfig
+	deployOnL1Height uint64
+	minConfirmNum    uint64
+	client           *jsonrpc.Client
+	db               *store.Storage
+	quit             chan struct{}
 }
 
 func NewSyncService(diskdb schema.PersistStore,
-	client *jsonrpc.Client, cfg *config.SyncConfig) *SyncService {
+	client *jsonrpc.Client, cfg *config.RollupCliConfig, dbDir string, deployOnL1Height uint64, minConfirmNum uint64) *SyncService {
 	return &SyncService{
-		db:     store.NewStorage(diskdb, cfg.DbDir),
-		conf:   cfg,
-		client: client,
-		quit:   make(chan struct{}),
+		db:               store.NewStorage(diskdb, dbDir),
+		conf:             cfg,
+		deployOnL1Height: deployOnL1Height,
+		minConfirmNum:    minConfirmNum,
+		client:           client,
+		quit:             make(chan struct{}),
 	}
 }
 
@@ -46,8 +50,8 @@ func (self *SyncService) start() error {
 		default:
 
 		}
-		if startHeight < self.conf.StartSyncHeight { //speedup
-			startHeight = self.conf.StartSyncHeight
+		if startHeight < self.deployOnL1Height { //speedup
+			startHeight = self.deployOnL1Height
 		}
 		l1Height, err := self.client.Eth().BlockNumber()
 		if err != nil {
@@ -55,8 +59,11 @@ func (self *SyncService) start() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		if l1Height > self.conf.MinConfirmBlockNum {
-			l1Height -= self.conf.MinConfirmBlockNum
+		if l1Height > self.minConfirmNum {
+			l1Height -= self.minConfirmNum
+		} else {
+			log.Warn("block too low")
+			continue
 		}
 		endHeight, err := CalcEndBlock(startHeight, l1Height)
 		if err != nil {
@@ -108,7 +115,7 @@ func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
 }
 
 func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	rollupInputContract := binding.NewRollupInputChain(self.conf.RollupInputChain, self.client)
+	rollupInputContract := binding.NewRollupInputChain(self.conf.L1Addresses.RollupInputChain, self.client)
 	queues, err := rollupInputContract.FilterTransactionEnqueuedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
 		return err
@@ -162,7 +169,7 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 }
 
 func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	l1Witness := binding.NewL1CrossLayerWitness(self.conf.L1CrossLayerWitness, self.client)
+	l1Witness := binding.NewL1CrossLayerWitness(self.conf.L1Addresses.L1CrossLayerWitness, self.client)
 	l1SentMsgs, err := l1Witness.FilterMessageSentEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("syncL1Witness: filter sent message, %s", err)
@@ -175,7 +182,7 @@ func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, e
 }
 
 func (self *SyncService) syncL1Bridge(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	l1TokenBridge := binding.NewL1StandardBridge(self.conf.L1TokenBridge, self.client)
+	l1TokenBridge := binding.NewL1StandardBridge(self.conf.L1Addresses.L1StandardBridge, self.client)
 	ethDepositEvts, err := l1TokenBridge.FilterETHDepositInitiatedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("syncL1Bridge: filter eth deposit, %s", err)
@@ -207,7 +214,7 @@ func (self *SyncService) Stop() error {
 }
 
 func (self *SyncService) syncRollupStateChain(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	rollupStateContract := binding.NewRollupStateChain(self.conf.RollupStateChain, self.client)
+	rollupStateContract := binding.NewRollupStateChain(self.conf.L1Addresses.RollupStateChain, self.client)
 	statesBatches, err := rollupStateContract.FilterStateBatchAppendedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
 		return err
@@ -220,7 +227,7 @@ func (self *SyncService) syncRollupStateChain(kvdb *store.StorageWriter, startHe
 }
 
 func (self *SyncService) syncAddrManager(writer *store.StorageWriter, startHeight, endHeight uint64) error {
-	addrMan := binding.NewAddressManager(self.conf.AddressManager, self.client)
+	addrMan := binding.NewAddressManager(self.conf.L1Addresses.AddressManager, self.client)
 	updated, err := addrMan.FilterAddressSetEvent(startHeight, endHeight)
 	if err != nil {
 		return err
@@ -232,40 +239,41 @@ func (self *SyncService) syncAddrManager(writer *store.StorageWriter, startHeigh
 	return nil
 }
 
-func (self *SyncService) syncL2Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	l2Witness := binding.NewL2CrossLayerWitness(self.conf.L2CrossLayerWitness, self.client)
-	l2SentMsgs, err := l2Witness.FilterMessageSentEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL2Witness: filter sent message, %s", err)
-	}
-	l2WitnessStore := kvdb.L2CrossLayerWitness()
-	l2WitnessStore.StoreSentMessage(l2SentMsgs)
-	kvdb.StoreL2CompactMerkleTree()
-	log.Infof("syncL2Witness: from %d to %d", startHeight, endHeight)
-	return nil
-}
-
-func (self *SyncService) syncL2Bridge(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
-	l2TokenBridge := binding.NewL2StandardBridge(self.conf.L2TokenBridge, self.client)
-	tokenWithdrawalEvts, err := l2TokenBridge.FilterWithdrawalInitiatedEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL2Bridge: filter eth withdrawal, %s", err)
-	}
-	tokenDepositEvts, err := l2TokenBridge.FilterDepositFinalizedEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL2Bridge: filter erc20 deposit, %s", err)
-	}
-	tokenDepositFailedEvts, err := l2TokenBridge.FilterDepositFailedEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL2Bridge: filter erc20 withdrawal, %s", err)
-	}
-	l2BridgeStore := kvdb.L2TokenBridge()
-	l2BridgeStore.StoreWithdrawal(tokenWithdrawalEvts)
-	l2BridgeStore.StoreDepositFinalized(tokenDepositEvts)
-	l2BridgeStore.StoreDepositFailed(tokenDepositFailedEvts)
-	log.Infof("syncL1Bridge: from %d to %d", startHeight, endHeight)
-	return nil
-}
+//todo :support sync L2 contracts
+//func (self *SyncService) syncL2Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
+//	l2Witness := binding.NewL2CrossLayerWitness(self.conf.L2Genesis.L2CrossLayerWitness, self.client)
+//	l2SentMsgs, err := l2Witness.FilterMessageSentEvent(nil, nil, nil, startHeight, endHeight)
+//	if err != nil {
+//		return fmt.Errorf("syncL2Witness: filter sent message, %s", err)
+//	}
+//	l2WitnessStore := kvdb.L2CrossLayerWitness()
+//	l2WitnessStore.StoreSentMessage(l2SentMsgs)
+//	kvdb.StoreL2CompactMerkleTree()
+//	log.Infof("syncL2Witness: from %d to %d", startHeight, endHeight)
+//	return nil
+//}
+//
+//func (self *SyncService) syncL2Bridge(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
+//	l2TokenBridge := binding.NewL2StandardBridge(self.conf.L1Addresses.L1StandardBridge, self.client)
+//	tokenWithdrawalEvts, err := l2TokenBridge.FilterWithdrawalInitiatedEvent(nil, nil, nil, startHeight, endHeight)
+//	if err != nil {
+//		return fmt.Errorf("syncL2Bridge: filter eth withdrawal, %s", err)
+//	}
+//	tokenDepositEvts, err := l2TokenBridge.FilterDepositFinalizedEvent(nil, nil, nil, startHeight, endHeight)
+//	if err != nil {
+//		return fmt.Errorf("syncL2Bridge: filter erc20 deposit, %s", err)
+//	}
+//	tokenDepositFailedEvts, err := l2TokenBridge.FilterDepositFailedEvent(nil, nil, nil, startHeight, endHeight)
+//	if err != nil {
+//		return fmt.Errorf("syncL2Bridge: filter erc20 withdrawal, %s", err)
+//	}
+//	l2BridgeStore := kvdb.L2TokenBridge()
+//	l2BridgeStore.StoreWithdrawal(tokenWithdrawalEvts)
+//	l2BridgeStore.StoreDepositFinalized(tokenDepositEvts)
+//	l2BridgeStore.StoreDepositFailed(tokenDepositFailedEvts)
+//	log.Infof("syncL2Bridge: from %d to %d", startHeight, endHeight)
+//	return nil
+//}
 
 func CalcEndBlock(start, largest uint64) (uint64, error) {
 	if largest < start {

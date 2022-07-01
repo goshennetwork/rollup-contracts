@@ -94,7 +94,8 @@ func DeployL2CrossLayerWitness(signer *contract.Signer, proxyAdmin web3.Address)
 
 	witness = binding.NewL2CrossLayerWitness(proxyReceipt.ContractAddress, signer.Client)
 	witness.Contract().SetFrom(signer.Address())
-	witness.Initialize().Sign(signer).SendTransaction(signer)
+	r := witness.Initialize().Sign(signer).SendTransaction(signer)
+	utils.EnsureTrue(r.Status == 1)
 
 	logic = binding.NewL2CrossLayerWitness(witnessReceipt.ContractAddress, signer.Client)
 	logic.Contract().SetFrom(signer.Address())
