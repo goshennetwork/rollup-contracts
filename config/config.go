@@ -37,11 +37,14 @@ const (
 )
 
 type RollupCliConfig struct {
-	L1Rpc       string
-	L2Rpc       string
-	PrivKey     string
-	L1Addresses *L1ContractAddressConfig
-	L2Genesis   *L2GenesisConfig
+	L1Rpc              string
+	L2Rpc              string
+	PrivKey            string
+	L2DbDir            string
+	DeployOnL1Height   uint64
+	MinConfirmBlockNum uint64
+	L1Addresses        *L1ContractAddressConfig
+	L2Genesis          *L2GenesisConfig
 }
 
 type L1ContractAddressConfig struct {

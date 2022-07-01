@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 	"os/signal"
 
@@ -16,17 +15,16 @@ import (
 
 func main() {
 	utils2.InitLog("./rollup-sync.log")
-	var dbDir = flag.String("dbDir", config.DefaultSyncDbName, "set sync db dir")
-	var deployOnL1Height = flag.Uint64("deployOnL1Height", 0, "set l1 rollup contracts deploy on height for speed up")
-	var minConfirmNum = flag.Uint64("minConfirmNum", 6, "set min l1 confirm block num to avoid l1 chain reorg")
-	flag.Parse()
 	var cfg config.RollupCliConfig
 	utils.Ensure(utils.LoadJsonFile(config.DefaultRollupConfigName, &cfg))
-	db, err := leveldbstore.NewLevelDBStore(*dbDir)
+	db, err := leveldbstore.NewLevelDBStore(cfg.L2DbDir)
 	utils.Ensure(err)
-	client, err := jsonrpc.NewClient(cfg.L1Rpc)
+	l1client, err := jsonrpc.NewClient(cfg.L1Rpc)
 	utils.Ensure(err)
-	syncService := sync_service.NewSyncService(db, client, &cfg, *dbDir, *deployOnL1Height, *minConfirmNum)
+	l2client, err := jsonrpc.NewClient(cfg.L1Rpc)
+	utils.Ensure(err)
+	utils.Ensure(err)
+	syncService := sync_service.NewSyncService(db, l1client, l2client, &cfg)
 	syncService.Start()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
