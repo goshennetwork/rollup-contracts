@@ -9,10 +9,6 @@ async function main() {
     const l1CrossLayerWitness = await upgrades.deployProxy(L1CrossLayerWitness, [addressManager.address]);
     console.log("sent L1CrossLayerWitness deploy tx, %s", l1CrossLayerWitness.deployTransaction.hash);
 
-    const L2CrossLayerWitness = await ethers.getContractFactory("L2CrossLayerWitness");
-    const l2CrossLayerWitness = await upgrades.deployProxy(L2CrossLayerWitness, []);
-    console.log("sent L2CrossLayerWitness deploy tx, %s", l2CrossLayerWitness.deployTransaction.hash);
-
     const TestERC20 = await ethers.getContractFactory("TestERC20");
     let feeToken;
     if (config.feeToken) {
@@ -91,10 +87,10 @@ async function main() {
     await addressManager.setAddress(config.addressName.STATE_TRANSITION, stateTransition.address);
 
     /* wait contracts deployed */
+    await dao.deployed();
+    console.log("dao deployed: %s", challenge.address);
     await l1CrossLayerWitness.deployed();
     console.log("L1CrossLayerWitness deployed: %s", challenge.address);
-    await l2CrossLayerWitness.deployed();
-    console.log("L2CrossLayerWitness deployed: %s", challenge.address);
     await feeToken.deployed();
     console.log("FeeToken deployed: %s", challenge.address);
     await rollupStateChain.deployed();
@@ -119,21 +115,21 @@ async function main() {
     console.log("l1StandardBridge deployed: %s", l1StandardBridge.address);
 
     const addresses = {
-        addressManager: addressManager.address,
-        l1CrossLayerWitness: l1CrossLayerWitness.address,
-        l2CrossLayerWitness: l2CrossLayerWitness.address,
-        feeToken: feeToken.address,
-        rollupStateChain: rollupStateChain.address,
-        challenge: challenge.address,
-        challengeBeacon: challengeBeacon.address,
-        challengeFactory: challengeFactory.address,
-        stakingManager: stakingManager.address,
-        rollupInputChain: rollupInputChain.address,
-        stateStorageContainer: stateStorageContainer.address,
-        inputStorageContainer: inputStorageContainer.address,
-        machineState: machineState.address,
-        stateTransition: inputStorageContainer.address,
-        l1StandardBridge: l1StandardBridge.address,
+        DAO: dao.address,
+        AddressManager: addressManager.address,
+        L1CrossLayerWitness: l1CrossLayerWitness.address,
+        FeeToken: feeToken.address,
+        RollupStateChain: rollupStateChain.address,
+        Challenge: challenge.address,
+        ChallengeBeacon: challengeBeacon.address,
+        ChallengeFactory: challengeFactory.address,
+        StakingManager: stakingManager.address,
+        RollupInputChain: rollupInputChain.address,
+        StateStorageContainer: stateStorageContainer.address,
+        InputStorageContainer: inputStorageContainer.address,
+        MachineState: machineState.address,
+        StateTransition: inputStorageContainer.address,
+        L1StandardBridge: l1StandardBridge.address,
     }
     console.log('contracts deployed', JSON.stringify(addresses));
 }
