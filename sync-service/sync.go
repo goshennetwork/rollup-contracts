@@ -2,6 +2,7 @@ package sync_service
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/laizy/log"
@@ -19,25 +20,31 @@ type SyncService struct {
 	l1client *jsonrpc.Client
 	l2client *jsonrpc.Client
 	db       *store.Storage
-	l1quit   chan struct{}
-	l2quit   chan struct{}
+	quit     chan struct{}
+	wg       sync.WaitGroup
 }
 
 func NewSyncService(diskdb schema.PersistStore,
-	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig) *SyncService {
+	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig, dbdir string) *SyncService {
 	return &SyncService{
-		db:       store.NewStorage(diskdb, cfg.L2DbDir),
+		db:       store.NewStorage(diskdb, dbdir),
 		conf:     cfg,
 		l1client: l1client,
 		l2client: l2client,
-		l1quit:   make(chan struct{}),
-		l2quit:   make(chan struct{}),
+		quit:     make(chan struct{}),
 	}
 }
 
 func (self *SyncService) Start() error {
-	go self.startL1Sync()
-	go self.startL2Sync()
+	self.wg.Add(2)
+	go func() {
+		defer self.wg.Done()
+		self.startL1Sync()
+	}()
+	go func() {
+		defer self.wg.Done()
+		self.startL2Sync()
+	}()
 	return nil
 }
 
@@ -46,7 +53,7 @@ func (self *SyncService) startL2Sync() error {
 	startHeight := lastHeight + 1
 	for {
 		select {
-		case <-self.l2quit:
+		case <-self.quit:
 			return nil
 		default:
 		}
@@ -78,7 +85,7 @@ func (self *SyncService) startL1Sync() error {
 	startHeight := lastHeight + 1
 	for {
 		select {
-		case <-self.l1quit:
+		case <-self.quit:
 			return nil
 		default:
 
@@ -242,8 +249,8 @@ func (self *SyncService) syncL1Bridge(kvdb *store.StorageWriter, startHeight, en
 }
 
 func (self *SyncService) Stop() error {
-	self.l1quit <- struct{}{}
-	self.l2quit <- struct{}{}
+	close(self.quit)
+	self.wg.Wait()
 	return nil
 }
 
