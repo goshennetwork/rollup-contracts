@@ -19,6 +19,7 @@ import (
 
 func main() {
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
+	submit := flag.Bool("submit", false, "whether submit tx to node")
 	flag.Parse()
 	var cfg config.RollupCliConfig
 	utils.Ensure(utils.LoadJsonFile(*cfgName, &cfg))
@@ -31,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	signer := contract.NewSigner(cfg.PrivKey, l1client, chainId.Uint64())
-	signer.Submit = true
+	signer.Submit = *submit
 
 	stakingManager := binding.NewStakingManager(cfg.L1Addresses.StakingManager, l1client)
 	stakingManager.Contract().SetFrom(signer.Address())
