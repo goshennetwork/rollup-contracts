@@ -1,8 +1,12 @@
 require("@nomiclabs/hardhat-waffle");
 require('@openzeppelin/hardhat-upgrades');
+const env = require('./.env.json');
+
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
+
+const PRIV_1 = env.PRIVATE_KEY_1;
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -15,6 +19,21 @@ module.exports = {
                 enabled: true,
                 runs: 999999
             }
+        }
+    },
+    metadata: {
+        // do not include the metadata hash, since this is machine dependent
+        // and we want all generated code to be deterministic
+        // https://docs.soliditylang.org/en/v0.8.6/metadata.html
+        bytecodeHash: 'none'
+    },
+    networks: {
+        hardhat: {
+            allowUnlimitedContractSize: false
+        },
+        testnet: {
+            url: 'http://172.168.3.70:8501',
+            accounts: [`0x${PRIV_1}`]
         }
     }
 };
