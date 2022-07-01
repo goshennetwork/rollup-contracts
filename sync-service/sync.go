@@ -46,31 +46,30 @@ func (self *SyncService) startL2Sync() error {
 	startHeight := lastHeight + 1
 	for {
 		select {
-		case <-self.l1quit:
+		case <-self.l2quit:
 			return nil
 		default:
-
 		}
 		l2Height, err := self.l2client.Eth().BlockNumber()
 		if err != nil {
-			log.Warnf("get block number error: %s", err)
+			log.Warnf("l2 get block number error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		endHeight, err := CalcEndBlock(startHeight, l2Height)
 		if err != nil {
-			log.Warnf("Input sync service: %s", err)
+			log.Warnf("l2 sync service: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		err = self.syncL2Contracts(startHeight, endHeight)
 		if err != nil {
-			log.Warnf("sync error: %s", err)
+			log.Warnf("l2 sync error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		startHeight = endHeight + 1
-		log.Debugf("input sync to :%d", endHeight)
+		log.Debugf("l2 sync to :%d", endHeight)
 	}
 }
 
@@ -89,30 +88,30 @@ func (self *SyncService) startL1Sync() error {
 		}
 		l1Height, err := self.l1client.Eth().BlockNumber()
 		if err != nil {
-			log.Warnf("get block number error: %s", err)
+			log.Warnf("l1 get block number error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		if l1Height > self.conf.MinConfirmBlockNum {
 			l1Height -= self.conf.MinConfirmBlockNum
 		} else {
-			log.Warn("block too low")
+			log.Warn("l1 block too low")
 			continue
 		}
 		endHeight, err := CalcEndBlock(startHeight, l1Height)
 		if err != nil {
-			log.Warnf("Input sync service: %s", err)
+			log.Warnf("l1 sync service: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		err = self.syncL1Contracts(startHeight, endHeight)
 		if err != nil {
-			log.Warnf("sync error: %s", err)
+			log.Warnf("l1 sync error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
 		startHeight = endHeight + 1
-		log.Debugf("input sync to :%d", endHeight)
+		log.Debugf("l1 sync to :%d", endHeight)
 	}
 }
 
