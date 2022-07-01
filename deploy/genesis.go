@@ -64,7 +64,6 @@ func getContractData(statedb *storage.StateDB, address web3.Address) *GenesisAcc
 	return fee
 }
 
-// TODO: remove this after mainnet launch
 func setBalanceForBuiltins(genesisAccts map[web3.Address]*GenesisAccount) {
 	builtin := web3.Address{}
 	for i := 0; i < 256; i++ {

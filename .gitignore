@@ -16,3 +16,4 @@ isa/
 # upgrades record for local devnet
 .openzeppelin/unknown-31337.json
 /build
+.env.json
