@@ -80,25 +80,6 @@ func (_a *RollupInputChain) INITIALENQUEUENONCE(block ...web3.BlockNumber) (retv
 	return
 }
 
-// INTRINSICGASFACTOR calls the INTRINSIC_GAS_FACTOR method in the solidity contract
-func (_a *RollupInputChain) INTRINSICGASFACTOR(block ...web3.BlockNumber) (retval0 uint64, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("INTRINSIC_GAS_FACTOR", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // MAXENQUEUETXSIZE calls the MAX_ENQUEUE_TX_SIZE method in the solidity contract
 func (_a *RollupInputChain) MAXENQUEUETXSIZE(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
