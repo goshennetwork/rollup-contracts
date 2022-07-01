@@ -14,7 +14,7 @@ import "../libraries/UnsafeSign.sol";
 
 
 contract TestRollupInputChain is TestBase,RollupInputChain {
-    address testAddress = address(0x8888);
+    address testAddress = address(0x8888);//admain
     address testAddress2 = address(0x9999);
 
     function setUp() public {
@@ -31,59 +31,80 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
 /*1.Test Fail*/
 
     //test  if{}  when (msg.sender == Constants.L1_CROSS_LAYER_WITNESS) , revert:"malicious sender"
-    function testFail_if_L1Witness_Enqueue() public {
-        // address l1witness = addressManager.resolve(AddressName.L1_CROSS_LAYER_WITNESS);
-        address l1witness2 = 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf ;
+    function testEnqueueWithWitnessSender() public {
+        address l1witness2 = Constants.L1_CROSS_LAYER_WITNESS ;
+        uint64 pendingNonce = rollupInputChain.getNonceByAddress(l1witness2);
+        uint64 passV = 36 + 2*rollupInputChain.l2ChainID();
+        uint64 passGasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
+
         vm.startPrank(l1witness2,l1witness2);
-        rollupInputChain.enqueue(address(1),10000000,bytes("0x100"),100,1,1,1);
+        vm.expectRevert("malicious sender");
+        rollupInputChain.enqueue(address(1),passGasLimit,bytes("0x100"),pendingNonce,1,1,passV);
         vm.stopPrank();
     }
 
 
     //test if{}  when (_nonce != pendingNonce) revert("wrong nonce")
-    function testFail_if_pendingNonce_Enqueue() public {
-        vm.startPrank(testAddress,testAddress);
+    function testEnqueueWithWrongNonce() public {
+        uint64 passV = 36 + 2*rollupInputChain.l2ChainID();
+        uint64 passGasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
         uint64 pendingNonce = rollupInputChain.getNonceByAddress(testAddress) + 1;
-        rollupInputChain.enqueue(address(1),10000000,bytes("0x0"),pendingNonce,1,1,3000);
+
+        vm.startPrank(testAddress,testAddress);
+        vm.expectRevert("wrong nonce");
+        rollupInputChain.enqueue(address(1),passGasLimit,bytes("0x0"),pendingNonce,1,1,passV);
         vm.stopPrank();
     }
 
     //test if-else： else{}: when (msg.sender != l1CrossLayerWitness) 
     //                      revert("contract can not enqueue L2 Tx")
-    function testFail_else_Nol1CrossLayerWitness_Enqueue() public {        
+    function testEnqueueWithContractSender() public {        
+        uint64 passV = 36 + 2*rollupInputChain.l2ChainID();
+        uint64 passGasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
+        uint64 pendingNonce = rollupInputChain.getNonceByAddress(testAddress);
+
         vm.startPrank(testAddress);
-        rollupInputChain.enqueue(address(1),10000000,bytes("0x0"),100,1,1,3000);
+        vm.expectRevert("contract can not enqueue L2 Tx");
+        rollupInputChain.enqueue(address(1),passGasLimit,bytes("0x0"),pendingNonce,1,1,passV);
         vm.stopPrank();
     }
 
     //test gasLimit toohigh
     // when (_gasLimit > maxEnqueueTxGasLimit)  revert("too high Tx gas limit")         
-    function testFail_gasLimitTooHigh_Enqueue() public {        
+    function testEnqueueWithTooHighGasLimit() public {        
+        uint64 passV = 36 + 2*rollupInputChain.l2ChainID();
+        uint64 allowedNonce = rollupInputChain.getNonceByAddress(testAddress);
         uint64 highGasLimit = rollupInputChain.maxEnqueueTxGasLimit() + uint64(100) ;
-        uint64 allowedNonce = getNonceByAddress(testAddress);
+
         vm.startPrank(testAddress,testAddress);
-        rollupInputChain.enqueue(address(1),highGasLimit,bytes("0x0"),allowedNonce,1,1,3000);
+        vm.expectRevert("too high Tx gas limit");
+        rollupInputChain.enqueue(address(1),highGasLimit,bytes("0x0"),allowedNonce,1,1,passV);
         vm.stopPrank();
     }
 
     //test gasLimit toolow
     // when (_gasLimit < MIN_ENQUEUE_TX_GAS )  revert("too low Tx gas limit")         
-    function testFail_gasLimitToolow_Enqueue() public {        
+    function testEnqueueWithToolowGasLimit() public {       
+        uint64 passV = 36 + 2*rollupInputChain.l2ChainID();
+        uint64 allowedNonce = rollupInputChain.getNonceByAddress(testAddress);
         uint64 mingasLimit = uint64(MIN_ENQUEUE_TX_GAS) - 10 ;
-        uint64 pendingNonce = getNonceByAddress(testAddress);
+
         vm.startPrank(testAddress,testAddress);
-        rollupInputChain.enqueue(address(1),mingasLimit,bytes("0x0"),pendingNonce,1,1,3000);
+        vm.expectRevert("too low Tx gas limit");
+        rollupInputChain.enqueue(address(1),mingasLimit,bytes("0x0"),allowedNonce,1,1,passV);
         vm.stopPrank();
     }
 
     //test v of (r,s,v)
     // when (_pureV > 28)  revert ("invalid v")
     // invalidV must (> 36 + 2*l2ChainID )
-    function testFail_invalidV_Enqueue() public {        
+    function testEnqueueWithinvalidV() public {        
         uint64 gasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
         uint64 pendingNonce = getNonceByAddress(testAddress);
         uint64 invalidV = 37 + 2 *(rollupInputChain.l2ChainID());
+
         vm.startPrank(testAddress,testAddress);
+        vm.expectRevert("invalid v");
         rollupInputChain.enqueue(address(1),gasLimit,bytes("0x0"),pendingNonce,1,1,invalidV);
         vm.stopPrank();
     }
@@ -91,27 +112,30 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
     //test wrong sign
     // when  sender != ecrecover(_signTxHash, uint8(_pureV), bytes32(r), bytes32(s)
     // revert ("wrong sign")
-    function testFail_invalidSign_Enqueue() public {        
+    function testEnqueueWithInvalidSign() public {        
         uint64 gasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
         uint64 pendingNonce = getNonceByAddress(testAddress);
         uint64 allowedV = 36 + 2 *(rollupInputChain.l2ChainID());
+
         vm.startPrank(testAddress,testAddress);
+        vm.expectRevert("wrong sign");
         rollupInputChain.enqueue(address(1),gasLimit,bytes("0x0"),pendingNonce,1,1,allowedV);
         vm.stopPrank();
     }
 
     //Test Fail() if{msg.sender == tx.origin}  
     // when _rlpTx.length > _maxTxSize  ; revert ("too large tx data size")
-    function testFail_dataTooLarge_Enqueue() public {
+    function testEnqueueWithTooLargeData() public {
         uint64 pendingNonce = 1 << 63;//when initialize ; pendingNonce always 2^63
         uint64 gasLimit = uint64(MIN_ENQUEUE_TX_GAS) + 10 ;
         uint64 allowedV = 36 + 2 *(rollupInputChain.l2ChainID());
-
         bytes memory data = new bytes(50002);
         address a = 0x576Dacb2e7Cb8DADbd9665CA9e62107AdD049EB0 ;
         uint r = 1;
         uint s = 1;
+
         vm.startPrank(a,a);
+        vm.expectRevert("too large tx data size");
         rollupInputChain.enqueue(address(1),gasLimit,data,pendingNonce,r,s,allowedV);
         vm.stopPrank();
     }
@@ -121,7 +145,7 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
     
     // if{msg.sender == tx.origin}  enqueue tx*2  
     // test queue.length  &&  queue.context{timestamp + transactionHash} && emit event
-    function test_if_Enqueue() public {
+    function testSenderEnqueueTwoTx() public {
         address SENDER = UnsafeSign.G2ADDR ;
         bytes32  Rlptx0 ;
         bytes32  Rlptx1 ;
@@ -144,7 +168,7 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
         require(Rlptx1 == aa , "queue[1] storage transactionHash different");
         vm.stopPrank();
     }
-    //helper function1  + test emit event
+    //helper function1  & test emit event
     // when if-else: if{}: {msg.sender == tx.origin}
     // input data , enqueue rollupInputChian
     function enqueue1(bytes memory _data) public returns(bytes32  ) {
@@ -174,10 +198,10 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
         return keccak256(rlpTx) ;
     }
 
-    // Test Enqueue() 
+    // Test L1witness Enqueue() 
     // if-else: else {}:  {msg.sender == l1CrossLayerWitness()}  enqueue tx*2  
     // test queue.length  &&  queue.context{timestamp + transactionHash} && emit event
-    function test_else_Enqueue() public {
+    function testL1witnessEnqueueTwoTx() public {
         bytes32  Rlptx0 ;
         bytes32  Rlptx1 ;
         vm.startPrank(address(l1CrossLayerWitness) ,testAddress);
@@ -204,8 +228,6 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
     // input data , enqueue rollupInputChian
     function enqueue2(bytes memory _data) public returns(bytes32) {
         address sender = Constants.L1_CROSS_LAYER_WITNESS;
-        // console.log("sender");
-        // console.log(sender);
         uint64 pendingNonce  = rollupInputChain.getNonceByAddress(sender);
         uint64 GasLimit = rollupInputChain.maxWitnessTxExecGasLimit() + uint64(16 * INTRINSIC_GAS_FACTOR * _data.length);
         uint256 Gasprice = 0 ;
@@ -232,60 +254,291 @@ contract TestRollupInputChain is TestBase,RollupInputChain {
 //Test appendBatch
 /**1.Test Fail**/
 
-    //test msg.sender
+    //test Fail msg.sender
     // when  sender != sequencerWhitelist
     // revert ("only sequencer")
-    function testFail_NotSequencer_appendBatch() public {        
+    function testAppendBatchNotSequencer() public {        
         vm.startPrank(testAddress2,testAddress2);
+        vm.expectRevert("only sequencer");
         rollupInputChain.appendBatch();
         vm.stopPrank();
     }
 
-    //test sequencer staking
+    //test Fail sequencer staking
     // when  isStaking(msg.sender)  ==  false
     // revert ("Sequencer should be staking")
-    function testFail_NoStaking_appendBatch() public {        
+    function testAppendBatchSequencerNoStaking() public {        
         vm.startPrank(testAddress);
         dao.setSequencerWhitelist(testAddress2, true);
         vm.stopPrank();
         vm.startPrank(testAddress2);
+        vm.expectRevert("Sequencer should be staking");
         rollupInputChain.appendBatch();
         vm.stopPrank();
     }
 
 
-    //test msg.data.length
+    //test Fail msg.data.length
     // when  msg.data.length < 36
     // revert ("wrong len")
-    function testFail_dataLength_appendBatch() public {        
+    function testAppendWrongBatchDataLength() public {        
         vm.startPrank(testAddress);
-        helpCall(address(rollupInputChain));
+        vm.expectRevert("wrong len");
+        helpCall(address(rollupInputChain),bytes("0x0"));
         vm.stopPrank();
     }
-    function helpCall(address _rollupInputChain) public {
+    function helpCall(address _rollupInputChain,bytes memory _data) public {
         (bool success, )= _rollupInputChain.call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"),bytes("0x0"))
+            abi.encodePacked(abi.encodeWithSignature("appendBatch()"),_data)
         ) ;
         require(success , "call failed") ;
     }
     
 
-    //test _batchIndex
+    //test Fail _batchIndex
     // when  _batchIndex != chainHeight()
     // revert ("wrong batch index")
-    function testFail_batchIndex_appendBatch() public {        
+    function testAppendBatchWrongBatchIndex() public {        
         vm.startPrank(testAddress);
-        helpCall2(address(rollupInputChain));
+        uint64 invalidIndex = rollupInputChain.chainHeight() + 10 ;
+        vm.expectRevert("wrong batch index");    
+        fakeAppendBatch(invalidIndex,0,1,1,0,bytes("0x0"));
         vm.stopPrank();
     }
-    function helpCall2(address _rollupInputChain) public {
-        (bool success, )= _rollupInputChain.call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"),bytes("0x000000010000000000000000000000000000"))
-        ) ;
-        require(success , "call failed") ;
+
+
+    //test Fail _queueStartIndex
+    // when  _queueStartIndex != pendingQueueIndex
+    // revert ("incorrect pending queue index")
+    function testAppendBatchQueueStartIndex() public {
+        vm.startPrank(testAddress);
+        vm.expectRevert("incorrect pending queue index");
+        fakeAppendBatch(0,0,1,1,0,bytes("0x0"));//it will always work
+        vm.stopPrank();
+    }
+
+    //helper function: encode calldata to appendBatch()
+    function fakeAppendBatch(uint64 _batchIndex,uint64 _queueNum,uint64 _queueStartIndex, uint64 batchNum,uint64 _time0Start, bytes memory data) internal {
+        // now support at least one sub batch
+        uint64 batchIndex = _batchIndex;
+        uint64 queueNum = _queueNum;
+        uint64 pendingQueueIndex = _queueStartIndex;
+        uint64 subBatchNum = batchNum;//all batch num
+        uint64 time0Start = _time0Start;
+        uint32[] memory timeDiff;
+        bytes memory _info;
+        if(batchNum == 0){
+            timeDiff = new uint32[](0);
+            _info = abi.encodePacked(
+            batchIndex,
+            queueNum,
+            pendingQueueIndex,
+            subBatchNum);
+        }else{
+            timeDiff = new uint32[](batchNum - 1);//alwayes length = batchNum -1
+            _info = abi.encodePacked(
+            batchIndex,
+            queueNum,
+            pendingQueueIndex,
+            subBatchNum,
+            time0Start,
+            timeDiff,
+            data);
+        }
+        (bool success, ) = address(rollupInputChain).call(
+            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+        );
+        require(success, "failed");
+    }
+
+    //test Fail _nextPendingQueueIndex
+    // when _nextPendingQueueIndex(queueStart + queueNum) > queuedTxInfos.length
+    // revert ("attempt to append unavailable queue")
+    function testAppendBatchInvalidNextPendingQueueIndex() public {
+        vm.startPrank(testAddress);
+        vm.expectRevert("attempt to append unavailable queue");
+        fakeAppendBatch(0,1,0,1,0,bytes("0x0"));
+        vm.stopPrank();
     }
 
 
+    //test Fail _queueNum
+    // when _queueNum <= 0
+    // revert ("nothing to append")
+    function testAppendBatchInvalidQueueNum() public {
+        vm.startPrank(testAddress);
+        vm.expectRevert("nothing to append");
+        fakeAppendBatch(0,0,0,0,0,bytes("0x0"));
+        vm.stopPrank();
+    }
 
+    //test Fail msg.data.length
+    // when msg.data.length != _batchDataPos
+    // revert ("wrong calldata")
+    function testAppendBatchInvalidMsgdataLength() public {
+        //enqueue
+        vm.startPrank(address(l1CrossLayerWitness) ,testAddress);
+        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
+        vm.stopPrank();
+
+        vm.startPrank(testAddress);
+        bytes memory data = new bytes(502);//because _batchDataPos always change, 502 will cover almost all
+        uint64 batchIndex = 0;
+        uint64 queueNum = 1;
+        uint64 pendingQueueIndex = 0;
+        uint64 subBatchNum = 0;
+        uint64 time0Start = 0;
+        uint32[] memory timeDiff = new uint32[](0);
+        bytes memory _info = abi.encodePacked(
+            batchIndex,
+            queueNum,
+            pendingQueueIndex,
+            subBatchNum,
+            time0Start,
+            timeDiff,
+            data
+        );
+        vm.expectRevert("wrong calldata");
+        (bool success, ) = address(rollupInputChain).call(
+            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+        );
+        require(success, "failed"); 
+        vm.stopPrank();
+    }
+
+    //test Fail _timestamp
+    // when _timestamp < lastTimestamp
+    // revert ("wrong batch timestamp")
+    //---- we do : enqueue*2 -->  AppendBatch(queue(1)) ---> lastTimestamp = 2 
+    //--->AppendBatch(queue(1)) & timeStamp == 0 ---> ("wrong batch timestamp")
+    function testAppendBatchInvalidTimestamp() public {
+        //enqueue
+        vm.startPrank(address(l1CrossLayerWitness) ,testAddress);
+        vm.warp(2);
+        bytes32 Rlptx0 = enqueue2(bytes("0x0"));     
+        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        vm.stopPrank();
+
+        vm.startPrank(testAddress);
+        fakeAppendBatch(0,1,0,1,0,bytes("0x0"));
+        vm.expectRevert("wrong batch timestamp");
+        fakeAppendBatch(1,1,1,1,0,bytes("0x0"));//This situation can work in many occasions
+        vm.stopPrank();
+    }
+
+    //test Fail _timestamp
+    // when _timestamp > _nextTimestamp
+    // revert ("last batch timestamp too high")
+    function testAppendBatchTooHighTimestamp() public {
+        vm.startPrank(testAddress);
+        uint64 time = uint64(block.timestamp) + 10;
+        vm.expectRevert("last batch timestamp too high");
+        fakeAppendBatch(0,0,0,1,time,bytes("0x0"));
+        vm.stopPrank();
+    }
+
+// Test AppendBatch() 
+/*2.Test pass*/
+
+    //test event AppendBatch if batchNum == 0
+    function testAppendBatchIfBatchnumEqual0() public {
+        //enqueue rollupInputChain Contract
+        vm.startPrank(address(l1CrossLayerWitness) ,testAddress);
+        bytes32 Rlptx0 = enqueue2(bytes("0x0"));     
+        bytes32 Rlptx1 = enqueue2(bytes("0x0"));
+        vm.stopPrank();
+
+        vm.startPrank(testAddress);
+        bytes32 _queueHashes = getrollupInputChainQueueHash(0, 1);
+        bytes memory info = getinfo(0,1,0,0,0,"") ;
+        bytes32 inputhash  = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
+        //test eventEmit
+        vm.expectEmit(true , true , false , true);
+        emit TransactionAppended(testAddress,0,0,1,inputhash);
+        fakeAppendBatch(0,1,0,0,0,"");
+        vm.stopPrank();
+    }
+
+    // help function : get queuehash in rollupInputChain-Contract
+    function getrollupInputChainQueueHash(uint64 _queueStartIndex, uint64 _queueNum) internal view returns (bytes32) {
+        uint256 len = (32 + 8) * _queueNum;
+        bytes memory _queueHash = new bytes(len);
+        uint64 _offset = 0;
+        for (uint64 i = 0; i < _queueNum; i++) {
+            (bytes32 queuehash , uint64 queuetime) =   rollupInputChain.getQueueTxInfo(_queueStartIndex + i); 
+            QueueTxInfo memory info = QueueTxInfo(queuehash , queuetime) ; 
+            bytes32 txHash = info.transactionHash;
+            bytes32 time = bytes32(uint256(info.timestamp) << 192);
+            assembly {
+                let ptr := add(_queueHash, _offset)
+                mstore(ptr, txHash)
+                ptr := add(ptr, 32)
+                // @notice we reuse _queueHash's the first 32 byte length bits, so no overflow
+                mstore(ptr, time)
+            }
+            _offset += 40;
+        }
+        // @notice we reuse _queueHash's length, so can not use keccak256(_queueHash)
+        bytes32 result;
+        assembly {
+            result := keccak256(_queueHash, len)
+        }
+        return result;
+    }
+
+
+    //helper function: get Inputhash
+    //Only in this case, the function name is not required
+    function getinfo(uint64 _batchIndex,uint64 _queueNum,uint64 _queueStartIndex, uint64 batchNum,uint64 _time0Start, bytes memory data) 
+    internal returns(bytes memory){
+        uint64 batchIndex = _batchIndex;
+        uint64 queueNum = _queueNum;
+        uint64 pendingQueueIndex = _queueStartIndex;
+        uint64 subBatchNum = batchNum;
+        uint64 time0Start = _time0Start;
+        uint32[] memory timeDiff;
+        bytes memory _info;
+        if(batchNum == 0){
+            timeDiff = new uint32[](0);
+            _info = abi.encodePacked(
+            queueNum,
+            pendingQueueIndex,
+            subBatchNum
+        );
+        }else{
+            timeDiff = new uint32[](batchNum - 1);
+            _info = abi.encodePacked(
+            queueNum,
+            pendingQueueIndex,
+            subBatchNum,
+            time0Start,
+            timeDiff,
+            data
+        );
+        }
+        return _info;
+    }
+
+    // test event AppendBatch if batchNum != 0
+    // appendBatch*2
+    function testAppendBatchIfBatchnumBiggerThan0() public {
+        //enqueue
+        vm.startPrank(address(l1CrossLayerWitness) ,testAddress);
+        vm.warp(2);
+        bytes32 Rlptx0 = enqueue2(bytes("0x0"));     
+        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        vm.stopPrank();
+
+        vm.startPrank(testAddress);
+        fakeAppendBatch(0,1,0,1,0,bytes("0x0"));
+
+        bytes32 _queueHashes = getrollupInputChainQueueHash(1, 1);
+        bytes memory info = getinfo(1,1,1,1,2,bytes("0x0")) ;      
+        bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
+        vm.expectEmit(true , true , false , true);
+        emit TransactionAppended(testAddress,1,1,1,inputhash);
+        fakeAppendBatch(1,1,1,1,2,bytes("0x0"));//it will always work
+        vm.stopPrank();
+    }
 
 }
