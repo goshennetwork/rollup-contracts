@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/erc20"
+
 	"github.com/laizy/log"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/gateway"
@@ -24,6 +26,7 @@ func main() {
 			messaging.CrossLayerWitnessCommand(),
 			staking.StakingCommand(),
 			genesis.GenesisCommand(),
+			erc20.ERC20Cmd(),
 		},
 	}
 
