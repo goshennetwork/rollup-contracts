@@ -27,7 +27,7 @@ func NewStorage(diskdb schema.PersistStore, dbPath string) *Storage {
 	}
 	l1TreeSize, l1Hashes, err := writer.GetL1CompactMerkleTree()
 	utils.Ensure(err)
-	l2TreeSize, l2Hashes, err := writer.GetL1CompactMerkleTree()
+	l2TreeSize, l2Hashes, err := writer.GetL2CompactMerkleTree()
 	utils.Ensure(err)
 	l1FileHashStore, err := merkle.NewFileHashStore(dbPath+string(filepath.Separator)+config.DefaultL1MMRFile, l1TreeSize)
 	utils.Ensure(err)
