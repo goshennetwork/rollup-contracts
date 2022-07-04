@@ -82,44 +82,49 @@ func (self *UploadBackend) runStateTask() {
 	defer ticker.Stop()
 
 loop:
-	for range ticker.C {
-		clientInfo, err := self.l2client.L2().GlobalInfo()
-		if err != nil {
-			log.Error("get global info", "err", err)
-			continue
-		}
-		l1StateNum, err := self.stateChain.TotalSubmittedState()
-		if err != nil {
-			log.Error("get l1 total submitted state", "err", err)
-			continue
-		}
-		if clientInfo.L2CheckedBatchNum <= l1StateNum {
-			log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", clientInfo.L2CheckedBatchNum)
-			continue
-		}
-		num := clientInfo.L2CheckedBatchNum - l1StateNum
-		if num > 512 { // limit num
-			num = 512
-		}
-		pendingStates := make([][32]byte, num)
-
-		for i, _ := range pendingStates {
-			index := l1StateNum + uint64(i)
-			l2State, err := self.l2client.L2().GetRollupStateHash(index)
+	for {
+		select {
+		case <-self.quit:
+			return
+		case <-ticker.C:
+			clientInfo, err := self.l2client.L2().GlobalInfo()
 			if err != nil {
-				log.Error("get state", "err", err)
-				continue loop
+				log.Error("get global info", "err", err)
+				continue
 			}
-			if bytes.Equal(l2State.Bytes(), web3.Hash{}.Bytes()) {
-				log.Warn("empty hash found", "batchIndex", index)
-				continue loop
+			l1StateNum, err := self.stateChain.TotalSubmittedState()
+			if err != nil {
+				log.Error("get l1 total submitted state", "err", err)
+				continue
 			}
-			pendingStates[i] = l2State
-		}
-		log.Info("try to append state...", "start", l1StateNum, "end", clientInfo.L2CheckedBatchNum-1)
-		receipt := self.stateChain.AppendStateBatch(pendingStates, l1StateNum).Sign(self.signer).SendTransaction(self.signer)
-		if receipt.IsReverted() {
-			log.Error("append state batch failed", "start", l1StateNum)
+			if clientInfo.L2CheckedBatchNum <= l1StateNum {
+				log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", clientInfo.L2CheckedBatchNum)
+				continue
+			}
+			num := clientInfo.L2CheckedBatchNum - l1StateNum
+			if num > 512 { // limit num
+				num = 512
+			}
+			pendingStates := make([][32]byte, num)
+
+			for i, _ := range pendingStates {
+				index := l1StateNum + uint64(i)
+				l2State, err := self.l2client.L2().GetRollupStateHash(index)
+				if err != nil {
+					log.Error("get state", "err", err)
+					continue loop
+				}
+				if bytes.Equal(l2State.Bytes(), web3.Hash{}.Bytes()) {
+					log.Warn("empty hash found", "batchIndex", index)
+					continue loop
+				}
+				pendingStates[i] = l2State
+			}
+			log.Info("try to append state...", "start", l1StateNum, "end", clientInfo.L2CheckedBatchNum-1)
+			receipt := self.stateChain.AppendStateBatch(pendingStates, l1StateNum).Sign(self.signer).SendTransaction(self.signer)
+			if receipt.IsReverted() {
+				log.Error("append state batch failed", "start", l1StateNum)
+			}
 		}
 	}
 
@@ -129,11 +134,11 @@ loop:
 func (self *UploadBackend) runTxTask() {
 	timer := time.NewTimer(0)
 	defer timer.Stop()
-	for range timer.C {
+	for {
 		select {
 		case <-self.quit:
 			return
-		default:
+		case <-timer.C:
 			timer.Reset(time.Duration(self.handle()))
 		}
 	}
@@ -210,7 +215,7 @@ func (self *UploadBackend) handle() (interval int64) {
 }
 
 func (self *UploadBackend) Stop() error {
-	self.quit <- struct{}{}
+	close(self.quit)
 	return nil
 }
 
