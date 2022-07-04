@@ -13,7 +13,7 @@ import "../libraries/RLPWriter.sol";
 import "../libraries/UnsafeSign.sol";
 
 contract TestRollupInputChain is TestBase, RollupInputChain {
-    address testAddress = address(0x8888); //admain
+    address testAddress = address(0x8888); //admin
     address testAddress2 = address(0x9999);
 
     function setUp() public {

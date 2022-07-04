@@ -11,7 +11,7 @@ import "./ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
 
 contract TestRollupStateChain is TestBase {
-    address sender = address(0x7777); //admain
+    address sender = address(0x7777); //admin
     address testAddress = address(0x8888);
     event StateBatchAppended(
         address indexed _proposer,
@@ -74,7 +74,7 @@ contract TestRollupStateChain is TestBase {
     }
 
     // test stateChian.length + _blockHashes.length >  inputChain.length
-    function testAppendExceedInputChian() public {
+    function testAppendExceedInputChain() public {
         vm.startPrank(address(rollupInputChain));
         addressManager.rollupInputChainContainer().append(bytes32(0));
         addressManager.rollupInputChainContainer().append(bytes32(0));
