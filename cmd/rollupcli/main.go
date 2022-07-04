@@ -3,12 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/dao"
-
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/erc20"
-
 	"github.com/laizy/log"
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/dao"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/erc20"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/gateway"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/genesis"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/messaging"
