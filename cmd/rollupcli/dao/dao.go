@@ -25,7 +25,7 @@ func SubCommand() []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:  "sequencerWhitelist",
-			Usage: "transfer erc20  from privKey's account  to addr2",
+			Usage: "set sequencer whitelist",
 			Flags: []cli.Flag{
 				flags.AccountFlag,
 				flags.EnabledFlag,

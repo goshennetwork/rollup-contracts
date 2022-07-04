@@ -4,7 +4,7 @@ import "github.com/urfave/cli/v2"
 
 var AmountFlag = &cli.Float64Flag{
 	Name:     "amount",
-	Usage:    "amount in decimal, support float value",
+	Usage:    "amount in token decimal, support float value",
 	Required: true,
 }
 
