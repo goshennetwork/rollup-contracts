@@ -1,11 +1,11 @@
 package erc20
 
 import (
+	"github.com/laizy/web3/contract/builtin/erc20"
+
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
-	"github.com/laizy/web3/utils/u256"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/urfave/cli/v2"
@@ -46,14 +46,14 @@ func transferErc20(ctx *cli.Context) error {
 	amount := ctx.Float64(flags.AmountFlag.Name)
 	submit := ctx.Bool(flags.SubmitFlag.Name)
 	signer.Submit = submit
-	erc20 := binding.NewERC20(conf.L1Addresses.FeeToken, signer.Client)
+	erc20 := erc20.NewERC20(conf.L1Addresses.FeeToken, signer.Client)
 	erc20.Contract().SetFrom(signer.Address())
-	decimal, err := erc20.Decimals(web3.Latest)
-	if err != nil {
-		return err
-	}
-	depositAmt := u256.New(uint64(amount * 1e9)).Mul(u256.New(1).ExpUint8(decimal)).Div(uint64(1e9))
-	receipt := erc20.Transfer(web3.HexToAddress(to), depositAmt.ToBigInt()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	depositAmt := erc20.AmountFloatWithDecimals(amount)
+	receipt := erc20.Transfer(web3.HexToAddress(to), depositAmt).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("transfer erc20 to %s: %s", to, utils.JsonString(receipt.Thin()))
+	balance, err := erc20.BalanceOf(web3.HexToAddress(to), web3.Latest)
+	utils.Ensure(err)
+	log.Infof("target balance : %s", balance.String())
+
 	return nil
 }

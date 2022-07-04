@@ -75,13 +75,7 @@ func DepositERC20Cmd(ctx *cli.Context) error {
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 
 	l1Tok := erc20.NewERC20(web3.HexToAddress(l1Token), signer.Client)
-	decimal, err := l1Tok.Decimals(web3.Latest)
-	if err != nil {
-		return err
-	}
-
-	depositAmt := u256.New(uint64(amount * 1e9)).Mul(u256.New(1).ExpUint8(decimal)).Div(uint64(1e9))
-
+	depositAmt := u256.New(l1Tok.AmountFloatWithDecimals(amount))
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
@@ -102,7 +96,6 @@ func DepositEthCmd(ctx *cli.Context) error {
 		to = signer.Address().String()
 	}
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
-
 	depositAmt := u256.New(uint64(amount * 1e9)).Mul(web3.Ether(1)).Div(uint64(1e9))
 
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
@@ -127,11 +120,7 @@ func WithdrawToERC20Cmd(ctx *cli.Context) error {
 	}
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 	l2Tok := erc20.NewERC20(web3.HexToAddress(l2Token), signer.Client)
-	decimal, err := l2Tok.Decimals(web3.Latest)
-	if err != nil {
-		return err
-	}
-	withDrawAmt := u256.New(uint64(amount * 1e9)).Mul(u256.New(10).ExpUint8(decimal)).Div(uint64(1e9))
+	withDrawAmt := u256.New(l2Tok.AmountFloatWithDecimals(amount))
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
