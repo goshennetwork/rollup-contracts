@@ -2,6 +2,8 @@
   "L1Rpc":       "http://127.0.0.1:8545/",
   "L2Rpc":       "http://127.0.0.1:8545",
   "PrivKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+  "DeployOnL1Height":   0,
+  "MinConfirmBlockNum": 6,
   "L1Addresses": {
     "AddressManager": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
     "InputChainStorage": "0xdc64a140aa3e981100a9beca4e685f962f0cf6c9",
