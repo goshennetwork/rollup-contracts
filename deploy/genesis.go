@@ -11,6 +11,7 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common/hexutil"
 	"github.com/laizy/web3/utils/u256"
+	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
@@ -26,15 +27,13 @@ func BuildL2GenesisData(cfg *config.L2GenesisConfig, l1TokenBridge web3.Address)
 	setBalanceForBuiltins(genesisAccts)
 	privKey := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	signer, local := SetupLocalSigner(0, privKey)
-
-	collector := DeployL2FeeCollector(signer, cfg.FeeCollectorOwner)
-	witness, witnessLogic := DeployL2CrossLayerWitness(signer, cfg.ProxyAdmin)
-	bridge, bridgeLogic := DeployL2TokenBridge(signer, cfg.ProxyAdmin)
-	r := bridge.Initialize(witness.Contract().Addr(), l1TokenBridge).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(r.Status == 1)
-
 	overlay := local.Executor.OverlayDB
 	statedb := storage.NewStateDB(storage.NewCacheDB(overlay))
+	prepareLogic(statedb, signer, cfg.L2CrossLayerWitnessLogic, cfg.L2StandardBridgeLogic)
+	collector := DeployL2FeeCollector(signer, cfg.FeeCollectorOwner)
+	witness, witnessLogic := DeployL2CrossLayerWitness(signer, cfg.ProxyAdmin, &cfg.L2CrossLayerWitnessLogic)
+	bridge, bridgeLogic := DeployL2TokenBridge(signer, cfg.ProxyAdmin, &cfg.L2StandardBridgeLogic)
+	bridge.Initialize(cfg.L2CrossLayerWitness, l1TokenBridge).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	genesisAccts[cfg.L2FeeCollector] = getContractData(statedb, collector.Contract().Addr())
 	genesisAccts[cfg.L2CrossLayerWitness] = getContractData(statedb, witness.Contract().Addr())
 	genesisAccts[cfg.L2CrossLayerWitnessLogic] = getContractData(statedb, witnessLogic.Contract().Addr())
@@ -46,6 +45,17 @@ func BuildL2GenesisData(cfg *config.L2GenesisConfig, l1TokenBridge web3.Address)
 	}
 
 	return genesisAccts
+}
+
+func prepareLogic(statedb *storage.StateDB, signer *contract.Signer, l2CrossLayerWitnessLogic, l2BridgeLogic web3.Address) {
+	w := binding.DeployL2CrossLayerWitness(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert().ContractAddress
+	b := binding.DeployL2StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert().ContractAddress
+
+	wdata := getContractData(statedb, w)
+	bdata := getContractData(statedb, b)
+	statedb.SetCode(l2CrossLayerWitnessLogic, wdata.Code)
+	statedb.SetCode(l2BridgeLogic, bdata.Code)
+	statedb.Commit()
 }
 
 func getContractData(statedb *storage.StateDB, address web3.Address) *GenesisAccount {

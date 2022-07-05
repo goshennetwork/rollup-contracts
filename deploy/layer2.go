@@ -53,13 +53,16 @@ func DeployProxyAdmin(signer *contract.Signer) *binding.ProxyAdmin {
 	return proxyAdmin
 }
 
-func DeployL2TokenBridge(signer *contract.Signer, proxyAdmin web3.Address) (
+func DeployL2TokenBridge(signer *contract.Signer, proxyAdmin web3.Address, bridgeLogicAddress *web3.Address) (
 	bridge *binding.L2StandardBridge, logic *binding.L2StandardBridge) {
 	bridgeReceipt := binding.DeployL2StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(bridgeReceipt.Status == 1)
-	// don't initialize bridge while deploy
+	bridgeLogic := bridgeReceipt.ContractAddress
+	if bridgeLogicAddress != nil {
+		bridgeLogic = *bridgeLogicAddress
+	}
 	proxyReceipt := binding.DeployTransparentUpgradeableProxy(signer.Client, signer.Address(),
-		bridgeReceipt.ContractAddress, proxyAdmin, []byte{}).Sign(signer).SendTransaction(signer)
+		bridgeLogic, proxyAdmin, []byte{}).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(proxyReceipt.Status == 1)
 	fmt.Println("deploy l2 token bridge, address:", proxyReceipt.ContractAddress.String())
 	bridge = binding.NewL2StandardBridge(proxyReceipt.ContractAddress, signer.Client)
@@ -82,20 +85,24 @@ func DeployL2FeeCollector(signer *contract.Signer, owner web3.Address) *binding.
 	return collector
 }
 
-func DeployL2CrossLayerWitness(signer *contract.Signer, proxyAdmin web3.Address) (
+func DeployL2CrossLayerWitness(signer *contract.Signer, proxyAdmin web3.Address, witnessLogicAddress *web3.Address) (
 	witness *binding.L2CrossLayerWitness, logic *binding.L2CrossLayerWitness) {
 	witnessReceipt := binding.DeployL2CrossLayerWitness(signer.Client, signer.Address()).
 		Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(witnessReceipt.Status == 1)
+	witnessLogic := witnessReceipt.ContractAddress
+
+	if witnessLogicAddress != nil {
+		witnessLogic = *witnessLogicAddress
+	}
 	proxyReceipt := binding.DeployTransparentUpgradeableProxy(signer.Client, signer.Address(),
-		witnessReceipt.ContractAddress, proxyAdmin, []byte{}).Sign(signer).SendTransaction(signer)
+		witnessLogic, proxyAdmin, []byte{}).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(proxyReceipt.Status == 1)
 	fmt.Println("deploy l2 cross layer witness, address:", proxyReceipt.ContractAddress.String())
 
 	witness = binding.NewL2CrossLayerWitness(proxyReceipt.ContractAddress, signer.Client)
 	witness.Contract().SetFrom(signer.Address())
-	r := witness.Initialize().Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(r.Status == 1)
+	witness.Initialize().Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	logic = binding.NewL2CrossLayerWitness(witnessReceipt.ContractAddress, signer.Client)
 	logic.Contract().SetFrom(signer.Address())
@@ -105,8 +112,8 @@ func DeployL2CrossLayerWitness(signer *contract.Signer, proxyAdmin web3.Address)
 func DeployL2Contracts(signer *contract.Signer, cfg *L2ChainDeployConfig) *L2Contracts {
 	proxyAdmin := DeployProxyAdmin(signer)
 	collector := DeployL2FeeCollector(signer, cfg.FeeCollectorOwner)
-	witness, witnessLogic := DeployL2CrossLayerWitness(signer, proxyAdmin.Contract().Addr())
-	bridge, bridgeLogic := DeployL2TokenBridge(signer, proxyAdmin.Contract().Addr())
+	witness, witnessLogic := DeployL2CrossLayerWitness(signer, proxyAdmin.Contract().Addr(), nil)
+	bridge, bridgeLogic := DeployL2TokenBridge(signer, proxyAdmin.Contract().Addr(), nil)
 
 	return &L2Contracts{
 		ProxyAdmin:          proxyAdmin,
