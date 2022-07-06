@@ -43,9 +43,8 @@ func (_a *RollupInputChain) AppendInputBatches(batches *RollupInputBatches) *con
 	return txn
 }
 
-func (self *RollupInputBatches) Encode() []byte {
+func (self *RollupInputBatches) EncodeWithoutIndex() []byte {
 	sink := codec.NewZeroCopySink(nil)
-	sink.WriteUint64BE(self.BatchIndex)
 	sink.WriteUint64BE(self.QueueNum).WriteUint64BE(self.QueueStart)
 	batchNum := uint64(len(self.SubBatches))
 	if batchNum < 1 {
@@ -71,9 +70,16 @@ func (self *RollupInputBatches) Encode() []byte {
 	return sink.Bytes()
 }
 
+func (self *RollupInputBatches) Encode() []byte {
+	sink := codec.NewZeroCopySink(nil)
+	sink.WriteUint64BE(self.BatchIndex)
+	dataWithoutIndex := self.EncodeWithoutIndex()
+	return append(sink.Bytes(), dataWithoutIndex...)
+}
+
 // InputBatchHash get input hash, ignore first 8 byte
 func (self *RollupInputBatches) InputBatchHash() web3.Hash {
-	return crypto.Keccak256Hash(self.Encode()[8:])
+	return crypto.Keccak256Hash(self.EncodeWithoutIndex())
 }
 
 func (self *RollupInputBatches) InputHash(queueHash web3.Hash) web3.Hash {
@@ -85,10 +91,8 @@ func safeAdd(x, y uint64) uint64 {
 	return x + y
 }
 
-// decode batch info and check in info correctness
-func (self *RollupInputBatches) Decode(b []byte) error {
+func (self *RollupInputBatches) DecodeWithoutIndex(b []byte) error {
 	reader := codec.NewZeroCopyReader(b)
-	self.BatchIndex = reader.ReadUint64BE()
 	self.QueueNum = reader.ReadUint64BE()
 	self.QueueStart = reader.ReadUint64BE()
 	batchNum := reader.ReadUint64BE()
@@ -136,4 +140,11 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 	}
 
 	return nil
+}
+
+// decode batch info and check in info correctness
+func (self *RollupInputBatches) Decode(b []byte) error {
+	reader := codec.NewZeroCopyReader(b[:8])
+	self.BatchIndex = reader.ReadUint64BE()
+	return self.DecodeWithoutIndex(b[8:])
 }
