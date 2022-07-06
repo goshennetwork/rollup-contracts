@@ -34,6 +34,12 @@ module.exports = {
         testnet: {
             url: 'http://172.168.3.70:8501',
             accounts: [`0x${PRIV_1}`]
+        },
+        mumbai: {
+            url: 'https://rpc.ankr.com/polygon_mumbai',
+            accounts: { // this mnemonic is invalid checksum
+                mnemonic: env.mnemonic
+            },
         }
     }
 };
