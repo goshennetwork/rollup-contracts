@@ -25,12 +25,7 @@ module.exports = {
         // do not include the metadata hash, since this is machine dependent
         // and we want all generated code to be deterministic
         // https://docs.soliditylang.org/en/v0.8.6/metadata.html
-        bytecodeHash: 'none',
-        remappings: [
-            '@ensdomains/=node_modules/@ensdomains/',
-            '@openzeppelin/=node_modules/@openzeppelin/',
-            'hardhat/=node_modules/hardhat/',
-        ]
+        bytecodeHash: 'none'
     },
     networks: {
         hardhat: {
