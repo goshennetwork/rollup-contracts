@@ -8,7 +8,7 @@ contract TestDisputeTree is TestBase {
     mapping(uint256 => DisputeTree.DisputeNode) testTree;
 
     //test middle special case
-    function testFailMiddle() public pure {
+    function testMiddle() public pure {
         //common case
         uint128 return1 = DisputeTree.middle(1, 3);
         require(return1 == 2, "middle compute error");
@@ -20,33 +20,20 @@ contract TestDisputeTree is TestBase {
         //when _upper == _lower
         uint128 return3 = DisputeTree.middle(2, 2);
         require(return3 == 2, "middle compute error");
+    }
 
+    //test middle special case
+    function testFailMiddle() public {
         //when _upper < _lower , revert
+        vm.expectRevert("Arithmetic over/underflow");
         DisputeTree.middle(2, 1);
     }
 
     //test EncodeNodeKey result
-    function testEncodeAndDecode() public pure {
-        //common case
-        uint256 return1 = DisputeTree.encodeNodeKey(1, 3);
-        require(return1 == (1 + (3 << 128)), "encodeNodeKey compute error");
-        (uint256 steplower1, uint256 stepupper1) = DisputeTree.decodeNodeKey(return1);
-        require(steplower1 == 1, "decode lower error");
-        require(stepupper1 == 3, "decode upper error");
-
-        //lower == 0 , upper == 0
-        uint256 return2 = DisputeTree.encodeNodeKey(0, 0);
-        require(return2 == 0, "encodeNodeKey compute error");
-        (uint256 steplower2, uint256 stepupper2) = DisputeTree.decodeNodeKey(return2);
-        require(steplower2 == 0, "decode lower error");
-        require(stepupper2 == 0, "decode upper error");
-
-        //lower == (1 << 128) - 1 , upper == (1 << 128) - 1
-        uint256 return3 = DisputeTree.encodeNodeKey((1 << 128) - 1, (1 << 128) - 1);
-        require(return3 == (1 << 256) - 1, "encodeNodeKey compute error");
-        (uint256 steplower3, uint256 stepupper3) = DisputeTree.decodeNodeKey(return3);
-        require(steplower3 == (1 << 128) - 1, "decode lower error");
-        require(stepupper3 == (1 << 128) - 1, "decode upper error");
+    function testEncodeAndDecode(uint128 lower, uint128 upper) public pure {
+        uint256 encoded = DisputeTree.encodeNodeKey(lower, upper);
+        (uint128 _lower, uint128 _upper) = DisputeTree.decodeNodeKey(encoded);
+        require(_lower == lower && upper == _upper, "decode lower error");
     }
 
     //test Search Node not find
@@ -56,11 +43,12 @@ contract TestDisputeTree is TestBase {
     }
 
     //test Search Node pass
-    function testSearchNode() public pure {
-        uint256 return1 = DisputeTree.searchNodeWithMidStep(1, 10, 6);
-        (uint256 steplower1, uint256 stepupper1) = DisputeTree.decodeNodeKey(return1);
-        require(steplower1 == 5, "search lower error");
-        require(stepupper1 == 7, "search upper error");
+    function testSearchNode2() public pure {
+        for (uint256 i = 2; i < 10; i++) {
+            uint256 return1 = DisputeTree.searchNodeWithMidStep(1, 10, i);
+            (uint256 lower, uint256 upper) = DisputeTree.decodeNodeKey(return1);
+            require((lower + upper) / 2 == i);
+        }
     }
 
     /* test addNewChild
@@ -119,8 +107,6 @@ contract TestDisputeTree is TestBase {
     }
 
     /*test getFirstLeafNode*/
-
-    //test get first leafnode
     function testGetFirstLeafNode() public {
         uint256 return1 = DisputeTree.encodeNodeKey(1, 10);
         DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(1, address(1), 100, bytes32("0x0"));
