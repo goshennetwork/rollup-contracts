@@ -30,7 +30,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         challengerDeposit = _challengerDeposit;
     }
 
-    function newChallange(
+    function newChallenge(
         //when create, creator should deposit at this contract.
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
@@ -52,6 +52,8 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
         contracts[newChallenge] = true;
         challengedStates[_hash] = newChallenge;
+        //maybe do not need to deposit because of the cost create contract?
+        require(stakingManager().token().transferFrom(msg.sender, newChallenge, challengerDeposit), "transfer failed");
         IChallenge(newChallenge).create(
             _systemStartState,
             msg.sender,

@@ -81,8 +81,6 @@ contract Challenge is IChallenge {
         expireAfterBlock = block.number + proposerTimeLimit;
         systemInfo.stateInfo = _stateInfo;
         minChallengerDeposit = _minChallengerDeposit;
-        //maybe do not need to deposit because of the cost create contract?
-        require(depositToken.transferFrom(_creator, address(this), minChallengerDeposit), "transfer failed");
         //started
         stage = ChallengeStage.Started;
         //emit by challengeFactory
