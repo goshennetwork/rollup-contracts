@@ -37,7 +37,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
     ) public {
         require(resolver.dao().challengerWhitelist(msg.sender), "only challenger");
         bytes32 _hash = _challengedStateInfo.hash();
-        require(challengedStates[_hash] != address(0), "already challenged");
+        require(challengedStates[_hash] == address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
         require(!resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
@@ -52,13 +52,8 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
         contracts[newChallenge] = true;
         challengedStates[_hash] = newChallenge;
-        IChallenge(newChallenge).create(
-            _systemStartState,
-            msg.sender,
-            blockLimitPerRound,
-            _challengedStateInfo,
-            challengerDeposit
-        );
+        require(stakingManager().token().transferFrom(msg.sender, newChallenge, challengerDeposit), "transfer failed");
+        IChallenge(newChallenge).create(_systemStartState, msg.sender, blockLimitPerRound, _challengedStateInfo);
         emit ChallengeStarted(
             _challengedStateInfo.index,
             _challengedStateInfo.proposer,

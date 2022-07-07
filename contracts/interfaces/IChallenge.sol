@@ -39,15 +39,13 @@ interface IChallenge {
      * @param _creator Challenger who start challenge.
      * @param _proposerTimeLimit After how much l1 block, the proposer expired.
      * @param _stateInfo StateInfo contains the challenged block info, already confirmed by challengeFactory
-     * @param _minChallengerDeposit floor price for challenge to engage challenge game
      * @notice revert when transfer failed
      */
     function create(
         bytes32 _systemStartState,
         address _creator,
         uint256 _proposerTimeLimit,
-        Types.StateInfo memory _stateInfo,
-        uint256 _minChallengerDeposit
+        Types.StateInfo memory _stateInfo
     ) external;
 
     event ChallengeInitialized(uint128 _systemEndStep, bytes32 _midSystemState);
