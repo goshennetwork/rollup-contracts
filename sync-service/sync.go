@@ -57,13 +57,13 @@ func (self *SyncService) startL2Sync() error {
 			return nil
 		default:
 		}
-		l2Height, err := self.l2client.Eth().BlockNumber()
+		l2Info, err := self.l2client.L2().GlobalInfo()
 		if err != nil {
-			log.Warnf("l2 get block number error: %s", err)
+			log.Warnf("l2 get global info error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		endHeight, err := CalcEndBlock(startHeight, l2Height)
+		endHeight, err := CalcEndBlock(startHeight, l2Info.L2CheckedBlockNum-1)
 		if err != nil {
 			log.Warnf("l2 sync service: %s", err)
 			time.Sleep(15 * time.Second)
