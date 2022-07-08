@@ -220,9 +220,9 @@ func (_a *ChallengeFactory) Initialize(resolver web3.Address, beacon web3.Addres
 	return _a.c.Txn("initialize", resolver, beacon, blockLimitPerRound, challengerDeposit)
 }
 
-// NewChallange sends a newChallange transaction in the solidity contract
-func (_a *ChallengeFactory) NewChallange(challengedStateInfo StateInfo, parentStateInfo StateInfo) *contract.Txn {
-	return _a.c.Txn("newChallange", challengedStateInfo, parentStateInfo)
+// NewChallenge sends a newChallenge transaction in the solidity contract
+func (_a *ChallengeFactory) NewChallenge(challengedStateInfo StateInfo, parentStateInfo StateInfo) *contract.Txn {
+	return _a.c.Txn("newChallenge", challengedStateInfo, parentStateInfo)
 }
 
 // events
