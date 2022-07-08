@@ -18,7 +18,7 @@ import "../test-helper/TestERC20.sol";
 import "../staking/StakingManager.sol";
 
 contract MockStateTransition {
-    function generateStartState (
+    function generateStartState(
         bytes32 rollupInputHash,
         uint64 blockNumber,
         bytes32 parentBlockHash
