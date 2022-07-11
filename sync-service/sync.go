@@ -63,7 +63,7 @@ func (self *SyncService) startL2Sync() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		endHeight, err := CalcEndBlock(startHeight, l2Info.L2CheckedBlockNum-1)
+		endHeight, err := CalcEndBlock(startHeight, uint64(l2Info.L2CheckedBlockNum)-1)
 		if err != nil {
 			log.Warnf("l2 sync service: %s", err)
 			time.Sleep(15 * time.Second)
