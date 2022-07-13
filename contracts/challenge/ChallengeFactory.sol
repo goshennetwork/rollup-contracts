@@ -30,14 +30,14 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         challengerDeposit = _challengerDeposit;
     }
 
-    function newChallange(
+    function newChallenge(
         //when create, creator should deposit at this contract.
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
     ) public {
         require(resolver.dao().challengerWhitelist(msg.sender), "only challenger");
         bytes32 _hash = _challengedStateInfo.hash();
-        require(challengedStates[_hash] != address(0), "already challenged");
+        require(challengedStates[_hash] == address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
         require(!resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
@@ -52,6 +52,8 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
         contracts[newChallenge] = true;
         challengedStates[_hash] = newChallenge;
+        //maybe do not need to deposit because of the cost create contract?
+        require(stakingManager().token().transferFrom(msg.sender, newChallenge, challengerDeposit), "transfer failed");
         IChallenge(newChallenge).create(
             _systemStartState,
             msg.sender,

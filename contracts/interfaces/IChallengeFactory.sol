@@ -23,7 +23,7 @@ interface IChallengeFactory {
      * 2.Provide wrong state info
      * 3.token transfer failed
      */
-    function newChallange(Types.StateInfo memory _challengedStateInfo, Types.StateInfo memory _parentStateInfo)
+    function newChallenge(Types.StateInfo memory _challengedStateInfo, Types.StateInfo memory _parentStateInfo)
         external;
 
     ///@return Challenge contract address
