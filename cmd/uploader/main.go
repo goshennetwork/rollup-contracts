@@ -97,11 +97,12 @@ loop:
 				log.Error("get l1 total submitted state", "err", err)
 				continue
 			}
-			if clientInfo.L2CheckedBatchNum <= l1StateNum {
+			l2checkedBatchNum := uint64(clientInfo.L2CheckedBatchNum)
+			if l2checkedBatchNum <= l1StateNum {
 				log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", clientInfo.L2CheckedBatchNum)
 				continue
 			}
-			num := clientInfo.L2CheckedBatchNum - l1StateNum
+			num := l2checkedBatchNum - l1StateNum
 			if num > 512 { // limit num
 				num = 512
 			}
@@ -159,17 +160,19 @@ func (self *UploadBackend) handle() (interval int64) {
 		log.Error("l1 get input ChainHeight", "err", err)
 		return
 	}
-	if info.L1InputInfo.TotalBatches < totalBatches {
+	l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
+	if l2clientTotalBatches < totalBatches {
 		log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", info.L1InputInfo.TotalBatches)
-		diff := int64(totalBatches - info.L1InputInfo.TotalBatches)
+		diff := int64(totalBatches - l2clientTotalBatches)
 		utils.EnsureTrue(diff > 0)
 		//every batch wait a block interval
 		interval *= diff
 		return
 	}
-	if info.L2CheckedBatchNum < totalBatches {
+	l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
+	if l2checkedBatchNum < totalBatches {
 		log.Warn("l2 client have not checked all batches", "checkedBatchNum", info.L2CheckedBlockNum, "l1 total batch", info.L1InputInfo.TotalBatches)
-		diff := int64(totalBatches - info.L2CheckedBatchNum)
+		diff := int64(totalBatches - l2checkedBatchNum)
 		utils.EnsureTrue(diff > 0)
 		//every batch wait a block interval
 		interval *= diff
@@ -180,7 +183,7 @@ func (self *UploadBackend) handle() (interval int64) {
 		log.Warn("l1 get pending queue index", "err", err)
 		return
 	}
-	if info.L1InputInfo.PendingQueueIndex != pendingQueueIndex {
+	if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
 		log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", info.L1InputInfo.PendingQueueIndex)
 		return
 	}
