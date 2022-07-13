@@ -6,8 +6,10 @@ library AddressName {
     string constant DAO = "DAO";
     ///RollupInputChain
     string constant ROLLUP_INPUT_CHAIN = "RollupInputChain";
+    bytes32 constant ROLLUP_INPUT_CHAIN_HASH = keccak256("RollupInputChain");
     ///ChainStorageContainer of RollupInputChain
     string constant ROLLUP_INPUT_CHAIN_CONTAINER = "RollupInputChainContainer";
+    bytes32 constant ROLLUP_INPUT_CHAIN_CONTAINER_HASH = keccak256("RollupInputChainContainer");
     ///RollupStateChain
     string constant ROLLUP_STATE_CHAIN = "RollupStateChain";
     ///ChainStorageContainer of RollupStateChain

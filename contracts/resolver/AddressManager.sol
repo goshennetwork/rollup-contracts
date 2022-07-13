@@ -43,7 +43,7 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function resolve(string memory _name) public view returns (address) {
-        address _addr = this.getAddr(_name);
+        address _addr = getAddr(_name);
         require(_addr != address(0), "no name saved");
         return _addr;
     }
@@ -53,11 +53,11 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function rollupInputChain() public view returns (IRollupInputChain) {
-        return IRollupInputChain(resolve(AddressName.ROLLUP_INPUT_CHAIN));
+        return IRollupInputChain(getAddrByHash[AddressName.ROLLUP_INPUT_CHAIN_HASH]);
     }
 
     function rollupInputChainContainer() public view returns (IChainStorageContainer) {
-        return IChainStorageContainer(resolve(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER));
+        return IChainStorageContainer(getAddrByHash[AddressName.ROLLUP_INPUT_CHAIN_CONTAINER_HASH]);
     }
 
     function rollupStateChain() public view returns (IRollupStateChain) {
@@ -89,6 +89,6 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_name));
+        return keccak256(bytes(_name));
     }
 }

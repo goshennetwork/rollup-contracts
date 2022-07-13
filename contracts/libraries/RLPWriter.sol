@@ -21,9 +21,14 @@ library RLPWriter {
         return encoded;
     }
 
-    function writeList(bytes[] memory _in) internal pure returns (bytes memory) {
-        bytes memory list = BytesSlice.concat(_in);
-        return abi.encodePacked(_writeLength(list.length, 192), list);
+    function writeList(bytes[] memory _list) internal pure returns (bytes memory) {
+        uint256 len = 0;
+        for (uint256 i = 0; i < _list.length; i++) {
+            len += _list[i].length;
+        }
+        bytes memory prefix = _writeLength(len, 192);
+
+        return BytesSlice.concat(prefix, _list, len);
     }
 
     function writeString(string memory _in) internal pure returns (bytes memory) {
@@ -36,7 +41,7 @@ library RLPWriter {
      * @return The RLP encoded address in bytes.
      */
     function writeAddress(address _in) internal pure returns (bytes memory) {
-        return writeBytes(abi.encodePacked(_in));
+        return abi.encodePacked(bytes1(uint8(20 + 128)), _in);
     }
 
     /**
@@ -45,7 +50,7 @@ library RLPWriter {
      * @return _out The RLP encoded bytes32 in bytes.
      */
     function writeBytes32(bytes32 _in) internal pure returns (bytes memory _out) {
-        return writeBytes(abi.encodePacked(_in));
+        return abi.encodePacked(bytes1(uint8(32 + 128)), _in);
     }
 
     /**
