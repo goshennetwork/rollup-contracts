@@ -76,8 +76,8 @@ func (self *CompactMerkleTree) Marshal() ([]byte, error) {
 func (self *CompactMerkleTree) UnMarshal(buf []byte) error {
 	tree_size := binary.BigEndian.Uint64(buf[:8])
 	nhashes := countBit(tree_size)
-	if len(buf) < 8+int(nhashes)*web3.HashLength {
-		return errors.New("Too short input buf length")
+	if len(buf) != 8+int(nhashes)*web3.HashLength {
+		return errors.New("wired data length")
 	}
 	hashes := make([]web3.Hash, nhashes, nhashes)
 	for i := 0; i < int(nhashes); i++ {
