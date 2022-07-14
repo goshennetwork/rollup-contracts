@@ -54,6 +54,10 @@ func NewTree(tree_size uint64, hashes []web3.Hash, store HashStore) *CompactMerk
 	return tree
 }
 
+func (self *CompactMerkleTree) HashStore() HashStore {
+	return self.hashStore
+}
+
 func (self *CompactMerkleTree) Hashes() []web3.Hash {
 	return self.hashes
 }
@@ -299,6 +303,7 @@ func (self *CompactMerkleTree) InclusionProof(m, n uint64) ([]web3.Hash, error) 
 	} else if self.hashStore == nil {
 		return nil, errors.New("hash store not available")
 	}
+	var err error
 
 	offset := uint64(0)
 	var hashes []web3.Hash
@@ -309,14 +314,20 @@ func (self *CompactMerkleTree) InclusionProof(m, n uint64) ([]web3.Hash, error) 
 			subhashes := make([]web3.Hash, len(pos), len(pos))
 			for p := range pos {
 				pos[p] += offset + k*2 - 1
-				subhashes[p], _ = self.hashStore.GetHash(pos[p] - 1)
+				subhashes[p], err = self.hashStore.GetHash(pos[p] - 1)
+				if err != nil {
+					return nil, err
+				}
 			}
 			rootk2n := self.hasher._hash_fold(subhashes)
 			hashes = append(hashes, rootk2n)
 			n = k
 		} else {
 			offset += k*2 - 1
-			root02k, _ := self.hashStore.GetHash(offset - 1)
+			root02k, err := self.hashStore.GetHash(offset - 1)
+			if err != nil {
+				return nil, err
+			}
 			hashes = append(hashes, root02k)
 			m -= k
 			n -= k

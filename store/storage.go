@@ -158,6 +158,22 @@ func (self *StorageWriter) GetL2CompactMerkleTree() (uint64, []web3.Hash, error)
 	return schema.DeserializeCompactMerkleTree(v)
 }
 
+func (self *StorageWriter) L2CompactMerkleTree() (*merkle.CompactMerkleTree, error) {
+	size, hashes, err := self.GetL2CompactMerkleTree()
+	if err != nil {
+		return nil, err
+	}
+	return merkle.NewTree(size, hashes, self.l2CompactMerkleTree.HashStore()), nil
+}
+
+func (self *StorageWriter) L1CompactMerkleTree() (*merkle.CompactMerkleTree, error) {
+	size, hashes, err := self.GetL1CompactMerkleTree()
+	if err != nil {
+		return nil, err
+	}
+	return merkle.NewTree(size, hashes, self.l1CompactMerkleTree.HashStore()), nil
+}
+
 func (self *StorageWriter) StoreL1CompactMerkleTree() {
 	v := schema.SerializeCompactMerkleTree(self.l1CompactMerkleTree)
 	self.overlay.Put(schema.L1CompactMerkleTreeKey, v)
