@@ -166,6 +166,10 @@ func (self *StorageWriter) L2CompactMerkleTree() (*merkle.CompactMerkleTree, err
 	return merkle.NewTree(size, hashes, self.l2CompactMerkleTree.HashStore()), nil
 }
 
+func (self *StorageWriter) OverlayDB() KeyValueDBWithCommit {
+	return self.overlay
+}
+
 func (self *StorageWriter) L1CompactMerkleTree() (*merkle.CompactMerkleTree, error) {
 	size, hashes, err := self.GetL1CompactMerkleTree()
 	if err != nil {
