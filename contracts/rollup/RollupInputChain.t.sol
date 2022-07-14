@@ -18,7 +18,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
 
     function setUp() public {
         vm.startPrank(testAddress);
-        initialize();
+        _initialize();
         dao.setProposerWhitelist(testAddress, true);
         dao.setSequencerWhitelist(testAddress, true);
         feeToken.approve(address(stakingManager), stakingManager.price());
@@ -385,7 +385,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendBatchInvalidMsgdataLength() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
@@ -422,8 +422,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
@@ -451,13 +451,13 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendBatchIfBatchnumEqual0() public {
         //enqueue rollupInputChain Contract
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx1 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
         bytes32 _queueHashes = getrollupInputChainQueueHash(0, 1);
-        bytes memory info = getinfo(0, 1, 0, 0, 0, "");
+        bytes memory info = getinfo(1, 0, 0, 0, "");
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         //test eventEmit
         vm.expectEmit(true, true, false, true);
@@ -496,14 +496,12 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     //helper function: get Inputhash
     //Only in this case, the function name is not required
     function getinfo(
-        uint64 _batchIndex,
         uint64 _queueNum,
         uint64 _queueStartIndex,
         uint64 batchNum,
         uint64 _time0Start,
         bytes memory data
-    ) internal returns (bytes memory) {
-        uint64 batchIndex = _batchIndex;
+    ) internal pure returns (bytes memory) {
         uint64 queueNum = _queueNum;
         uint64 pendingQueueIndex = _queueStartIndex;
         uint64 subBatchNum = batchNum;
@@ -526,15 +524,15 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
         fakeAppendBatch(0, 1, 0, 1, 0, bytes("0x0"));
 
         bytes32 _queueHashes = getrollupInputChainQueueHash(1, 1);
-        bytes memory info = getinfo(1, 1, 1, 1, 2, bytes("0x0"));
+        bytes memory info = getinfo(1, 1, 1, 2, bytes("0x0"));
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         vm.expectEmit(true, true, false, true);
         emit TransactionAppended(testAddress, 1, 1, 1, inputhash);

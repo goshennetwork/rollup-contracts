@@ -19,21 +19,25 @@ import "../dao/DAO.sol";
 
 contract TestBase {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+
+    using MerkleMountainRange for CompactMerkleTree;
+    CompactMerkleTree _trees;
+
     AddressManager addressManager;
     RollupStateChain rollupStateChain;
     RollupInputChain rollupInputChain;
-    L1CrossLayerWitness l1CrossLayerWitness;
-    L2CrossLayerWitness l2CrossLayerWitness;
+    TestMockL1CrossLayerWitness l1CrossLayerWitness;
+    TestMockL2CrossLayerWitness l2CrossLayerWitness;
     TestERC20 feeToken;
     StakingManager stakingManager;
+    ProxyAdmin proxyAdmin;
     uint256 constant fraudProofWindow = 3;
     address challengerFactory;
     DAO dao;
 
-    function initialize() internal {
+    function _initialize() internal {
         // deploy proxy admin
-        ProxyAdmin proxyAdmin = new ProxyAdmin();
-
+        proxyAdmin = new ProxyAdmin();
         // deploy AddressManager
         AddressManager addressManagerLogic = new AddressManager();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
@@ -44,22 +48,22 @@ contract TestBase {
         addressManager = AddressManager(address(proxy));
 
         // deploy L1CrossLayerWitness
-        L1CrossLayerWitness l1CrossLayerWitnessLogic = new L1CrossLayerWitness();
+        TestMockL1CrossLayerWitness l1CrossLayerWitnessLogic = new TestMockL1CrossLayerWitness();
         proxy = new TransparentUpgradeableProxy(
             address(l1CrossLayerWitnessLogic),
             address(proxyAdmin),
             abi.encodeWithSelector(L1CrossLayerWitness.initialize.selector, address(addressManager))
         );
-        l1CrossLayerWitness = L1CrossLayerWitness(address(proxy));
+        l1CrossLayerWitness = TestMockL1CrossLayerWitness(address(proxy));
 
         // deploy L2CrossLayerWitness
-        L2CrossLayerWitness l2CrossLayerWitnessLogic = new L2CrossLayerWitness();
+        TestMockL2CrossLayerWitness l2CrossLayerWitnessLogic = new TestMockL2CrossLayerWitness();
         proxy = new TransparentUpgradeableProxy(
             address(l2CrossLayerWitnessLogic),
             address(proxyAdmin),
-            abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector)
+            abi.encodeWithSelector(L2CrossLayerWitness.initialize.selector, address(addressManager))
         );
-        l2CrossLayerWitness = L2CrossLayerWitness(address(proxy));
+        l2CrossLayerWitness = TestMockL2CrossLayerWitness(address(proxy));
 
         feeToken = new TestERC20("test token", "test");
 
@@ -150,10 +154,76 @@ contract TestBase {
         addressManager.setAddress(AddressName.DAO, address(dao));
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
     }
+
+    function callRelayMessage(
+        uint8 witnessType,
+        address target,
+        address sender,
+        bytes memory signatureWithData
+    ) internal {
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(target, sender, 0, signatureWithData);
+        MerkleMountainRange.appendLeafHash(_trees, _hash);
+        bytes32[] memory _proof;
+        bytes[] memory list = new bytes[](15);
+        list[13] = abi.encodePacked(_trees.rootHash);
+        list[14] = abi.encodePacked(_trees.treeSize);
+        bytes[] memory encodedList = new bytes[](15);
+        for (uint256 i = 0; i < list.length; i++) {
+            encodedList[i] = RLPWriter.writeBytes(list[i]);
+        }
+        bytes memory rlpData = RLPWriter.writeList(encodedList);
+        Types.StateInfo memory stateInfo;
+        stateInfo.blockHash = keccak256(rlpData);
+        vm.startPrank(address(rollupStateChain));
+        addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
+        vm.warp(3);
+        vm.stopPrank();
+        if (witnessType == 1) {
+            vm.startPrank(address(addressManager));
+            bool success = l1CrossLayerWitness.relayMessage(
+                target,
+                sender,
+                signatureWithData,
+                0,
+                rlpData,
+                stateInfo,
+                _proof
+            );
+            require(success, "call l1 relayMessage failed");
+        } else if (witnessType == 2) {
+            vm.startPrank(Constants.L1_CROSS_LAYER_WITNESS);
+            bool success = l2CrossLayerWitness.relayMessage(target, sender, signatureWithData, 0, bytes32(0), 0);
+            require(success, "call l2 relayMessage failed");
+        }
+    }
 }
 
 contract MockChallengeFactory {
     function isChallengeContract(address _addr) external view returns (bool) {
         return _addr == address(this);
+    }
+}
+
+contract TestMockL1CrossLayerWitness is L1CrossLayerWitness {
+    function mockSetSuccessRelayedMessages(bytes32 hash) public returns (bool) {
+        successRelayedMessages[hash] = true;
+        return true;
+    }
+
+    function mockSetBlockedMessages(bytes32 hash) public returns (bool) {
+        blockedMessages[hash] = true;
+        return true;
+    }
+}
+
+contract TestMockL2CrossLayerWitness is L2CrossLayerWitness {
+    function mockSetSuccessRelayedMessages(bytes32 hash) public returns (bool) {
+        successRelayedMessages[hash] = true;
+        return true;
+    }
+
+    function mockSetMmrRoot(uint64 size, bytes32 hash) public returns (bool) {
+        mmrRoots[size] = hash;
+        return true;
     }
 }
