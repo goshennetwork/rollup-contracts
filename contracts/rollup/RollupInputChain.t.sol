@@ -18,7 +18,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
 
     function setUp() public {
         vm.startPrank(testAddress);
-        initialize();
+        _initialize();
         dao.setProposerWhitelist(testAddress, true);
         dao.setSequencerWhitelist(testAddress, true);
         feeToken.approve(address(stakingManager), stakingManager.price());
