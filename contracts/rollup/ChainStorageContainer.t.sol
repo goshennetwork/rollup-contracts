@@ -24,7 +24,7 @@ contract TestChainStorageContainer is TestBase, ChainStorageContainer {
         vm.stopPrank();
     }
 
-    function testChainSize() public view{
+    function testChainSize() public view {
         require(chainStorageContainer.chainSize() == 0);
     }
 

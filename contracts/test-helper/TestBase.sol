@@ -113,7 +113,7 @@ contract TestBase {
                 address(addressManager),
                 15000000,
                 3000000,
-                1234  
+                1234
             )
         );
         rollupInputChain = RollupInputChain(address(proxy));

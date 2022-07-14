@@ -457,7 +457,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
 
         vm.startPrank(testAddress);
         bytes32 _queueHashes = getrollupInputChainQueueHash(0, 1);
-        bytes memory info = getinfo(0, 1, 0, 0, 0, "");
+        bytes memory info = getinfo(1, 0, 0, 0, "");
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         //test eventEmit
         vm.expectEmit(true, true, false, true);
@@ -496,7 +496,6 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     //helper function: get Inputhash
     //Only in this case, the function name is not required
     function getinfo(
-        uint64 _batchIndex,
         uint64 _queueNum,
         uint64 _queueStartIndex,
         uint64 batchNum,
@@ -533,7 +532,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         fakeAppendBatch(0, 1, 0, 1, 0, bytes("0x0"));
 
         bytes32 _queueHashes = getrollupInputChainQueueHash(1, 1);
-        bytes memory info = getinfo(1, 1, 1, 1, 2, bytes("0x0"));
+        bytes memory info = getinfo(1, 1, 1, 2, bytes("0x0"));
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         vm.expectEmit(true, true, false, true);
         emit TransactionAppended(testAddress, 1, 1, 1, inputhash);
