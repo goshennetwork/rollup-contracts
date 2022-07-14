@@ -63,9 +63,9 @@ func (self *CompactMerkleTree) TreeSize() uint64 {
 }
 
 func (self *CompactMerkleTree) Marshal() ([]byte, error) {
-	length := 4 + len(self.hashes)*web3.HashLength
-	buf := make([]byte, 4, length)
-	binary.BigEndian.PutUint64(buf[0:], self.treeSize)
+	length := 8 + len(self.hashes)*web3.HashLength
+	buf := make([]byte, 8, length)
+	binary.BigEndian.PutUint64(buf[:], self.treeSize)
 	for _, h := range self.hashes {
 		buf = append(buf, h[:]...)
 	}
@@ -74,14 +74,14 @@ func (self *CompactMerkleTree) Marshal() ([]byte, error) {
 }
 
 func (self *CompactMerkleTree) UnMarshal(buf []byte) error {
-	tree_size := binary.BigEndian.Uint64(buf[0:4])
+	tree_size := binary.BigEndian.Uint64(buf[:8])
 	nhashes := countBit(tree_size)
-	if len(buf) < 4+int(nhashes)*web3.HashLength {
+	if len(buf) < 8+int(nhashes)*web3.HashLength {
 		return errors.New("Too short input buf length")
 	}
 	hashes := make([]web3.Hash, nhashes, nhashes)
 	for i := 0; i < int(nhashes); i++ {
-		copy(hashes[i][:], buf[4+i*web3.HashLength:])
+		copy(hashes[i][:], buf[8+i*web3.HashLength:])
 	}
 
 	self._update(tree_size, hashes)
