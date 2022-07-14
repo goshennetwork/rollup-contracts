@@ -385,7 +385,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendBatchInvalidMsgdataLength() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
@@ -422,8 +422,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
@@ -451,8 +451,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendBatchIfBatchnumEqual0() public {
         //enqueue rollupInputChain Contract
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx1 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
@@ -502,8 +502,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         uint64 batchNum,
         uint64 _time0Start,
         bytes memory data
-    ) internal returns (bytes memory) {
-        uint64 batchIndex = _batchIndex;
+    ) internal pure returns (bytes memory) {
         uint64 queueNum = _queueNum;
         uint64 pendingQueueIndex = _queueStartIndex;
         uint64 subBatchNum = batchNum;
@@ -526,8 +525,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
-        bytes32 Rlptx0 = enqueue2(bytes("0x0"));
-        bytes32 Rlptx2 = enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
+        enqueue2(bytes("0x0"));
         vm.stopPrank();
 
         vm.startPrank(testAddress);
