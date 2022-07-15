@@ -25,9 +25,9 @@ type SyncService struct {
 }
 
 func NewSyncService(diskdb schema.PersistStore,
-	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig, dbdir string) *SyncService {
+	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig) *SyncService {
 	return &SyncService{
-		db:       store.NewStorage(diskdb, dbdir),
+		db:       store.NewStorage(diskdb),
 		conf:     cfg,
 		l1client: l1client,
 		l2client: l2client,

@@ -16,7 +16,7 @@ type Storage struct {
 	*StorageWriter // this is acturaly read only
 }
 
-func NewStorage(diskdb schema.PersistStore, dbPath string) *Storage {
+func NewStorage(diskdb schema.PersistStore) *Storage {
 	overlay := &ReadOnlyDB{overlaydb.NewOverlayDB(diskdb)}
 	writer := &StorageWriter{
 		overlay: overlay,
