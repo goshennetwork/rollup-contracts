@@ -304,10 +304,10 @@ func (self *SyncService) syncL2Witness(kvdb *store.StorageWriter, startHeight, e
 	}
 	l2WitnessStore := kvdb.L2CrossLayerWitness()
 	hashes := l2WitnessStore.StoreSentMessage(l2SentMsgs)
-	l1mmr := kvdb.L1MMR()
-	tree := l1mmr.GetCompactMerkleTree()
+	mmrStore := kvdb.L2MMR()
+	tree := mmrStore.GetCompactMerkleTree()
 	tree.AppendHashes(hashes)
-	l1mmr.StoreCompactMerkleTree(tree)
+	mmrStore.StoreCompactMerkleTree(tree)
 	log.Infof("syncL2Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }
