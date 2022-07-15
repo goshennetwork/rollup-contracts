@@ -29,8 +29,6 @@ import (
 // HashStore is an interface for persist hash
 type HashStore interface {
 	Append(hash []web3.Hash) error
-	Flush() error
-	Close()
 	GetHash(pos uint64) (web3.Hash, error)
 }
 

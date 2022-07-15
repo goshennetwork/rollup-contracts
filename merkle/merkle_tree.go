@@ -150,6 +150,12 @@ func (self *CompactMerkleTree) Append(leafv []byte) []web3.Hash {
 	return self.AppendHash(leaf)
 }
 
+func (self *CompactMerkleTree) AppendHashes(leaves []web3.Hash) {
+	for _, leaf := range leaves {
+		self.AppendHash(leaf)
+	}
+}
+
 // AppendHash appends a leaf hash to the merkle tree and returns the audit path
 func (self *CompactMerkleTree) AppendHash(leaf web3.Hash) []web3.Hash {
 	size := len(self.hashes)
@@ -170,7 +176,6 @@ func (self *CompactMerkleTree) AppendHash(leaf web3.Hash) []web3.Hash {
 	}
 	if self.hashStore != nil {
 		self.hashStore.Append(storehashes)
-		self.hashStore.Flush()
 	}
 	self.treeSize += 1
 	self.hashes = self.hashes[0:size]

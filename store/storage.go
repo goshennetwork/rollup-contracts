@@ -1,13 +1,9 @@
 package store
 
 import (
-	"path/filepath"
-
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/config"
-	"github.com/ontology-layer-2/rollup-contracts/merkle"
 	"github.com/ontology-layer-2/rollup-contracts/store/l2client"
 	"github.com/ontology-layer-2/rollup-contracts/store/overlaydb"
 	"github.com/ontology-layer-2/rollup-contracts/store/resolver"
@@ -25,18 +21,6 @@ func NewStorage(diskdb schema.PersistStore, dbPath string) *Storage {
 	writer := &StorageWriter{
 		overlay: overlay,
 	}
-	l1TreeSize, l1Hashes, err := writer.GetL1CompactMerkleTree()
-	utils.Ensure(err)
-	l2TreeSize, l2Hashes, err := writer.GetL2CompactMerkleTree()
-	utils.Ensure(err)
-	l1FileHashStore, err := merkle.NewFileHashStore(dbPath+string(filepath.Separator)+config.DefaultL1MMRFile, l1TreeSize)
-	utils.Ensure(err)
-	l2FileHashStore, err := merkle.NewFileHashStore(dbPath+string(filepath.Separator)+config.DefaultL2MMRFile, l2TreeSize)
-	utils.Ensure(err)
-	l1CompactTree := merkle.NewTree(l1TreeSize, l1Hashes, l1FileHashStore)
-	l2CompactTree := merkle.NewTree(l2TreeSize, l2Hashes, l2FileHashStore)
-	writer.l1CompactMerkleTree = l1CompactTree
-	writer.l2CompactMerkleTree = l2CompactTree
 	return &Storage{
 		diskdb:        diskdb,
 		StorageWriter: writer,
@@ -44,13 +28,11 @@ func NewStorage(diskdb schema.PersistStore, dbPath string) *Storage {
 }
 
 type StorageWriter struct {
-	l1CompactMerkleTree *merkle.CompactMerkleTree
-	l2CompactMerkleTree *merkle.CompactMerkleTree
-	overlay             KeyValueDBWithCommit
+	overlay KeyValueDBWithCommit
 }
 
 func (self *Storage) Writer() *StorageWriter {
-	return &StorageWriter{overlay: overlaydb.NewOverlayDB(self.diskdb), l1CompactMerkleTree: self.l1CompactMerkleTree, l2CompactMerkleTree: self.l2CompactMerkleTree}
+	return &StorageWriter{overlay: overlaydb.NewOverlayDB(self.diskdb)}
 }
 
 func (self *StorageWriter) InputChain() *rollup.InputChain {
@@ -70,7 +52,7 @@ func (self *StorageWriter) L1TokenBridge() *rollup.L1BridgeStore {
 }
 
 func (self *StorageWriter) L1CrossLayerWitness() *rollup.L1WitnessStore {
-	return rollup.NewL1WitnessStore(self.overlay, self.l1CompactMerkleTree)
+	return rollup.NewL1WitnessStore(self.overlay)
 }
 
 func (self *StorageWriter) L2TokenBridge() *rollup.L2BridgeStore {
@@ -78,11 +60,19 @@ func (self *StorageWriter) L2TokenBridge() *rollup.L2BridgeStore {
 }
 
 func (self *StorageWriter) L2CrossLayerWitness() *rollup.L2WitnessStore {
-	return rollup.NewL2WitnessStore(self.overlay, self.l2CompactMerkleTree)
+	return rollup.NewL2WitnessStore(self.overlay)
 }
 
 func (self *StorageWriter) L2Client() *l2client.Store {
 	return l2client.NewStore(self.overlay)
+}
+
+func (self *StorageWriter) L1MMR() *rollup.MMR {
+	return rollup.NewL1MMR(self.overlay)
+}
+
+func (self *StorageWriter) L2MMR() *rollup.MMR {
+	return rollup.NewL2MMR(self.overlay)
 }
 
 func (self *StorageWriter) SetLastSyncedL1Height(lastEndHeight uint64) {
@@ -156,16 +146,6 @@ func (self *StorageWriter) GetL2CompactMerkleTree() (uint64, []web3.Hash, error)
 		return 0, []web3.Hash{}, nil
 	}
 	return schema.DeserializeCompactMerkleTree(v)
-}
-
-func (self *StorageWriter) StoreL1CompactMerkleTree() {
-	v := schema.SerializeCompactMerkleTree(self.l1CompactMerkleTree)
-	self.overlay.Put(schema.L1CompactMerkleTreeKey, v)
-}
-
-func (self *StorageWriter) StoreL2CompactMerkleTree() {
-	v := schema.SerializeCompactMerkleTree(self.l2CompactMerkleTree)
-	self.overlay.Put(schema.L2CompactMerkleTreeKey, v)
 }
 
 type ReadOnlyDB struct {

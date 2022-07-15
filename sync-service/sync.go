@@ -215,8 +215,11 @@ func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, e
 		return fmt.Errorf("syncL1Witness: filter sent message, %s", err)
 	}
 	l1BridgeStore := kvdb.L1CrossLayerWitness()
-	l1BridgeStore.StoreSentMessage(l1SentMsgs)
-	kvdb.StoreL1CompactMerkleTree()
+	leaves := l1BridgeStore.StoreSentMessage(l1SentMsgs)
+	mmrStore := kvdb.L1MMR()
+	tree := mmrStore.GetCompactMerkleTree()
+	tree.AppendHashes(leaves)
+	mmrStore.StoreCompactMerkleTree(tree)
 	log.Infof("syncL1Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }
@@ -300,8 +303,11 @@ func (self *SyncService) syncL2Witness(kvdb *store.StorageWriter, startHeight, e
 		return fmt.Errorf("syncL2Witness: filter sent message, %s", err)
 	}
 	l2WitnessStore := kvdb.L2CrossLayerWitness()
-	l2WitnessStore.StoreSentMessage(l2SentMsgs)
-	kvdb.StoreL2CompactMerkleTree()
+	hashes := l2WitnessStore.StoreSentMessage(l2SentMsgs)
+	l1mmr := kvdb.L1MMR()
+	tree := l1mmr.GetCompactMerkleTree()
+	tree.AppendHashes(hashes)
+	l1mmr.StoreCompactMerkleTree(tree)
 	log.Infof("syncL2Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }
