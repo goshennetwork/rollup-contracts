@@ -16,24 +16,12 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
-func newL2WitnessStore() *L2WitnessStore {
-	return &L2WitnessStore{
-		store: overlaydb.NewOverlayDB(storage.NewFakeDB()),
-	}
+func newL2WitnessStore(db schema.KeyValueDB) *L2WitnessStore {
+	return NewL2WitnessStore(db)
 }
 
-func newL1WitnessStore() *L1WitnessStore {
-	return &L1WitnessStore{
-		store: overlaydb.NewOverlayDB(storage.NewFakeDB()),
-	}
-}
-
-func newL1MMR() *MMR {
-	return NewL1MMR(overlaydb.NewOverlayDB(storage.NewFakeDB()))
-}
-
-func newL2MMR() *MMR {
-	return NewL2MMR(overlaydb.NewOverlayDB(storage.NewFakeDB()))
+func newL1WitnessStore(db schema.KeyValueDB) *L1WitnessStore {
+	return NewL1WitnessStore(db)
 }
 
 func TestZeroCopyAndAbiEncodePacked(t *testing.T) {
@@ -53,16 +41,15 @@ func TestZeroCopyAndAbiEncodePacked(t *testing.T) {
 func TestL1Witness(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 
-	l1Witness := newL1WitnessStore()
-	mmrStore := newL1MMR()
+	db := overlaydb.NewOverlayDB(storage.NewFakeDB())
+
+	l1Witness := newL1WitnessStore(db)
+	mmrStore := NewL1MMR(db)
 
 	m := 5
 	n := 10
 	msgs := genRandomSentMessage(n)
-	leaves := l1Witness.StoreSentMessage(msgs)
-	tree := mmrStore.GetCompactMerkleTree()
-	tree.AppendHashes(leaves)
-	mmrStore.StoreCompactMerkleTree(tree)
+	l1Witness.StoreSentMessage(msgs)
 	proof, err := mmrStore.GetCompactMerkleTree().InclusionProof(uint64(m), uint64(n))
 	if err != nil {
 		t.Fatal(err)
@@ -82,16 +69,14 @@ func TestL1Witness(t *testing.T) {
 
 func TestL2Witness(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-
-	l2Witness := newL2WitnessStore()
-	mmrStore := newL2MMR()
+	db := overlaydb.NewOverlayDB(storage.NewFakeDB())
+	l2Witness := newL2WitnessStore(db)
+	mmrStore := NewL2MMR(db)
 	m := 5
 	n := 10
 	msgs := genRandomSentMessage(n)
-	leaves := l2Witness.StoreSentMessage(msgs)
-	tree := mmrStore.GetCompactMerkleTree()
-	tree.AppendHashes(leaves)
-	mmrStore.StoreCompactMerkleTree(tree)
+	l2Witness.StoreSentMessage(msgs)
+
 	proof, err := mmrStore.GetCompactMerkleTree().InclusionProof(uint64(m), uint64(n))
 	if err != nil {
 		t.Fatal(err)

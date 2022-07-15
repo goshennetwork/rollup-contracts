@@ -11,19 +11,21 @@ import (
 
 type L1WitnessStore struct {
 	store schema.KeyValueDB
+	mmr   *MMR
 }
 
 func NewL1WitnessStore(db schema.KeyValueDB) *L1WitnessStore {
 	return &L1WitnessStore{
 		store: db,
+		mmr:   NewL1MMR(db),
 	}
 }
 
-func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) []web3.Hash {
-	ret := make([]web3.Hash, 0, len(msgs))
+func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) {
+	tree := self.mmr.GetCompactMerkleTree()
 	sink := codec.NewZeroCopySink(nil)
 	for _, msg := range msgs {
-		ret = append(ret, getMsgHash(sink, msg))
+		tree.AppendHash(getMsgHash(sink, msg))
 		sink.Reset()
 		key := genL1SentMessageKey(msg.MessageIndex)
 		self.store.Put(key, codec.SerializeToBytes(&schema.CrossLayerSentMessage{
@@ -35,7 +37,7 @@ func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) [
 			Message:      msg.Message,
 		}))
 	}
-	return ret
+	self.mmr.StoreCompactMerkleTree(tree)
 }
 
 func (self *L1WitnessStore) GetL1CompactMerkleTree() (uint64, []web3.Hash, error) {
