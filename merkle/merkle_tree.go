@@ -25,6 +25,7 @@ import (
 
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
+	"github.com/laizy/web3/utils"
 )
 
 var EMPTY_HASH = web3.Hash{}
@@ -231,10 +232,11 @@ func getSubTreePos(n uint64) []uint64 {
 func (self *CompactMerkleTree) merkleRoot(n uint64) web3.Hash {
 	hashespos := getSubTreePos(n)
 	nhashes := uint(len(hashespos))
-
+	var err error
 	hashes := make([]web3.Hash, nhashes, nhashes)
 	for i := uint(0); i < nhashes; i++ {
-		hashes[i], _ = self.hashStore.GetHash(hashespos[i] - 1)
+		hashes[i], err = self.hashStore.GetHash(hashespos[i] - 1)
+		utils.Ensure(err)
 	}
 	return self.hasher._hash_fold(hashes)
 }
@@ -252,6 +254,7 @@ func (self *CompactMerkleTree) ConsistencyProof(m, n uint64) []web3.Hash {
 func (self *CompactMerkleTree) subproof(m, n uint64, b bool) []web3.Hash {
 	offset := uint64(0)
 	var hashes []web3.Hash
+	var err error
 	for m < n {
 		k := uint64(1 << (highBit(n-1) - 1))
 		if m <= k {
@@ -259,14 +262,16 @@ func (self *CompactMerkleTree) subproof(m, n uint64, b bool) []web3.Hash {
 			subhashes := make([]web3.Hash, len(pos), len(pos))
 			for p := range pos {
 				pos[p] += offset + k*2 - 1
-				subhashes[p], _ = self.hashStore.GetHash(pos[p] - 1)
+				subhashes[p], err = self.hashStore.GetHash(pos[p] - 1)
+				utils.Ensure(err)
 			}
 			rootk2n := self.hasher._hash_fold(subhashes)
 			hashes = append(hashes, rootk2n)
 			n = k
 		} else {
 			offset += k*2 - 1
-			root02k, _ := self.hashStore.GetHash(offset - 1)
+			root02k, err := self.hashStore.GetHash(offset - 1)
+			utils.Ensure(err)
 			hashes = append(hashes, root02k)
 			m -= k
 			n -= k
@@ -281,7 +286,8 @@ func (self *CompactMerkleTree) subproof(m, n uint64, b bool) []web3.Hash {
 		if len(pos) != 1 {
 			panic("assert error")
 		}
-		root02n, _ := self.hashStore.GetHash(pos[0] + offset - 1)
+		root02n, err := self.hashStore.GetHash(pos[0] + offset - 1)
+		utils.Ensure(err)
 		hashes = append(hashes, root02n)
 	}
 
