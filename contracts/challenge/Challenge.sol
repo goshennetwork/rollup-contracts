@@ -74,7 +74,6 @@ contract Challenge is IChallenge {
         uint256 _minChallengerDeposit
     ) external override {
         factory = IChallengeFactory(msg.sender);
-        IERC20 depositToken = factory.stakingManager().token();
         systemInfo.systemStartState = _systemStartState;
         creator = _creator;
         proposerTimeLimit = _proposerTimeLimit;
@@ -261,7 +260,7 @@ contract Challenge is IChallenge {
             DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
             //first pay back,and record the amount of gainer.
             if (_challenger == node.challenger) {
-                _scale += (_amount + _k) / _pieces;
+                _scale += (_amount + _k);
             }
             _amount--;
             if (node.parent == _correctNodeKey) {
@@ -270,7 +269,7 @@ contract Challenge is IChallenge {
             }
             _correctNodeKey = node.parent;
         }
-        _canWithdraw += _scale * rewardAmount;
+        _canWithdraw += (_scale * rewardAmount) / _pieces;
         lastSelectedNodeKey[_challenger] = 0;
         require(token.transfer(_challenger, _canWithdraw), "transfer failed");
     }
