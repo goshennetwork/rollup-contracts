@@ -260,7 +260,7 @@ contract Challenge is IChallenge {
             DisputeTree.DisputeNode storage node = disputeTree[_correctNodeKey];
             //first pay back,and record the amount of gainer.
             if (_challenger == node.challenger) {
-                _scale += (_amount + _k) ;
+                _scale += (_amount + _k);
             }
             _amount--;
             if (node.parent == _correctNodeKey) {
