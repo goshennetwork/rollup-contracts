@@ -20,15 +20,18 @@ const (
 
 	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
 
+	L1MMRDataPrefix = 0x16
+	L2MMRDataPrefix = 0x17
+
 	AddressNamePrefix = 0x20 // name -> address
 )
 
 var (
 	LastSyncedL1HeightKey              = []byte{0x10} //last sync rollupInputContract's L1 block height
 	LastSyncedL1TimestampKey           = []byte{0x11} //last sync l1 block timestamp
-	CurrentRollupInputChainInfo        = []byte{0x12} // -> current rollupInputChain info
+	CurrentRollupInputChainInfoKey     = []byte{0x12} // -> current rollupInputChain info
 	RollupStateLastL1BlockHeightKey    = []byte{0x13} // last sync rollupStateContract's L1 block height
-	CurrentRollupStateChainInfo        = []byte{0x14} // -> current rollupStateChain info
+	CurrentRollupStateChainInfoKey     = []byte{0x14} // -> current rollupStateChain info
 	AddressManagerLastL1BlockHeightKey = []byte{0x15}
 	L1CompactMerkleTreeKey             = []byte{0x16}
 	L2CompactMerkleTreeKey             = []byte{0x17}

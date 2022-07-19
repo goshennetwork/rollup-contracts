@@ -6,7 +6,7 @@ import (
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/deploy"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResolver(t *testing.T) {

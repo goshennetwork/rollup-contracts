@@ -11,5 +11,4 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954
 	github.com/urfave/cli/v2 v2.3.0
-	gotest.tools v2.2.0+incompatible
 )

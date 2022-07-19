@@ -30,11 +30,11 @@ func NewInputMemStore() *InputChain {
 }
 
 func (self *InputChain) putInfo(info *schema.InputChainInfo) {
-	self.store.Put(schema.CurrentRollupInputChainInfo, codec.SerializeToBytes(info))
+	self.store.Put(schema.CurrentRollupInputChainInfoKey, codec.SerializeToBytes(info))
 }
 
 func (self *InputChain) GetInfo() *schema.InputChainInfo {
-	data, err := self.store.Get(schema.CurrentRollupInputChainInfo)
+	data, err := self.store.Get(schema.CurrentRollupInputChainInfoKey)
 	utils.Ensure(err)
 	if len(data) == 0 { // not exist
 		return &schema.InputChainInfo{0, 0, 0}

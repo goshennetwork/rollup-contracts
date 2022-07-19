@@ -83,11 +83,11 @@ func (self *StateChain) StoreLastL1BlockHeight(lastEndHeight uint64) {
 }
 
 func (self *StateChain) StoreInfo(info *schema.StateChainInfo) {
-	self.store.Put(schema.CurrentRollupStateChainInfo, codec.SerializeToBytes(info))
+	self.store.Put(schema.CurrentRollupStateChainInfoKey, codec.SerializeToBytes(info))
 }
 
 func (self *StateChain) GetInfo() *schema.StateChainInfo {
-	v, err := self.store.Get(schema.CurrentRollupStateChainInfo)
+	v, err := self.store.Get(schema.CurrentRollupStateChainInfoKey)
 	utils.Ensure(err)
 	if len(v) == 0 { // not exist
 		return &schema.StateChainInfo{TotalSize: 0}

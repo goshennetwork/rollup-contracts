@@ -6,28 +6,27 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/merkle"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type L1WitnessStore struct {
-	store             schema.KeyValueDB
-	compactMerkleTree *merkle.CompactMerkleTree
+	store schema.KeyValueDB
+	mmr   *MMR
 }
 
-func NewL1WitnessStore(db schema.KeyValueDB, tree *merkle.CompactMerkleTree) *L1WitnessStore {
+func NewL1WitnessStore(db schema.KeyValueDB) *L1WitnessStore {
 	return &L1WitnessStore{
-		store:             db,
-		compactMerkleTree: tree,
+		store: db,
+		mmr:   NewL1MMR(db),
 	}
 }
 
 func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) {
+	tree := self.mmr.GetCompactMerkleTree()
 	sink := codec.NewZeroCopySink(nil)
 	for _, msg := range msgs {
-		self.compactMerkleTree.AppendHash(getMsgHash(sink, msg))
+		tree.AppendHash(getMsgHash(sink, msg))
 		sink.Reset()
-
 		key := genL1SentMessageKey(msg.MessageIndex)
 		self.store.Put(key, codec.SerializeToBytes(&schema.CrossLayerSentMessage{
 			BlockNumber:  msg.Raw.BlockNumber,
@@ -38,13 +37,18 @@ func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) {
 			Message:      msg.Message,
 		}))
 	}
+	self.mmr.StoreCompactMerkleTree(tree)
 }
 
-func (self *L1WitnessStore) GetL1MMRProof(msgIndex uint64, size uint64) ([]web3.Hash, error) {
-	if size == 0 {
-		size = self.compactMerkleTree.TreeSize()
+func (self *L1WitnessStore) GetL1CompactMerkleTree() (uint64, []web3.Hash, error) {
+	v, err := self.store.Get(schema.L1CompactMerkleTreeKey)
+	if err != nil {
+		return 0, []web3.Hash{}, err
 	}
-	return self.compactMerkleTree.InclusionProof(msgIndex, size)
+	if len(v) == 0 {
+		return 0, []web3.Hash{}, nil
+	}
+	return schema.DeserializeCompactMerkleTree(v)
 }
 
 func (self *L1WitnessStore) GetSentMessage(msgIndex uint64) (*schema.CrossLayerSentMessage, error) {

@@ -16,29 +16,14 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
-func newL1WitnessStore(t *testing.T) *L1WitnessStore {
-	fileStore, err := merkle.NewFileHashStore("l1tree.db", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tree := merkle.NewTree(0, []web3.Hash{}, fileStore)
-	return &L1WitnessStore{
-		store:             overlaydb.NewOverlayDB(storage.NewFakeDB()),
-		compactMerkleTree: tree,
-	}
+func newL2WitnessStore(db schema.KeyValueDB) *L2WitnessStore {
+	return NewL2WitnessStore(db)
 }
 
-func newL2WitnessStore(t *testing.T) *L2WitnessStore {
-	fileStore, err := merkle.NewFileHashStore("l2tree.db", 0)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tree := merkle.NewTree(0, []web3.Hash{}, fileStore)
-	return &L2WitnessStore{
-		store:             overlaydb.NewOverlayDB(storage.NewFakeDB()),
-		compactMerkleTree: tree,
-	}
+func newL1WitnessStore(db schema.KeyValueDB) *L1WitnessStore {
+	return NewL1WitnessStore(db)
 }
+
 func TestZeroCopyAndAbiEncodePacked(t *testing.T) {
 	target := web3.HexToAddress("0xEC9C107cf2D52B4E771301c3d702196D2e163bDC")
 	msgSender := web3.HexToAddress("0x9A2900E4b204E31dD58eCc8F276808169D8E4A1b")
@@ -56,13 +41,16 @@ func TestZeroCopyAndAbiEncodePacked(t *testing.T) {
 func TestL1Witness(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 
-	l1Witness := newL1WitnessStore(t)
+	db := overlaydb.NewOverlayDB(storage.NewFakeDB())
+
+	l1Witness := newL1WitnessStore(db)
+	mmrStore := NewL1MMR(db)
 
 	m := 5
 	n := 10
 	msgs := genRandomSentMessage(n)
 	l1Witness.StoreSentMessage(msgs)
-	proof, err := l1Witness.GetL1MMRProof(uint64(m), uint64(n))
+	proof, err := mmrStore.GetCompactMerkleTree().InclusionProof(uint64(m), uint64(n))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,8 +59,8 @@ func TestL1Witness(t *testing.T) {
 	}
 	msgHash := getMsgHash(codec.NewZeroCopySink(nil), msgs[m])
 	verifier := merkle.NewMerkleVerifier()
-	err = verifier.VerifyLeafHashInclusion(msgHash, uint64(m), proof, l1Witness.compactMerkleTree.Root(),
-		l1Witness.compactMerkleTree.TreeSize())
+	err = verifier.VerifyLeafHashInclusion(msgHash, uint64(m), proof, mmrStore.GetCompactMerkleTree().Root(),
+		mmrStore.GetCompactMerkleTree().TreeSize())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,14 +69,15 @@ func TestL1Witness(t *testing.T) {
 
 func TestL2Witness(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-
-	l2Witness := newL2WitnessStore(t)
-
+	db := overlaydb.NewOverlayDB(storage.NewFakeDB())
+	l2Witness := newL2WitnessStore(db)
+	mmrStore := NewL2MMR(db)
 	m := 5
 	n := 10
 	msgs := genRandomSentMessage(n)
 	l2Witness.StoreSentMessage(msgs)
-	proof, err := l2Witness.GetL2MMRProof(uint64(m), uint64(n))
+
+	proof, err := mmrStore.GetCompactMerkleTree().InclusionProof(uint64(m), uint64(n))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,8 +87,8 @@ func TestL2Witness(t *testing.T) {
 	msgHash := getMsgHash(codec.NewZeroCopySink(nil), msgs[m])
 	t.Log(msgHash.String())
 	verifier := merkle.NewMerkleVerifier()
-	err = verifier.VerifyLeafHashInclusion(msgHash, uint64(m), proof, l2Witness.compactMerkleTree.Root(),
-		l2Witness.compactMerkleTree.TreeSize())
+	err = verifier.VerifyLeafHashInclusion(msgHash, uint64(m), proof, mmrStore.GetCompactMerkleTree().Root(),
+		mmrStore.GetCompactMerkleTree().TreeSize())
 	if err != nil {
 		t.Fatal(err)
 	}

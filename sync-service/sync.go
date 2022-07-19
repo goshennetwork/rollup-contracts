@@ -25,9 +25,9 @@ type SyncService struct {
 }
 
 func NewSyncService(diskdb schema.PersistStore,
-	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig, dbdir string) *SyncService {
+	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig) *SyncService {
 	return &SyncService{
-		db:       store.NewStorage(diskdb, dbdir),
+		db:       store.NewStorage(diskdb),
 		conf:     cfg,
 		l1client: l1client,
 		l2client: l2client,
@@ -216,7 +216,6 @@ func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, e
 	}
 	l1BridgeStore := kvdb.L1CrossLayerWitness()
 	l1BridgeStore.StoreSentMessage(l1SentMsgs)
-	kvdb.StoreL1CompactMerkleTree()
 	log.Infof("syncL1Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }
@@ -301,7 +300,6 @@ func (self *SyncService) syncL2Witness(kvdb *store.StorageWriter, startHeight, e
 	}
 	l2WitnessStore := kvdb.L2CrossLayerWitness()
 	l2WitnessStore.StoreSentMessage(l2SentMsgs)
-	kvdb.StoreL2CompactMerkleTree()
 	log.Infof("syncL2Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }
