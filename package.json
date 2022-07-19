@@ -6,7 +6,7 @@
   "scripts": {
     "build": "forge build -o out --root ./",
     "clean": "forge clean",
-    "test": "forge test -vvvv --root ./",
+    "test": "forge test -vvv --root ./",
     "gasnap": "forge snapshot",
     "format": "prettier --write 'contracts/**/*.sol'",
     "fmt": "prettier --write 'contracts/**/*.sol'",
