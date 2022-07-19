@@ -44,7 +44,7 @@ func (self *MMR) getTotalHashSize() uint64 {
 	return i
 }
 
-func (self *MMR) storePendingIndex(pendingIndex uint64) {
+func (self *MMR) storeTotalHashSize(pendingIndex uint64) {
 	self.store.Put(self.genHashSizeKey(), codec.NewZeroCopySink(nil).WriteUint64BE(pendingIndex).Bytes())
 }
 
@@ -80,12 +80,12 @@ func (self *MMR) GetCompactMerkleTree() *merkle.CompactMerkleTree {
 }
 
 func (self *MMR) Append(hash []web3.Hash) error {
-	pendingIndex := self.getTotalHashSize()
+	size := self.getTotalHashSize()
 	for _, s := range hash {
-		self.store.Put(self.genHashKey(pendingIndex), codec.NewZeroCopySink(nil).WriteHash(s).Bytes())
-		pendingIndex++
+		self.store.Put(self.genHashKey(size), codec.NewZeroCopySink(nil).WriteHash(s).Bytes())
+		size++
 	}
-	self.storePendingIndex(pendingIndex)
+	self.storeTotalHashSize(size)
 	return nil
 }
 
