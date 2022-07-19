@@ -79,6 +79,7 @@ type L2ContractAddressConfig struct {
 }
 
 type L1ChainDeployConfig struct {
+	Admin                    web3.Address
 	FeeToken                 web3.Address
 	FraudProofWindow         uint64 // block number
 	MaxEnqueueTxGasLimit     uint64

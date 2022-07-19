@@ -83,117 +83,97 @@ func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
 	return feeToken
 }
 
-func DeployDAO(signer *contract.Signer) *binding.DAO {
+func DeployDAOLogic(signer *contract.Signer) *binding.DAO {
 	receipt := binding.DeployDAO(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	dao := binding.NewDAO(receipt.ContractAddress, signer.Client)
-	dao.Contract().SetFrom(signer.Address())
-	dao.Initialize().Sign(signer).SendTransaction(signer)
-
 	return dao
 }
 
-func DeployChallengeFactory(signer *contract.Signer, addrMan, beacon web3.Address, blockLimitPerRound uint64, challengerDeposit *big.Int) *binding.ChallengeFactory {
+func DeployChallengeFactoryLogic(signer *contract.Signer) *binding.ChallengeFactory {
 	receipt := binding.DeployChallengeFactory(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	factory := binding.NewChallengeFactory(receipt.ContractAddress, signer.Client)
-	factory.Contract().SetFrom(signer.Address())
-	factory.Initialize(addrMan, beacon, big.NewInt(0).SetUint64(blockLimitPerRound), challengerDeposit).Sign(signer).SendTransaction(signer)
-
 	return factory
 }
 
-func DeployStakingManager(signer *contract.Signer, dao, challengeFactory, rollupStateChain,
-	feeToken web3.Address, price *big.Int) *binding.StakingManager {
+func DeployStakingManagerLogic(signer *contract.Signer) *binding.StakingManager {
 	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
-	staking.Contract().SetFrom(signer.Address())
-	staking.Initialize(dao, challengeFactory, rollupStateChain, feeToken, price).Sign(signer).SendTransaction(signer)
-
 	return staking
 }
 
-func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
-	maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *binding.RollupInputChain {
+func DeployRollupInputChainLogic(signer *contract.Signer) *binding.RollupInputChain {
 	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
-	rollupInputChain.Contract().SetFrom(signer.Address())
-	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID).Sign(signer).SendTransaction(signer)
-
 	return rollupInputChain
 }
 
-func DeployRollupStateChain(signer *contract.Signer, addrMan web3.Address, fraudProofWindow uint64) *binding.RollupStateChain {
+func DeployRollupStateChainLogic(signer *contract.Signer) *binding.RollupStateChain {
 	receipt := binding.DeployRollupStateChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	rollupStateChain := binding.NewRollupStateChain(receipt.ContractAddress, signer.Client)
-	rollupStateChain.Contract().SetFrom(signer.Address())
-	rollupStateChain.Initialize(addrMan, big.NewInt(0).SetUint64(fraudProofWindow)).Sign(signer).SendTransaction(signer)
-
 	return rollupStateChain
 }
 
-func DeployChainStorage(signer *contract.Signer, addrMan web3.Address, owner string) *binding.ChainStorageContainer {
+func DeployChainStorageLogic(signer *contract.Signer) *binding.ChainStorageContainer {
 	receipt := binding.DeployChainStorageContainer(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
-	fmt.Printf("deploy chain storage, owner: %s, address:%s\n", owner, receipt.ContractAddress.String())
 	chainStorage := binding.NewChainStorageContainer(receipt.ContractAddress, signer.Client)
-	chainStorage.Contract().SetFrom(signer.Address())
-	chainStorage.Initialize(owner, addrMan).Sign(signer).SendTransaction(signer)
-	fmt.Println("initialized chain storage")
-
 	return chainStorage
 }
 
-func DeployL1CrossLayerWitness(signer *contract.Signer, addrMan web3.Address) *binding.L1CrossLayerWitness {
+func DeployL1CrossLayerWitnessLogic(signer *contract.Signer) *binding.L1CrossLayerWitness {
 	receipt := binding.DeployL1CrossLayerWitness(signer.Client, signer.Address()).
 		Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	fmt.Println("deploy l1 cross layer witness, address:", receipt.ContractAddress.String())
 	l1CrossLayerWitness := binding.NewL1CrossLayerWitness(receipt.ContractAddress, signer.Client)
-	l1CrossLayerWitness.Contract().SetFrom(signer.Address())
-	l1CrossLayerWitness.Initialize(addrMan).Sign(signer).SendTransaction(signer)
-
 	return l1CrossLayerWitness
 }
 
-func DeployAddressManager(signer *contract.Signer) *binding.AddressManager {
+func DeployUpgradeProxy(signer *contract.Signer, logic web3.Address, admin web3.Address, data []byte) *binding.TransparentUpgradeableProxy {
+	receipt := binding.DeployTransparentUpgradeableProxy(signer.Client, signer.Address(), logic, admin, data).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	p := binding.NewTransparentUpgradeableProxy(receipt.ContractAddress, signer.Client)
+	p.Contract().SetFrom(signer.Address())
+	return p
+}
+
+func DeployAddressManagerLogic(signer *contract.Signer) *binding.AddressManager {
 	receipt := binding.DeployAddressManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	fmt.Println("deploy address manager, address:", receipt.ContractAddress.String())
-
 	addrMan := binding.NewAddressManager(receipt.ContractAddress, signer.Client)
-	addrMan.Contract().SetFrom(signer.Address())
-	utils.EnsureTrue(1 == addrMan.Initialize().Sign(signer).SendTransaction(signer).Status)
-
 	return addrMan
 }
 
-func DeployL1StandardBridge(signer *contract.Signer, l1witness, l2bridge web3.Address) *binding.L1StandardBridge {
+func DeployL1StandardBridgeLogic(signer *contract.Signer) *binding.L1StandardBridge {
 	receipt := binding.DeployL1StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	fmt.Println("deploy l1 standard bridge, address:", receipt.ContractAddress.String())
 
 	bridge := binding.NewL1StandardBridge(receipt.ContractAddress, signer.Client)
-	bridge.Contract().SetFrom(signer.Address())
-
-	bridge.Initialize(l1witness, l2bridge).Sign(signer).SendTransaction(signer)
-
 	return bridge
 }
 
 // TODO: using proxy
 func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig) *L1Contracts {
 	// deploy address manager
-	addrMan := DeployAddressManager(signer)
-	l1CrossLayerWitness := DeployL1CrossLayerWitness(signer, addrMan.Contract().Addr())
-	inputChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupInputChain")
-	stateChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupStateChain")
+	addrLogic := DeployAddressManagerLogic(signer)
+	addrProxy := DeployUpgradeProxy(signer, addrLogic.Contract().Addr(), cfg.Admin, addrLogic.Initialize().Data)
+	resolver := addrProxy.Contract().Addr()
+	l1CrossLayerWitnessLogic := DeployL1CrossLayerWitnessLogic(signer)
+	l1CrossLayerWitnessProxy := DeployUpgradeProxy(signer, l1CrossLayerWitnessLogic.Contract().Addr(), cfg.Admin, l1CrossLayerWitnessLogic.Initialize(resolver).Data)
+	chainContainerLogic := DeployChainStorageLogic(signer)
+	inputChainContainerProxy := DeployUpgradeProxy(signer, chainContainerLogic.Contract().Addr(), cfg.Admin, chainContainerLogic.Initialize("RollupInputChain", resolver).Data)
+	stateChainContainerProxy := DeployUpgradeProxy(signer, chainContainerLogic.Contract().Addr(), cfg.Admin, chainContainerLogic.Initialize("RollupStateChain", resolver).Data)
 
-	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxWitnessTxExecGasLimit, cfg.L2ChainId)
-	rollupStateChain := DeployRollupStateChain(signer, addrMan.Contract().Addr(), cfg.FraudProofWindow)
+	rollupInputChainLogic := DeployRollupInputChainLogic(signer)
+	rollupInputChainProxy := DeployUpgradeProxy(signer, rollupInputChainLogic.Contract().Addr(), cfg.Admin, rollupInputChainLogic.Initialize(resolver, cfg.MaxEnqueueTxGasLimit, cfg.MaxWitnessTxExecGasLimit, cfg.L2ChainId).Data)
+	rollupStateChainLogic := DeployRollupStateChainLogic(signer)
+	rollupStateChainProxy := DeployUpgradeProxy(signer, rollupStateChainLogic.Contract().Addr(), cfg.Admin, rollupStateChainLogic.Initialize(resolver, big.NewInt(0).SetUint64(cfg.FraudProofWindow)).Data)
 
 	var feeToken *binding.ERC20
 	if cfg.FeeToken.IsZero() {
@@ -203,15 +183,18 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		feeToken.Contract().SetFrom(signer.Address())
 	}
 
-	dao := DeployDAO(signer)
+	daoLogic := DeployDAOLogic(signer)
+	daoProxy := DeployUpgradeProxy(signer, daoLogic.Contract().Addr(), cfg.Admin, daoLogic.Initialize().Data)
 	challenge := DeployChallengeLogic(signer)
 	beacon := DeployBeacon(signer, challenge.Contract().Addr())
-	factory := DeployChallengeFactory(signer, addrMan.Contract().Addr(), beacon.Contract().Addr(), cfg.BlockLimitPerRound, cfg.ChallengerDeposit)
+	factoryLogic := DeployChallengeFactoryLogic(signer)
+	factoryProxy := DeployUpgradeProxy(signer, factoryLogic.Contract().Addr(), cfg.Admin, factoryLogic.Initialize(resolver, beacon.Contract().Addr(), new(big.Int).SetUint64(cfg.BlockLimitPerRound), cfg.ChallengerDeposit).Data)
+	stakingLogic := DeployStakingManagerLogic(signer)
+	stakingProxy := DeployUpgradeProxy(signer, stakingLogic.Contract().Addr(), cfg.Admin, stakingLogic.Initialize(daoProxy.Contract().Addr(), factoryProxy.Contract().Addr(),
+		rollupStateChainProxy.Contract().Addr(), feeToken.Contract().Addr(), cfg.StakingAmount).Data)
 
-	staking := DeployStakingManager(signer, dao.Contract().Addr(), factory.Contract().Addr(),
-		rollupStateChain.Contract().Addr(), feeToken.Contract().Addr(), cfg.StakingAmount)
-
-	bridge := DeployL1StandardBridge(signer, l1CrossLayerWitness.Contract().Addr(), cfg.L2StandardBridge)
+	bridgeLogic := DeployL1StandardBridgeLogic(signer)
+	bridgeProxy := DeployUpgradeProxy(signer, bridgeLogic.Contract().Addr(), cfg.Admin, bridgeLogic.Initialize(l1CrossLayerWitnessProxy.Contract().Addr(), cfg.L2StandardBridge).Data)
 
 	names := []string{
 		"L1CrossLayerWitness",
@@ -226,32 +209,34 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		"L2CrossLayerWitness",
 	}
 	addrs := []web3.Address{
-		l1CrossLayerWitness.Contract().Addr(),
-		inputChainContainer.Contract().Addr(),
-		stateChainContainer.Contract().Addr(),
-		rollupInputChain.Contract().Addr(),
-		rollupStateChain.Contract().Addr(),
-		dao.Contract().Addr(),
-		staking.Contract().Addr(),
-		staking.Contract().Addr(),
-		factory.Contract().Addr(),
+		l1CrossLayerWitnessProxy.Contract().Addr(),
+		inputChainContainerProxy.Contract().Addr(),
+		stateChainContainerProxy.Contract().Addr(),
+		rollupInputChainProxy.Contract().Addr(),
+		rollupStateChainProxy.Contract().Addr(),
+		daoProxy.Contract().Addr(),
+		stakingProxy.Contract().Addr(),
+		stakingProxy.Contract().Addr(),
+		factoryProxy.Contract().Addr(),
 		cfg.L2CrossLayerWitness,
 	}
-	addrMan.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer)
+	manager := binding.NewAddressManager(resolver, signer.Client)
+	manager.Contract().SetFrom(signer.Address())
+	manager.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return &L1Contracts{
-		AddressManager:      addrMan,
-		InputChainStorage:   inputChainContainer,
-		StateChainStorage:   stateChainContainer,
-		RollupInputChain:    rollupInputChain,
-		RollupStateChain:    rollupStateChain,
-		L1CrossLayerWitness: l1CrossLayerWitness,
-		L1StandardBridge:    bridge,
+		AddressManager:      manager,
+		InputChainStorage:   binding.NewChainStorageContainer(inputChainContainerProxy.Contract().Addr(), signer.Client),
+		StateChainStorage:   binding.NewChainStorageContainer(stateChainContainerProxy.Contract().Addr(), signer.Client),
+		RollupInputChain:    binding.NewRollupInputChain(rollupInputChainProxy.Contract().Addr(), signer.Client),
+		RollupStateChain:    binding.NewRollupStateChain(rollupStateChainProxy.Contract().Addr(), signer.Client),
+		L1CrossLayerWitness: binding.NewL1CrossLayerWitness(l1CrossLayerWitnessProxy.Contract().Addr(), signer.Client),
+		L1StandardBridge:    binding.NewL1StandardBridge(bridgeProxy.Contract().Addr(), signer.Client),
 		FeeToken:            feeToken,
 		ChallengeLogic:      challenge,
 		ChallengeBeacon:     beacon,
-		ChallengeFactory:    factory,
-		StakingManager:      staking,
-		DAO:                 dao,
+		ChallengeFactory:    binding.NewChallengeFactory(factoryProxy.Contract().Addr(), signer.Client),
+		StakingManager:      binding.NewStakingManager(stakingProxy.Contract().Addr(), signer.Client),
+		DAO:                 binding.NewDAO(daoProxy.Contract().Addr(), signer.Client),
 	}
 }
