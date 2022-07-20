@@ -36,7 +36,7 @@ contract MockStateTransition {
     }
 }
 
-contract TestChallenge2 is Challenge {
+contract TestChallenge is Challenge {
     address testAddress = address(0x7777);
     address testAddress2 = address(0x8888);
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
