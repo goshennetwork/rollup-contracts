@@ -4,7 +4,7 @@ import "github.com/urfave/cli/v2"
 
 var AmountFlag = &cli.Float64Flag{
 	Name:     "amount",
-	Usage:    "amount in ether, support float value",
+	Usage:    "amount in token decimal, support float value",
 	Required: true,
 }
 
@@ -51,4 +51,16 @@ var L2TokenFlag = &cli.StringFlag{
 var DataHash = &cli.StringFlag{
 	Name:  "datahash",
 	Usage: "cross layer message hash",
+}
+
+var AccountFlag = &cli.StringFlag{
+	Name:     "account",
+	Usage:    "account address",
+	Required: true,
+}
+
+var EnabledFlag = &cli.BoolFlag{
+	Name:     "enabled",
+	Usage:    "whether enable or disable",
+	Required: true,
 }

@@ -114,6 +114,7 @@ func depositCmd(ctx *cli.Context) error {
 	}
 	log.Infof("staking token address:%s", tokenAddr.String())
 	token := erc20.NewERC20(tokenAddr, signer.Client)
+	token.Contract().SetFrom(signer.Address())
 	allowance, err := token.Allowance(signer.Address(), conf.L1Addresses.StakingManager)
 	if err != nil {
 		return err
