@@ -267,7 +267,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         return keccak256(rlpTx);
     }
 
-    //Test appendBatch
+    //Test appendInputBatch
     /**1.Test Fail**/
 
     //test Fail msg.sender
@@ -276,7 +276,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendBatchNotSequencer() public {
         vm.startPrank(testAddress2, testAddress2);
         vm.expectRevert("only sequencer");
-        rollupInputChain.appendBatch();
+        rollupInputChain.appendInputBatch();
         vm.stopPrank();
     }
 
@@ -289,7 +289,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
         vm.startPrank(testAddress2);
         vm.expectRevert("Sequencer should be staking");
-        rollupInputChain.appendBatch();
+        rollupInputChain.appendInputBatch();
         vm.stopPrank();
     }
 
@@ -304,7 +304,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     }
 
     function helpCall(address _rollupInputChain, bytes memory _data) public {
-        (bool success, ) = _rollupInputChain.call(abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _data));
+        (bool success, ) = _rollupInputChain.call(abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _data));
         require(success, "call failed");
     }
 
@@ -329,7 +329,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
     }
 
-    //helper function: encode calldata to appendBatch()
+    //helper function: encode calldata to appendInputBatch()
     function fakeAppendBatch(
         uint64 _batchIndex,
         uint64 _queueNum,
@@ -354,7 +354,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             _info = abi.encodePacked(batchIndex, queueNum, pendingQueueIndex, subBatchNum, time0Start, timeDiff, data);
         }
         (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
         );
         require(success, "failed");
     }
@@ -407,7 +407,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         );
         vm.expectRevert("wrong calldata");
         (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
         );
         require(success, "failed");
         vm.stopPrank();
@@ -461,7 +461,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         //test eventEmit
         vm.expectEmit(true, true, false, true);
-        emit TransactionAppended(testAddress, 0, 0, 1, inputhash);
+        emit InputBatchAppended(testAddress, 0, 0, 1, inputhash);
         fakeAppendBatch(0, 1, 0, 0, 0, "");
         vm.stopPrank();
     }
@@ -535,7 +535,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         bytes memory info = getinfo(1, 1, 1, 2, bytes("0x0"));
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         vm.expectEmit(true, true, false, true);
-        emit TransactionAppended(testAddress, 1, 1, 1, inputhash);
+        emit InputBatchAppended(testAddress, 1, 1, 1, inputhash);
         fakeAppendBatch(1, 1, 1, 1, 2, bytes("0x0")); //it will always work
         vm.stopPrank();
     }
