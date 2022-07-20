@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"math/big"
+
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -50,6 +52,15 @@ func gatewayCommands() []*cli.Command {
 			Action: WithdrawToERC20Cmd,
 			Flags: []cli.Flag{
 				flags.L2TokenFlag,
+				flags.AmountFlag,
+				flags.ToFlag,
+				flags.SubmitFlag,
+			},
+		},
+		{
+			Name:   "withdrawEth",
+			Action: WithdrawEthCmd,
+			Flags: []cli.Flag{
 				flags.AmountFlag,
 				flags.ToFlag,
 				flags.SubmitFlag,
@@ -128,6 +139,23 @@ func WithdrawToERC20Cmd(ctx *cli.Context) error {
 	return nil
 }
 
+func WithdrawEthCmd(ctx *cli.Context) error {
+	path := ctx.String(flags.ConfigFlag.Name)
+	signer, conf, err := common.SetUpL2(path)
+	if err != nil {
+		return err
+	}
+	amount := ctx.Float64(flags.AmountFlag.Name)
+	to := ctx.String(flags.ToFlag.Name)
+	if to == "" {
+		to = signer.Address().String()
+	}
+	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
+	withdrawAmt := u256.New(uint64(amount * 1e9)).Mul(web3.Ether(1)).Div(uint64(1e9))
+	WithdrawEthTo(signer, conf.L2Genesis.L2StandardBridge, web3.HexToAddress(to), withdrawAmt.ToBigInt())
+	return nil
+}
+
 func DepositEthToL2(signer *contract.Signer, to, l1Bridge web3.Address, depositAmt u256.Int) {
 	gateway := binding.NewL1StandardBridge(l1Bridge, signer.Client)
 	gateway.Contract().SetFrom(signer.Address())
@@ -147,4 +175,11 @@ func WithdrawToERC20ToL1(signer *contract.Signer, l2Bridge, to, l2Token web3.Add
 	gateway.Contract().SetFrom(signer.Address())
 	receipt := gateway.WithdrawTo(l2Token, to, withdrawAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer)
 	log.Infof("withdrawal erc20 to l1: %s", utils.JsonString(receipt.Thin()))
+}
+
+func WithdrawEthTo(signer *contract.Signer, l2Bridge web3.Address, target web3.Address, amount *big.Int) {
+	gateway := binding.NewL2StandardBridge(l2Bridge, signer.Client)
+	gateway.Contract().SetFrom(signer.Address())
+	r := gateway.WithdrawETHTo(target, nil).SetValue(amount).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	log.Infof("withdrawal eth to l1 :%s", utils.JsonString(r.Thin()))
 }
