@@ -1,4 +1,4 @@
-[profile.default]
+[default]
 fuzz_runs = 1024
 libs = ['node_modules']
 optimizer = true
