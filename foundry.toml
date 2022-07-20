@@ -10,6 +10,7 @@ remappings = [
     '@openzeppelin/=node_modules/@openzeppelin/',
     'hardhat/=node_modules/hardhat/',
 ]
+bytecode_hash = "none"
 src = 'contracts'
 test = 'test'
 gas_reports = ["*"]
