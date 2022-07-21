@@ -177,12 +177,16 @@ func (s *StateChainInfo) Deserialization(source *codec.ZeroCopySource) (err erro
 }
 
 func CalcQueueHash(queues []*EnqueuedTransaction) web3.Hash {
+	return crypto.Keccak256Hash(SerializeEnqueuedTxsInfo(queues))
+}
+
+func SerializeEnqueuedTxsInfo(queues []*EnqueuedTransaction) []byte {
 	b := codec.NewZeroCopySink(nil)
 	for _, queue := range queues {
 		txHash := crypto.Keccak256Hash(queue.RlpTx)
 		b.WriteHash(txHash).WriteUint64BE(queue.Timestamp)
 	}
-	return crypto.Keccak256Hash(b.Bytes())
+	return b.Bytes()
 }
 
 type CrossLayerSentMessage struct {
