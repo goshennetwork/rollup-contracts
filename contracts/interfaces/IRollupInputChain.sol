@@ -13,15 +13,6 @@ interface IRollupInputChain {
         uint64 timestamp
     );
 
-    // TODO: remove this, left here just for binding generation
-    event TransactionAppended(
-        address indexed proposer,
-        uint64 indexed index,
-        uint64 startQueueIndex,
-        uint64 queueNum,
-        bytes32 inputHash
-    );
-
     event InputBatchAppended(
         address indexed proposer,
         uint64 indexed index,
