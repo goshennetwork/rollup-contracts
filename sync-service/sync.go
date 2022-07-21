@@ -160,7 +160,7 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 	if err != nil {
 		return err
 	}
-	batches, err := rollupInputContract.FilterTransactionAppendedEvent(nil, nil, startHeight, endHeight)
+	batches, err := rollupInputContract.FilterInputBatchAppendedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
 		log.Errorf("sync fetch sequenced batch err:%s", err)
 		return err
