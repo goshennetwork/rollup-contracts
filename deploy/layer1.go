@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -87,6 +88,7 @@ func DeployDAOLogic(signer *contract.Signer) *binding.DAO {
 	receipt := binding.DeployDAO(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	dao := binding.NewDAO(receipt.ContractAddress, signer.Client)
+	dao.Contract().SetFrom(signer.Address())
 	return dao
 }
 
@@ -94,6 +96,7 @@ func DeployChallengeFactoryLogic(signer *contract.Signer) *binding.ChallengeFact
 	receipt := binding.DeployChallengeFactory(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	factory := binding.NewChallengeFactory(receipt.ContractAddress, signer.Client)
+	factory.Contract().SetFrom(signer.Address())
 	return factory
 }
 
@@ -101,6 +104,7 @@ func DeployStakingManagerLogic(signer *contract.Signer) *binding.StakingManager 
 	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
+	staking.Contract().SetFrom(signer.Address())
 	return staking
 }
 
@@ -108,6 +112,7 @@ func DeployRollupInputChainLogic(signer *contract.Signer) *binding.RollupInputCh
 	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
+	rollupInputChain.Contract().SetFrom(signer.Address())
 	return rollupInputChain
 }
 
@@ -115,6 +120,7 @@ func DeployRollupStateChainLogic(signer *contract.Signer) *binding.RollupStateCh
 	receipt := binding.DeployRollupStateChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	rollupStateChain := binding.NewRollupStateChain(receipt.ContractAddress, signer.Client)
+	rollupStateChain.Contract().SetFrom(signer.Address())
 	return rollupStateChain
 }
 
@@ -122,6 +128,7 @@ func DeployChainStorageLogic(signer *contract.Signer) *binding.ChainStorageConta
 	receipt := binding.DeployChainStorageContainer(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	chainStorage := binding.NewChainStorageContainer(receipt.ContractAddress, signer.Client)
+	chainStorage.Contract().SetFrom(signer.Address())
 	return chainStorage
 }
 
@@ -131,6 +138,7 @@ func DeployL1CrossLayerWitnessLogic(signer *contract.Signer) *binding.L1CrossLay
 	utils.EnsureTrue(receipt.Status == 1)
 	fmt.Println("deploy l1 cross layer witness, address:", receipt.ContractAddress.String())
 	l1CrossLayerWitness := binding.NewL1CrossLayerWitness(receipt.ContractAddress, signer.Client)
+	l1CrossLayerWitness.Contract().SetFrom(signer.Address())
 	return l1CrossLayerWitness
 }
 
@@ -146,6 +154,7 @@ func DeployAddressManagerLogic(signer *contract.Signer) *binding.AddressManager 
 	utils.EnsureTrue(receipt.Status == 1)
 	fmt.Println("deploy address manager, address:", receipt.ContractAddress.String())
 	addrMan := binding.NewAddressManager(receipt.ContractAddress, signer.Client)
+	addrMan.Contract().SetFrom(signer.Address())
 	return addrMan
 }
 
@@ -155,6 +164,7 @@ func DeployL1StandardBridgeLogic(signer *contract.Signer) *binding.L1StandardBri
 	fmt.Println("deploy l1 standard bridge, address:", receipt.ContractAddress.String())
 
 	bridge := binding.NewL1StandardBridge(receipt.ContractAddress, signer.Client)
+	bridge.Contract().SetFrom(signer.Address())
 	return bridge
 }
 
@@ -224,7 +234,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 	manager.Contract().SetFrom(signer.Address())
 	manager.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
-	return &L1Contracts{
+	l1 := &L1Contracts{
 		AddressManager:      manager,
 		InputChainStorage:   binding.NewChainStorageContainer(inputChainContainerProxy.Contract().Addr(), signer.Client),
 		StateChainStorage:   binding.NewChainStorageContainer(stateChainContainerProxy.Contract().Addr(), signer.Client),
@@ -239,4 +249,13 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		StakingManager:      binding.NewStakingManager(stakingProxy.Contract().Addr(), signer.Client),
 		DAO:                 binding.NewDAO(daoProxy.Contract().Addr(), signer.Client),
 	}
+	v := reflect.ValueOf(l1).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		v.Field(i).Interface().(Bind).Contract().SetFrom(signer.Address())
+	}
+	return l1
+}
+
+type Bind interface {
+	Contract() *contract.Contract
 }

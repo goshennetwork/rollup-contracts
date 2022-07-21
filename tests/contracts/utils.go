@@ -24,6 +24,7 @@ var LocalL1ChainEnv = &deploy.L1ChainEnv{
 	RpcUrl:  "local",
 	PrivKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 	ChainConfig: &config.L1ChainDeployConfig{
+		Admin:                    web3.Address{0, 0, 0, 1},
 		FraudProofWindow:         3,
 		MaxEnqueueTxGasLimit:     15000000,
 		MaxWitnessTxExecGasLimit: 5000000,
