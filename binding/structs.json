@@ -396,6 +396,34 @@
       "EventID": "Initialized(uint8)",
       "EventName": "InitializedEventID"
     },
+    "InputBatchAppendedEvent": {
+      "Name": "InputBatchAppendedEvent",
+      "Fields": [
+        {
+          "Name": "proposer",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "index",
+          "Type": "uint64"
+        },
+        {
+          "Name": "startQueueIndex",
+          "Type": "uint64"
+        },
+        {
+          "Name": "queueNum",
+          "Type": "uint64"
+        },
+        {
+          "Name": "inputHash",
+          "Type": "[32]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "InputBatchAppended(address,uint64,uint64,uint64,bytes32)",
+      "EventName": "InputBatchAppendedEventID"
+    },
     "MessageAllowedEvent": {
       "Name": "MessageAllowedEvent",
       "Fields": [
@@ -671,34 +699,6 @@
       "IsEvent": true,
       "EventID": "StateRollbacked(uint64,bytes32)",
       "EventName": "StateRollbackedEventID"
-    },
-    "TransactionAppendedEvent": {
-      "Name": "TransactionAppendedEvent",
-      "Fields": [
-        {
-          "Name": "proposer",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "index",
-          "Type": "uint64"
-        },
-        {
-          "Name": "startQueueIndex",
-          "Type": "uint64"
-        },
-        {
-          "Name": "queueNum",
-          "Type": "uint64"
-        },
-        {
-          "Name": "inputHash",
-          "Type": "[32]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "TransactionAppended(address,uint64,uint64,uint64,bytes32)",
-      "EventName": "TransactionAppendedEventID"
     },
     "TransactionEnqueuedEvent": {
       "Name": "TransactionEnqueuedEvent",

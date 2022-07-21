@@ -204,6 +204,18 @@ type InitializedEvent struct {
 	Raw *web3.Log
 }
 
+var InputBatchAppendedEventID = crypto.Keccak256Hash([]byte("InputBatchAppended(address,uint64,uint64,uint64,bytes32)"))
+
+type InputBatchAppendedEvent struct {
+	Proposer        web3.Address
+	Index           uint64
+	StartQueueIndex uint64
+	QueueNum        uint64
+	InputHash       [32]byte
+
+	Raw *web3.Log
+}
+
 var MessageAllowedEventID = crypto.Keccak256Hash([]byte("MessageAllowed(bytes32[])"))
 
 type MessageAllowedEvent struct {
@@ -345,18 +357,6 @@ var StateRollbackedEventID = crypto.Keccak256Hash([]byte("StateRollbacked(uint64
 type StateRollbackedEvent struct {
 	StateIndex uint64
 	BlockHash  [32]byte
-
-	Raw *web3.Log
-}
-
-var TransactionAppendedEventID = crypto.Keccak256Hash([]byte("TransactionAppended(address,uint64,uint64,uint64,bytes32)"))
-
-type TransactionAppendedEvent struct {
-	Proposer        web3.Address
-	Index           uint64
-	StartQueueIndex uint64
-	QueueNum        uint64
-	InputHash       [32]byte
 
 	Raw *web3.Log
 }
