@@ -107,7 +107,7 @@ func (self *InputChain) GetEnqueuedTransactions(startIndex uint64, num uint64) (
 }
 
 //will update info in memory
-func (self *InputChain) StoreSequencerBatches(batches ...*binding.TransactionAppendedEvent) {
+func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppendedEvent) {
 	info := self.GetInfo()
 	for _, batch := range batches {
 		if batch.Index != info.TotalBatches {
