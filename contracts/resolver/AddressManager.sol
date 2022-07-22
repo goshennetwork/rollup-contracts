@@ -49,7 +49,7 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function dao() public view returns (IDAO) {
-        return IDAO(resolve(AddressName.DAO));
+        return IDAO(getAddrByHash[AddressName.DAO_HASH]);
     }
 
     function rollupInputChain() public view returns (IRollupInputChain) {
@@ -61,31 +61,31 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function rollupStateChain() public view returns (IRollupStateChain) {
-        return IRollupStateChain(resolve(AddressName.ROLLUP_STATE_CHAIN));
+        return IRollupStateChain(getAddrByHash[AddressName.ROLLUP_STATE_CHAIN_HASH]);
     }
 
     function rollupStateChainContainer() public view returns (IChainStorageContainer) {
-        return IChainStorageContainer(resolve(AddressName.ROLLUP_STATE_CHAIN_CONTAINER));
+        return IChainStorageContainer(getAddrByHash[AddressName.ROLLUP_STATE_CHAIN_CONTAINER_HASH]);
     }
 
     function stakingManager() public view returns (IStakingManager) {
-        return IStakingManager(resolve(AddressName.STAKING_MANAGER));
+        return IStakingManager(getAddrByHash[AddressName.STAKING_MANAGER_HASH]);
     }
 
     function challengeFactory() public view returns (IChallengeFactory) {
-        return IChallengeFactory(resolve(AddressName.CHALLENGE_FACTORY));
+        return IChallengeFactory(getAddrByHash[AddressName.CHALLENGE_FACTORY_HASH]);
     }
 
     function l1CrossLayerWitness() public view returns (IL1CrossLayerWitness) {
-        return IL1CrossLayerWitness(resolve(AddressName.L1_CROSS_LAYER_WITNESS));
+        return IL1CrossLayerWitness(getAddrByHash[AddressName.L1_CROSS_LAYER_WITNESS_HASH]);
     }
 
     function l2CrossLayerWitness() public view returns (IL2CrossLayerWitness) {
-        return IL2CrossLayerWitness(resolve(AddressName.L2_CROSS_LAYER_WITNESS));
+        return IL2CrossLayerWitness(getAddrByHash[AddressName.L2_CROSS_LAYER_WITNESS_HASH]);
     }
 
     function stateTransition() public view returns (IStateTransition) {
-        return IStateTransition(resolve(AddressName.STATE_TRANSITION));
+        return IStateTransition(getAddrByHash[AddressName.STATE_TRANSITION_HASH]);
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

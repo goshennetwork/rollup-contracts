@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 library AddressName {
     ///DAO
     string constant DAO = "DAO";
+    bytes32 constant DAO_HASH = keccak256("DAO");
     ///RollupInputChain
     string constant ROLLUP_INPUT_CHAIN = "RollupInputChain";
     bytes32 constant ROLLUP_INPUT_CHAIN_HASH = keccak256("RollupInputChain");
@@ -12,16 +13,23 @@ library AddressName {
     bytes32 constant ROLLUP_INPUT_CHAIN_CONTAINER_HASH = keccak256("RollupInputChainContainer");
     ///RollupStateChain
     string constant ROLLUP_STATE_CHAIN = "RollupStateChain";
+    bytes32 constant ROLLUP_STATE_CHAIN_HASH = keccak256("RollupStateChain");
     ///ChainStorageContainer of RollupStateChain
     string constant ROLLUP_STATE_CHAIN_CONTAINER = "RollupStateChainContainer";
+    bytes32 constant ROLLUP_STATE_CHAIN_CONTAINER_HASH = keccak256("RollupStateChainContainer");
     ///StakingManager
     string constant STAKING_MANAGER = "StakingManager";
+    bytes32 constant STAKING_MANAGER_HASH = keccak256("StakingManager");
     ///ChallengeFactory
     string constant CHALLENGE_FACTORY = "ChallengeFactory";
+    bytes32 constant CHALLENGE_FACTORY_HASH = keccak256("ChallengeFactory");
     ///L1CrossLayerWitness
     string constant L1_CROSS_LAYER_WITNESS = "L1CrossLayerWitness";
+    bytes32 constant L1_CROSS_LAYER_WITNESS_HASH = keccak256("L1CrossLayerWitness");
     ///L2CrossLayerWitness
     string constant L2_CROSS_LAYER_WITNESS = "L2CrossLayerWitness";
+    bytes32 constant L2_CROSS_LAYER_WITNESS_HASH = keccak256("L2CrossLayerWitness");
     ///StateTransition
     string constant STATE_TRANSITION = "StateTransition";
+    bytes32 constant STATE_TRANSITION_HASH = keccak256("StateTransition");
 }
