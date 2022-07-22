@@ -115,24 +115,35 @@ library BytesSlice {
      * Concatenate a variable number of bytes. note: you can also use built-in function `bytes.concat`
      * if the list size is static.
      */
-    function concat(bytes[] memory _list) internal pure returns (bytes memory) {
-        if (_list.length == 0) {
-            return new bytes(0);
-        }
-
-        uint256 len;
-        uint256 i = 0;
-        for (; i < _list.length; i++) {
+    function concat(bytes memory prefix, bytes[] memory _list) internal pure returns (bytes memory) {
+        uint256 len = 0;
+        for (uint256 i = 0; i < _list.length; i++) {
             len += _list[i].length;
         }
 
+        return concat(prefix, _list, len);
+    }
+
+    function concat(
+        bytes memory prefix,
+        bytes[] memory _list,
+        uint256 _listBytes
+    ) internal pure returns (bytes memory) {
+        uint256 prefixLen = prefix.length;
+        uint256 len = prefixLen + _listBytes;
         bytes memory flattened = new bytes(len);
         uint256 flattenedPtr;
         assembly {
             flattenedPtr := add(flattened, 0x20)
         }
+        uint256 prefixPtr;
+        assembly {
+            prefixPtr := add(prefix, 0x20)
+        }
+        memcpy(flattenedPtr, prefixPtr, prefixLen);
+        flattenedPtr += prefixLen;
 
-        for (i = 0; i < _list.length; i++) {
+        for (uint256 i = 0; i < _list.length; i++) {
             bytes memory item = _list[i];
 
             uint256 listPtr;
@@ -140,11 +151,20 @@ library BytesSlice {
                 listPtr := add(item, 0x20)
             }
 
-            BytesSlice.memcpy(flattenedPtr, listPtr, item.length);
-            flattenedPtr += _list[i].length;
+            uint256 itemLen = item.length;
+            memcpy(flattenedPtr, listPtr, itemLen);
+            flattenedPtr += itemLen;
         }
 
         return flattened;
+    }
+
+    /**
+     * Concatenate a variable number of bytes. note: you can also use built-in function `bytes.concat`
+     * if the list size is static.
+     */
+    function concat(bytes[] memory _list) internal pure returns (bytes memory) {
+        return concat(bytes(""), _list);
     }
 
     function equal(bytes memory left, bytes memory right) internal pure returns (bool) {
