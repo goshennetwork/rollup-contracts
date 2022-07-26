@@ -23,10 +23,10 @@ func TestL1Store(t *testing.T) {
 	l1Erc20DepositEvents := genRandomL1Erc20DepositEvts(10)
 	l1Erc20WithdrawalEvents := genRandomL1Erc20Withdrawals(10)
 
-	l1BridgeStore.StoreETHDeposit(l1EthDepositEvents)
-	l1BridgeStore.StoreETHWithdrawal(l1EthWithdrawalEvents)
-	l1BridgeStore.StoreERC20Deposit(l1Erc20DepositEvents)
-	l1BridgeStore.StoreERC20Withdrawal(l1Erc20WithdrawalEvents)
+	l1BridgeStore.StoreDeposit(l1EthDepositEvents)
+	l1BridgeStore.StoreWithdrawal(l1EthWithdrawalEvents)
+	l1BridgeStore.StoreDeposit(l1Erc20DepositEvents)
+	l1BridgeStore.StoreWithdrawal(l1Erc20WithdrawalEvents)
 
 	assertL1EthDepositEvtsEqual(t, l1BridgeStore.store, l1EthDepositEvents)
 	assertL1EthWithdrawalEvtsEqual(t, l1BridgeStore.store, l1EthWithdrawalEvents)
@@ -52,10 +52,10 @@ func TestL2Store(t *testing.T) {
 	assertDepositFailedEventEqual(t, l2BridgeStore.store, l2DepositFailed)
 }
 
-func genRandomL1EthDepositEvts(length int) []*binding.ETHDepositInitiatedEvent {
-	result := make([]*binding.ETHDepositInitiatedEvent, 0)
+func genRandomL1EthDepositEvts(length int) []*binding.DepositInitiatedEvent {
+	result := make([]*binding.DepositInitiatedEvent, 0)
 	for i := 0; i < length; i++ {
-		evt := &binding.ETHDepositInitiatedEvent{
+		evt := &binding.DepositInitiatedEvent{
 			Data: make([]byte, 20), Raw: &web3.Log{},
 		}
 		_, _ = rand.Read(evt.From[:])
@@ -70,10 +70,10 @@ func genRandomL1EthDepositEvts(length int) []*binding.ETHDepositInitiatedEvent {
 	return result
 }
 
-func genRandomL1EthWithdrawalEvts(length int) []*binding.ETHWithdrawalFinalizedEvent {
-	result := make([]*binding.ETHWithdrawalFinalizedEvent, 0)
+func genRandomL1EthWithdrawalEvts(length int) []*binding.WithdrawalFinalizedEvent {
+	result := make([]*binding.WithdrawalFinalizedEvent, 0)
 	for i := 0; i < length; i++ {
-		evt := &binding.ETHWithdrawalFinalizedEvent{
+		evt := &binding.WithdrawalFinalizedEvent{
 			Data: make([]byte, 20), Raw: &web3.Log{},
 		}
 		_, _ = rand.Read(evt.From[:])
@@ -88,12 +88,14 @@ func genRandomL1EthWithdrawalEvts(length int) []*binding.ETHWithdrawalFinalizedE
 	return result
 }
 
-func genRandomL1Erc20DepositEvts(length int) []*binding.ERC20DepositInitiatedEvent {
-	result := make([]*binding.ERC20DepositInitiatedEvent, 0)
+func genRandomL1Erc20DepositEvts(length int) []*binding.DepositInitiatedEvent {
+	result := make([]*binding.DepositInitiatedEvent, 0)
 	for i := 0; i < length; i++ {
-		evt := &binding.ERC20DepositInitiatedEvent{
+		evt := &binding.DepositInitiatedEvent{
 			Data: make([]byte, 20), Raw: &web3.Log{},
 		}
+		_, _ = rand.Read(evt.L1Token[:])
+		_, _ = rand.Read(evt.L2Token[:])
 		_, _ = rand.Read(evt.From[:])
 		_, _ = rand.Read(evt.To[:])
 		_, _ = rand.Read(evt.Data[:])
@@ -106,12 +108,14 @@ func genRandomL1Erc20DepositEvts(length int) []*binding.ERC20DepositInitiatedEve
 	return result
 }
 
-func genRandomL1Erc20Withdrawals(length int) []*binding.ERC20WithdrawalFinalizedEvent {
-	result := make([]*binding.ERC20WithdrawalFinalizedEvent, 0)
+func genRandomL1Erc20Withdrawals(length int) []*binding.WithdrawalFinalizedEvent {
+	result := make([]*binding.WithdrawalFinalizedEvent, 0)
 	for i := 0; i < length; i++ {
-		evt := &binding.ERC20WithdrawalFinalizedEvent{
+		evt := &binding.WithdrawalFinalizedEvent{
 			Data: make([]byte, 20), Raw: &web3.Log{},
 		}
+		_, _ = rand.Read(evt.L1Token[:])
+		_, _ = rand.Read(evt.L2Token[:])
 		_, _ = rand.Read(evt.From[:])
 		_, _ = rand.Read(evt.To[:])
 		_, _ = rand.Read(evt.Data[:])
@@ -178,12 +182,12 @@ func genRandomL2DepositFailed(length int) []*binding.DepositFailedEvent {
 	return result
 }
 
-func assertL1EthDepositEvtsEqual(t *testing.T, store schema.KeyValueDB, events []*binding.ETHDepositInitiatedEvent) {
+func assertL1EthDepositEvtsEqual(t *testing.T, store schema.KeyValueDB, events []*binding.DepositInitiatedEvent) {
 	for _, evt := range events {
 		newEvt := readL1TokenBridgeETHEvent(t, store, evt.Raw.TransactionHash, false)
 		exist := false
 		for _, item := range newEvt {
-			if l1TokenBridgeETHDepositEqual(evt, item) {
+			if l1TokenBridgeDepositEqual(evt, item) {
 				exist = true
 				break
 			}
@@ -194,12 +198,12 @@ func assertL1EthDepositEvtsEqual(t *testing.T, store schema.KeyValueDB, events [
 	}
 }
 
-func assertL1EthWithdrawalEvtsEqual(t *testing.T, store schema.KeyValueDB, events []*binding.ETHWithdrawalFinalizedEvent) {
+func assertL1EthWithdrawalEvtsEqual(t *testing.T, store schema.KeyValueDB, events []*binding.WithdrawalFinalizedEvent) {
 	for _, evt := range events {
 		newEvt := readL1TokenBridgeETHEvent(t, store, evt.Raw.TransactionHash, true)
 		exist := false
 		for _, item := range newEvt {
-			if l1TokenBridgeETHWithdrawalEqual(evt, item) {
+			if l1TokenBridgeWithdrawalEqual(evt, item) {
 				exist = true
 				break
 			}
@@ -213,15 +217,10 @@ func assertL1EthWithdrawalEvtsEqual(t *testing.T, store schema.KeyValueDB, event
 func assertDepositFailedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.DepositFailedEvent) {
 	for _, evt := range events {
 		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genDepositFailedKey)
-		exist := false
 		for _, item := range newEvt {
-			if crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
-				exist = true
-				break
+			if !crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
+				t.Fatal(1)
 			}
-		}
-		if !exist {
-			t.Fatal("failed")
 		}
 	}
 }
@@ -229,38 +228,28 @@ func assertDepositFailedEventEqual(t *testing.T, store schema.KeyValueDB, events
 func assertDepositFinalizedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.DepositFinalizedEvent) {
 	for _, evt := range events {
 		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genDepositFinalizedKey)
-		exist := false
 		for _, item := range newEvt {
-			if crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
-				exist = true
-				break
+			if !crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
+				t.Fatal("1")
 			}
-		}
-		if !exist {
-			t.Fatal("failed")
 		}
 	}
 }
 
-func assertERC20DepositInitiatedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.ERC20DepositInitiatedEvent) {
+func assertERC20DepositInitiatedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.DepositInitiatedEvent) {
 	for _, evt := range events {
-		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genL1ERC20DepositInitKey)
-		exist := false
+		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genL1DepositKey)
 		for _, item := range newEvt {
-			if crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
-				exist = true
-				break
+			if !crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
+				t.Fatal(1)
 			}
-		}
-		if !exist {
-			t.Fatal("failed")
 		}
 	}
 }
 
-func assertERC20WithdrawalFinalizedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.ERC20WithdrawalFinalizedEvent) {
+func assertERC20WithdrawalFinalizedEventEqual(t *testing.T, store schema.KeyValueDB, events []*binding.WithdrawalFinalizedEvent) {
 	for _, evt := range events {
-		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genL1ERC20WithdrawalFinalizedKey)
+		newEvt := readCrossLayerTokenInfo(t, store, evt.Raw.TransactionHash, genL1WithdrawalKey)
 		exist := false
 		for _, item := range newEvt {
 			if crossLayerTokenInfoEqual(evt.GetTokenCrossInfo(), item) {
@@ -290,17 +279,17 @@ func assertWithdrawalInitiatedEventEqual(t *testing.T, store schema.KeyValueDB, 
 	}
 }
 
-func readL1TokenBridgeETHEvent(t *testing.T, store schema.KeyValueDB, txHash web3.Hash, isWithdrawal bool) schema.L1TokenBridgeETHEvents {
-	key := genL1ETHDepositKey(txHash)
+func readL1TokenBridgeETHEvent(t *testing.T, store schema.KeyValueDB, txHash web3.Hash, isWithdrawal bool) binding.CrossLayerInfos {
+	key := genL1DepositKey(txHash)
 	if isWithdrawal {
-		key = genL1ETHWithdrawalKey(txHash)
+		key = genL1WithdrawalKey(txHash)
 	}
 	data, err := store.Get(key)
 	if err != nil {
 		t.Fatal(err)
 	}
 	source := codec.NewZeroCopySource(data)
-	newEvt, err := schema.DeserializationL1TokenBridgeETHEvents(source)
+	newEvt, err := binding.DeserializationCrossLayerInfos(source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,16 +312,16 @@ func readCrossLayerTokenInfo(t *testing.T, store schema.KeyValueDB, txHash web3.
 }
 
 func crossLayerTokenInfoEqual(item, newItem *binding.CrossLayerInfo) bool {
-	return item.L1Token == newItem.L1Token || item.L2Token == newItem.L2Token || item.From == newItem.From ||
-		item.To == newItem.To || item.Amount.Uint64() == newItem.Amount.Uint64() ||
-		!bytes.Equal(item.Data, newItem.Data)
+	return item.L1Token == newItem.L1Token && item.L2Token == newItem.L2Token && item.From == newItem.From &&
+		item.To == newItem.To && item.Amount.Uint64() == newItem.Amount.Uint64() &&
+		bytes.Equal(item.Data, newItem.Data)
 }
 
-func l1TokenBridgeETHDepositEqual(info *binding.ETHDepositInitiatedEvent, newInfo *schema.L1TokenBridgeETHEvent) bool {
-	return info.To == newInfo.To || info.From == newInfo.From || info.Amount.Uint64() == newInfo.Amount.Uint64() ||
-		!bytes.Equal(info.Data, newInfo.Data)
+func l1TokenBridgeDepositEqual(info *binding.DepositInitiatedEvent, newInfo *binding.CrossLayerInfo) bool {
+	return info.To == newInfo.To && info.From == newInfo.From && info.Amount.Uint64() == newInfo.Amount.Uint64() &&
+		bytes.Equal(info.Data, newInfo.Data) && info.L1Token == newInfo.L1Token && info.L2Token == newInfo.L2Token
 }
-func l1TokenBridgeETHWithdrawalEqual(info *binding.ETHWithdrawalFinalizedEvent, newInfo *schema.L1TokenBridgeETHEvent) bool {
-	return info.To == newInfo.To || info.From == newInfo.From || info.Amount.Uint64() == newInfo.Amount.Uint64() ||
-		!bytes.Equal(info.Data, newInfo.Data)
+func l1TokenBridgeWithdrawalEqual(info *binding.WithdrawalFinalizedEvent, newInfo *binding.CrossLayerInfo) bool {
+	return info.To == newInfo.To && info.From == newInfo.From && info.Amount.Uint64() == newInfo.Amount.Uint64() &&
+		bytes.Equal(info.Data, newInfo.Data) && info.L1Token == newInfo.L1Token && info.L2Token == newInfo.L2Token
 }

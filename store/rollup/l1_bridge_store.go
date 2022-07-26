@@ -34,14 +34,7 @@ func (self *L1BridgeStore) StoreDeposit(events []*binding.DepositInitiatedEvent)
 		if !ok {
 			data = make([]*binding.CrossLayerInfo, 0)
 		}
-		data = append(data, &binding.CrossLayerInfo{
-			L1Token: evt.L1Token,
-			L2Token: evt.L2Token,
-			From:    evt.From,
-			To:      evt.To,
-			Amount:  evt.Amount,
-			Data:    evt.Data,
-		})
+		data = append(data, evt.GetTokenCrossInfo())
 		cached[evt.Raw.TransactionHash] = data
 	}
 	for txHash, evts := range cached {
@@ -56,14 +49,7 @@ func (self *L1BridgeStore) StoreWithdrawal(events []*binding.WithdrawalFinalized
 		if !ok {
 			data = make([]*binding.CrossLayerInfo, 0)
 		}
-		data = append(data, &binding.CrossLayerInfo{
-			L1Token: evt.L1Token,
-			L2Token: evt.L2Token,
-			From:    evt.From,
-			To:      evt.To,
-			Amount:  evt.Amount,
-			Data:    evt.Data,
-		})
+		data = append(data, evt.GetTokenCrossInfo())
 		cached[evt.Raw.TransactionHash] = data
 	}
 	for txHash, evts := range cached {
