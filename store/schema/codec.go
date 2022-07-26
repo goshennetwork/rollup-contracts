@@ -226,27 +226,6 @@ type TokenBridgeERC20Event struct {
 	Data    []byte
 }
 
-func (s *TokenBridgeERC20Event) Serialization(sink *codec.ZeroCopySink) {
-	sink.WriteAddress(s.L1Token)
-	sink.WriteAddress(s.L2Token)
-	sink.WriteAddress(s.From)
-	sink.WriteAddress(s.To)
-	sink.WriteVarBytes(s.Amount.Bytes())
-	sink.WriteVarBytes(s.Data)
-}
-
-func (s *TokenBridgeERC20Event) Deserialization(source *codec.ZeroCopySource) (err error) {
-	reader := source.Reader()
-	s.L1Token = reader.ReadAddress()
-	s.L2Token = reader.ReadAddress()
-	s.From = reader.ReadAddress()
-	s.To = reader.ReadAddress()
-	amountData := reader.ReadVarBytes()
-	s.Amount = new(big.Int).SetBytes(amountData)
-	s.Data = reader.ReadVarBytes()
-	return reader.Error()
-}
-
 // this struct used to track all enqueue block
 type ChainedEnqueueBlockInfo struct {
 	PrevEnqueueBlock uint64 // prev l2 enqueue block
