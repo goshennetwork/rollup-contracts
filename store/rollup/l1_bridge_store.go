@@ -4,6 +4,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
+	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
@@ -42,6 +43,16 @@ func (self *L1BridgeStore) StoreDeposit(events []*binding.DepositInitiatedEvent)
 	}
 }
 
+func (self *L1BridgeStore) GetDeposit(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genL1DepositKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	source := codec.NewZeroCopySource(v)
+	return binding.DeserializationCrossLayerInfos(source)
+}
+
 func (self *L1BridgeStore) StoreWithdrawal(events []*binding.WithdrawalFinalizedEvent) {
 	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
 	for _, evt := range events {
@@ -55,4 +66,14 @@ func (self *L1BridgeStore) StoreWithdrawal(events []*binding.WithdrawalFinalized
 	for txHash, evts := range cached {
 		self.store.Put(genL1WithdrawalKey(txHash), codec.SerializeToBytes(evts))
 	}
+}
+
+func (self *L1BridgeStore) GetWithdrawal(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genL1WithdrawalKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	source := codec.NewZeroCopySource(v)
+	return binding.DeserializationCrossLayerInfos(source)
 }
