@@ -212,6 +212,38 @@
       "EventID": "DepositFinalized(address,address,address,address,uint256,bytes)",
       "EventName": "DepositFinalizedEventID"
     },
+    "DepositInitiatedEvent": {
+      "Name": "DepositInitiatedEvent",
+      "Fields": [
+        {
+          "Name": "_l1Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_l2Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_from",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_to",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_amount",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "_data",
+          "Type": "[]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "DepositInitiated(address,address,address,address,uint256,bytes)",
+      "EventName": "DepositInitiatedEventID"
+    },
     "DepositSlashedEvent": {
       "Name": "DepositSlashedEvent",
       "Fields": [
@@ -803,6 +835,38 @@
       "IsEvent": true,
       "EventID": "WithdrawStarted(address,uint256)",
       "EventName": "WithdrawStartedEventID"
+    },
+    "WithdrawalFinalizedEvent": {
+      "Name": "WithdrawalFinalizedEvent",
+      "Fields": [
+        {
+          "Name": "_l1Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_l2Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_from",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_to",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_amount",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "_data",
+          "Type": "[]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "WithdrawalFinalized(address,address,address,address,uint256,bytes)",
+      "EventName": "WithdrawalFinalizedEventID"
     },
     "WithdrawalInitiatedEvent": {
       "Name": "WithdrawalInitiatedEvent",

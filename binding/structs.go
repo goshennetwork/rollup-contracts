@@ -118,6 +118,19 @@ type DepositFinalizedEvent struct {
 	Raw *web3.Log
 }
 
+var DepositInitiatedEventID = crypto.Keccak256Hash([]byte("DepositInitiated(address,address,address,address,uint256,bytes)"))
+
+type DepositInitiatedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
+
+	Raw *web3.Log
+}
+
 var DepositSlashedEventID = crypto.Keccak256Hash([]byte("DepositSlashed(address,address,uint256,bytes32)"))
 
 type DepositSlashedEvent struct {
@@ -413,6 +426,19 @@ var WithdrawStartedEventID = crypto.Keccak256Hash([]byte("WithdrawStarted(addres
 type WithdrawStartedEvent struct {
 	Proposer           web3.Address
 	NeedComfirmedBlock *big.Int
+
+	Raw *web3.Log
+}
+
+var WithdrawalFinalizedEventID = crypto.Keccak256Hash([]byte("WithdrawalFinalized(address,address,address,address,uint256,bytes)"))
+
+type WithdrawalFinalizedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+	From    web3.Address
+	To      web3.Address
+	Amount  *big.Int
+	Data    []byte
 
 	Raw *web3.Log
 }
