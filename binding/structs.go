@@ -161,54 +161,6 @@ type DisputeBranchSelectedEvent struct {
 	Raw *web3.Log
 }
 
-var ERC20DepositInitiatedEventID = crypto.Keccak256Hash([]byte("ERC20DepositInitiated(address,address,address,address,uint256,bytes)"))
-
-type ERC20DepositInitiatedEvent struct {
-	L1Token web3.Address
-	L2Token web3.Address
-	From    web3.Address
-	To      web3.Address
-	Amount  *big.Int
-	Data    []byte
-
-	Raw *web3.Log
-}
-
-var ERC20WithdrawalFinalizedEventID = crypto.Keccak256Hash([]byte("ERC20WithdrawalFinalized(address,address,address,address,uint256,bytes)"))
-
-type ERC20WithdrawalFinalizedEvent struct {
-	L1Token web3.Address
-	L2Token web3.Address
-	From    web3.Address
-	To      web3.Address
-	Amount  *big.Int
-	Data    []byte
-
-	Raw *web3.Log
-}
-
-var ETHDepositInitiatedEventID = crypto.Keccak256Hash([]byte("ETHDepositInitiated(address,address,uint256,bytes)"))
-
-type ETHDepositInitiatedEvent struct {
-	From   web3.Address
-	To     web3.Address
-	Amount *big.Int
-	Data   []byte
-
-	Raw *web3.Log
-}
-
-var ETHWithdrawalFinalizedEventID = crypto.Keccak256Hash([]byte("ETHWithdrawalFinalized(address,address,uint256,bytes)"))
-
-type ETHWithdrawalFinalizedEvent struct {
-	From   web3.Address
-	To     web3.Address
-	Amount *big.Int
-	Data   []byte
-
-	Raw *web3.Log
-}
-
 var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
 
 type InitializedEvent struct {
