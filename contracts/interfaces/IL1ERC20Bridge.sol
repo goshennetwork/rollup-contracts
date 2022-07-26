@@ -3,6 +3,27 @@
 pragma solidity ^0.8.0;
 
 interface IL1ERC20Bridge {
+    /**********
+     * Events *
+     **********/
+    event DepositInitiated(
+        address indexed _l1Token,
+        address indexed _l2Token,
+        address indexed _from,
+        address _to,
+        uint256 _amount,
+        bytes _data
+    );
+
+    event WithdrawalFinalized(
+        address indexed _l1Token,
+        address indexed _l2Token,
+        address indexed _from,
+        address _to,
+        uint256 _amount,
+        bytes _data
+    );
+
     /********************
      * Public Functions *
      ********************/
