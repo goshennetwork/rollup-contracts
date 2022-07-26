@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "../interfaces/ICrossLayerWitness.sol";
 
-contract CrossLayerContextUpgradeable is Initializable {
+abstract contract CrossLayerContextUpgradeable is Initializable {
     ICrossLayerWitness public crossLayerWitness;
     uint256[49] private __gap;
 
