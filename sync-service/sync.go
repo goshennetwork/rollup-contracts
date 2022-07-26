@@ -222,27 +222,18 @@ func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, e
 
 func (self *SyncService) syncL1Bridge(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
 	l1TokenBridge := binding.NewL1StandardBridge(self.conf.L1Addresses.L1StandardBridge, self.l1client)
-	ethDepositEvts, err := l1TokenBridge.FilterETHDepositInitiatedEvent(nil, nil, startHeight, endHeight)
+	depositEvts, err := l1TokenBridge.FilterDepositInitiatedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("syncL1Bridge: filter eth deposit, %s", err)
 	}
-	ethWithdrawalEvts, err := l1TokenBridge.FilterETHWithdrawalFinalizedEvent(nil, nil, startHeight, endHeight)
+	withdrawalEvts, err := l1TokenBridge.FilterWithdrawalFinalizedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("syncL1Bridge: filter eth withdrawal, %s", err)
 	}
-	erc20DepositEvts, err := l1TokenBridge.FilterERC20DepositInitiatedEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL1Bridge: filter erc20 deposit, %s", err)
-	}
-	erc20WithdrawalEvts, err := l1TokenBridge.FilterERC20WithdrawalFinalizedEvent(nil, nil, nil, startHeight, endHeight)
-	if err != nil {
-		return fmt.Errorf("syncL1Bridge: filter erc20 withdrawal, %s", err)
-	}
+
 	l1BridgeStore := kvdb.L1TokenBridge()
-	l1BridgeStore.StoreETHDeposit(ethDepositEvts)
-	l1BridgeStore.StoreETHWithdrawal(ethWithdrawalEvts)
-	l1BridgeStore.StoreERC20Deposit(erc20DepositEvts)
-	l1BridgeStore.StoreERC20Withdrawal(erc20WithdrawalEvts)
+	l1BridgeStore.StoreDeposit(depositEvts)
+	l1BridgeStore.StoreWithdrawal(withdrawalEvts)
 	log.Infof("syncL1Bridge: from %d to %d", startHeight, endHeight)
 	return nil
 }
