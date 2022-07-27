@@ -201,9 +201,13 @@ contract TestBase {
     }
 }
 
-contract MockChallengeFactory {
+contract MockChallengeFactory is Initializable {
     function isChallengeContract(address _addr) external view returns (bool) {
         return _addr == address(this);
+    }
+
+    function return12() public pure returns (uint256) {
+        return 12;
     }
 }
 

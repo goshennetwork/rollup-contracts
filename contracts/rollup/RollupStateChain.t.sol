@@ -11,7 +11,7 @@ import "./ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
 
 contract TestRollupStateChain is TestBase {
-    address sender = address(0x7777); //admin
+    address sender = address(7777); //admin
     address testAddress = address(0x8888);
     event StateBatchAppended(
         address indexed _proposer,
@@ -22,8 +22,8 @@ contract TestRollupStateChain is TestBase {
     event StateRollbacked(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
 
     function setUp() public {
-        vm.startPrank(sender);
         super._initialize();
+        vm.startPrank(sender);
         dao.setProposerWhitelist(sender, true);
         dao.setSequencerWhitelist(sender, true);
         feeToken.approve(address(stakingManager), stakingManager.price());

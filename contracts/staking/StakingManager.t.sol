@@ -11,12 +11,10 @@ import "../rollup/ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
 
 contract TestStakingManager is TestBase {
-    address sender = address(0x7777);
+    address sender = address(7777);
 
     function setUp() public {
-        vm.startPrank(sender);
         super._initialize();
-        vm.stopPrank();
     }
 
     function testDeposit() public {

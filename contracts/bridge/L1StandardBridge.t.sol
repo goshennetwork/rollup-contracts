@@ -15,9 +15,9 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
 
     function setUp() public {
         _initialize();
-        vm.startPrank(sender); //设置msg.sender为后面的sender地址
+        vm.startPrank(sender);
         L1StandardBridge l1StandardBridgeLogic = new L1StandardBridge();
-        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy( //更新的代理地址
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(l1StandardBridgeLogic),
             address(proxyAdmin),
             abi.encodeWithSelector(L1StandardBridge.initialize.selector, address(l1CrossLayerWitness), l2MockBridgeAddr)
@@ -29,7 +29,6 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         vm.stopPrank();
     }
 
-    //测试质押以太功能
     function testDepositETH() public {
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
@@ -44,9 +43,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         require(l1StandardBridgeBal == amount, "testDepositETH failed");
     }
 
-    //测试质押0ETH的情况
     function testDepositETHWithZeroValue() public {
-        // test deposit amount == 0
         vm.startPrank(sender, sender);
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderBal = sender.balance;
@@ -59,7 +56,6 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         require(l1StandardBridgeBal == l1StandardBridgeAfterBal, "testDepositETH failed");
     }
 
-    //测试质押失败，fail那么顺利通过
     function testFailDepositETH() public {
         // test amount > sender.balance
         vm.deal(sender, 10);
