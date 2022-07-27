@@ -74,7 +74,7 @@ func DeployBeacon(signer *contract.Signer, impl web3.Address) *binding.Upgradeab
 }
 
 func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
-	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT").Sign(signer).SendTransaction(signer)
+	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT", 18).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 
 	feeToken := binding.NewERC20(receipt.ContractAddress, signer.Client)

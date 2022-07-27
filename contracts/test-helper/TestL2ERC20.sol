@@ -2,17 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../token/L2StandardERC20.sol";
 
-contract TestERC20 is ERC20 {
+contract L2TestERC20 is L2StandardERC20 {
     uint8 private immutable decimal;
 
     constructor(
-        string memory name_,
-        string memory symbol_,
+        address _l2Bridge,
+        address _l1Token,
+        string memory _name,
+        string memory _symbol,
         uint8 decimals_
-    ) ERC20(name_, symbol_) {
+    ) L2StandardERC20(_l2Bridge, _l1Token, _name, _symbol) {
         decimal = decimals_;
-        _mint(msg.sender, 10000000 * (10**uint256(decimal)));
     }
 
     function decimals() public view override returns (uint8) {

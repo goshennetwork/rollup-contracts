@@ -20,30 +20,30 @@ var (
 	_ = mapstructure.Decode
 )
 
-// TestERC20 is a solidity contract
-type TestERC20 struct {
+// L2StandardERC20 is a solidity contract
+type L2StandardERC20 struct {
 	c *contract.Contract
 }
 
-// DeployTestERC20 deploys a new TestERC20 contract
-func DeployTestERC20(provider *jsonrpc.Client, from web3.Address, name string, symbol string, decimals uint8) *contract.Txn {
-	return contract.DeployContract(provider, from, abiTestERC20, binTestERC20, name, symbol, decimals)
+// DeployL2StandardERC20 deploys a new L2StandardERC20 contract
+func DeployL2StandardERC20(provider *jsonrpc.Client, from web3.Address, l2Bridge web3.Address, l1Token web3.Address, name string, symbol string) *contract.Txn {
+	return contract.DeployContract(provider, from, abiL2StandardERC20, binL2StandardERC20, l2Bridge, l1Token, name, symbol)
 }
 
-// NewTestERC20 creates a new instance of the contract at a specific address
-func NewTestERC20(addr web3.Address, provider *jsonrpc.Client) *TestERC20 {
-	return &TestERC20{c: contract.NewContract(addr, abiTestERC20, provider)}
+// NewL2StandardERC20 creates a new instance of the contract at a specific address
+func NewL2StandardERC20(addr web3.Address, provider *jsonrpc.Client) *L2StandardERC20 {
+	return &L2StandardERC20{c: contract.NewContract(addr, abiL2StandardERC20, provider)}
 }
 
 // Contract returns the contract object
-func (_a *TestERC20) Contract() *contract.Contract {
+func (_a *L2StandardERC20) Contract() *contract.Contract {
 	return _a.c
 }
 
 // calls
 
 // Allowance calls the allowance method in the solidity contract
-func (_a *TestERC20) Allowance(owner web3.Address, spender web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+func (_a *L2StandardERC20) Allowance(owner web3.Address, spender web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -62,7 +62,7 @@ func (_a *TestERC20) Allowance(owner web3.Address, spender web3.Address, block .
 }
 
 // BalanceOf calls the balanceOf method in the solidity contract
-func (_a *TestERC20) BalanceOf(account web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+func (_a *L2StandardERC20) BalanceOf(account web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -81,7 +81,7 @@ func (_a *TestERC20) BalanceOf(account web3.Address, block ...web3.BlockNumber) 
 }
 
 // Decimals calls the decimals method in the solidity contract
-func (_a *TestERC20) Decimals(block ...web3.BlockNumber) (retval0 uint8, err error) {
+func (_a *L2StandardERC20) Decimals(block ...web3.BlockNumber) (retval0 uint8, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -99,8 +99,46 @@ func (_a *TestERC20) Decimals(block ...web3.BlockNumber) (retval0 uint8, err err
 	return
 }
 
+// L1Token calls the l1Token method in the solidity contract
+func (_a *L2StandardERC20) L1Token(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("l1Token", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// L2Bridge calls the l2Bridge method in the solidity contract
+func (_a *L2StandardERC20) L2Bridge(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("l2Bridge", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // Name calls the name method in the solidity contract
-func (_a *TestERC20) Name(block ...web3.BlockNumber) (retval0 string, err error) {
+func (_a *L2StandardERC20) Name(block ...web3.BlockNumber) (retval0 string, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -118,8 +156,27 @@ func (_a *TestERC20) Name(block ...web3.BlockNumber) (retval0 string, err error)
 	return
 }
 
+// SupportsInterface calls the supportsInterface method in the solidity contract
+func (_a *L2StandardERC20) SupportsInterface(interfaceId [4]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("supportsInterface", web3.EncodeBlock(block...), interfaceId)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // Symbol calls the symbol method in the solidity contract
-func (_a *TestERC20) Symbol(block ...web3.BlockNumber) (retval0 string, err error) {
+func (_a *L2StandardERC20) Symbol(block ...web3.BlockNumber) (retval0 string, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -138,7 +195,7 @@ func (_a *TestERC20) Symbol(block ...web3.BlockNumber) (retval0 string, err erro
 }
 
 // TotalSupply calls the totalSupply method in the solidity contract
-func (_a *TestERC20) TotalSupply(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+func (_a *L2StandardERC20) TotalSupply(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -159,33 +216,43 @@ func (_a *TestERC20) TotalSupply(block ...web3.BlockNumber) (retval0 *big.Int, e
 // txns
 
 // Approve sends a approve transaction in the solidity contract
-func (_a *TestERC20) Approve(spender web3.Address, amount *big.Int) *contract.Txn {
+func (_a *L2StandardERC20) Approve(spender web3.Address, amount *big.Int) *contract.Txn {
 	return _a.c.Txn("approve", spender, amount)
 }
 
+// Burn sends a burn transaction in the solidity contract
+func (_a *L2StandardERC20) Burn(from web3.Address, amount *big.Int) *contract.Txn {
+	return _a.c.Txn("burn", from, amount)
+}
+
 // DecreaseAllowance sends a decreaseAllowance transaction in the solidity contract
-func (_a *TestERC20) DecreaseAllowance(spender web3.Address, subtractedValue *big.Int) *contract.Txn {
+func (_a *L2StandardERC20) DecreaseAllowance(spender web3.Address, subtractedValue *big.Int) *contract.Txn {
 	return _a.c.Txn("decreaseAllowance", spender, subtractedValue)
 }
 
 // IncreaseAllowance sends a increaseAllowance transaction in the solidity contract
-func (_a *TestERC20) IncreaseAllowance(spender web3.Address, addedValue *big.Int) *contract.Txn {
+func (_a *L2StandardERC20) IncreaseAllowance(spender web3.Address, addedValue *big.Int) *contract.Txn {
 	return _a.c.Txn("increaseAllowance", spender, addedValue)
 }
 
+// Mint sends a mint transaction in the solidity contract
+func (_a *L2StandardERC20) Mint(to web3.Address, amount *big.Int) *contract.Txn {
+	return _a.c.Txn("mint", to, amount)
+}
+
 // Transfer sends a transfer transaction in the solidity contract
-func (_a *TestERC20) Transfer(to web3.Address, amount *big.Int) *contract.Txn {
+func (_a *L2StandardERC20) Transfer(to web3.Address, amount *big.Int) *contract.Txn {
 	return _a.c.Txn("transfer", to, amount)
 }
 
 // TransferFrom sends a transferFrom transaction in the solidity contract
-func (_a *TestERC20) TransferFrom(from web3.Address, to web3.Address, amount *big.Int) *contract.Txn {
+func (_a *L2StandardERC20) TransferFrom(from web3.Address, to web3.Address, amount *big.Int) *contract.Txn {
 	return _a.c.Txn("transferFrom", from, to, amount)
 }
 
 // events
 
-func (_a *TestERC20) ApprovalTopicFilter(owner []web3.Address, spender []web3.Address) [][]web3.Hash {
+func (_a *L2StandardERC20) ApprovalTopicFilter(owner []web3.Address, spender []web3.Address) [][]web3.Hash {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -206,7 +273,7 @@ func (_a *TestERC20) ApprovalTopicFilter(owner []web3.Address, spender []web3.Ad
 	return topics
 }
 
-func (_a *TestERC20) FilterApprovalEvent(owner []web3.Address, spender []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ApprovalEvent, error) {
+func (_a *L2StandardERC20) FilterApprovalEvent(owner []web3.Address, spender []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ApprovalEvent, error) {
 	topic := _a.ApprovalTopicFilter(owner, spender)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
@@ -231,7 +298,7 @@ func (_a *TestERC20) FilterApprovalEvent(owner []web3.Address, spender []web3.Ad
 	return res, nil
 }
 
-func (_a *TestERC20) TransferTopicFilter(from []web3.Address, to []web3.Address) [][]web3.Hash {
+func (_a *L2StandardERC20) TransferTopicFilter(from []web3.Address, to []web3.Address) [][]web3.Hash {
 
 	var fromRule []interface{}
 	for _, fromItem := range from {
@@ -252,7 +319,7 @@ func (_a *TestERC20) TransferTopicFilter(from []web3.Address, to []web3.Address)
 	return topics
 }
 
-func (_a *TestERC20) FilterTransferEvent(from []web3.Address, to []web3.Address, startBlock uint64, endBlock ...uint64) ([]*TransferEvent, error) {
+func (_a *L2StandardERC20) FilterTransferEvent(from []web3.Address, to []web3.Address, startBlock uint64, endBlock ...uint64) ([]*TransferEvent, error) {
 	topic := _a.TransferTopicFilter(from, to)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)

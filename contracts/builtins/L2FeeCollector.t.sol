@@ -15,7 +15,7 @@ contract TestL2FeeCollector {
     function setUp() public {
         vm.startPrank(sender);
         l2FeeCollector = new L2FeeCollector();
-        testErc20 = new TestERC20("test token", "test");
+        testErc20 = new TestERC20("test token", "test", 18);
         vm.stopPrank();
     }
 
