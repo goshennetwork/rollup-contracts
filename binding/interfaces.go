@@ -108,7 +108,7 @@ func (evt *DepositFinalizedEvent) GetTokenCrossInfo() *CrossLayerInfo {
 	}
 }
 
-func (evt *ERC20DepositInitiatedEvent) GetTokenCrossInfo() *CrossLayerInfo {
+func (evt *DepositInitiatedEvent) GetTokenCrossInfo() *CrossLayerInfo {
 	return &CrossLayerInfo{
 		L1Token: evt.L1Token,
 		L2Token: evt.L2Token,
@@ -119,7 +119,7 @@ func (evt *ERC20DepositInitiatedEvent) GetTokenCrossInfo() *CrossLayerInfo {
 	}
 }
 
-func (evt *ERC20WithdrawalFinalizedEvent) GetTokenCrossInfo() *CrossLayerInfo {
+func (evt *WithdrawalFinalizedEvent) GetTokenCrossInfo() *CrossLayerInfo {
 	return &CrossLayerInfo{
 		L1Token: evt.L1Token,
 		L2Token: evt.L2Token,
