@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"io"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -218,30 +217,6 @@ func (s *CrossLayerSentMessage) Deserialization(source *codec.ZeroCopySource) (e
 	return reader.Error()
 }
 
-type L1TokenBridgeETHEvent struct {
-	From   web3.Address
-	To     web3.Address
-	Amount *big.Int
-	Data   []byte
-}
-
-func (s *L1TokenBridgeETHEvent) Serialization(sink *codec.ZeroCopySink) {
-	sink.WriteAddress(s.From)
-	sink.WriteAddress(s.To)
-	sink.WriteVarBytes(s.Amount.Bytes())
-	sink.WriteVarBytes(s.Data)
-}
-
-func (s *L1TokenBridgeETHEvent) Deserialization(source *codec.ZeroCopySource) (err error) {
-	reader := source.Reader()
-	s.From = reader.ReadAddress()
-	s.To = reader.ReadAddress()
-	amountData := reader.ReadVarBytes()
-	s.Amount = new(big.Int).SetBytes(amountData)
-	s.Data = reader.ReadVarBytes()
-	return reader.Error()
-}
-
 type TokenBridgeERC20Event struct {
 	L1Token web3.Address
 	L2Token web3.Address
@@ -249,57 +224,6 @@ type TokenBridgeERC20Event struct {
 	To      web3.Address
 	Amount  *big.Int
 	Data    []byte
-}
-
-func (s *TokenBridgeERC20Event) Serialization(sink *codec.ZeroCopySink) {
-	sink.WriteAddress(s.L1Token)
-	sink.WriteAddress(s.L2Token)
-	sink.WriteAddress(s.From)
-	sink.WriteAddress(s.To)
-	sink.WriteVarBytes(s.Amount.Bytes())
-	sink.WriteVarBytes(s.Data)
-}
-
-func (s *TokenBridgeERC20Event) Deserialization(source *codec.ZeroCopySource) (err error) {
-	reader := source.Reader()
-	s.L1Token = reader.ReadAddress()
-	s.L2Token = reader.ReadAddress()
-	s.From = reader.ReadAddress()
-	s.To = reader.ReadAddress()
-	amountData := reader.ReadVarBytes()
-	s.Amount = new(big.Int).SetBytes(amountData)
-	s.Data = reader.ReadVarBytes()
-	return reader.Error()
-}
-
-type L1TokenBridgeETHEvents []*L1TokenBridgeETHEvent
-
-func (s L1TokenBridgeETHEvents) Serialization(sink *codec.ZeroCopySink) {
-	sink.WriteInt64(int64(len(s)))
-	for _, evt := range s {
-		sink.WriteVarBytes(codec.SerializeToBytes(evt))
-	}
-}
-
-func DeserializationL1TokenBridgeETHEvents(source *codec.ZeroCopySource) (s []*L1TokenBridgeETHEvent, err error) {
-	length, eof := source.NextInt64()
-	if eof {
-		return nil, io.ErrUnexpectedEOF
-	}
-
-	for i := int64(0); i < length; i++ {
-		data, err := source.ReadVarBytes()
-		if err != nil {
-			return nil, err
-		}
-		evt := &L1TokenBridgeETHEvent{}
-		err = evt.Deserialization(codec.NewZeroCopySource(data))
-		if err != nil {
-			return nil, err
-		}
-		s = append(s, evt)
-	}
-	return s, nil
 }
 
 // this struct used to track all enqueue block

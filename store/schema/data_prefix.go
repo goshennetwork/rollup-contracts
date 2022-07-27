@@ -6,10 +6,8 @@ const (
 	SequencerQueuePrefix    = 0x02 // queueIndex -> QueueElement
 	RollupInputBatchDataKey = 0x03 // batchIndex -> TransactionBatchData
 
-	L1TokenBridgeETHDepositKey      = 0x04
-	L1TokenBridgeERC20DepositKey    = 0x05
-	L1TokenBridgeETHWithdrawalKey   = 0x06
-	L1TokenBridgeERC20WithdrawalKey = 0x07
+	L1TokenBridgeDepositKey    = 0x04
+	L1TokenBridgeWithdrawalKey = 0x05
 
 	L2TokenBridgeWithdrawalKey       = 0x08
 	L2TokenBridgeDepositFinalizedKey = 0x09

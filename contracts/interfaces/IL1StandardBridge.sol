@@ -8,13 +8,6 @@ import "./IL1ERC20Bridge.sol";
  * @title IL1StandardBridge
  */
 interface IL1StandardBridge is IL1ERC20Bridge {
-    /**********
-     * Events *
-     **********/
-    event ETHDepositInitiated(address indexed _from, address indexed _to, uint256 _amount, bytes _data);
-
-    event ETHWithdrawalFinalized(address indexed _from, address indexed _to, uint256 _amount, bytes _data);
-
     /********************
      * Public Functions *
      ********************/

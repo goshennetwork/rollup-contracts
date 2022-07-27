@@ -4,6 +4,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
+	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
@@ -26,27 +27,33 @@ func newL1BridgeMemStore() *L1BridgeStore {
 	}
 }
 
-func (self *L1BridgeStore) StoreETHDeposit(events []*binding.ETHDepositInitiatedEvent) {
-	cached := make(map[web3.Hash]schema.L1TokenBridgeETHEvents, 0)
+func (self *L1BridgeStore) StoreDeposit(events []*binding.DepositInitiatedEvent) {
+	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
 	for _, evt := range events {
+
 		data, ok := cached[evt.Raw.TransactionHash]
 		if !ok {
-			data = make([]*schema.L1TokenBridgeETHEvent, 0)
+			data = make([]*binding.CrossLayerInfo, 0)
 		}
-		data = append(data, &schema.L1TokenBridgeETHEvent{
-			From:   evt.From,
-			To:     evt.To,
-			Amount: evt.Amount,
-			Data:   evt.Data,
-		})
+		data = append(data, evt.GetTokenCrossInfo())
 		cached[evt.Raw.TransactionHash] = data
 	}
 	for txHash, evts := range cached {
-		self.store.Put(genL1ETHDepositKey(txHash), codec.SerializeToBytes(evts))
+		self.store.Put(genL1DepositKey(txHash), codec.SerializeToBytes(evts))
 	}
 }
 
-func (self *L1BridgeStore) StoreERC20Deposit(events []*binding.ERC20DepositInitiatedEvent) {
+func (self *L1BridgeStore) GetDeposit(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genL1DepositKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	source := codec.NewZeroCopySource(v)
+	return binding.DeserializationCrossLayerInfos(source)
+}
+
+func (self *L1BridgeStore) StoreWithdrawal(events []*binding.WithdrawalFinalizedEvent) {
 	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
 	for _, evt := range events {
 		data, ok := cached[evt.Raw.TransactionHash]
@@ -57,41 +64,16 @@ func (self *L1BridgeStore) StoreERC20Deposit(events []*binding.ERC20DepositIniti
 		cached[evt.Raw.TransactionHash] = data
 	}
 	for txHash, evts := range cached {
-		self.store.Put(genL1ERC20DepositInitKey(txHash), codec.SerializeToBytes(evts))
+		self.store.Put(genL1WithdrawalKey(txHash), codec.SerializeToBytes(evts))
 	}
 }
 
-func (self *L1BridgeStore) StoreETHWithdrawal(events []*binding.ETHWithdrawalFinalizedEvent) {
-	cached := make(map[web3.Hash]schema.L1TokenBridgeETHEvents, 0)
-	for _, evt := range events {
-		data, ok := cached[evt.Raw.TransactionHash]
-		if !ok {
-			data = make([]*schema.L1TokenBridgeETHEvent, 0)
-		}
-		data = append(data, &schema.L1TokenBridgeETHEvent{
-			From:   evt.From,
-			To:     evt.To,
-			Amount: evt.Amount,
-			Data:   evt.Data,
-		})
-		cached[evt.Raw.TransactionHash] = data
+func (self *L1BridgeStore) GetWithdrawal(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genL1WithdrawalKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
 	}
-	for txHash, evts := range cached {
-		self.store.Put(genL1ETHWithdrawalKey(txHash), codec.SerializeToBytes(evts))
-	}
-}
-
-func (self *L1BridgeStore) StoreERC20Withdrawal(events []*binding.ERC20WithdrawalFinalizedEvent) {
-	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
-	for _, evt := range events {
-		data, ok := cached[evt.Raw.TransactionHash]
-		if !ok {
-			data = make([]*binding.CrossLayerInfo, 0)
-		}
-		data = append(data, evt.GetTokenCrossInfo())
-		cached[evt.Raw.TransactionHash] = data
-	}
-	for txHash, evts := range cached {
-		self.store.Put(genL1ERC20WithdrawalFinalizedKey(txHash), codec.SerializeToBytes(evts))
-	}
+	source := codec.NewZeroCopySource(v)
+	return binding.DeserializationCrossLayerInfos(source)
 }
