@@ -24,7 +24,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         );
         l1StandardBridge = L1StandardBridge(payable(proxy));
         require(l1StandardBridge.l2TokenBridge() == l2MockBridgeAddr);
-        testErc20 = new TestERC20("test token", "test");
+        testErc20 = new TestERC20("test token", "test", 18);
         testErc20.approve(address(l1StandardBridge), 10 ether);
         vm.stopPrank();
     }

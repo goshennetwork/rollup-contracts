@@ -65,7 +65,7 @@ contract TestBase {
         );
         l2CrossLayerWitness = TestMockL2CrossLayerWitness(address(proxy));
 
-        feeToken = new TestERC20("test token", "test");
+        feeToken = new TestERC20("test token", "test", 18);
 
         RollupStateChain rollupStateChainLogic = new RollupStateChain();
         proxy = new TransparentUpgradeableProxy(
