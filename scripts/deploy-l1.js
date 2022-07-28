@@ -80,20 +80,39 @@ async function main() {
     await addressManager.deployed();
     console.log("AddressManager deployed: %s", addressManager.address);
     /* config address manager */
-    await addressManager.setAddress(config.addressName.ROLLUP_INPUT_CHAIN, rollupInputChain.address);
-    await addressManager.setAddress(config.addressName.STAKING_MANAGER, stakingManager.address);
-    await addressManager.setAddress(config.addressName.ROLLUP_STATE_CHAIN_CONTAINER, stateStorageContainer.address);
-    await addressManager.setAddress(config.addressName.ROLLUP_INPUT_CHAIN_CONTAINER, inputStorageContainer.address);
-    await addressManager.setAddress(config.addressName.ROLLUP_STATE_CHAIN, rollupStateChain.address);
-    await addressManager.setAddress(config.addressName.L1_CROSS_LAYER_WITNESS, l1CrossLayerWitness.address);
-    await addressManager.setAddress(config.addressName.L2_CROSS_LAYER_WITNESS, config.l2CrossLayerWitness);
-    await addressManager.setAddress(config.addressName.DAO, dao.address);
-    await addressManager.setAddress(config.addressName.CHALLENGE_FACTORY, challengeFactory.address);
-    await addressManager.setAddress(config.addressName.STATE_TRANSITION, stateTransition.address);
-    await addressManager.setAddress(config.addressName.L1_STANDARD_BRIDGE, l1StandardBridge.address);
-    await addressManager.setAddress(config.addressName.CHALLENGE_BEACON, challengeBeacon.address);
-    await addressManager.setAddress(config.addressName.FEE_TOKEN, feeToken.address);
-    await addressManager.setAddress(config.addressName.MACHINE_STATE, machineState.address);
+    const names = [
+        config.addressName.ROLLUP_INPUT_CHAIN,
+        config.addressName.STAKING_MANAGER,
+        config.addressName.ROLLUP_STATE_CHAIN_CONTAINER,
+        config.addressName.ROLLUP_INPUT_CHAIN_CONTAINER,
+        config.addressName.ROLLUP_STATE_CHAIN,
+        config.addressName.L1_CROSS_LAYER_WITNESS,
+        config.addressName.L2_CROSS_LAYER_WITNESS,
+        config.addressName.DAO,
+        config.addressName.CHALLENGE_FACTORY,
+        config.addressName.STATE_TRANSITION,
+        config.addressName.L1_STANDARD_BRIDGE,
+        config.addressName.CHALLENGE_BEACON,
+        config.addressName.FEE_TOKEN,
+        config.addressName.MACHINE_STATE
+    ];
+    const addrs = [
+        rollupInputChain.address,
+        stakingManager.address,
+        stateStorageContainer.address,
+        inputStorageContainer.address,
+        rollupStateChain.address,
+        l1CrossLayerWitness.address,
+        config.l2CrossLayerWitness,
+        dao.address,
+        challengeFactory.address,
+        stateTransition.address,
+        l1StandardBridge.address,
+        challengeBeacon.address,
+        feeToken.address,
+        machineState.address
+    ];
+    await addressManager.setAddressBatch(names, addrs);
 
     /* wait contracts deployed */
     await dao.deployed();
