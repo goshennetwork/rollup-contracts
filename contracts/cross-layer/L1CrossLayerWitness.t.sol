@@ -346,7 +346,7 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(sender);
         (bytes32 _mmrRoot, uint64 _mmrSize) = Types.decodeMMRFromRlpHeader(rlpData);
         vm.expectEmit(true, true, true, true, address(l1CrossLayerWitness));
-        emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
+        emit MessageRelayFailed(0, _hash, _mmrSize, _mmrRoot);
         bool success = l1CrossLayerWitness.relayMessage(
             address(0x9),
             sender,
