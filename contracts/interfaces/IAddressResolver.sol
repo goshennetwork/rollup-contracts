@@ -55,7 +55,7 @@ interface IAddressResolver {
     function challengeBeacon() external view returns (UpgradeableBeacon);
 
     ///get FeeToken contract address
-    function feeToken() external view returns (TestERC20);
+    function feeToken() external view returns (IERC20);
 
     ///get MachineState contract address
     function machineState() external view returns (IMachineState);
