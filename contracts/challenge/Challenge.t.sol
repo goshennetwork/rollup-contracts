@@ -100,7 +100,7 @@ contract TestChallenge is Challenge {
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, address(challengeFactory));
 
         // deploy feeToken contract & (mint feeToken & approve feeToken) to testAddress
-        feeToken = new TestERC20("test feeToken", "test");
+        feeToken = new TestERC20("test feeToken", "test",18);
         feeToken.transfer(address(testAddress2), 1000 ether);
 
         //create 3*challenger
