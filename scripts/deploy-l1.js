@@ -1,7 +1,7 @@
 const config = require("./config/config.json");
 
 async function main() {
-    const decimals=18;
+    const decimals = 18;
     const AddressManager = await ethers.getContractFactory("AddressManager");
     const addressManager = await upgrades.deployProxy(AddressManager, []);
     console.log("sent AddressManager deploy tx, %s", addressManager.deployTransaction.hash);
@@ -15,7 +15,7 @@ async function main() {
     if (config.feeToken) {
         feeToken = await TestERC20.attach(config.feeToken);
     } else {
-        feeToken = await TestERC20.deploy("Test Fee Token", 'TFT',decimals);
+        feeToken = await TestERC20.deploy("Test Fee Token", 'TFT', decimals);
         console.log("sent FeeToken deploy tx, %s", feeToken.deployTransaction.hash);
     }
 
@@ -35,7 +35,8 @@ async function main() {
     console.log("sent UpgradeableBeacon deploy tx, %s", challengeBeacon.deployTransaction.hash);
     const ChallengeFactory = await ethers.getContractFactory("ChallengeFactory");
     const challengeFactory = await upgrades.deployProxy(ChallengeFactory, [addressManager.address,
-        challengeBeacon.address, config.blockLimitPerRound, ethers.utils.parseEther(config.challengerDeposit)]);
+        challengeBeacon.address, config.blockLimitPerRound, ethers.utils.parseEther(config.challengerDeposit)
+    ]);
     console.log("sent ChallengeFactory deploy tx, %s", challengeFactory.deployTransaction.hash);
 
     const DAO = await ethers.getContractFactory("DAO");
@@ -44,12 +45,14 @@ async function main() {
 
     const StakingManager = await ethers.getContractFactory("StakingManager");
     const stakingManager = await upgrades.deployProxy(StakingManager, [dao.address, challengeFactory.address,
-        rollupStateChain.address, feeToken.address, ethers.utils.parseEther(config.stakingPrice)]);
+        rollupStateChain.address, feeToken.address, ethers.utils.parseEther(config.stakingPrice)
+    ]);
     console.log("sent StakingManager deploy tx, %s", stakingManager.deployTransaction.hash);
 
     const RollupInputChain = await ethers.getContractFactory("RollupInputChain");
     const rollupInputChain = await upgrades.deployProxy(RollupInputChain, [addressManager.address, config.maxTxGasLimit,
-        config.maxCrossLayerTxGasLimit, config.l2ChainId]);
+        config.maxCrossLayerTxGasLimit, config.l2ChainId
+    ]);
     console.log("sent RollupInputChain deploy tx, %s", rollupInputChain.deployTransaction.hash);
 
     const ChainStorageContainer = await ethers.getContractFactory("ChainStorageContainer");
@@ -65,7 +68,8 @@ async function main() {
     const machineState = await MachineState.deploy();
     const StateTransition = await ethers.getContractFactory("StateTransition");
     const stateTransition = await upgrades.deployProxy(StateTransition, [config.imageStateRoot, addressManager.address,
-        machineState.address]);
+        machineState.address
+    ]);
     console.log("sent StateTransition deploy tx, %s", stateTransition.deployTransaction.hash);
 
     /* deploy bridge */
@@ -86,10 +90,10 @@ async function main() {
     await addressManager.setAddress(config.addressName.DAO, dao.address);
     await addressManager.setAddress(config.addressName.CHALLENGE_FACTORY, challengeFactory.address);
     await addressManager.setAddress(config.addressName.STATE_TRANSITION, stateTransition.address);
-    await addressManager.setAddress(config.addressName.L1_STANDARD_BRIDGE,l1StandardBridge.address);
-    await addressManager.setAddress(config.addressName.CHALLENGE_BEACON,challengeBeacon.address);
-    await addressManager.setAddress(config.addressName.FEE_TOKEN,feeToken.address);
-    await addressManager.setAddress(config.addressName.MACHINE_STATE,machineState.address);
+    await addressManager.setAddress(config.addressName.L1_STANDARD_BRIDGE, l1StandardBridge.address);
+    await addressManager.setAddress(config.addressName.CHALLENGE_BEACON, challengeBeacon.address);
+    await addressManager.setAddress(config.addressName.FEE_TOKEN, feeToken.address);
+    await addressManager.setAddress(config.addressName.MACHINE_STATE, machineState.address);
 
     /* wait contracts deployed */
     await dao.deployed();
@@ -137,8 +141,11 @@ async function main() {
         L1StandardBridge: l1StandardBridge.address,
     }
     const fs = require('fs/promises');
-    const filedata = JSON.stringify(addresses,""," ");
-    await fs.writeFile('./l1-contracts.json', filedata, err => {console.error(err);process.exit(1)});
+    const filedata = JSON.stringify(addresses, "", " ");
+    await fs.writeFile('./l1-contracts.json', filedata, err => {
+        console.error(err);
+        process.exit(1)
+    });
     console.log('contracts deployed', JSON.stringify(addresses));
 }
 
