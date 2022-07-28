@@ -19,6 +19,10 @@
     "CHALLENGE_FACTORY": "ChallengeFactory",
     "L1_CROSS_LAYER_WITNESS": "L1CrossLayerWitness",
     "L2_CROSS_LAYER_WITNESS": "L2CrossLayerWitness",
-    "STATE_TRANSITION": "StateTransition"
+    "STATE_TRANSITION": "StateTransition",
+    "L1_STANDARD_BRIDGE": "L1StandardBridge",
+    "CHALLENGE_BEACON": "ChallengeBeacon",
+    "FEE_TOKEN": "FeeToken",
+    "MACHINE_STATE": "MachineState"
   }
 }
