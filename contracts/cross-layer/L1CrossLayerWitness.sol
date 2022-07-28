@@ -55,7 +55,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
             successRelayedMessages[_hash] = true;
             emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
+            emit MessageRelayFailed(_messageIndex, _hash, _mmrSize, _mmrRoot);
         }
         return success;
     }

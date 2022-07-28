@@ -372,6 +372,10 @@
       "Name": "MessageRelayFailedEvent",
       "Fields": [
         {
+          "Name": "_messageIndex",
+          "Type": "uint64"
+        },
+        {
           "Name": "_msgHash",
           "Type": "[32]byte"
         },
@@ -385,7 +389,7 @@
         }
       ],
       "IsEvent": true,
-      "EventID": "MessageRelayFailed(bytes32,uint64,bytes32)",
+      "EventID": "MessageRelayFailed(uint64,bytes32,uint64,bytes32)",
       "EventName": "MessageRelayFailedEventID"
     },
     "MessageRelayedEvent": {

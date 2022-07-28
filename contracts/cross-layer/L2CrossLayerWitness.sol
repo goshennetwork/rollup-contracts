@@ -43,7 +43,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
             emit MessageRelayed(_messageIndex, _hash);
         } else {
             mmrRoots[_mmrSize] = _mmrRoot;
-            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
+            emit MessageRelayFailed(_messageIndex, _hash, _mmrSize, _mmrRoot);
         }
         return success;
     }
@@ -69,7 +69,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
             successRelayedMessages[_hash] = true;
             emit MessageRelayed(_messageIndex, _hash);
         } else {
-            emit MessageRelayFailed(_hash, _mmrSize, _mmrRoot);
+            emit MessageRelayFailed(_messageIndex, _hash, _mmrSize, _mmrRoot);
         }
         return success;
     }

@@ -322,7 +322,12 @@ func (_a *L1CrossLayerWitness) FilterMessageBlockedEvent(startBlock uint64, endB
 	return res, nil
 }
 
-func (_a *L1CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte) [][]web3.Hash {
+func (_a *L1CrossLayerWitness) MessageRelayFailedTopicFilter(messageIndex []uint64, msgHash [][32]byte) [][]web3.Hash {
+
+	var messageIndexRule []interface{}
+	for _, _messageIndexItem := range messageIndex {
+		messageIndexRule = append(messageIndexRule, _messageIndexItem)
+	}
 
 	var msgHashRule []interface{}
 	for _, _msgHashItem := range msgHash {
@@ -330,7 +335,7 @@ func (_a *L1CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte)
 	}
 
 	var query [][]interface{}
-	query = append(query, []interface{}{MessageRelayFailedEventID}, msgHashRule)
+	query = append(query, []interface{}{MessageRelayFailedEventID}, messageIndexRule, msgHashRule)
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -338,8 +343,8 @@ func (_a *L1CrossLayerWitness) MessageRelayFailedTopicFilter(msgHash [][32]byte)
 	return topics
 }
 
-func (_a *L1CrossLayerWitness) FilterMessageRelayFailedEvent(msgHash [][32]byte, startBlock uint64, endBlock ...uint64) ([]*MessageRelayFailedEvent, error) {
-	topic := _a.MessageRelayFailedTopicFilter(msgHash)
+func (_a *L1CrossLayerWitness) FilterMessageRelayFailedEvent(messageIndex []uint64, msgHash [][32]byte, startBlock uint64, endBlock ...uint64) ([]*MessageRelayFailedEvent, error) {
+	topic := _a.MessageRelayFailedTopicFilter(messageIndex, msgHash)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {
