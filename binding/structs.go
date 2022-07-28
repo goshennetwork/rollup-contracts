@@ -197,12 +197,13 @@ type MessageBlockedEvent struct {
 	Raw *web3.Log
 }
 
-var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(bytes32,uint64,bytes32)"))
+var MessageRelayFailedEventID = crypto.Keccak256Hash([]byte("MessageRelayFailed(uint64,bytes32,uint64,bytes32)"))
 
 type MessageRelayFailedEvent struct {
-	MsgHash [32]byte
-	MmrSize uint64
-	MmrRoot [32]byte
+	MessageIndex uint64
+	MsgHash      [32]byte
+	MmrSize      uint64
+	MmrRoot      [32]byte
 
 	Raw *web3.Log
 }
