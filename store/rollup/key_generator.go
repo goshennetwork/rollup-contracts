@@ -5,20 +5,12 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
-func genL1ETHDepositKey(l1TxHash web3.Hash) []byte {
-	return genKeyByTxHash(schema.L1TokenBridgeETHDepositKey, l1TxHash)
+func genL1DepositKey(l1TxHash web3.Hash) []byte {
+	return genKeyByTxHash(schema.L1TokenBridgeDepositKey, l1TxHash)
 }
 
-func genL1ERC20DepositInitKey(l1TxHash web3.Hash) []byte {
-	return genKeyByTxHash(schema.L1TokenBridgeERC20DepositKey, l1TxHash)
-}
-
-func genL1ETHWithdrawalKey(l1TxHash web3.Hash) []byte {
-	return genKeyByTxHash(schema.L1TokenBridgeETHWithdrawalKey, l1TxHash)
-}
-
-func genL1ERC20WithdrawalFinalizedKey(l1TxHash web3.Hash) []byte {
-	return genKeyByTxHash(schema.L1TokenBridgeERC20WithdrawalKey, l1TxHash)
+func genL1WithdrawalKey(l1TxHash web3.Hash) []byte {
+	return genKeyByTxHash(schema.L1TokenBridgeWithdrawalKey, l1TxHash)
 }
 
 func genL2WithdrawalInitKey(l2TxHash web3.Hash) []byte {

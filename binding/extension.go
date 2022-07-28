@@ -30,14 +30,14 @@ type SubBatch struct {
 }
 
 func (self *RollupInputBatches) Calldata() []byte {
-	//function appendBatch() public
-	funcSelecter := RollupInputChainAbi().Methods["appendBatch"].ID()
+	//function appendInputBatch() public
+	funcSelecter := RollupInputChainAbi().Methods["appendInputBatch"].ID()
 	return append(funcSelecter, self.Encode()...)
 }
 
 // AppendBatch sends a appendBatch transaction in the solidity contract
 func (_a *RollupInputChain) AppendInputBatches(batches *RollupInputBatches) *contract.Txn {
-	txn := _a.c.Txn("appendBatch")
+	txn := _a.c.Txn("appendInputBatch")
 	txn.Data = batches.Calldata()
 
 	return txn

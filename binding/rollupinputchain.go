@@ -351,9 +351,9 @@ func (_a *RollupInputChain) TotalQueue(block ...web3.BlockNumber) (retval0 uint6
 
 // txns
 
-// AppendBatch sends a appendBatch transaction in the solidity contract
-func (_a *RollupInputChain) AppendBatch() *contract.Txn {
-	return _a.c.Txn("appendBatch")
+// AppendInputBatch sends a appendInputBatch transaction in the solidity contract
+func (_a *RollupInputChain) AppendInputBatch() *contract.Txn {
+	return _a.c.Txn("appendInputBatch")
 }
 
 // Enqueue sends a enqueue transaction in the solidity contract
@@ -404,7 +404,7 @@ func (_a *RollupInputChain) FilterInitializedEvent(startBlock uint64, endBlock .
 	return res, nil
 }
 
-func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Address, index []uint64) [][]web3.Hash {
+func (_a *RollupInputChain) InputBatchAppendedTopicFilter(proposer []web3.Address, index []uint64) [][]web3.Hash {
 
 	var proposerRule []interface{}
 	for _, proposerItem := range proposer {
@@ -417,7 +417,7 @@ func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Addre
 	}
 
 	var query [][]interface{}
-	query = append(query, []interface{}{TransactionAppendedEventID}, proposerRule, indexRule)
+	query = append(query, []interface{}{InputBatchAppendedEventID}, proposerRule, indexRule)
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -425,21 +425,21 @@ func (_a *RollupInputChain) TransactionAppendedTopicFilter(proposer []web3.Addre
 	return topics
 }
 
-func (_a *RollupInputChain) FilterTransactionAppendedEvent(proposer []web3.Address, index []uint64, startBlock uint64, endBlock ...uint64) ([]*TransactionAppendedEvent, error) {
-	topic := _a.TransactionAppendedTopicFilter(proposer, index)
+func (_a *RollupInputChain) FilterInputBatchAppendedEvent(proposer []web3.Address, index []uint64, startBlock uint64, endBlock ...uint64) ([]*InputBatchAppendedEvent, error) {
+	topic := _a.InputBatchAppendedTopicFilter(proposer, index)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]*TransactionAppendedEvent, 0)
-	evts := _a.c.Abi.Events["TransactionAppended"]
+	res := make([]*InputBatchAppendedEvent, 0)
+	evts := _a.c.Abi.Events["InputBatchAppended"]
 	for _, log := range logs {
 		args, err := evts.ParseLog(log)
 		if err != nil {
 			return nil, err
 		}
-		var evtItem TransactionAppendedEvent
+		var evtItem InputBatchAppendedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

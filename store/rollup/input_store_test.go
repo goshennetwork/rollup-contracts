@@ -27,8 +27,8 @@ func TestCtcStore_AppendSequencerBatch(t *testing.T) {
 	ctc.StoreSequencerBatches(genTransactionBatchInfo(0, 2, 0))
 }
 
-func genTransactionBatchInfo(batchIndex, batchSize, prevTotalElements uint64) *binding.TransactionAppendedEvent {
-	return &binding.TransactionAppendedEvent{
+func genTransactionBatchInfo(batchIndex, batchSize, prevTotalElements uint64) *binding.InputBatchAppendedEvent {
+	return &binding.InputBatchAppendedEvent{
 		Index:           batchIndex,
 		StartQueueIndex: prevTotalElements,
 		QueueNum:        0,

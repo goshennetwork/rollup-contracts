@@ -78,7 +78,7 @@ contract TestChallengeFactory is ChallengeFactory {
 
         // deploy token contract & (mint token & approve token) to testAddress2
         vm.startPrank(testAddress2);
-        TestERC20 feeToken = new TestERC20("test token", "test");
+        TestERC20 feeToken = new TestERC20("test token", "test", 18);
         feeToken.approve(address(challengeFactory), 100 ether);
         vm.stopPrank();
 

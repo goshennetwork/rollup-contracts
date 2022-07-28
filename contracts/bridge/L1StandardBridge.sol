@@ -78,7 +78,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         sendCrossLayerMessage(l2TokenBridge, message);
 
         // slither-disable-next-line reentrancy-events
-        emit ETHDepositInitiated(_from, _to, msg.value, _data);
+        emit DepositInitiated(address(0), address(0), _from, _to, msg.value, _data);
     }
 
     function depositERC20(
@@ -149,7 +149,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         deposits[_l1Token][_l2Token] = deposits[_l1Token][_l2Token] + _amount;
 
         // slither-disable-next-line reentrancy-events
-        emit ERC20DepositInitiated(_l1Token, _l2Token, _from, _to, _amount, _data);
+        emit DepositInitiated(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 
     function finalizeETHWithdrawal(
@@ -163,7 +163,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         require(success, "ETH transfer failed");
 
         // slither-disable-next-line reentrancy-events
-        emit ETHWithdrawalFinalized(_from, _to, _amount, _data);
+        emit WithdrawalFinalized(address(0), address(0), _from, _to, _amount, _data);
     }
 
     /**
@@ -184,7 +184,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         IERC20Upgradeable(_l1Token).safeTransfer(_to, _amount);
 
         // slither-disable-next-line reentrancy-events
-        emit ERC20WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
+        emit WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 
     /*****************************

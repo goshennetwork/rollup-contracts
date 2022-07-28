@@ -13,6 +13,14 @@ interface IRollupInputChain {
         uint64 timestamp
     );
 
+    event InputBatchAppended(
+        address indexed proposer,
+        uint64 indexed index,
+        uint64 startQueueIndex,
+        uint64 queueNum,
+        bytes32 inputHash
+    );
+
     /**
      * @dev Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2.Normal EOA just need
      to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function
@@ -38,14 +46,6 @@ interface IRollupInputChain {
         uint64 v
     ) external;
 
-    event TransactionAppended(
-        address indexed proposer,
-        uint64 indexed index,
-        uint64 startQueueIndex,
-        uint64 queueNum,
-        bytes32 inputHash
-    );
-
     /**
      * append a batches of sequenced tx to input chain.Only staking sender permitted
      * @dev The info is in calldata,format as: // format: batchIndex(uint64) + batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64)  + subBatchNum(uint64) + subBatch0Time(uint64) +
@@ -61,7 +61,7 @@ interface IRollupInputChain {
      * - txs' largest timestamp larger than next pending queue timestamp(block.timestamp queued_tx_timestamp >= lastTimestamp )
      * - next lastTimestamp larger than next pending queue timestamp, which making sequencer stuck(make sure next_lastTimestamp <=pending_queue_timestamp)
      */
-    function appendBatch() external;
+    function appendInputBatch() external;
 
     ///@return total sequenced input num
     function chainHeight() external view returns (uint64);

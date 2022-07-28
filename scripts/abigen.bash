@@ -19,6 +19,8 @@ ProxyAdmin.sol/*
 TransparentUpgradeableProxy.sol/*
 DAO.sol/*
 L2FeeCollector.sol/*
+TestL2ERC20.sol/*
+L2StandardERC20.sol/*
 "
 prefix="out/"
 for file in $files ; do

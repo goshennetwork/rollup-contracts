@@ -143,7 +143,7 @@ func (_a *L1StandardBridge) Initialize(l1witness web3.Address, l2TokenBridge web
 
 // events
 
-func (_a *L1StandardBridge) ERC20DepositInitiatedTopicFilter(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address) [][]web3.Hash {
+func (_a *L1StandardBridge) DepositInitiatedTopicFilter(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address) [][]web3.Hash {
 
 	var l1TokenRule []interface{}
 	for _, _l1TokenItem := range l1Token {
@@ -161,7 +161,7 @@ func (_a *L1StandardBridge) ERC20DepositInitiatedTopicFilter(l1Token []web3.Addr
 	}
 
 	var query [][]interface{}
-	query = append(query, []interface{}{ERC20DepositInitiatedEventID}, l1TokenRule, l2TokenRule, fromRule)
+	query = append(query, []interface{}{DepositInitiatedEventID}, l1TokenRule, l2TokenRule, fromRule)
 
 	topics, err := contract.MakeTopics(query...)
 	utils.Ensure(err)
@@ -169,164 +169,21 @@ func (_a *L1StandardBridge) ERC20DepositInitiatedTopicFilter(l1Token []web3.Addr
 	return topics
 }
 
-func (_a *L1StandardBridge) FilterERC20DepositInitiatedEvent(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ERC20DepositInitiatedEvent, error) {
-	topic := _a.ERC20DepositInitiatedTopicFilter(l1Token, l2Token, from)
+func (_a *L1StandardBridge) FilterDepositInitiatedEvent(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address, startBlock uint64, endBlock ...uint64) ([]*DepositInitiatedEvent, error) {
+	topic := _a.DepositInitiatedTopicFilter(l1Token, l2Token, from)
 
 	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]*ERC20DepositInitiatedEvent, 0)
-	evts := _a.c.Abi.Events["ERC20DepositInitiated"]
+	res := make([]*DepositInitiatedEvent, 0)
+	evts := _a.c.Abi.Events["DepositInitiated"]
 	for _, log := range logs {
 		args, err := evts.ParseLog(log)
 		if err != nil {
 			return nil, err
 		}
-		var evtItem ERC20DepositInitiatedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
-func (_a *L1StandardBridge) ERC20WithdrawalFinalizedTopicFilter(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address) [][]web3.Hash {
-
-	var l1TokenRule []interface{}
-	for _, _l1TokenItem := range l1Token {
-		l1TokenRule = append(l1TokenRule, _l1TokenItem)
-	}
-
-	var l2TokenRule []interface{}
-	for _, _l2TokenItem := range l2Token {
-		l2TokenRule = append(l2TokenRule, _l2TokenItem)
-	}
-
-	var fromRule []interface{}
-	for _, _fromItem := range from {
-		fromRule = append(fromRule, _fromItem)
-	}
-
-	var query [][]interface{}
-	query = append(query, []interface{}{ERC20WithdrawalFinalizedEventID}, l1TokenRule, l2TokenRule, fromRule)
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *L1StandardBridge) FilterERC20WithdrawalFinalizedEvent(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ERC20WithdrawalFinalizedEvent, error) {
-	topic := _a.ERC20WithdrawalFinalizedTopicFilter(l1Token, l2Token, from)
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*ERC20WithdrawalFinalizedEvent, 0)
-	evts := _a.c.Abi.Events["ERC20WithdrawalFinalized"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem ERC20WithdrawalFinalizedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
-func (_a *L1StandardBridge) ETHDepositInitiatedTopicFilter(from []web3.Address, to []web3.Address) [][]web3.Hash {
-
-	var fromRule []interface{}
-	for _, _fromItem := range from {
-		fromRule = append(fromRule, _fromItem)
-	}
-
-	var toRule []interface{}
-	for _, _toItem := range to {
-		toRule = append(toRule, _toItem)
-	}
-
-	var query [][]interface{}
-	query = append(query, []interface{}{ETHDepositInitiatedEventID}, fromRule, toRule)
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *L1StandardBridge) FilterETHDepositInitiatedEvent(from []web3.Address, to []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ETHDepositInitiatedEvent, error) {
-	topic := _a.ETHDepositInitiatedTopicFilter(from, to)
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*ETHDepositInitiatedEvent, 0)
-	evts := _a.c.Abi.Events["ETHDepositInitiated"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem ETHDepositInitiatedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
-func (_a *L1StandardBridge) ETHWithdrawalFinalizedTopicFilter(from []web3.Address, to []web3.Address) [][]web3.Hash {
-
-	var fromRule []interface{}
-	for _, _fromItem := range from {
-		fromRule = append(fromRule, _fromItem)
-	}
-
-	var toRule []interface{}
-	for _, _toItem := range to {
-		toRule = append(toRule, _toItem)
-	}
-
-	var query [][]interface{}
-	query = append(query, []interface{}{ETHWithdrawalFinalizedEventID}, fromRule, toRule)
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *L1StandardBridge) FilterETHWithdrawalFinalizedEvent(from []web3.Address, to []web3.Address, startBlock uint64, endBlock ...uint64) ([]*ETHWithdrawalFinalizedEvent, error) {
-	topic := _a.ETHWithdrawalFinalizedTopicFilter(from, to)
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*ETHWithdrawalFinalizedEvent, 0)
-	evts := _a.c.Abi.Events["ETHWithdrawalFinalized"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem ETHWithdrawalFinalizedEvent
+		var evtItem DepositInitiatedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err
@@ -363,6 +220,57 @@ func (_a *L1StandardBridge) FilterInitializedEvent(startBlock uint64, endBlock .
 			return nil, err
 		}
 		var evtItem InitializedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
+
+func (_a *L1StandardBridge) WithdrawalFinalizedTopicFilter(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address) [][]web3.Hash {
+
+	var l1TokenRule []interface{}
+	for _, _l1TokenItem := range l1Token {
+		l1TokenRule = append(l1TokenRule, _l1TokenItem)
+	}
+
+	var l2TokenRule []interface{}
+	for _, _l2TokenItem := range l2Token {
+		l2TokenRule = append(l2TokenRule, _l2TokenItem)
+	}
+
+	var fromRule []interface{}
+	for _, _fromItem := range from {
+		fromRule = append(fromRule, _fromItem)
+	}
+
+	var query [][]interface{}
+	query = append(query, []interface{}{WithdrawalFinalizedEventID}, l1TokenRule, l2TokenRule, fromRule)
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *L1StandardBridge) FilterWithdrawalFinalizedEvent(l1Token []web3.Address, l2Token []web3.Address, from []web3.Address, startBlock uint64, endBlock ...uint64) ([]*WithdrawalFinalizedEvent, error) {
+	topic := _a.WithdrawalFinalizedTopicFilter(l1Token, l2Token, from)
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*WithdrawalFinalizedEvent, 0)
+	evts := _a.c.Abi.Events["WithdrawalFinalized"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem WithdrawalFinalizedEvent
 		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
 		if err != nil {
 			return nil, err

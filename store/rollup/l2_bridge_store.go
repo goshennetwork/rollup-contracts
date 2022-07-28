@@ -4,6 +4,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
+	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
@@ -41,6 +42,15 @@ func (self *L2BridgeStore) StoreWithdrawal(events []*binding.WithdrawalInitiated
 	}
 }
 
+func (self *L2BridgeStore) GetWithdrawal(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genL2WithdrawalInitKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	return binding.DeserializationCrossLayerInfos(codec.NewZeroCopySource(v))
+}
+
 func (self *L2BridgeStore) StoreDepositFinalized(events []*binding.DepositFinalizedEvent) {
 	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
 	for _, evt := range events {
@@ -56,6 +66,15 @@ func (self *L2BridgeStore) StoreDepositFinalized(events []*binding.DepositFinali
 	}
 }
 
+func (self *L2BridgeStore) GetDepositFinalized(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genDepositFinalizedKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	return binding.DeserializationCrossLayerInfos(codec.NewZeroCopySource(v))
+}
+
 func (self *L2BridgeStore) StoreDepositFailed(events []*binding.DepositFailedEvent) {
 	cached := make(map[web3.Hash]binding.CrossLayerInfos, 0)
 	for _, evt := range events {
@@ -69,4 +88,13 @@ func (self *L2BridgeStore) StoreDepositFailed(events []*binding.DepositFailedEve
 	for txHash, evts := range cached {
 		self.store.Put(genDepositFailedKey(txHash), codec.SerializeToBytes(evts))
 	}
+}
+
+func (self *L2BridgeStore) GetDepositFailed(txHash web3.Hash) (binding.CrossLayerInfos, error) {
+	v, err := self.store.Get(genDepositFailedKey(txHash))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil, schema.ErrNotFound
+	}
+	return binding.DeserializationCrossLayerInfos(codec.NewZeroCopySource(v))
 }

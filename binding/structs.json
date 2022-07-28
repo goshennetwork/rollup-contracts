@@ -212,6 +212,38 @@
       "EventID": "DepositFinalized(address,address,address,address,uint256,bytes)",
       "EventName": "DepositFinalizedEventID"
     },
+    "DepositInitiatedEvent": {
+      "Name": "DepositInitiatedEvent",
+      "Fields": [
+        {
+          "Name": "_l1Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_l2Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_from",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_to",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_amount",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "_data",
+          "Type": "[]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "DepositInitiated(address,address,address,address,uint256,bytes)",
+      "EventName": "DepositInitiatedEventID"
+    },
     "DepositSlashedEvent": {
       "Name": "DepositSlashedEvent",
       "Fields": [
@@ -272,118 +304,6 @@
       "EventID": "DisputeBranchSelected(address,uint256[],uint256)",
       "EventName": "DisputeBranchSelectedEventID"
     },
-    "ERC20DepositInitiatedEvent": {
-      "Name": "ERC20DepositInitiatedEvent",
-      "Fields": [
-        {
-          "Name": "_l1Token",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_l2Token",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_from",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_to",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_amount",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "_data",
-          "Type": "[]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ERC20DepositInitiated(address,address,address,address,uint256,bytes)",
-      "EventName": "ERC20DepositInitiatedEventID"
-    },
-    "ERC20WithdrawalFinalizedEvent": {
-      "Name": "ERC20WithdrawalFinalizedEvent",
-      "Fields": [
-        {
-          "Name": "_l1Token",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_l2Token",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_from",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_to",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_amount",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "_data",
-          "Type": "[]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ERC20WithdrawalFinalized(address,address,address,address,uint256,bytes)",
-      "EventName": "ERC20WithdrawalFinalizedEventID"
-    },
-    "ETHDepositInitiatedEvent": {
-      "Name": "ETHDepositInitiatedEvent",
-      "Fields": [
-        {
-          "Name": "_from",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_to",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_amount",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "_data",
-          "Type": "[]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ETHDepositInitiated(address,address,uint256,bytes)",
-      "EventName": "ETHDepositInitiatedEventID"
-    },
-    "ETHWithdrawalFinalizedEvent": {
-      "Name": "ETHWithdrawalFinalizedEvent",
-      "Fields": [
-        {
-          "Name": "_from",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_to",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "_amount",
-          "Type": "*big.Int"
-        },
-        {
-          "Name": "_data",
-          "Type": "[]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ETHWithdrawalFinalized(address,address,uint256,bytes)",
-      "EventName": "ETHWithdrawalFinalizedEventID"
-    },
     "InitializedEvent": {
       "Name": "InitializedEvent",
       "Fields": [
@@ -395,6 +315,34 @@
       "IsEvent": true,
       "EventID": "Initialized(uint8)",
       "EventName": "InitializedEventID"
+    },
+    "InputBatchAppendedEvent": {
+      "Name": "InputBatchAppendedEvent",
+      "Fields": [
+        {
+          "Name": "proposer",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "index",
+          "Type": "uint64"
+        },
+        {
+          "Name": "startQueueIndex",
+          "Type": "uint64"
+        },
+        {
+          "Name": "queueNum",
+          "Type": "uint64"
+        },
+        {
+          "Name": "inputHash",
+          "Type": "[32]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "InputBatchAppended(address,uint64,uint64,uint64,bytes32)",
+      "EventName": "InputBatchAppendedEventID"
     },
     "MessageAllowedEvent": {
       "Name": "MessageAllowedEvent",
@@ -672,34 +620,6 @@
       "EventID": "StateRollbacked(uint64,bytes32)",
       "EventName": "StateRollbackedEventID"
     },
-    "TransactionAppendedEvent": {
-      "Name": "TransactionAppendedEvent",
-      "Fields": [
-        {
-          "Name": "proposer",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "index",
-          "Type": "uint64"
-        },
-        {
-          "Name": "startQueueIndex",
-          "Type": "uint64"
-        },
-        {
-          "Name": "queueNum",
-          "Type": "uint64"
-        },
-        {
-          "Name": "inputHash",
-          "Type": "[32]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "TransactionAppended(address,uint64,uint64,uint64,bytes32)",
-      "EventName": "TransactionAppendedEventID"
-    },
     "TransactionEnqueuedEvent": {
       "Name": "TransactionEnqueuedEvent",
       "Fields": [
@@ -803,6 +723,38 @@
       "IsEvent": true,
       "EventID": "WithdrawStarted(address,uint256)",
       "EventName": "WithdrawStartedEventID"
+    },
+    "WithdrawalFinalizedEvent": {
+      "Name": "WithdrawalFinalizedEvent",
+      "Fields": [
+        {
+          "Name": "_l1Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_l2Token",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_from",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_to",
+          "Type": "web3.Address"
+        },
+        {
+          "Name": "_amount",
+          "Type": "*big.Int"
+        },
+        {
+          "Name": "_data",
+          "Type": "[]byte"
+        }
+      ],
+      "IsEvent": true,
+      "EventID": "WithdrawalFinalized(address,address,address,address,uint256,bytes)",
+      "EventName": "WithdrawalFinalizedEventID"
     },
     "WithdrawalInitiatedEvent": {
       "Name": "WithdrawalInitiatedEvent",

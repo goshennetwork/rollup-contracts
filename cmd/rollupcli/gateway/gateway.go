@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"math/big"
+
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -55,6 +57,15 @@ func gatewayCommands() []*cli.Command {
 				flags.SubmitFlag,
 			},
 		},
+		{
+			Name:   "withdrawEth",
+			Action: WithdrawEthCmd,
+			Flags: []cli.Flag{
+				flags.AmountFlag,
+				flags.ToFlag,
+				flags.SubmitFlag,
+			},
+		},
 	}
 }
 
@@ -75,13 +86,7 @@ func DepositERC20Cmd(ctx *cli.Context) error {
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 
 	l1Tok := erc20.NewERC20(web3.HexToAddress(l1Token), signer.Client)
-	decimal, err := l1Tok.Decimals(web3.Latest)
-	if err != nil {
-		return err
-	}
-
-	depositAmt := u256.New(uint64(amount * 1e9)).Mul(u256.New(1).ExpUint8(decimal)).Div(uint64(1e9))
-
+	depositAmt := u256.New(l1Tok.AmountFloatWithDecimals(amount))
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
@@ -102,7 +107,6 @@ func DepositEthCmd(ctx *cli.Context) error {
 		to = signer.Address().String()
 	}
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
-
 	depositAmt := u256.New(uint64(amount * 1e9)).Mul(web3.Ether(1)).Div(uint64(1e9))
 
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
@@ -127,15 +131,28 @@ func WithdrawToERC20Cmd(ctx *cli.Context) error {
 	}
 	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
 	l2Tok := erc20.NewERC20(web3.HexToAddress(l2Token), signer.Client)
-	decimal, err := l2Tok.Decimals(web3.Latest)
-	if err != nil {
-		return err
-	}
-	withDrawAmt := u256.New(uint64(amount * 1e9)).Mul(u256.New(10).ExpUint8(decimal)).Div(uint64(1e9))
+	withDrawAmt := u256.New(l2Tok.AmountFloatWithDecimals(amount))
 	balance, err := signer.Eth().GetBalance(signer.Address(), web3.Latest)
 	utils.Ensure(err)
 	log.Infof("balance of %s is %s ether", signer.Address().String(), u256.New(balance).ToFixNum(18))
 	WithdrawToERC20ToL1(signer, conf.L2Genesis.L2StandardBridge, web3.HexToAddress(to), web3.HexToAddress(l2Token), withDrawAmt)
+	return nil
+}
+
+func WithdrawEthCmd(ctx *cli.Context) error {
+	path := ctx.String(flags.ConfigFlag.Name)
+	signer, conf, err := common.SetUpL2(path)
+	if err != nil {
+		return err
+	}
+	amount := ctx.Float64(flags.AmountFlag.Name)
+	to := ctx.String(flags.ToFlag.Name)
+	if to == "" {
+		to = signer.Address().String()
+	}
+	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
+	withdrawAmt := u256.New(uint64(amount * 1e9)).Mul(web3.Ether(1)).Div(uint64(1e9))
+	WithdrawEthTo(signer, conf.L2Genesis.L2StandardBridge, web3.HexToAddress(to), withdrawAmt.ToBigInt())
 	return nil
 }
 
@@ -158,4 +175,11 @@ func WithdrawToERC20ToL1(signer *contract.Signer, l2Bridge, to, l2Token web3.Add
 	gateway.Contract().SetFrom(signer.Address())
 	receipt := gateway.WithdrawTo(l2Token, to, withdrawAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer)
 	log.Infof("withdrawal erc20 to l1: %s", utils.JsonString(receipt.Thin()))
+}
+
+func WithdrawEthTo(signer *contract.Signer, l2Bridge web3.Address, target web3.Address, amount *big.Int) {
+	gateway := binding.NewL2StandardBridge(l2Bridge, signer.Client)
+	gateway.Contract().SetFrom(signer.Address())
+	r := gateway.WithdrawETHTo(target, nil).SetValue(amount).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	log.Infof("withdrawal eth to l1 :%s", utils.JsonString(r.Thin()))
 }

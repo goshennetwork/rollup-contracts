@@ -267,29 +267,29 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         return keccak256(rlpTx);
     }
 
-    //Test appendBatch
+    //Test appendInputBatch
     /**1.Test Fail**/
 
     //test Fail msg.sender
     // when  sender != sequencerWhitelist
     // revert ("only sequencer")
-    function testAppendBatchNotSequencer() public {
+    function testAppendInputBatchNotSequencer() public {
         vm.startPrank(testAddress2, testAddress2);
         vm.expectRevert("only sequencer");
-        rollupInputChain.appendBatch();
+        rollupInputChain.appendInputBatch();
         vm.stopPrank();
     }
 
     //test Fail sequencer staking
     // when  isStaking(msg.sender)  ==  false
     // revert ("Sequencer should be staking")
-    function testAppendBatchSequencerNoStaking() public {
+    function testAppendInputBatchSequencerNoStaking() public {
         vm.startPrank(testAddress);
         dao.setSequencerWhitelist(testAddress2, true);
         vm.stopPrank();
         vm.startPrank(testAddress2);
         vm.expectRevert("Sequencer should be staking");
-        rollupInputChain.appendBatch();
+        rollupInputChain.appendInputBatch();
         vm.stopPrank();
     }
 
@@ -304,33 +304,35 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     }
 
     function helpCall(address _rollupInputChain, bytes memory _data) public {
-        (bool success, ) = _rollupInputChain.call(abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _data));
+        (bool success, ) = _rollupInputChain.call(
+            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _data)
+        );
         require(success, "call failed");
     }
 
     //test Fail _batchIndex
     // when  _batchIndex != chainHeight()
     // revert ("wrong batch index")
-    function testAppendBatchWrongBatchIndex() public {
+    function testAppendInputBatchWrongBatchIndex() public {
         vm.startPrank(testAddress);
         uint64 invalidIndex = rollupInputChain.chainHeight() + 10;
         vm.expectRevert("wrong batch index");
-        fakeAppendBatch(invalidIndex, 0, 1, 1, 0, bytes("0x0"));
+        fakeAppendInputBatch(invalidIndex, 0, 1, 1, 0, bytes("0x0"));
         vm.stopPrank();
     }
 
     //test Fail _queueStartIndex
     // when  _queueStartIndex != pendingQueueIndex
     // revert ("incorrect pending queue index")
-    function testAppendBatchQueueStartIndex() public {
+    function testAppendInputBatchQueueStartIndex() public {
         vm.startPrank(testAddress);
         vm.expectRevert("incorrect pending queue index");
-        fakeAppendBatch(0, 0, 1, 1, 0, bytes("0x0")); //it will always work
+        fakeAppendInputBatch(0, 0, 1, 1, 0, bytes("0x0")); //it will always work
         vm.stopPrank();
     }
 
-    //helper function: encode calldata to appendBatch()
-    function fakeAppendBatch(
+    //helper function: encode calldata to appendInputBatch()
+    function fakeAppendInputBatch(
         uint64 _batchIndex,
         uint64 _queueNum,
         uint64 _queueStartIndex,
@@ -354,7 +356,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             _info = abi.encodePacked(batchIndex, queueNum, pendingQueueIndex, subBatchNum, time0Start, timeDiff, data);
         }
         (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
         );
         require(success, "failed");
     }
@@ -362,27 +364,27 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     //test Fail _nextPendingQueueIndex
     // when _nextPendingQueueIndex(queueStart + queueNum) > queuedTxInfos.length
     // revert ("attempt to append unavailable queue")
-    function testAppendBatchInvalidNextPendingQueueIndex() public {
+    function testAppendInputBatchInvalidNextPendingQueueIndex() public {
         vm.startPrank(testAddress);
         vm.expectRevert("attempt to append unavailable queue");
-        fakeAppendBatch(0, 1, 0, 1, 0, bytes("0x0"));
+        fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
         vm.stopPrank();
     }
 
     //test Fail _queueNum
     // when _queueNum <= 0
     // revert ("nothing to append")
-    function testAppendBatchInvalidQueueNum() public {
+    function testAppendInputBatchInvalidQueueNum() public {
         vm.startPrank(testAddress);
         vm.expectRevert("nothing to append");
-        fakeAppendBatch(0, 0, 0, 0, 0, bytes("0x0"));
+        fakeAppendInputBatch(0, 0, 0, 0, 0, bytes("0x0"));
         vm.stopPrank();
     }
 
     //test Fail msg.data.length
     // when msg.data.length != _batchDataPos
     // revert ("wrong calldata")
-    function testAppendBatchInvalidMsgdataLength() public {
+    function testAppendInputBatchInvalidMsgdataLength() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         enqueue2(bytes("0x0"));
@@ -407,7 +409,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         );
         vm.expectRevert("wrong calldata");
         (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendBatch()"), _info)
+            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
         );
         require(success, "failed");
         vm.stopPrank();
@@ -416,9 +418,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     //test Fail _timestamp
     // when _timestamp < lastTimestamp
     // revert ("wrong batch timestamp")
-    //---- we do : enqueue*2 -->  AppendBatch(queue(1)) ---> lastTimestamp = 2
-    //--->AppendBatch(queue(1)) & timeStamp == 0 ---> ("wrong batch timestamp")
-    function testAppendBatchInvalidTimestamp() public {
+    //---- we do : enqueue*2 -->  AppendInputBatch(queue(1)) ---> lastTimestamp = 2
+    //--->AppendInputBatch(queue(1)) & timeStamp == 0 ---> ("wrong batch timestamp")
+    function testAppendInputBatchInvalidTimestamp() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
@@ -427,28 +429,28 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
 
         vm.startPrank(testAddress);
-        fakeAppendBatch(0, 1, 0, 1, 0, bytes("0x0"));
+        fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
         vm.expectRevert("wrong batch timestamp");
-        fakeAppendBatch(1, 1, 1, 1, 0, bytes("0x0")); //This situation can work in many occasions
+        fakeAppendInputBatch(1, 1, 1, 1, 0, bytes("0x0")); //This situation can work in many occasions
         vm.stopPrank();
     }
 
     //test Fail _timestamp
     // when _timestamp > _nextTimestamp
     // revert ("last batch timestamp too high")
-    function testAppendBatchTooHighTimestamp() public {
+    function testAppendInputBatchTooHighTimestamp() public {
         vm.startPrank(testAddress);
         uint64 time = uint64(block.timestamp) + 10;
         vm.expectRevert("last batch timestamp too high");
-        fakeAppendBatch(0, 0, 0, 1, time, bytes("0x0"));
+        fakeAppendInputBatch(0, 0, 0, 1, time, bytes("0x0"));
         vm.stopPrank();
     }
 
-    // Test AppendBatch()
+    // Test AppendInputBatch()
     /*2.Test pass*/
 
-    //test event AppendBatch if batchNum == 0
-    function testAppendBatchIfBatchnumEqual0() public {
+    //test event AppendInputBatch if batchNum == 0
+    function testAppendInputBatchIfBatchnumEqual0() public {
         //enqueue rollupInputChain Contract
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         enqueue2(bytes("0x0"));
@@ -461,8 +463,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         //test eventEmit
         vm.expectEmit(true, true, false, true);
-        emit TransactionAppended(testAddress, 0, 0, 1, inputhash);
-        fakeAppendBatch(0, 1, 0, 0, 0, "");
+        emit InputBatchAppended(testAddress, 0, 0, 1, inputhash);
+        fakeAppendInputBatch(0, 1, 0, 0, 0, "");
         vm.stopPrank();
     }
 
@@ -518,9 +520,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         return _info;
     }
 
-    // test event AppendBatch if batchNum != 0
-    // appendBatch*2
-    function testAppendBatchIfBatchnumBiggerThan0() public {
+    // test event AppendInputBatch if batchNum != 0
+    // appendInputBatch*2
+    function testAppendInputBatchIfBatchnumBiggerThan0() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         vm.warp(2);
@@ -529,14 +531,14 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
 
         vm.startPrank(testAddress);
-        fakeAppendBatch(0, 1, 0, 1, 0, bytes("0x0"));
+        fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
 
         bytes32 _queueHashes = getrollupInputChainQueueHash(1, 1);
         bytes memory info = getinfo(1, 1, 1, 2, bytes("0x0"));
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
         vm.expectEmit(true, true, false, true);
-        emit TransactionAppended(testAddress, 1, 1, 1, inputhash);
-        fakeAppendBatch(1, 1, 1, 1, 2, bytes("0x0")); //it will always work
+        emit InputBatchAppended(testAddress, 1, 1, 1, inputhash);
+        fakeAppendInputBatch(1, 1, 1, 1, 2, bytes("0x0")); //it will always work
         vm.stopPrank();
     }
 }

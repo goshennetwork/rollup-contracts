@@ -103,8 +103,8 @@ loop:
 				continue
 			}
 			num := l2checkedBatchNum - l1StateNum
-			if num > 512 { // limit num
-				num = 512
+			if num > 64 { // limit num
+				num = 64
 			}
 			pendingStates := make([][32]byte, num)
 
@@ -121,7 +121,7 @@ loop:
 				}
 				pendingStates[i] = l2State
 			}
-			log.Info("try to append state...", "start", l1StateNum, "end", clientInfo.L2CheckedBatchNum-1)
+			log.Info("try to append state...", "start", l1StateNum, "end", l1StateNum+num)
 			receipt := self.stateChain.AppendStateBatch(pendingStates, l1StateNum).Sign(self.signer).SendTransaction(self.signer)
 			if receipt.IsReverted() {
 				log.Error("append state batch failed", "start", l1StateNum)
