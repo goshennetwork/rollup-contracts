@@ -42,6 +42,25 @@ func (_a *AddressManager) Contract() *contract.Contract {
 
 // calls
 
+// ChallengeBeacon calls the challengeBeacon method in the solidity contract
+func (_a *AddressManager) ChallengeBeacon(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("challengeBeacon", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // ChallengeFactory calls the challengeFactory method in the solidity contract
 func (_a *AddressManager) ChallengeFactory(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
@@ -67,6 +86,25 @@ func (_a *AddressManager) Dao(block ...web3.BlockNumber) (retval0 web3.Address, 
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("dao", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// FeeToken calls the feeToken method in the solidity contract
+func (_a *AddressManager) FeeToken(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("feeToken", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
@@ -137,12 +175,50 @@ func (_a *AddressManager) L1CrossLayerWitness(block ...web3.BlockNumber) (retval
 	return
 }
 
+// L1StandardBridge calls the l1StandardBridge method in the solidity contract
+func (_a *AddressManager) L1StandardBridge(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("l1StandardBridge", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // L2CrossLayerWitness calls the l2CrossLayerWitness method in the solidity contract
 func (_a *AddressManager) L2CrossLayerWitness(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("l2CrossLayerWitness", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// MachineState calls the machineState method in the solidity contract
+func (_a *AddressManager) MachineState(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("machineState", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
