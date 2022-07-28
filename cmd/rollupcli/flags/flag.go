@@ -64,3 +64,39 @@ var EnabledFlag = &cli.BoolFlag{
 	Usage:    "whether enable or disable",
 	Required: true,
 }
+
+var MsgIndexFlag = &cli.Uint64Flag{
+	Name:     "msgIndex",
+	Usage:    "msg index",
+	Required: true,
+}
+
+var L1RpcFlag = &cli.StringFlag{
+	Name:     "l1",
+	Usage:    "set l1 rpc",
+	Required: true,
+}
+
+var L2RpcFlag = &cli.StringFlag{
+	Name:     "l2",
+	Usage:    "set l2 rpc",
+	Required: true,
+}
+
+var NameFlag = &cli.StringFlag{
+	Name:  "name",
+	Usage: "set file name",
+	Value: "rollup-config.json",
+}
+
+var ResolverFlag = &cli.StringFlag{
+	Name:     "resolver",
+	Usage:    "set address manager contract address",
+	Required: true,
+}
+
+var PrivateFlag = &cli.StringFlag{
+	Name:     "key",
+	Usage:    "private key",
+	Required: true,
+}

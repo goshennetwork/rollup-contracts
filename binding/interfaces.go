@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/laizy/web3"
+	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils/codec"
 )
 
@@ -138,5 +139,14 @@ func (evt *WithdrawalInitiatedEvent) GetTokenCrossInfo() *CrossLayerInfo {
 		To:      evt.To,
 		Amount:  evt.Amount,
 		Data:    evt.Data,
+	}
+}
+
+func FromRPCStateInfo(s *jsonrpc.RPCBatchState) *StateInfo {
+	return &StateInfo{
+		s.BlockHash,
+		uint64(s.Index),
+		uint64(s.Timestamp),
+		s.Proposer,
 	}
 }

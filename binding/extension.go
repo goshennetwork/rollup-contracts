@@ -148,3 +148,12 @@ func (self *RollupInputBatches) Decode(b []byte) error {
 	self.BatchIndex = reader.ReadUint64BE()
 	return self.DecodeWithoutIndex(b[8:])
 }
+
+func (s *StateInfo) Hash() web3.Hash {
+	b := codec.NewZeroCopySink(nil)
+	b.WriteHash(s.BlockHash)
+	b.WriteUint64BE(s.Index)
+	b.WriteUint64BE(s.Timestamp)
+	b.WriteAddress(s.Proposer)
+	return crypto.Keccak256Hash(b.Bytes())
+}

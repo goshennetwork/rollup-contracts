@@ -94,3 +94,16 @@ type ChallengeConfig struct {
 	BlockLimitPerRound uint64 // proposer
 	ChallengerDeposit  *big.Int
 }
+
+var DefaultL2GenesisConfig = L2GenesisConfig{
+	FeeCollectorOwner: web3.HexToAddress("0xa0ee7a142d267c1f36714e4a8f75612f20a79720"),
+	BridgeBalance:     1000000000,
+	L2ContractAddressConfig: &L2ContractAddressConfig{
+		ProxyAdmin:               web3.HexToAddress("0xa0ee7a142d267c1f36714e4a8f75612f20a79720"),
+		L2CrossLayerWitness:      web3.HexToAddress("0x2210000000000000000000000000000000000221"),
+		L2StandardBridge:         web3.HexToAddress("0xbde0000000000000000000000000000000000bde"),
+		L2CrossLayerWitnessLogic: web3.HexToAddress("0x221c0de00000000000000000000000000221c0de"),
+		L2StandardBridgeLogic:    web3.HexToAddress("0xbdec0de00000000000000000000000000bdec0de"),
+		L2FeeCollector:           web3.HexToAddress("0xfee0000000000000000000000000000000000fee"),
+	},
+}

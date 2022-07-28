@@ -1,12 +1,14 @@
 package gateway
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/contract/builtin/erc20"
+	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/u256"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
@@ -66,7 +68,55 @@ func gatewayCommands() []*cli.Command {
 				flags.SubmitFlag,
 			},
 		},
+		{
+			Name:   "relayMsgToL1",
+			Action: FinalizeWithdraw,
+			Flags: []cli.Flag{
+				flags.MsgIndexFlag,
+				flags.SubmitFlag,
+			},
+			Usage: "relay l2->l1 msg to l1",
+		},
 	}
+}
+
+func FinalizeWithdraw(ctx *cli.Context) error {
+	path := ctx.String(flags.ConfigFlag.Name)
+
+	signer, conf, err := common.SetUpL1(path)
+	if err != nil {
+		return err
+	}
+	signer.Submit = ctx.Bool(flags.SubmitFlag.Name)
+	msgIndex := ctx.Uint64(flags.MsgIndexFlag.Name)
+	return RelayMsg(signer, conf.L2Rpc, conf.L1Addresses.L1CrossLayerWitness, msgIndex)
+}
+
+func RelayMsg(signer *contract.Signer, l2url string, L1CrossLayerWitness web3.Address, msgIndex uint64) error {
+	l2client, err := jsonrpc.NewClient(l2url)
+	utils.Ensure(err)
+	params, err := l2client.L2().GetL1RelayMsgParams(msgIndex)
+	if err != nil {
+		return err
+	}
+	log.Info("r1cs debug", "params", utils.JsonStr(params))
+	if params == nil {
+		return fmt.Errorf("no params found, msgIndex: %d", msgIndex)
+	}
+
+	l1Cross := binding.NewL1CrossLayerWitness(L1CrossLayerWitness, signer.Client)
+	l1Cross.Contract().SetFrom(signer.Address())
+	var proof [][32]byte
+	for _, h := range params.Proof {
+		proof = append(proof, h)
+	}
+	stateInfo := binding.FromRPCStateInfo(params.StateInfo)
+	log.Info("r1cs debug", "stateHash", stateInfo.Hash(), "stateInfo", utils.JsonStr(stateInfo))
+	txn := l1Cross.RelayMessage(params.Target, params.Sender, params.Message, uint64(params.MessageIndex), params.RLPHeader, *stateInfo, proof).Sign(signer)
+	log.Info("r1cs debug", "data", txn.Input)
+	r := txn.SendTransaction(signer).EnsureNoRevert()
+	log.Info("relay message succeed", "msgIndex", msgIndex, "txHash", r.TransactionHash, "log", utils.JsonStr(r))
+	return nil
 }
 
 func DepositERC20Cmd(ctx *cli.Context) error {
