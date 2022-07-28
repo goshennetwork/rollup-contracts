@@ -5,6 +5,10 @@ import "../interfaces/IAddressManager.sol";
 import "./AddressName.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../interfaces/IAddressResolver.sol";
+import "../interfaces/IL1StandardBridge.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import "../test-helper/TestERC20.sol";
+import "../interfaces/IMachineState.sol";
 
 contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable {
     mapping(bytes32 => address) public getAddrByHash;
@@ -86,6 +90,22 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
 
     function stateTransition() public view returns (IStateTransition) {
         return IStateTransition(getAddrByHash[AddressName.STATE_TRANSITION_HASH]);
+    }
+
+    function l1StandardBridge() public view returns (IL1StandardBridge) {
+        return IL1StandardBridge(getAddrByHash[AddressName.L1_STANDARD_BRIDGE_HASH]);
+    }
+
+    function challengeBeacon() public view returns (UpgradeableBeacon) {
+        return UpgradeableBeacon(getAddrByHash[AddressName.CHALLENGE_BEACON_HASH]);
+    }
+
+    function feeToken() public view returns (TestERC20) {
+        return TestERC20(getAddrByHash[AddressName.FEE_TOKEN_HASH]);
+    }
+
+    function machineState() public view returns (IMachineState) {
+        return IMachineState(getAddrByHash[AddressName.MACHINE_STATE_HASH]);
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

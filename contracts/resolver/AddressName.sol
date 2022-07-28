@@ -32,4 +32,16 @@ library AddressName {
     ///StateTransition
     string constant STATE_TRANSITION = "StateTransition";
     bytes32 constant STATE_TRANSITION_HASH = keccak256("StateTransition");
+    ///L1StandardBridge
+    string constant L1_STANDARD_BRIDGE = "L1StandardBridge";
+    bytes32 constant L1_STANDARD_BRIDGE_HASH = keccak256("L1StandardBridge");
+    ///ChallengeBeacon
+    string constant CHALLENGE_BEACON = "ChallengeBeacon";
+    bytes32 constant CHALLENGE_BEACON_HASH = keccak256("ChallengeBeacon");
+    ///FeeToken
+    string constant FEE_TOKEN = "FeeToken";
+    bytes32 constant FEE_TOKEN_HASH = keccak256("FeeToken");
+    ///MachineState
+    string constant MACHINE_STATE = "MachineState";
+    bytes32 constant MACHINE_STATE_HASH = keccak256("MachineState");
 }

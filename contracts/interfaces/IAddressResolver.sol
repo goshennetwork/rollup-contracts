@@ -8,6 +8,10 @@ import "./IRollupInputChain.sol";
 import "./IL1CrossLayerWitness.sol";
 import "./IL2CrossLayerWitness.sol";
 import "./IDAO.sol";
+import "./IL1StandardBridge.sol";
+import "../test-helper/TestERC20.sol";
+import "./IMachineState.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 ///@dev resolver only read address
 interface IAddressResolver {
@@ -43,4 +47,16 @@ interface IAddressResolver {
 
     ///get StateTransition contract address
     function stateTransition() external view returns (IStateTransition);
+
+    //get L1StandardBridge contract address
+    function l1StandardBridge() external view returns (IL1StandardBridge);
+
+    ///get ChallengeBeacon contract address
+    function challengeBeacon() external view returns (UpgradeableBeacon);
+
+    ///get FeeToken contract address
+    function feeToken() external view returns (TestERC20);
+
+    ///get MachineState contract address
+    function machineState() external view returns (IMachineState);
 }
