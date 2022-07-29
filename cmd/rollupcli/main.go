@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/laizy/log"
+	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/cfg"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/dao"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
 	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/erc20"
@@ -28,6 +29,7 @@ func main() {
 			genesis.GenesisCommand(),
 			erc20.ERC20Cmd(),
 			dao.Cmd(),
+			cfg.CfgCommand(),
 		},
 	}
 
