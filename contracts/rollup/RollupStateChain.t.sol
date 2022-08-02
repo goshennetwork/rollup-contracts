@@ -11,8 +11,7 @@ import "./ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
 
 contract TestRollupStateChain is TestBase {
-    address sender = address(7777); //admin
-    address testAddress = address(0x8888);
+    address callAddress = address(0x8888);
     event StateBatchAppended(
         address indexed _proposer,
         uint64 indexed _startIndex,
@@ -23,9 +22,9 @@ contract TestRollupStateChain is TestBase {
 
     function setUp() public {
         super._initialize();
-        vm.startPrank(sender);
-        dao.setProposerWhitelist(sender, true);
-        dao.setSequencerWhitelist(sender, true);
+        vm.startPrank(ownerAddress);
+        dao.setProposerWhitelist(ownerAddress, true);
+        dao.setSequencerWhitelist(ownerAddress, true);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
@@ -37,7 +36,7 @@ contract TestRollupStateChain is TestBase {
     // test address not proposer
     function testAppendNotSequencer() public {
         bytes32[] memory states = new bytes32[](1);
-        vm.startPrank(testAddress, testAddress);
+        vm.startPrank(callAddress, callAddress);
         vm.expectRevert("only proposer");
         rollupStateChain.appendStateBatch(states, 0);
         vm.stopPrank();
@@ -46,7 +45,7 @@ contract TestRollupStateChain is TestBase {
     // test in case of duplicated
     function testAppendDup() public {
         bytes32[] memory states = new bytes32[](1);
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         vm.expectRevert("start pos mismatch");
         rollupStateChain.appendStateBatch(states, 1);
         vm.stopPrank();
@@ -54,11 +53,11 @@ contract TestRollupStateChain is TestBase {
 
     //test Fail proposer unstaked
     function testAppendBatchSequencerNoStaking() public {
-        vm.startPrank(sender);
-        dao.setProposerWhitelist(testAddress, true);
+        vm.startPrank(ownerAddress);
+        dao.setProposerWhitelist(callAddress, true);
         vm.stopPrank();
         bytes32[] memory states = new bytes32[](1);
-        vm.startPrank(testAddress);
+        vm.startPrank(callAddress);
         vm.expectRevert("unstaked");
         rollupStateChain.appendStateBatch(states, 0);
         vm.stopPrank();
@@ -67,7 +66,7 @@ contract TestRollupStateChain is TestBase {
     //append empty state
     function testAppend0() public {
         bytes32[] memory states;
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         vm.expectRevert("no block hashes");
         rollupStateChain.appendStateBatch(states, 0);
         vm.stopPrank();
@@ -83,7 +82,7 @@ contract TestRollupStateChain is TestBase {
         vm.stopPrank();
 
         bytes32[] memory states = new bytes32[](5);
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         vm.expectRevert("exceed input chain height");
         rollupStateChain.appendStateBatch(states, 0);
         vm.stopPrank();
@@ -102,11 +101,11 @@ contract TestRollupStateChain is TestBase {
         addressManager.rollupInputChainContainer().append(bytes32(0));
         vm.stopPrank();
 
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         bytes32[] memory states = new bytes32[](1);
         //test eventEmit
         vm.expectEmit(true, true, false, true);
-        emit StateBatchAppended(sender, 0, uint64(block.timestamp), states);
+        emit StateBatchAppended(ownerAddress, 0, uint64(block.timestamp), states);
         rollupStateChain.appendStateBatch(states, 0);
 
         states = new bytes32[](3);
@@ -120,10 +119,10 @@ contract TestRollupStateChain is TestBase {
 */
     // test address not challenge contract
     function testRollbackNotchallenge() public {
-        vm.startPrank(testAddress, testAddress);
+        vm.startPrank(callAddress, callAddress);
         Types.StateInfo memory stateInfo;
         stateInfo.timestamp = uint64(block.timestamp);
-        stateInfo.proposer = sender;
+        stateInfo.proposer = ownerAddress;
         stateInfo.index = 3;
 
         vm.expectRevert("only permitted by challenge contract");
@@ -136,7 +135,7 @@ contract TestRollupStateChain is TestBase {
         vm.startPrank(challengerFactory, challengerFactory);
         Types.StateInfo memory stateInfo;
         stateInfo.timestamp = uint64(block.timestamp);
-        stateInfo.proposer = sender;
+        stateInfo.proposer = ownerAddress;
         stateInfo.index = 3;
         vm.expectRevert("invalid state info");
         rollupStateChain.rollbackStateBefore(stateInfo);
@@ -152,11 +151,11 @@ contract TestRollupStateChain is TestBase {
         addressManager.rollupInputChainContainer().append(bytes32(0));
         vm.stopPrank();
         Types.StateInfo memory stateInfo;
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         bytes32[] memory states = new bytes32[](4);
         rollupStateChain.appendStateBatch(states, 0);
         stateInfo.timestamp = uint64(block.timestamp);
-        stateInfo.proposer = sender;
+        stateInfo.proposer = ownerAddress;
         stateInfo.index = 3;
         vm.stopPrank();
 
@@ -179,12 +178,12 @@ contract TestRollupStateChain is TestBase {
         addressManager.rollupInputChainContainer().append(bytes32(0));
         addressManager.rollupInputChainContainer().append(bytes32(0));
         vm.stopPrank();
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         bytes32[] memory states = new bytes32[](4);
         rollupStateChain.appendStateBatch(states, 0);
         require(rollupStateChain.totalSubmittedState() == 4, "4");
         stateInfo.timestamp = uint64(block.timestamp);
-        stateInfo.proposer = sender;
+        stateInfo.proposer = ownerAddress;
         stateInfo.index = 3;
         vm.stopPrank();
         vm.startPrank(challengerFactory);

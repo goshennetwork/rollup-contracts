@@ -11,21 +11,19 @@ import "../rollup/ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
 
 contract TestStakingManager is TestBase {
-    address sender = address(7777);
-
     function setUp() public {
         super._initialize();
     }
 
     function testDeposit() public {
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
-        require(stakingManager.isStaking(sender), "not staking");
+        require(stakingManager.isStaking(ownerAddress), "not staking");
     }
 
     function testWithdraw() public {
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         stakingManager.startWithdrawal();
@@ -36,12 +34,12 @@ contract TestStakingManager is TestBase {
         addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
         vm.warp(fraudProofWindow);
         vm.stopPrank();
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         stakingManager.finalizeWithdrawal(stateInfo);
     }
 
     function testSlash() public {
-        vm.startPrank(sender);
+        vm.startPrank(ownerAddress);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
@@ -51,8 +49,8 @@ contract TestStakingManager is TestBase {
         addressManager.rollupStateChainContainer().append(Types.hash(stateInfo));
         vm.stopPrank();
         vm.startPrank(challengerFactory);
-        stakingManager.slash(0, Types.hash(stateInfo), sender);
+        stakingManager.slash(0, Types.hash(stateInfo), ownerAddress);
         vm.warp(fraudProofWindow);
-        stakingManager.claim(sender, stateInfo);
+        stakingManager.claim(ownerAddress, stateInfo);
     }
 }
