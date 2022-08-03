@@ -17,7 +17,7 @@ ChallengeFactory.sol/*
 UpgradeableBeacon.sol/*
 ProxyAdmin.sol/*
 TransparentUpgradeableProxy.sol/*
-DAO.sol/*
+Whitelist.sol/*
 L2FeeCollector.sol/*
 TestL2ERC20.sol/*
 L2StandardERC20.sol/*
