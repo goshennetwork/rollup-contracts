@@ -3,17 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IAddressResolver.sol";
+import "../interfaces/IWhitelist.sol";
 
-contract Whitelist is Initializable {
+contract Whitelist is IWhitelist, Initializable {
     mapping(address => bool) public override canSequence;
     mapping(address => bool) public override canPropose;
     mapping(address => bool) public override canChallenge;
 
     IAddressResolver addressResolver;
-
-    event SequencerUpdated(address submitter, bool enabled);
-    event ProposerUpdated(address proposer, bool enabled);
-    event ChallengerUpdated(address challenger, bool enabled);
 
     modifier onlyDAO() {
         require(msg.sender == address(addressResolver.dao()), "only dao allowed");
