@@ -35,7 +35,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         Types.StateInfo memory _challengedStateInfo,
         Types.StateInfo memory _parentStateInfo
     ) public {
-        require(resolver.dao().challengerWhitelist(msg.sender), "only challenger");
+        require(resolver.whitelist().canChallenge(msg.sender), "only challenger");
         bytes32 _hash = _challengedStateInfo.hash();
         require(challengedStates[_hash] == address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");

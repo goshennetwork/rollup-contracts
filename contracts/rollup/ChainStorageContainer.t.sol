@@ -9,7 +9,7 @@ contract TestChainStorageContainer is TestBase, ChainStorageContainer {
 
     function setUp() public {
         vm.startPrank(sender);
-        _initialize();
+        _initialize(sender);
         ChainStorageContainer chainStorageContainerLogic = new ChainStorageContainer();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(chainStorageContainerLogic),

@@ -44,4 +44,7 @@ library AddressName {
     ///MachineState
     string constant MACHINE_STATE = "MachineState";
     bytes32 constant MACHINE_STATE_HASH = keccak256("MachineState");
+    ///Whitelist
+    string constant WHITELIST = "Whitelist";
+    bytes32 constant WHITELIST_HASH = keccak256("Whitelist");
 }

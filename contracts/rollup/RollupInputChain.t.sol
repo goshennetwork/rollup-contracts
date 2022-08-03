@@ -18,9 +18,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
 
     function setUp() public {
         vm.startPrank(testAddress);
-        _initialize();
-        dao.setProposerWhitelist(testAddress, true);
-        dao.setSequencerWhitelist(testAddress, true);
+        _initialize(testAddress);
+        whitelist.setSequencer(testAddress, true);
+        whitelist.setProposer(testAddress, true);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
@@ -285,7 +285,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // revert ("Sequencer should be staking")
     function testAppendInputBatchSequencerNoStaking() public {
         vm.startPrank(testAddress);
-        dao.setSequencerWhitelist(testAddress2, true);
+        whitelist.setSequencer(testAddress2, true);
         vm.stopPrank();
         vm.startPrank(testAddress2);
         vm.expectRevert("Sequencer should be staking");
