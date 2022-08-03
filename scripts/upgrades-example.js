@@ -5,7 +5,7 @@ async function main() {
     console.log('deploy L1CrossLayerWitness at', l1CrossLayerWitness.address);
 
     // upgrades
-    const l1CrossLayerWitnessV2 =await upgrades.upgradeProxy(l1CrossLayerWitness.address, L1CrossLayerWitness);
+    const l1CrossLayerWitnessV2 = await upgrades.upgradeProxy(l1CrossLayerWitness.address, L1CrossLayerWitness);
     console.log('upgraded, tx is', l1CrossLayerWitnessV2.deployTransaction.hash);
 }
 
