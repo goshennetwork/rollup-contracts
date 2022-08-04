@@ -20,6 +20,7 @@ import "../dao/DAO.sol";
 contract TestBase {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
+    address ownerAddress = address(7777);
     using MerkleMountainRange for CompactMerkleTree;
     CompactMerkleTree _trees;
 
@@ -36,6 +37,7 @@ contract TestBase {
     DAO dao;
 
     function _initialize() internal {
+        vm.startPrank(ownerAddress);
         // deploy proxy admin
         proxyAdmin = new ProxyAdmin();
         // deploy AddressManager
@@ -153,6 +155,7 @@ contract TestBase {
         addressManager.setAddress(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
         addressManager.setAddress(AddressName.DAO, address(dao));
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
+        vm.stopPrank();
     }
 
     function callRelayMessage(
@@ -198,9 +201,13 @@ contract TestBase {
     }
 }
 
-contract MockChallengeFactory {
+contract MockChallengeFactory is Initializable {
     function isChallengeContract(address _addr) external view returns (bool) {
         return _addr == address(this);
+    }
+
+    function return12() public pure returns (uint256) {
+        return 12;
     }
 }
 

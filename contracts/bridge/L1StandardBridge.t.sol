@@ -44,7 +44,6 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
     }
 
     function testDepositETHWithZeroValue() public {
-        // test deposit amount == 0
         vm.startPrank(sender, sender);
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderBal = sender.balance;

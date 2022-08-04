@@ -4,12 +4,11 @@ pragma solidity ^0.8.0;
 import "../test-helper/TestBase.sol";
 
 contract TestChainStorageContainer is TestBase, ChainStorageContainer {
-    address sender = address(0x89898);
     ChainStorageContainer chainStorageContainer;
 
     function setUp() public {
-        vm.startPrank(sender);
         _initialize();
+        vm.startPrank(ownerAddress);
         ChainStorageContainer chainStorageContainerLogic = new ChainStorageContainer();
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(chainStorageContainerLogic),

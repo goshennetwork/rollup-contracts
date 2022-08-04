@@ -119,6 +119,7 @@ contract TestChallengeFactory is ChallengeFactory {
         vm.stopPrank();
 
         vm.startPrank(testAddress2);
+        vm.warp(0);
         challengeFactory.newChallenge(challengeStateinfo, parentStateinfo);
         vm.expectRevert("already challenged");
         challengeFactory.newChallenge(challengeStateinfo, parentStateinfo);
@@ -163,6 +164,7 @@ contract TestChallengeFactory is ChallengeFactory {
         vm.stopPrank();
 
         vm.startPrank(testAddress2);
+        vm.warp(0);
         vm.expectRevert("wrong stateInfo");
         challengeFactory.newChallenge(stateinfo1, stateinfo2);
         vm.stopPrank();
@@ -182,6 +184,7 @@ contract TestChallengeFactory is ChallengeFactory {
 
         //parentStateInfo.index + 1 != challengedStateInfo.index
         vm.startPrank(testAddress2);
+        vm.warp(0);
         vm.expectRevert("wrong parent stateInfo");
         challengeFactory.newChallenge(challengeStateinfo, parentStateinfo);
         vm.stopPrank();
@@ -190,6 +193,7 @@ contract TestChallengeFactory is ChallengeFactory {
     /* test pass NewChallenge */
     function testNewChallengePass() public {
         vm.startPrank(testAddress);
+
         dao2.setChallengerWhitelist(testAddress2, true);
         Types.StateInfo memory challengeStateinfo = Types.StateInfo(bytes32("0x0"), 1, 1, address(1));
         Types.StateInfo memory parentStateinfo = Types.StateInfo(bytes32("0x0"), 0, 1, address(1));
@@ -200,6 +204,7 @@ contract TestChallengeFactory is ChallengeFactory {
         vm.stopPrank();
 
         vm.startPrank(testAddress2);
+        vm.warp(0);
         challengeFactory.newChallenge(challengeStateinfo, parentStateinfo);
         vm.stopPrank();
     }
