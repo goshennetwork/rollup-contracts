@@ -229,6 +229,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		"ChallengeFactory",
 		"L2CrossLayerWitness",
 		"Whitelist",
+		"FeeToken",
 	}
 	addrs := []web3.Address{
 		l1CrossLayerWitness.Contract().Addr(),
@@ -242,6 +243,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		factory.Contract().Addr(),
 		cfg.L2CrossLayerWitness,
 		whitelist.Contract().Addr(),
+		feeToken.Contract().Addr(),
 	}
 	addrMan.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer)
 
