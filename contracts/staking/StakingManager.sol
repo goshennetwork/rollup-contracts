@@ -21,13 +21,13 @@ contract StakingManager is IStakingManager, Initializable {
 
     /// The token address used for staking.
     function token() public view returns (IERC20) {
-        return resolver.stakingERC20();
+        return resolver.feeToken();
     }
 
     function deposit() external override {
         StakingInfo storage senderStaking = getStakingInfo[msg.sender];
         require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
-        require(resolver.stakingERC20().transferFrom(msg.sender, address(this), price), "transfer failed");
+        require(resolver.feeToken().transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
         emit Deposited(msg.sender, price);
     }
@@ -49,7 +49,7 @@ contract StakingManager is IStakingManager, Initializable {
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
         _assertStateIsConfirmed(resolver.rollupStateChain(), senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
-        resolver.stakingERC20().transfer(msg.sender, price);
+        resolver.feeToken().transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
     }
 
@@ -86,7 +86,7 @@ contract StakingManager is IStakingManager, Initializable {
         require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
-        resolver.stakingERC20().transfer(msg.sender, price);
+        resolver.feeToken().transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
@@ -99,7 +99,7 @@ contract StakingManager is IStakingManager, Initializable {
         _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
         address _dao = resolver.dao();
-        resolver.stakingERC20().transfer(_dao, price);
+        resolver.feeToken().transfer(_dao, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, _dao, price);
     }

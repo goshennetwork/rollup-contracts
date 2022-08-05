@@ -77,10 +77,6 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
         return IStakingManager(getAddrByHash[AddressName.STAKING_MANAGER_HASH]);
     }
 
-    function stakingERC20() public view returns (IERC20) {
-        return IERC20(getAddrByHash[AddressName.STAKING_ERC20_HASH]);
-    }
-
     function challengeFactory() public view returns (IChallengeFactory) {
         return IChallengeFactory(getAddrByHash[AddressName.CHALLENGE_FACTORY_HASH]);
     }
