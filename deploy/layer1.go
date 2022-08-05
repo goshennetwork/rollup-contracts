@@ -105,13 +105,12 @@ func DeployChallengeFactory(signer *contract.Signer, addrMan, beacon web3.Addres
 	return factory
 }
 
-func DeployStakingManager(signer *contract.Signer, dao, challengeFactory, rollupStateChain,
-	feeToken web3.Address, price *big.Int) *binding.StakingManager {
+func DeployStakingManager(signer *contract.Signer, resolver web3.Address, price *big.Int) *binding.StakingManager {
 	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
 	staking.Contract().SetFrom(signer.Address())
-	staking.Initialize(dao, challengeFactory, rollupStateChain, feeToken, price).Sign(signer).SendTransaction(signer)
+	staking.Initialize(resolver, price).Sign(signer).SendTransaction(signer)
 
 	return staking
 }
@@ -214,8 +213,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 	beacon := DeployBeacon(signer, challenge.Contract().Addr())
 	factory := DeployChallengeFactory(signer, addrMan.Contract().Addr(), beacon.Contract().Addr(), cfg.BlockLimitPerRound, cfg.ChallengerDeposit)
 
-	staking := DeployStakingManager(signer, dao, factory.Contract().Addr(),
-		rollupStateChain.Contract().Addr(), feeToken.Contract().Addr(), cfg.StakingAmount)
+	staking := DeployStakingManager(signer, addrMan.Contract().Addr(), cfg.StakingAmount)
 
 	bridge := DeployL1StandardBridge(signer, l1CrossLayerWitness.Contract().Addr(), cfg.L2StandardBridge)
 
