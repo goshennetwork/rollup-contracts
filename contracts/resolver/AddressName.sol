@@ -20,6 +20,8 @@ library AddressName {
     ///StakingManager
     string constant STAKING_MANAGER = "StakingManager";
     bytes32 constant STAKING_MANAGER_HASH = keccak256("StakingManager");
+    string constant STAKING_ERC20 = "StakingERC20";
+    bytes32 constant STAKING_ERC20_HASH = keccak256("StakingERC20");
     ///ChallengeFactory
     string constant CHALLENGE_FACTORY = "ChallengeFactory";
     bytes32 constant CHALLENGE_FACTORY_HASH = keccak256("ChallengeFactory");

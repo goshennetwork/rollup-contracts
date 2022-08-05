@@ -4,38 +4,30 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IStakingManager.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "../interfaces/IRollupStateChain.sol";
-import "../interfaces/IChallengeFactory.sol";
 import "../libraries/Types.sol";
 import "../libraries/console.sol";
+import "../interfaces/IAddressResolver.sol";
 
 contract StakingManager is IStakingManager, Initializable {
-    address private DAOAddress;
-    IChallengeFactory challengeFactory;
-    IRollupStateChain public rollupStateChain;
-    IERC20 public override token;
+    IAddressResolver resolver;
     mapping(address => StakingInfo) public getStakingInfo;
     //price should never change, unless every stakingInfo record the relating info of price.
     uint256 public price;
 
-    function initialize(
-        address _DAOAddress,
-        address _challengeFactory,
-        address _rollupStateChain,
-        address _erc20,
-        uint256 _price
-    ) public initializer {
-        DAOAddress = _DAOAddress;
-        challengeFactory = IChallengeFactory(_challengeFactory);
-        rollupStateChain = IRollupStateChain(_rollupStateChain);
-        token = IERC20(_erc20);
+    function initialize(address _resolver, uint256 _price) public initializer {
+        resolver = IAddressResolver(_resolver);
         price = _price;
+    }
+
+    /// The token address used for staking.
+    function token() public view returns (IERC20) {
+        return resolver.stakingERC20();
     }
 
     function deposit() external override {
         StakingInfo storage senderStaking = getStakingInfo[msg.sender];
         require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
-        require(token.transferFrom(msg.sender, address(this), price), "transfer failed");
+        require(resolver.stakingERC20().transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
         emit Deposited(msg.sender, price);
     }
@@ -48,16 +40,16 @@ contract StakingManager is IStakingManager, Initializable {
         StakingInfo storage senderStake = getStakingInfo[msg.sender];
         require(senderStake.state == StakingState.STAKING, "not in staking");
         senderStake.state = StakingState.WITHDRAWING;
-        senderStake.needConfirmedHeight = rollupStateChain.totalSubmittedState();
+        senderStake.needConfirmedHeight = resolver.rollupStateChain().totalSubmittedState();
         emit WithdrawStarted(msg.sender, senderStake.needConfirmedHeight);
     }
 
     function finalizeWithdrawal(Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage senderStake = getStakingInfo[msg.sender];
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
-        _assertStateIsConfirmed(senderStake.needConfirmedHeight, _stateInfo);
+        _assertStateIsConfirmed(resolver.rollupStateChain(), senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
-        token.transfer(msg.sender, price);
+        resolver.stakingERC20().transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
     }
 
@@ -68,7 +60,7 @@ contract StakingManager is IStakingManager, Initializable {
     ) external override {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //only challenge.
-        require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
+        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only challenge contract permitted");
         //unstaked is not allowed
         require(proposerStake.state != StakingState.UNSTAKED, "unStaked unexpected");
         if (proposerStake.firstSlashTime == 0) {
@@ -88,12 +80,13 @@ contract StakingManager is IStakingManager, Initializable {
     function claim(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //only challenge.
-        require(challengeFactory.isChallengeContract(msg.sender), "only challenge contract permitted");
+        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
-        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        IRollupStateChain _stateChain = resolver.rollupStateChain();
+        require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
-        token.transfer(msg.sender, price);
+        resolver.stakingERC20().transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
@@ -101,17 +94,23 @@ contract StakingManager is IStakingManager, Initializable {
     function claimToGovernance(address _proposer, Types.StateInfo memory _stateInfo) external override {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
-        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
-        _assertStateIsConfirmed(proposerStake.earliestChallengeHeight, _stateInfo);
+        IRollupStateChain _stateChain = resolver.rollupStateChain();
+        require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
-        token.transfer(DAOAddress, price);
+        address _dao = resolver.dao();
+        resolver.stakingERC20().transfer(_dao, price);
         proposerStake.state = StakingState.UNSTAKED;
-        emit DepositClaimed(_proposer, DAOAddress, price);
+        emit DepositClaimed(_proposer, _dao, price);
     }
 
-    function _assertStateIsConfirmed(uint256 _index, Types.StateInfo memory _stateInfo) internal view {
-        require(rollupStateChain.verifyStateInfo(_stateInfo), "incorrect state info");
-        require(rollupStateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
+    function _assertStateIsConfirmed(
+        IRollupStateChain _stateChain,
+        uint256 _index,
+        Types.StateInfo memory _stateInfo
+    ) internal view {
+        require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
+        require(_stateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
         require(_stateInfo.index == _index, "should provide wanted state info");
     }
 }

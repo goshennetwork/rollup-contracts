@@ -36,6 +36,9 @@ interface IAddressResolver {
     ///Get StakingManager contract
     function stakingManager() external view returns (IStakingManager);
 
+    ///Get ERC20 token used by staking
+    function stakingERC20() external view returns (IERC20);
+
     ///Get ChallengeFactory contract
     function challengeFactory() external view returns (IChallengeFactory);
 
