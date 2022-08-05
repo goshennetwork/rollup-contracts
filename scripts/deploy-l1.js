@@ -39,9 +39,14 @@ async function main() {
     ]);
     console.log("sent ChallengeFactory deploy tx, %s", challengeFactory.deployTransaction.hash);
 
-    const DAO = await ethers.getContractFactory("DAO");
-    const dao = await upgrades.deployProxy(DAO, []);
-    console.log("sent DAO deploy tx, %s", dao.deployTransaction.hash);
+    if (!config.dao){
+        console.error("miss dao in config");
+        process.exit(0);
+    }
+    const dao = cfg.dao;
+    const Whitelist = await ethers.getContractFactory("Whitelist");
+    const whitelist = await upgrades.deployProxy(Whitelist,[addressManager.address]);
+    console.log("sent Whitelist deploy tx, %s", whitelist.deployTransaction.hash);
 
     const StakingManager = await ethers.getContractFactory("StakingManager");
     const stakingManager = await upgrades.deployProxy(StakingManager, [dao.address, challengeFactory.address,
