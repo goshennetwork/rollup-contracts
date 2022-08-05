@@ -24,6 +24,7 @@
     "L1_STANDARD_BRIDGE": "L1StandardBridge",
     "CHALLENGE_BEACON": "ChallengeBeacon",
     "FEE_TOKEN": "FeeToken",
-    "MACHINE_STATE": "MachineState"
+    "MACHINE_STATE": "MachineState",
+    "WHITELIST": "Whitelist"
   }
 }

@@ -39,17 +39,17 @@ async function main() {
     ]);
     console.log("sent ChallengeFactory deploy tx, %s", challengeFactory.deployTransaction.hash);
 
-    if (!config.dao){
+    if (!config.dao) {
         console.error("miss dao in config");
         process.exit(0);
     }
-    const dao = cfg.dao;
+    const dao = config.dao;
     const Whitelist = await ethers.getContractFactory("Whitelist");
-    const whitelist = await upgrades.deployProxy(Whitelist,[addressManager.address]);
+    const whitelist = await upgrades.deployProxy(Whitelist, [addressManager.address]);
     console.log("sent Whitelist deploy tx, %s", whitelist.deployTransaction.hash);
 
     const StakingManager = await ethers.getContractFactory("StakingManager");
-    const stakingManager = await upgrades.deployProxy(StakingManager, [dao.address, challengeFactory.address,
+    const stakingManager = await upgrades.deployProxy(StakingManager, [dao, challengeFactory.address,
         rollupStateChain.address, feeToken.address, ethers.utils.parseEther(config.stakingPrice)
     ]);
     console.log("sent StakingManager deploy tx, %s", stakingManager.deployTransaction.hash);
@@ -99,7 +99,8 @@ async function main() {
         config.addressName.L1_STANDARD_BRIDGE,
         config.addressName.CHALLENGE_BEACON,
         config.addressName.FEE_TOKEN,
-        config.addressName.MACHINE_STATE
+        config.addressName.MACHINE_STATE,
+        config.addressName.WHITELIST
     ];
     const addrs = [
         rollupInputChain.address,
@@ -109,19 +110,20 @@ async function main() {
         rollupStateChain.address,
         l1CrossLayerWitness.address,
         config.l2CrossLayerWitness,
-        dao.address,
+        dao,
         challengeFactory.address,
         stateTransition.address,
         l1StandardBridge.address,
         challengeBeacon.address,
         feeToken.address,
-        machineState.address
+        machineState.address,
+        whitelist.address
     ];
     await addressManager.setAddressBatch(names, addrs);
 
     /* wait contracts deployed */
-    await dao.deployed();
-    console.log("dao deployed: %s", challenge.address);
+    await whitelist.deployed();
+    console.log("whitelist deployed: %s", challenge.address);
     await l1CrossLayerWitness.deployed();
     console.log("L1CrossLayerWitness deployed: %s", challenge.address);
     await feeToken.deployed();
@@ -163,6 +165,7 @@ async function main() {
         MachineState: machineState.address,
         StateTransition: inputStorageContainer.address,
         L1StandardBridge: l1StandardBridge.address,
+        WhiteList: whitelist.address,
     }
     const fs = require('fs/promises');
     const filedata = JSON.stringify(addresses, "", " ");
