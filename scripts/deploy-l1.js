@@ -38,20 +38,15 @@ async function main() {
         challengeBeacon.address, config.blockLimitPerRound, ethers.utils.parseEther(config.challengerDeposit)
     ]);
     console.log("sent ChallengeFactory deploy tx, %s", challengeFactory.deployTransaction.hash);
-
-    if (!config.dao) {
-        console.error("miss dao in config");
-        process.exit(0);
-    }
-    const dao = config.dao;
+    const signers = await ethers.getSigners();
+    const dao = await signers[0].getAddress();
+    console.log("set dao address, %s", dao);
     const Whitelist = await ethers.getContractFactory("Whitelist");
     const whitelist = await upgrades.deployProxy(Whitelist, [addressManager.address]);
     console.log("sent Whitelist deploy tx, %s", whitelist.deployTransaction.hash);
 
     const StakingManager = await ethers.getContractFactory("StakingManager");
-    const stakingManager = await upgrades.deployProxy(StakingManager, [dao, challengeFactory.address,
-        rollupStateChain.address, feeToken.address, ethers.utils.parseEther(config.stakingPrice)
-    ]);
+    const stakingManager = await upgrades.deployProxy(StakingManager, [addressManager.address, ethers.utils.parseEther(config.stakingPrice)]);
     console.log("sent StakingManager deploy tx, %s", stakingManager.deployTransaction.hash);
 
     const RollupInputChain = await ethers.getContractFactory("RollupInputChain");
