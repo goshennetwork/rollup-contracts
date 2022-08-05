@@ -128,22 +128,6 @@
       "EventID": "ChallengerUpdated(address,bool)",
       "EventName": "ChallengerUpdatedEventID"
     },
-    "ChallengerWhitelistUpdatedEvent": {
-      "Name": "ChallengerWhitelistUpdatedEvent",
-      "Fields": [
-        {
-          "Name": "challenger",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "enabled",
-          "Type": "bool"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ChallengerWhitelistUpdated(address,bool)",
-      "EventName": "ChallengerWhitelistUpdatedEventID"
-    },
     "DepositClaimedEvent": {
       "Name": "DepositClaimedEvent",
       "Fields": [
@@ -544,22 +528,6 @@
       "EventID": "ProposerUpdated(address,bool)",
       "EventName": "ProposerUpdatedEventID"
     },
-    "ProposerWhitelistUpdatedEvent": {
-      "Name": "ProposerWhitelistUpdatedEvent",
-      "Fields": [
-        {
-          "Name": "proposer",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "enabled",
-          "Type": "bool"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ProposerWhitelistUpdated(address,bool)",
-      "EventName": "ProposerWhitelistUpdatedEventID"
-    },
     "ProposerWinEvent": {
       "Name": "ProposerWinEvent",
       "Fields": [
@@ -591,22 +559,6 @@
       "IsEvent": true,
       "EventID": "SequencerUpdated(address,bool)",
       "EventName": "SequencerUpdatedEventID"
-    },
-    "SequencerWhitelistUpdatedEvent": {
-      "Name": "SequencerWhitelistUpdatedEvent",
-      "Fields": [
-        {
-          "Name": "submitter",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "enabled",
-          "Type": "bool"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "SequencerWhitelistUpdated(address,bool)",
-      "EventName": "SequencerWhitelistUpdatedEventID"
     },
     "StateBatchAppendedEvent": {
       "Name": "StateBatchAppendedEvent",
