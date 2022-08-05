@@ -81,7 +81,7 @@ func TestAppendBatches(t *testing.T) {
 
 	l1Chain.FeeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
 	l1Chain.StakingManager.Deposit().Sign(signer).SendTransaction(signer)
-	l1Chain.DAO.SetSequencerWhitelist(signer.Address(), true).Sign(signer).SendTransaction(signer)
+	l1Chain.Whitelist.SetSequencer(signer.Address(), true).Sign(signer).SendTransaction(signer)
 
 	batches := &binding.RollupInputBatches{
 		BatchIndex: 0,
