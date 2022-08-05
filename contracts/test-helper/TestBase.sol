@@ -15,7 +15,7 @@ import "../cross-layer/L1CrossLayerWitness.sol";
 import "../cross-layer/L2CrossLayerWitness.sol";
 import "../interfaces/ForgeVM.sol";
 import "../libraries/Types.sol";
-import "../dao/DAO.sol";
+import "../dao/Whitelist.sol";
 
 contract TestBase {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -33,9 +33,12 @@ contract TestBase {
     ProxyAdmin proxyAdmin;
     uint256 constant fraudProofWindow = 3;
     address challengerFactory;
-    DAO dao;
+    Whitelist whitelist;
+    address dao;
 
-    function _initialize() internal {
+    function _initialize(address _dao) internal {
+        dao = _dao;
+        console.logAddress(dao);
         // deploy proxy admin
         proxyAdmin = new ProxyAdmin();
         // deploy AddressManager
@@ -78,28 +81,21 @@ contract TestBase {
         // TODO: use normal challenge factory
         challengerFactory = address(new MockChallengeFactory());
 
-        // deploy dao
-        DAO daoLogic = new DAO();
+        // deploy whitelist
+        Whitelist whitelistLogic = new Whitelist();
         proxy = new TransparentUpgradeableProxy(
-            address(daoLogic),
+            address(whitelistLogic),
             address(proxyAdmin),
-            abi.encodeWithSelector(DAO.initialize.selector)
+            abi.encodeWithSelector(Whitelist.initialize.selector, addressManager)
         );
-        dao = DAO(address(proxy));
+        whitelist = Whitelist(address(proxy));
 
         // deploy staking manager
         StakingManager stakingManagerLogic = new StakingManager();
         proxy = new TransparentUpgradeableProxy(
             address(stakingManagerLogic),
             address(proxyAdmin),
-            abi.encodeWithSelector(
-                StakingManager.initialize.selector,
-                address(dao),
-                challengerFactory,
-                address(rollupStateChain),
-                address(feeToken),
-                1 ether
-            )
+            abi.encodeWithSelector(StakingManager.initialize.selector, address(addressManager), 1 ether)
         );
         stakingManager = StakingManager(address(proxy));
 
@@ -151,8 +147,10 @@ contract TestBase {
         addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN, address(rollupStateChain));
         addressManager.setAddress(AddressName.L1_CROSS_LAYER_WITNESS, address(l1CrossLayerWitness));
         addressManager.setAddress(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
-        addressManager.setAddress(AddressName.DAO, address(dao));
+        addressManager.setAddress(AddressName.DAO, dao);
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
+        addressManager.setAddress(AddressName.WHITELIST, address(whitelist));
+        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
     }
 
     function callRelayMessage(

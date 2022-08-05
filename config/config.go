@@ -60,6 +60,7 @@ type L1ContractAddressConfig struct {
 	ChallengeFactory    web3.Address
 	FeeToken            web3.Address
 	DAO                 web3.Address
+	Whitelist           web3.Address
 }
 
 type L2GenesisConfig struct {
@@ -79,6 +80,7 @@ type L2ContractAddressConfig struct {
 }
 
 type L1ChainDeployConfig struct {
+	Dao                      web3.Address
 	FeeToken                 web3.Address
 	FraudProofWindow         uint64 // block number
 	MaxEnqueueTxGasLimit     uint64

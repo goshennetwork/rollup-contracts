@@ -9,6 +9,7 @@ import "../interfaces/IL1StandardBridge.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "../test-helper/TestERC20.sol";
 import "../interfaces/IMachineState.sol";
+import "../interfaces/IWhitelist.sol";
 
 contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable {
     mapping(bytes32 => address) public getAddrByHash;
@@ -52,8 +53,8 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
         return _addr;
     }
 
-    function dao() public view returns (IDAO) {
-        return IDAO(getAddrByHash[AddressName.DAO_HASH]);
+    function dao() public view returns (address) {
+        return getAddrByHash[AddressName.DAO_HASH];
     }
 
     function rollupInputChain() public view returns (IRollupInputChain) {
@@ -106,6 +107,10 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
 
     function machineState() public view returns (IMachineState) {
         return IMachineState(getAddrByHash[AddressName.MACHINE_STATE_HASH]);
+    }
+
+    function whitelist() public view returns (IWhitelist) {
+        return IWhitelist(getAddrByHash[AddressName.WHITELIST_HASH]);
     }
 
     function hash(string memory _name) internal pure returns (bytes32) {

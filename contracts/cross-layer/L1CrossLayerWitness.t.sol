@@ -9,7 +9,7 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
     address sender = address(0x7878);
 
     function setUp() public {
-        _initialize();
+        _initialize(sender);
     }
 
     function testCrossLayerSender() public {

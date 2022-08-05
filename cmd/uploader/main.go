@@ -37,9 +37,9 @@ func main() {
 
 	stakingManager := binding.NewStakingManager(cfg.L1Addresses.StakingManager, l1client)
 	stakingManager.Contract().SetFrom(signer.Address())
-	dao := binding.NewDAO(cfg.L1Addresses.DAO, l1client)
-	dao.Contract().SetFrom(signer.Address())
-	err = checkPermission(stakingManager, dao, signer.Address())
+	whitelist := binding.NewWhitelist(cfg.L1Addresses.Whitelist, l1client)
+	whitelist.Contract().SetFrom(signer.Address())
+	err = checkPermission(stakingManager, whitelist, signer.Address())
 	if err != nil {
 		log.Error(err.Error())
 		return
@@ -222,8 +222,8 @@ func (self *UploadBackend) Stop() error {
 	return nil
 }
 
-func checkPermission(stakingManager *binding.StakingManager, dao *binding.DAO, addr web3.Address) error {
-	allowed, err := dao.SequencerWhitelist(addr)
+func checkPermission(stakingManager *binding.StakingManager, whitelist *binding.Whitelist, addr web3.Address) error {
+	allowed, err := whitelist.CanSequence(addr)
 	if err != nil {
 		return err
 	}

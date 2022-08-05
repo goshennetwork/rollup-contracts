@@ -7,7 +7,7 @@ import "./IChallengeFactory.sol";
 import "./IRollupInputChain.sol";
 import "./IL1CrossLayerWitness.sol";
 import "./IL2CrossLayerWitness.sol";
-import "./IDAO.sol";
+import "./IWhitelist.sol";
 import "./IL1StandardBridge.sol";
 import "../test-helper/TestERC20.sol";
 import "./IMachineState.sol";
@@ -19,7 +19,7 @@ interface IAddressResolver {
     ///@notice Revert if wanted contract have no address recorded
     function resolve(string memory _name) external view returns (address);
 
-    function dao() external view returns (IDAO);
+    function dao() external view returns (address);
 
     ///Get RollupInputChain contract
     function rollupInputChain() external view returns (IRollupInputChain);
@@ -59,4 +59,7 @@ interface IAddressResolver {
 
     ///get MachineState contract address
     function machineState() external view returns (IMachineState);
+
+    ///get Whitelist contract address
+    function whitelist() external view returns (IWhitelist);
 }

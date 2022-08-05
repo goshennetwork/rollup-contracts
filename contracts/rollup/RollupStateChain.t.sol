@@ -23,9 +23,9 @@ contract TestRollupStateChain is TestBase {
 
     function setUp() public {
         vm.startPrank(sender);
-        super._initialize();
-        dao.setProposerWhitelist(sender, true);
-        dao.setSequencerWhitelist(sender, true);
+        super._initialize(sender);
+        whitelist.setProposer(sender, true);
+        whitelist.setProposer(sender, true);
         feeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
@@ -55,7 +55,7 @@ contract TestRollupStateChain is TestBase {
     //test Fail proposer unstaked
     function testAppendBatchSequencerNoStaking() public {
         vm.startPrank(sender);
-        dao.setProposerWhitelist(testAddress, true);
+        whitelist.setProposer(testAddress, true);
         vm.stopPrank();
         bytes32[] memory states = new bytes32[](1);
         vm.startPrank(testAddress);

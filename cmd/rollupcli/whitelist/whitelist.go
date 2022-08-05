@@ -1,4 +1,4 @@
-package dao
+package whitelist
 
 import (
 	"github.com/laizy/log"
@@ -13,7 +13,7 @@ import (
 
 func Cmd() *cli.Command {
 	return &cli.Command{
-		Name:        "dao",
+		Name:        "whitelist",
 		Subcommands: SubCommand(),
 		Flags: []cli.Flag{
 			flags.ConfigFlag,
@@ -89,10 +89,10 @@ func setSequencerWhitelist(params *param) {
 	signer := params.signer
 	sequencer := params.target
 	enabled := params.enabled
-	c := binding.NewDAO(dao, signer.Client)
+	c := binding.NewWhitelist(dao, signer.Client)
 	c.Contract().SetFrom(signer.Address())
-	receipt := c.SetSequencerWhitelist(sequencer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
-	log.Info("set sequencer whitelist", "dao", dao, "sequencer", sequencer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
+	receipt := c.SetSequencer(sequencer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	log.Info("whitelist set sequencer", "dao", dao, "sequencer", sequencer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
 }
 
 func setProposerWhitelist(params *param) {
@@ -100,8 +100,19 @@ func setProposerWhitelist(params *param) {
 	signer := params.signer
 	proposer := params.target
 	enabled := params.enabled
-	c := binding.NewDAO(dao, signer.Client)
+	c := binding.NewWhitelist(dao, signer.Client)
 	c.Contract().SetFrom(signer.Address())
-	receipt := c.SetProposerWhitelist(proposer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	receipt := c.SetProposer(proposer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Info("set proposer whitelist", "dao", dao, "proposer", proposer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
+}
+
+func setChallengerWhitelist(params *param) {
+	dao := params.dao
+	signer := params.signer
+	challenger := params.target
+	enabled := params.enabled
+	c := binding.NewWhitelist(dao, signer.Client)
+	c.Contract().SetFrom(signer.Address())
+	receipt := c.SetChallenger(challenger, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	log.Info("whitelist set challenger", "dao", dao, "challenger", challenger, "enabled", enabled, "receipt", utils.JsonStr(receipt))
 }

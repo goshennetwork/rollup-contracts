@@ -31,7 +31,8 @@ type L1Contracts struct {
 	ChallengeLogic      *binding.Challenge
 	ChallengeFactory    *binding.ChallengeFactory
 	FeeToken            *binding.ERC20
-	DAO                 *binding.DAO
+	DAO                 web3.Address
+	Whitelist           *binding.Whitelist
 }
 
 func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
@@ -48,7 +49,8 @@ func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
 		ChallengeLogic:      self.ChallengeLogic.Contract().Addr(),
 		ChallengeFactory:    self.ChallengeFactory.Contract().Addr(),
 		FeeToken:            self.FeeToken.Contract().Addr(),
-		DAO:                 self.DAO.Contract().Addr(),
+		DAO:                 self.DAO,
+		Whitelist:           self.Whitelist.Contract().Addr(),
 	}
 
 }
@@ -83,14 +85,14 @@ func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
 	return feeToken
 }
 
-func DeployDAO(signer *contract.Signer) *binding.DAO {
-	receipt := binding.DeployDAO(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
+func DeployWhitelist(signer *contract.Signer, resolver web3.Address) *binding.Whitelist {
+	receipt := binding.DeployWhitelist(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
-	dao := binding.NewDAO(receipt.ContractAddress, signer.Client)
-	dao.Contract().SetFrom(signer.Address())
-	dao.Initialize().Sign(signer).SendTransaction(signer)
+	whitelist := binding.NewWhitelist(receipt.ContractAddress, signer.Client)
+	whitelist.Contract().SetFrom(signer.Address())
+	whitelist.Initialize(resolver).Sign(signer).SendTransaction(signer)
 
-	return dao
+	return whitelist
 }
 
 func DeployChallengeFactory(signer *contract.Signer, addrMan, beacon web3.Address, blockLimitPerRound uint64, challengerDeposit *big.Int) *binding.ChallengeFactory {
@@ -103,13 +105,12 @@ func DeployChallengeFactory(signer *contract.Signer, addrMan, beacon web3.Addres
 	return factory
 }
 
-func DeployStakingManager(signer *contract.Signer, dao, challengeFactory, rollupStateChain,
-	feeToken web3.Address, price *big.Int) *binding.StakingManager {
+func DeployStakingManager(signer *contract.Signer, resolver web3.Address, price *big.Int) *binding.StakingManager {
 	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
 	utils.EnsureTrue(receipt.Status == 1)
 	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
 	staking.Contract().SetFrom(signer.Address())
-	staking.Initialize(dao, challengeFactory, rollupStateChain, feeToken, price).Sign(signer).SendTransaction(signer)
+	staking.Initialize(resolver, price).Sign(signer).SendTransaction(signer)
 
 	return staking
 }
@@ -186,6 +187,10 @@ func DeployL1StandardBridge(signer *contract.Signer, l1witness, l2bridge web3.Ad
 
 // TODO: using proxy
 func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig) *L1Contracts {
+	dao := cfg.Dao
+	if dao == (web3.Address{}) {
+		panic(1)
+	}
 	// deploy address manager
 	addrMan := DeployAddressManager(signer)
 	l1CrossLayerWitness := DeployL1CrossLayerWitness(signer, addrMan.Contract().Addr())
@@ -203,13 +208,12 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		feeToken.Contract().SetFrom(signer.Address())
 	}
 
-	dao := DeployDAO(signer)
+	whitelist := DeployWhitelist(signer, addrMan.Contract().Addr())
 	challenge := DeployChallengeLogic(signer)
 	beacon := DeployBeacon(signer, challenge.Contract().Addr())
 	factory := DeployChallengeFactory(signer, addrMan.Contract().Addr(), beacon.Contract().Addr(), cfg.BlockLimitPerRound, cfg.ChallengerDeposit)
 
-	staking := DeployStakingManager(signer, dao.Contract().Addr(), factory.Contract().Addr(),
-		rollupStateChain.Contract().Addr(), feeToken.Contract().Addr(), cfg.StakingAmount)
+	staking := DeployStakingManager(signer, addrMan.Contract().Addr(), cfg.StakingAmount)
 
 	bridge := DeployL1StandardBridge(signer, l1CrossLayerWitness.Contract().Addr(), cfg.L2StandardBridge)
 
@@ -224,6 +228,8 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		"StakingManager",
 		"ChallengeFactory",
 		"L2CrossLayerWitness",
+		"Whitelist",
+		"FeeToken",
 	}
 	addrs := []web3.Address{
 		l1CrossLayerWitness.Contract().Addr(),
@@ -231,11 +237,13 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		stateChainContainer.Contract().Addr(),
 		rollupInputChain.Contract().Addr(),
 		rollupStateChain.Contract().Addr(),
-		dao.Contract().Addr(),
+		dao,
 		staking.Contract().Addr(),
 		staking.Contract().Addr(),
 		factory.Contract().Addr(),
 		cfg.L2CrossLayerWitness,
+		whitelist.Contract().Addr(),
+		feeToken.Contract().Addr(),
 	}
 	addrMan.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer)
 
@@ -253,5 +261,6 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		ChallengeFactory:    factory,
 		StakingManager:      staking,
 		DAO:                 dao,
+		Whitelist:           whitelist,
 	}
 }

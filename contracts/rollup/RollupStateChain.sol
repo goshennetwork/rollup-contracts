@@ -32,7 +32,7 @@ contract RollupStateChain is IRollupStateChain, Initializable {
     }
 
     function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startAt) public {
-        require(addressResolver.dao().proposerWhitelist(msg.sender), "only proposer");
+        require(addressResolver.whitelist().canPropose(msg.sender), "only proposer");
         IChainStorageContainer _chain = addressResolver.rollupStateChainContainer();
         // in case of duplicated
         require(_startAt == _chain.chainSize(), "start pos mismatch");

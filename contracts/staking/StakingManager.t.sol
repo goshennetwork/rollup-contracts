@@ -15,7 +15,7 @@ contract TestStakingManager is TestBase {
 
     function setUp() public {
         vm.startPrank(sender);
-        super._initialize();
+        super._initialize(sender);
         vm.stopPrank();
     }
 

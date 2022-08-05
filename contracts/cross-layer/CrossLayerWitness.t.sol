@@ -48,8 +48,7 @@ contract TestCrossLayerWitness {
         rollupStateChain = new RollupStateChain();
         rollupStateChain.initialize(address(addressManager), 3);
         StakingManager stakingManager = new StakingManager();
-        stakingManager.initialize(dao, challengerFactory, address(rollupStateChain), address(erc20), 0);
-        stakingManager.deposit();
+        stakingManager.initialize(address(addressManager), 0);
         rollupInputChain = new RollupInputChain();
         rollupInputChain.initialize(address(addressManager), 15000000, 3000000, 1234);
         ChainStorageContainer stateStorageContainer = new ChainStorageContainer();
@@ -66,6 +65,8 @@ contract TestCrossLayerWitness {
         addressManager.setAddress(AddressName.L1_CROSS_LAYER_WITNESS, address(l1CrossLayerWitness));
         addressManager.setAddress(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
         addressManager.setAddress(AddressName.DAO, sender);
+        addressManager.setAddress(AddressName.FEE_TOKEN, address(erc20));
+        stakingManager.deposit();
         vm.stopPrank();
     }
 

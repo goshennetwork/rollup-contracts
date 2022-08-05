@@ -10,12 +10,12 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IAddressManager.sol";
 import "../interfaces/ForgeVM.sol";
-import "../dao/DAO.sol";
 import "../rollup/RollupStateChain.sol";
 import "../rollup/RollupInputChain.sol";
 import "../rollup/ChainStorageContainer.sol";
 import "../test-helper/TestERC20.sol";
 import "../staking/StakingManager.sol";
+import "../dao/Whitelist.sol";
 
 contract MockStateTransition {
     function generateStartState(
@@ -37,7 +37,7 @@ contract TestChallengeFactory is ChallengeFactory {
     ChallengeFactory challengeFactory;
     UpgradeableBeacon challengebeacon;
     AddressManager addressManager;
-    DAO dao2;
+    Whitelist whitelist;
     RollupStateChain rollupstatechain;
     ChainStorageContainer stateStorageContainer;
     RollupInputChain rollupinputchain;
@@ -49,8 +49,8 @@ contract TestChallengeFactory is ChallengeFactory {
         // deploy related contract
         addressManager = new AddressManager();
         addressManager.initialize();
-        dao2 = new DAO();
-        dao2.initialize();
+        whitelist = new Whitelist();
+        whitelist.initialize(IAddressResolver(address(addressManager)));
         rollupstatechain = new RollupStateChain();
         rollupstatechain.initialize(address(addressManager), 10);
         stateStorageContainer = new ChainStorageContainer();
@@ -63,12 +63,13 @@ contract TestChallengeFactory is ChallengeFactory {
 
         // change addressManager.Address
         addressManager.setAddress("testAddress", testAddress);
-        addressManager.setAddress(AddressName.DAO, address(dao2));
+        addressManager.setAddress(AddressName.DAO, testAddress);
         addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN, address(rollupstatechain));
         addressManager.setAddress(AddressName.ROLLUP_STATE_CHAIN_CONTAINER, address(stateStorageContainer));
         addressManager.setAddress(AddressName.ROLLUP_INPUT_CHAIN_CONTAINER, address(inputStorageContainer));
         addressManager.setAddress(AddressName.ROLLUP_INPUT_CHAIN, address(rollupinputchain));
         addressManager.setAddress(AddressName.STATE_TRANSITION, address(stateTransition));
+        addressManager.setAddress(AddressName.WHITELIST, address(whitelist));
         // deploy challengeFactory
         challengeFactory = new ChallengeFactory();
         Challenge challenge = new Challenge();
@@ -84,14 +85,10 @@ contract TestChallengeFactory is ChallengeFactory {
 
         vm.startPrank(testAddress);
         StakingManager stakingManager = new StakingManager();
-        stakingManager.initialize(
-            address(dao2),
-            address(challengeFactory),
-            address(rollupstatechain),
-            address(feeToken),
-            1 ether
-        );
+        stakingManager.initialize(address(addressManager), 1 ether);
         addressManager.setAddress(AddressName.STAKING_MANAGER, address(stakingManager));
+        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
+
         vm.stopPrank();
     }
 
@@ -109,7 +106,7 @@ contract TestChallengeFactory is ChallengeFactory {
     // create new challenge * 2
     function testNewChallengeAlreadyExist() public {
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         Types.StateInfo memory challengeStateinfo = Types.StateInfo(bytes32("0x1"), 1, 1, address(1));
         Types.StateInfo memory parentStateinfo = Types.StateInfo(bytes32("0x1"), 0, 1, address(1));
         stateStorageContainer.append(Types.hash(parentStateinfo));
@@ -128,7 +125,7 @@ contract TestChallengeFactory is ChallengeFactory {
     // test wrong challenged stateInfo
     function testNewChallengeWrongStateInfo() public {
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         vm.stopPrank();
 
         vm.startPrank(testAddress2);
@@ -141,7 +138,7 @@ contract TestChallengeFactory is ChallengeFactory {
     // test state confirmed
     function testNewChallengeStateConfirmed() public {
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         Types.StateInfo memory stateinfo1 = Types.StateInfo(bytes32("0x0"), 0, 1, address(1));
         stateStorageContainer.append(Types.hash(stateinfo1));
         vm.stopPrank();
@@ -156,7 +153,7 @@ contract TestChallengeFactory is ChallengeFactory {
     // test wrong parent stateInfo
     function testNewChallengeWrongParentStateInfo() public {
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         Types.StateInfo memory stateinfo1 = Types.StateInfo(bytes32("0x0"), 0, 1, address(1));
         Types.StateInfo memory stateinfo2 = Types.StateInfo(bytes32("0x0"), 10, 1, address(1));
         stateStorageContainer.append(Types.hash(stateinfo1));
@@ -172,7 +169,7 @@ contract TestChallengeFactory is ChallengeFactory {
     function testNewChallengeWrongParentStateInfoIndex() public {
         //rollupstateChain append (StateInfo*3)
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         Types.StateInfo memory challengeStateinfo = Types.StateInfo(bytes32("0x0"), 2, 1, address(1));
         Types.StateInfo memory parentStateinfo = Types.StateInfo(bytes32("0x0"), 0, 1, address(1));
         stateStorageContainer.append(Types.hash(parentStateinfo));
@@ -190,7 +187,7 @@ contract TestChallengeFactory is ChallengeFactory {
     /* test pass NewChallenge */
     function testNewChallengePass() public {
         vm.startPrank(testAddress);
-        dao2.setChallengerWhitelist(testAddress2, true);
+        whitelist.setChallenger(testAddress2, true);
         Types.StateInfo memory challengeStateinfo = Types.StateInfo(bytes32("0x0"), 1, 1, address(1));
         Types.StateInfo memory parentStateinfo = Types.StateInfo(bytes32("0x0"), 0, 1, address(1));
         stateStorageContainer.append(Types.hash(parentStateinfo));

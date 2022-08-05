@@ -73,9 +73,9 @@ type ChallengeStartedEvent struct {
 	Raw *web3.Log
 }
 
-var ChallengerWhitelistUpdatedEventID = crypto.Keccak256Hash([]byte("ChallengerWhitelistUpdated(address,bool)"))
+var ChallengerUpdatedEventID = crypto.Keccak256Hash([]byte("ChallengerUpdated(address,bool)"))
 
-type ChallengerWhitelistUpdatedEvent struct {
+type ChallengerUpdatedEvent struct {
 	Challenger web3.Address
 	Enabled    bool
 
@@ -273,9 +273,9 @@ type ProposerTimeoutEvent struct {
 	Raw *web3.Log
 }
 
-var ProposerWhitelistUpdatedEventID = crypto.Keccak256Hash([]byte("ProposerWhitelistUpdated(address,bool)"))
+var ProposerUpdatedEventID = crypto.Keccak256Hash([]byte("ProposerUpdated(address,bool)"))
 
-type ProposerWhitelistUpdatedEvent struct {
+type ProposerUpdatedEvent struct {
 	Proposer web3.Address
 	Enabled  bool
 
@@ -291,9 +291,9 @@ type ProposerWinEvent struct {
 	Raw *web3.Log
 }
 
-var SequencerWhitelistUpdatedEventID = crypto.Keccak256Hash([]byte("SequencerWhitelistUpdated(address,bool)"))
+var SequencerUpdatedEventID = crypto.Keccak256Hash([]byte("SequencerUpdated(address,bool)"))
 
-type SequencerWhitelistUpdatedEvent struct {
+type SequencerUpdatedEvent struct {
 	Submitter web3.Address
 	Enabled   bool
 
