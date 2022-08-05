@@ -111,25 +111,6 @@ func (_a *StakingManager) Price(block ...web3.BlockNumber) (retval0 *big.Int, er
 	return
 }
 
-// RollupStateChain calls the rollupStateChain method in the solidity contract
-func (_a *StakingManager) RollupStateChain(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("rollupStateChain", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // Token calls the token method in the solidity contract
 func (_a *StakingManager) Token(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
@@ -172,8 +153,8 @@ func (_a *StakingManager) FinalizeWithdrawal(stateInfo StateInfo) *contract.Txn 
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *StakingManager) Initialize(DAOAddress web3.Address, challengeFactory web3.Address, rollupStateChain web3.Address, erc20 web3.Address, price *big.Int) *contract.Txn {
-	return _a.c.Txn("initialize", DAOAddress, challengeFactory, rollupStateChain, erc20, price)
+func (_a *StakingManager) Initialize(resolver web3.Address, price *big.Int) *contract.Txn {
+	return _a.c.Txn("initialize", resolver, price)
 }
 
 // Slash sends a slash transaction in the solidity contract

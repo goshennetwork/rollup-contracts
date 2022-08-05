@@ -346,6 +346,25 @@ func (_a *AddressManager) RollupStateChainContainer(block ...web3.BlockNumber) (
 	return
 }
 
+// StakingERC20 calls the stakingERC20 method in the solidity contract
+func (_a *AddressManager) StakingERC20(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("stakingERC20", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // StakingManager calls the stakingManager method in the solidity contract
 func (_a *AddressManager) StakingManager(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
