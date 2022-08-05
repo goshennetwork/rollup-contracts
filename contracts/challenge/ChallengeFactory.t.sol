@@ -87,7 +87,7 @@ contract TestChallengeFactory is ChallengeFactory {
         StakingManager stakingManager = new StakingManager();
         stakingManager.initialize(address(addressManager), 1 ether);
         addressManager.setAddress(AddressName.STAKING_MANAGER, address(stakingManager));
-        addressManager.setAddress(AddressName.STAKING_ERC20, address(feeToken));
+        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
 
         vm.stopPrank();
     }

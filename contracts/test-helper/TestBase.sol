@@ -150,7 +150,7 @@ contract TestBase {
         addressManager.setAddress(AddressName.DAO, dao);
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
         addressManager.setAddress(AddressName.WHITELIST, address(whitelist));
-        addressManager.setAddress(AddressName.STAKING_ERC20, address(feeToken));
+        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
     }
 
     function callRelayMessage(
