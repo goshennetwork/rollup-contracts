@@ -95,14 +95,7 @@ contract TestBase {
         proxy = new TransparentUpgradeableProxy(
             address(stakingManagerLogic),
             address(proxyAdmin),
-            abi.encodeWithSelector(
-                StakingManager.initialize.selector,
-                address(dao),
-                challengerFactory,
-                address(rollupStateChain),
-                address(feeToken),
-                1 ether
-            )
+            abi.encodeWithSelector(StakingManager.initialize.selector, address(addressManager), 1 ether)
         );
         stakingManager = StakingManager(address(proxy));
 
@@ -157,6 +150,7 @@ contract TestBase {
         addressManager.setAddress(AddressName.DAO, dao);
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
         addressManager.setAddress(AddressName.WHITELIST, address(whitelist));
+        addressManager.setAddress(AddressName.STAKING_ERC20, address(feeToken));
     }
 
     function callRelayMessage(
