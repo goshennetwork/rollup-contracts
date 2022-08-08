@@ -223,7 +223,7 @@ func (this *testCase) copyRam(ram map[uint32]uint32) ([]byte, error) {
 		if err != nil {
 			panic(err)
 		}
-		_, err = this.insertTrieNode(node)
+		_, err = this.insertPreimage(node)
 		if err != nil {
 			panic(err)
 		}
@@ -267,9 +267,9 @@ func (this *testCase) readMemory(root common.Hash, k uint32) uint32 {
 	return out
 }
 
-func (this *testCase) insertTrieNode(data []byte) (ret []byte, err error) {
-	//function insertTrieNode(bytes calldata _node)public
-	input := this.ramAbi.Methods["insertTrieNode"].MustEncodeIDAndInput(data)
+func (this *testCase) insertPreimage(data []byte) (ret []byte, err error) {
+	//function insertPreimage(bytes calldata _node)public
+	input := this.ramAbi.Methods["insertPreimage"].MustEncodeIDAndInput(data)
 	ret, _, err = this.evm.Call(this.sender, this.ramAddr, input, math.MaxUint64, new(big.Int))
 	return
 }

@@ -141,9 +141,9 @@ func (this *testCase) checkGet(key []byte) error {
 	return nil
 }
 
-func (this *testCase) insertTrieNode(encoded []byte) error {
-	//function insertTrieNode(bytes calldata anything)external;
-	input, err := this.cAbi.Methods["insertTrieNode"].EncodeIDAndInput(encoded)
+func (this *testCase) insertPreimage(encoded []byte) error {
+	//function insertPreimage(bytes calldata anything)external;
+	input, err := this.cAbi.Methods["insertPreimage"].EncodeIDAndInput(encoded)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func TestReplication(t *testing.T) {
 	trieCase.db.Commit(trieCase.trie.Hash(), false, func(hash common.Hash) {
 		value, err := trieCase.db.Node(hash)
 		ensure(t, err)
-		ensure(t, copied.insertTrieNode(value))
+		ensure(t, copied.insertPreimage(value))
 	})
 	for _, s := range vals {
 		err := copied.checkGet([]byte(s.k))
@@ -268,7 +268,7 @@ func TestLargeValue(t *testing.T) {
 	trieCase.db.Commit(trieCase.trie.Hash(), false, func(hash common.Hash) {
 		value, err := trieCase.db.Node(hash)
 		ensure(t, err)
-		ensure(t, copied.insertTrieNode(value))
+		ensure(t, copied.insertPreimage(value))
 	})
 	for _, s := range res {
 		ensure(t, copied.checkGet(s.k))
@@ -289,7 +289,7 @@ func TestRandomCases(t *testing.T) {
 	trieCase.db.Commit(trieCase.trie.Hash(), false, func(hash common.Hash) {
 		value, err := trieCase.db.Node(hash)
 		ensure(t, err)
-		ensure(t, copied.insertTrieNode(value))
+		ensure(t, copied.insertPreimage(value))
 	})
 	for _, s := range res { //same key may cover pre value, so checkGet it from trie to ensure correctness
 		if err := copied.checkGet(s.k); err != nil {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IMachineState {
-    function insertTrieNode(bytes calldata _node) external;
+    function insertPreimage(bytes calldata _node) external;
 
     function preimage(bytes32 _hash) external view returns (bytes memory _ret, uint32 _len);
 

@@ -13,7 +13,7 @@ contract MachineState is IMachineState {
     using Syscall for mapping(bytes32 => bytes);
     mapping(bytes32 => bytes) hashdb;
 
-    function insertTrieNode(bytes calldata _node) public {
+    function insertPreimage(bytes calldata _node) public {
         hashdb[keccak256(_node)] = _node;
     }
 
