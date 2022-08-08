@@ -159,21 +159,21 @@ func WithdrawEthCmd(ctx *cli.Context) error {
 func DepositEthToL2(signer *contract.Signer, to, l1Bridge web3.Address, depositAmt u256.Int) {
 	gateway := binding.NewL1StandardBridge(l1Bridge, signer.Client)
 	gateway.Contract().SetFrom(signer.Address())
-	receipt := gateway.DepositETHTo(to, nil).SetValue(depositAmt.ToBigInt()).Sign(signer).SendTransaction(signer)
+	receipt := gateway.DepositETHTo(to, nil).SetValue(depositAmt.ToBigInt()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("deposit eth to l2: %s", utils.JsonString(receipt.Thin()))
 }
 
 func DepositERC20ToL2(signer *contract.Signer, to, l1Bridge, l1Token, l2Token web3.Address, depositAmt u256.Int) {
 	gateway := binding.NewL1StandardBridge(l1Bridge, signer.Client)
 	gateway.Contract().SetFrom(signer.Address())
-	receipt := gateway.DepositERC20To(l1Token, l2Token, to, depositAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer)
+	receipt := gateway.DepositERC20To(l1Token, l2Token, to, depositAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("deposit erc20 to l2: %s", utils.JsonString(receipt.Thin()))
 }
 
 func WithdrawToERC20ToL1(signer *contract.Signer, l2Bridge, to, l2Token web3.Address, withdrawAmt u256.Int) {
 	gateway := binding.NewL2StandardBridge(l2Bridge, signer.Client)
 	gateway.Contract().SetFrom(signer.Address())
-	receipt := gateway.WithdrawTo(l2Token, to, withdrawAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer)
+	receipt := gateway.WithdrawTo(l2Token, to, withdrawAmt.ToBigInt(), nil).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("withdrawal erc20 to l1: %s", utils.JsonString(receipt.Thin()))
 }
 

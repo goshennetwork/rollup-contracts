@@ -108,7 +108,7 @@ func sendMessageCmd(ctx *cli.Context) error {
 
 	l1Messenger := binding.NewL1CrossLayerWitness(conf.L1Addresses.L1CrossLayerWitness, signer.Client)
 	l1Messenger.Contract().SetFrom(signer.Address())
-	receipt := l1Messenger.SendMessage(web3.HexToAddress(target), web3.Hex2Bytes(mesage)).Sign(signer).SendTransaction(signer)
+	receipt := l1Messenger.SendMessage(web3.HexToAddress(target), web3.Hex2Bytes(mesage)).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("Sends a cross layer message, receipt:%s", utils.JsonString(receipt.Thin()))
 	return nil
 }
@@ -127,7 +127,7 @@ func blockMessageCmd(ctx *cli.Context) error {
 	}
 	l1Messenger := binding.NewL1CrossLayerWitness(conf.L1Addresses.L1CrossLayerWitness, signer.Client)
 	l1Messenger.Contract().SetFrom(signer.Address())
-	receipt := l1Messenger.BlockMessage([][32]byte{web3.HexToHash(dataHash)}).Sign(signer).SendTransaction(signer)
+	receipt := l1Messenger.BlockMessage([][32]byte{web3.HexToHash(dataHash)}).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("Block a message, messageHash:%s, receipt:%s", dataHash, utils.JsonString(receipt.Thin()))
 	return nil
 }
@@ -146,7 +146,7 @@ func allowMessageCmd(ctx *cli.Context) error {
 	}
 	l1Messenger := binding.NewL1CrossLayerWitness(conf.L1Addresses.L1CrossLayerWitness, signer.Client)
 	l1Messenger.Contract().SetFrom(signer.Address())
-	receipt := l1Messenger.AllowMessage([][32]byte{web3.HexToHash(dataHash)}).Sign(signer).SendTransaction(signer)
+	receipt := l1Messenger.AllowMessage([][32]byte{web3.HexToHash(dataHash)}).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("Allow a message, messageHash:%s, receipt:%s", dataHash, utils.JsonString(receipt.Thin()))
 	return nil
 }
@@ -164,7 +164,7 @@ func pauseCmd(ctx *cli.Context) error {
 	}
 	l1Messenger := binding.NewL1CrossLayerWitness(conf.L1Addresses.L1CrossLayerWitness, signer.Client)
 	l1Messenger.Contract().SetFrom(signer.Address())
-	receipt := l1Messenger.Pause().Sign(signer).SendTransaction(signer)
+	receipt := l1Messenger.Pause().Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("Pause relaying: %s", utils.JsonString(receipt.Thin()))
 	return nil
 }

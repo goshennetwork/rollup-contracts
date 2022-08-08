@@ -6,7 +6,6 @@ import (
 
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
-	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
 )
@@ -56,8 +55,7 @@ func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
 }
 
 func DeployChallengeLogic(signer *contract.Signer) *binding.Challenge {
-	receipt := binding.DeployChallenge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployChallenge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	challenge := binding.NewChallenge(receipt.ContractAddress, signer.Client)
 	challenge.Contract().SetFrom(signer.Address())
@@ -66,8 +64,7 @@ func DeployChallengeLogic(signer *contract.Signer) *binding.Challenge {
 }
 
 func DeployBeacon(signer *contract.Signer, impl web3.Address) *binding.UpgradeableBeacon {
-	receipt := binding.DeployUpgradeableBeacon(signer.Client, signer.Address(), impl).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployUpgradeableBeacon(signer.Client, signer.Address(), impl).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	beacon := binding.NewUpgradeableBeacon(receipt.ContractAddress, signer.Client)
 	beacon.Contract().SetFrom(signer.Address())
@@ -76,8 +73,7 @@ func DeployBeacon(signer *contract.Signer, impl web3.Address) *binding.Upgradeab
 }
 
 func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
-	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT", 18).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT", 18).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	feeToken := binding.NewERC20(receipt.ContractAddress, signer.Client)
 	feeToken.Contract().SetFrom(signer.Address())
@@ -86,63 +82,57 @@ func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
 }
 
 func DeployWhitelist(signer *contract.Signer, resolver web3.Address) *binding.Whitelist {
-	receipt := binding.DeployWhitelist(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployWhitelist(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	whitelist := binding.NewWhitelist(receipt.ContractAddress, signer.Client)
 	whitelist.Contract().SetFrom(signer.Address())
-	whitelist.Initialize(resolver).Sign(signer).SendTransaction(signer)
+	whitelist.Initialize(resolver).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return whitelist
 }
 
 func DeployChallengeFactory(signer *contract.Signer, addrMan, beacon web3.Address, blockLimitPerRound uint64, challengerDeposit *big.Int) *binding.ChallengeFactory {
-	receipt := binding.DeployChallengeFactory(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployChallengeFactory(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	factory := binding.NewChallengeFactory(receipt.ContractAddress, signer.Client)
 	factory.Contract().SetFrom(signer.Address())
-	factory.Initialize(addrMan, beacon, big.NewInt(0).SetUint64(blockLimitPerRound), challengerDeposit).Sign(signer).SendTransaction(signer)
+	factory.Initialize(addrMan, beacon, big.NewInt(0).SetUint64(blockLimitPerRound), challengerDeposit).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return factory
 }
 
 func DeployStakingManager(signer *contract.Signer, resolver web3.Address, price *big.Int) *binding.StakingManager {
-	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployStakingManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	staking := binding.NewStakingManager(receipt.ContractAddress, signer.Client)
 	staking.Contract().SetFrom(signer.Address())
-	staking.Initialize(resolver, price).Sign(signer).SendTransaction(signer)
+	staking.Initialize(resolver, price).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return staking
 }
 
 func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
 	maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *binding.RollupInputChain {
-	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
 	rollupInputChain.Contract().SetFrom(signer.Address())
-	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID).Sign(signer).SendTransaction(signer)
+	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return rollupInputChain
 }
 
 func DeployRollupStateChain(signer *contract.Signer, addrMan web3.Address, fraudProofWindow uint64) *binding.RollupStateChain {
-	receipt := binding.DeployRollupStateChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployRollupStateChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	rollupStateChain := binding.NewRollupStateChain(receipt.ContractAddress, signer.Client)
 	rollupStateChain.Contract().SetFrom(signer.Address())
-	rollupStateChain.Initialize(addrMan, big.NewInt(0).SetUint64(fraudProofWindow)).Sign(signer).SendTransaction(signer)
+	rollupStateChain.Initialize(addrMan, big.NewInt(0).SetUint64(fraudProofWindow)).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return rollupStateChain
 }
 
 func DeployChainStorage(signer *contract.Signer, addrMan web3.Address, owner string) *binding.ChainStorageContainer {
-	receipt := binding.DeployChainStorageContainer(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployChainStorageContainer(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	fmt.Printf("deploy chain storage, owner: %s, address:%s\n", owner, receipt.ContractAddress.String())
 	chainStorage := binding.NewChainStorageContainer(receipt.ContractAddress, signer.Client)
 	chainStorage.Contract().SetFrom(signer.Address())
-	chainStorage.Initialize(owner, addrMan).Sign(signer).SendTransaction(signer)
+	chainStorage.Initialize(owner, addrMan).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	fmt.Println("initialized chain storage")
 
 	return chainStorage
@@ -150,37 +140,34 @@ func DeployChainStorage(signer *contract.Signer, addrMan web3.Address, owner str
 
 func DeployL1CrossLayerWitness(signer *contract.Signer, addrMan web3.Address) *binding.L1CrossLayerWitness {
 	receipt := binding.DeployL1CrossLayerWitness(signer.Client, signer.Address()).
-		Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+		Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	fmt.Println("deploy l1 cross layer witness, address:", receipt.ContractAddress.String())
 	l1CrossLayerWitness := binding.NewL1CrossLayerWitness(receipt.ContractAddress, signer.Client)
 	l1CrossLayerWitness.Contract().SetFrom(signer.Address())
-	l1CrossLayerWitness.Initialize(addrMan).Sign(signer).SendTransaction(signer)
+	l1CrossLayerWitness.Initialize(addrMan).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return l1CrossLayerWitness
 }
 
 func DeployAddressManager(signer *contract.Signer) *binding.AddressManager {
-	receipt := binding.DeployAddressManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployAddressManager(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	fmt.Println("deploy address manager, address:", receipt.ContractAddress.String())
 
 	addrMan := binding.NewAddressManager(receipt.ContractAddress, signer.Client)
 	addrMan.Contract().SetFrom(signer.Address())
-	utils.EnsureTrue(1 == addrMan.Initialize().Sign(signer).SendTransaction(signer).Status)
+	addrMan.Initialize().Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return addrMan
 }
 
 func DeployL1StandardBridge(signer *contract.Signer, l1witness, l2bridge web3.Address) *binding.L1StandardBridge {
-	receipt := binding.DeployL1StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer)
-	utils.EnsureTrue(receipt.Status == 1)
+	receipt := binding.DeployL1StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	fmt.Println("deploy l1 standard bridge, address:", receipt.ContractAddress.String())
 
 	bridge := binding.NewL1StandardBridge(receipt.ContractAddress, signer.Client)
 	bridge.Contract().SetFrom(signer.Address())
 
-	bridge.Initialize(l1witness, l2bridge).Sign(signer).SendTransaction(signer)
+	bridge.Initialize(l1witness, l2bridge).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return bridge
 }

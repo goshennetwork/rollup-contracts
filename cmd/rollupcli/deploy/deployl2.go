@@ -45,7 +45,7 @@ func initL2BridgeCmd(cfgFile string, verbose, submit bool) error {
 	}
 	bridge := binding.NewL2StandardBridge(conf.L2Genesis.L2StandardBridge, signer.Client)
 	bridge.Contract().SetFrom(signer.Address())
-	bridge.Initialize(conf.L2Genesis.L2CrossLayerWitness, conf.L1Addresses.L1StandardBridge).Sign(signer).SendTransaction(signer)
+	bridge.Initialize(conf.L2Genesis.L2CrossLayerWitness, conf.L1Addresses.L1StandardBridge).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return nil
 }

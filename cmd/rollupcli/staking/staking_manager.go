@@ -58,7 +58,7 @@ func startWithdrawalCmd(ctx *cli.Context) error {
 
 	staking := binding.NewStakingManager(conf.L1Addresses.StakingManager, signer.Client)
 	staking.Contract().SetFrom(signer.Address())
-	receipt := staking.StartWithdrawal().Sign(signer).SendTransaction(signer)
+	receipt := staking.StartWithdrawal().Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("start withdrawal receipt:%s", utils.JsonString(receipt.Thin()))
 	return nil
 }
