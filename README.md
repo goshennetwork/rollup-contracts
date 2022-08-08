@@ -31,10 +31,9 @@ yarn format # format contracts code
 yarn build # build contracts
 yarn test # run contracts testcase
 
-forge test --fork-url http://172.168.3.70:8501  --fork-block-number 589600 --match-contract "testUpgradeForkL1" -v  # block-number should update
+forge test --fork-url http://172.168.3.70:8501  --fork-block-number 589600 --match-contract "testUpgradeForkL1" -v  # (block-number)&(rpc) maybe need update
 
-forge test --fork-url http://172.168.3.73:8545 --fork-block-number 1393 
--m "testUpgradeForkL2" -v  # block-number should update
+forge test --fork-url http://172.168.3.73:8545 --fork-block-number 1393 -m "testUpgradeForkL2" -v  # (block-number)&(rpc) maybe need update
 
 yarn gasnap # run contracts testcase and generate gas snapshot file
 yarn clean # clean built contracts

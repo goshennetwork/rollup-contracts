@@ -12,7 +12,6 @@ import "../state-machine/StateTransition.sol";
 import "../challenge/Challenge.sol";
 import "../challenge/ChallengeFactory.sol";
 
-
 /*  test code(block number & rpc should update):
 
 forge test --fork-url http://172.168.3.70:8501 
@@ -22,21 +21,23 @@ contract testUpgradeForkL1 is TestBase {
     address owner;
     address proxyAdminAddrl1;
     address proxyAdminAddrl2;
+
     function setUp() public {
         owner = address(0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266);
         proxyAdminAddrl1 = address(0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512);
     }
 
-/* 1.test L1code */
+    /* 1.test L1code */
     function testUpgradeL1StandardBridge() public {
         // get l1 bridge contract & new mockl1bridge contract
         address l1BridgeProxy = address(0xD8a5a9b31c3C0232E196d518E89Fd8bF83AcAd43);
         MockL1Bridge newl1StandardBridge = new MockL1Bridge();
         // upgrade l1bridge contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1BridgeProxy)), address(newl1StandardBridge)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1BridgeProxy)),
+            address(newl1StandardBridge)
+        );
         vm.stopPrank();
         newl1StandardBridge = MockL1Bridge(l1BridgeProxy);
         // test call newL1Bridge
@@ -50,9 +51,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1AddressManager contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1AddressManager)), address(newAddressManager)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1AddressManager)),
+            address(newAddressManager)
+        );
         vm.stopPrank();
 
         newAddressManager = MockAddressManager(l1AddressManager);
@@ -67,9 +69,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1InputChainStorage contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1InputChainStorage)), address(newl1InputChainStorage)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1InputChainStorage)),
+            address(newl1InputChainStorage)
+        );
         vm.stopPrank();
 
         newl1InputChainStorage = MockChainStorageContainer(l1InputChainStorage);
@@ -84,9 +87,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1StateChainStorage contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1StateChainStorage)), address(newl1StateChainStorage)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1StateChainStorage)),
+            address(newl1StateChainStorage)
+        );
         vm.stopPrank();
 
         newl1StateChainStorage = MockChainStorageContainer(l1StateChainStorage);
@@ -101,9 +105,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1RollupInputChain contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1RollupInputChain)), address(newl1RollupInputChain)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1RollupInputChain)),
+            address(newl1RollupInputChain)
+        );
         vm.stopPrank();
 
         newl1RollupInputChain = MockRollupInputChain(l1RollupInputChain);
@@ -118,9 +123,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1RollupStateChain contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1RollupStateChain)), address(newl1RollupStateChain)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1RollupStateChain)),
+            address(newl1RollupStateChain)
+        );
         vm.stopPrank();
 
         newl1RollupStateChain = MockRollupStateChain(l1RollupStateChain);
@@ -135,9 +141,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade L1CrossLayerWitness contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1CrossLayerWitness)), address(newL1CrossLayerWitness)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1CrossLayerWitness)),
+            address(newL1CrossLayerWitness)
+        );
         vm.stopPrank();
 
         newL1CrossLayerWitness = MockL1CrossLayerWitness(l1CrossLayerWitness);
@@ -152,16 +159,16 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade L1StakingManager contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(L1StakingManager)), address(newL1StakingManager)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(L1StakingManager)),
+            address(newL1StakingManager)
+        );
         vm.stopPrank();
 
         newL1StakingManager = MockStakingManager(L1StakingManager);
         // test call newL1StakingManager
         require(newL1StakingManager.return10() == 10, "upgrade fail 10");
     }
-
 
     function testUpgradeL1ChallengeFactory() public {
         // get l1 ChallengeFactory contract & new mockChallengeFactory contract
@@ -170,9 +177,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1ChallengeFactory contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1ChallengeFactory)), address(newL1ChallengeFactory)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1ChallengeFactory)),
+            address(newL1ChallengeFactory)
+        );
         vm.stopPrank();
 
         newL1ChallengeFactory = MockChallengeFactory(l1ChallengeFactory);
@@ -187,9 +195,7 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1DAO contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1DAO)), address(newL1DAO)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(payable(l1DAO)), address(newL1DAO));
         vm.stopPrank();
 
         newL1DAO = MockDAO(l1DAO);
@@ -204,9 +210,10 @@ contract testUpgradeForkL1 is TestBase {
 
         // upgrade l1StateTransition contract
         vm.startPrank(owner);
-        ProxyAdmin(proxyAdminAddrl1).upgrade(TransparentUpgradeableProxy(
-            payable(l1StateTransition)), address(newL1StateTransition)
-            );
+        ProxyAdmin(proxyAdminAddrl1).upgrade(
+            TransparentUpgradeableProxy(payable(l1StateTransition)),
+            address(newL1StateTransition)
+        );
         vm.stopPrank();
 
         newL1StateTransition = MockStateTransition(l1StateTransition);
@@ -226,13 +233,13 @@ contract testUpgradeForkL1 is TestBase {
     //     IChainStorageContainer stateChainStorage = IChainStorageContainer(0xdbC43Ba45381e02825b14322cDdd15eC4B3164E6);
     //     IChainStorageContainer inputChainStorage = IChainStorageContainer(0x04C89607413713Ec9775E14b954286519d836FEf);
     //     StakingManager L1StakingManager = StakingManager(0x922D6956C99E12DFeB3224DEA977D0939758A1Fe);
-        
+
     //     bytes memory _data;
     //     address oldChallenge = address(new BeaconProxy(ChallengeBeacon, _data));
     //     MockProposer proposer = new MockProposer();
 
     //     MockChallenge newL1Challenge = new MockChallenge();
-        
+
     //     vm.startPrank(owner);
     //     feeToken.approve(address(challengeFactory), 100 ether);
 
@@ -246,7 +253,7 @@ contract testUpgradeForkL1 is TestBase {
 
     //     Types.StateInfo memory challengeStateinfo = Types.StateInfo(bytes32("0x1"), 310, 1, address(proposer));
     //     Types.StateInfo memory parentStateinfo = Types.StateInfo(bytes32("0x1"), 309, 1, address(proposer));
-        
+
     //     vm.stopPrank();
 
     //     // rollupStateChain call stateChainStorage
@@ -266,5 +273,4 @@ contract testUpgradeForkL1 is TestBase {
     //     challengeFactory.newChallenge(challengeStateinfo, parentStateinfo);
     //     vm.stopPrank();
     // }
-    
 }
