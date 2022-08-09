@@ -287,6 +287,8 @@ github.com/laizy/web3 v0.1.14-0.20220708063227-18490370993d h1:EtY5Yh73ZJ2WBQjX5
 github.com/laizy/web3 v0.1.14-0.20220708063227-18490370993d/go.mod h1:JlZEgyIf5AP6E4622lHRNyzzucdQyhyIoZfRG+cldDk=
 github.com/laizy/web3 v0.1.14-0.20220801034644-528b47955083 h1:VdTRZP+dVh84Ajc4VeOe+RB2wRZGmCSoLx1mhx+vY8o=
 github.com/laizy/web3 v0.1.14-0.20220801034644-528b47955083/go.mod h1:JlZEgyIf5AP6E4622lHRNyzzucdQyhyIoZfRG+cldDk=
+github.com/laizy/web3 v0.1.14-0.20220808113148-39eb9ee24ae0 h1:U4FyHA8aylQVYgp1cpC0ieCtG0tYfgX1oLLiEiiG5r0=
+github.com/laizy/web3 v0.1.14-0.20220808113148-39eb9ee24ae0/go.mod h1:JlZEgyIf5AP6E4622lHRNyzzucdQyhyIoZfRG+cldDk=
 github.com/leanovate/gopter v0.2.9/go.mod h1:U2L/78B+KVFIx2VmW6onHJQzXtFb+p5y3y2Sh+Jxxv8=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
