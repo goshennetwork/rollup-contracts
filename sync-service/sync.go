@@ -214,13 +214,18 @@ func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, e
 	if err != nil {
 		return fmt.Errorf("syncL1Witness: filter sent message, %s", err)
 	}
-	l1WitnessStore := kvdb.L1CrossLayerWitness()
-	l1WitnessStore.StoreSentMessage(l1SentMsgs)
 	l1relayedMsgs, err := l1Witness.FilterMessageRelayedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("syncL1Witness: filter relayed message, %s", err)
 	}
-	l1rellayedFailedMsgs, err := l1Witness.FilterMessageRelayFailedEvent(nil, nil, startHeight, endHeight)
+	l1relayFailedMsgs, err := l1Witness.FilterMessageRelayFailedEvent(nil, nil, startHeight, endHeight)
+	if err != nil {
+		return fmt.Errorf("syncL1Witness: filter relayFailed message,%s", err)
+	}
+	l1WitnessStore := kvdb.L1CrossLayerWitness()
+	l1WitnessStore.StoreSentMessage(l1SentMsgs)
+	l1WitnessStore.StoreRelayedMessage(l1relayedMsgs)
+	l1WitnessStore.StoreRelayFailedMessage(l1relayFailedMsgs)
 	log.Infof("syncL1Witness: from %d to %d", startHeight, endHeight)
 	return nil
 }

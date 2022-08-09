@@ -6,6 +6,7 @@ import (
 	"github.com/laizy/web3/utils/codec"
 	"github.com/ontology-layer-2/rollup-contracts/store/l2client"
 	"github.com/ontology-layer-2/rollup-contracts/store/overlaydb"
+	"github.com/ontology-layer-2/rollup-contracts/store/relayer"
 	"github.com/ontology-layer-2/rollup-contracts/store/resolver"
 	"github.com/ontology-layer-2/rollup-contracts/store/rollup"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
@@ -73,6 +74,10 @@ func (self *StorageWriter) L1MMR() *rollup.MMR {
 
 func (self *StorageWriter) L2MMR() *rollup.MMR {
 	return rollup.NewL2MMR(self.overlay)
+}
+
+func (self *StorageWriter) Relayer() *relayer.RelayerStore {
+	return relayer.NewStore(self.overlay)
 }
 
 func (self *StorageWriter) SetLastSyncedL1Height(lastEndHeight uint64) {

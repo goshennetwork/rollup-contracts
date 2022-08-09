@@ -3,6 +3,7 @@ package rollup
 import (
 	"bytes"
 	"math/rand"
+	"reflect"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/merkle"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
+	"github.com/stretchr/testify/assert"
 )
 
 func newL2WitnessStore(db schema.KeyValueDB) *L2WitnessStore {
@@ -65,6 +67,24 @@ func TestL1Witness(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertEqual(t, false, l1Witness.store, msgs)
+
+	relayedMsg := genRandomRelayedMessage(10)
+	l1Witness.StoreRelayedMessage(relayedMsg)
+	for _, msg := range relayedMsg {
+		got, err := l1Witness.GetRelayedMessage(msg.MessageIndex)
+		assert.Nil(t, err)
+		want := &schema.MessageRelayedEvent{msg.MessageIndex, msg.MsgHash}
+		assert.True(t, reflect.DeepEqual(got, want))
+	}
+
+	relayFailedMsg := genRandomRelayFailedMessage(10)
+	l1Witness.StoreRelayFailedMessage(relayFailedMsg)
+	for _, msg := range relayFailedMsg {
+		got, err := l1Witness.GetRelayFailedMessage(msg.MessageIndex)
+		assert.Nil(t, err)
+		want := &schema.MessageRelayFailedEvent{msg.MessageIndex, msg.MsgHash, msg.MmrSize, msg.MmrRoot}
+		assert.True(t, reflect.DeepEqual(got, want))
+	}
 }
 
 func TestL2Witness(t *testing.T) {
@@ -111,6 +131,40 @@ func genRandomSentMessage(length int) []*binding.MessageSentEvent {
 		message := make([]byte, 64)
 		_, _ = rand.Read(message[:])
 		evt.Message = message
+		result = append(result, evt)
+	}
+	return result
+}
+
+func genRandomRelayedMessage(length int) []*binding.MessageRelayedEvent {
+	result := make([]*binding.MessageRelayedEvent, 0)
+	for i := 0; i < length; i++ {
+		evt := &binding.MessageRelayedEvent{
+			MessageIndex: rand.Uint64(),
+			Raw: &web3.Log{
+				BlockNumber: rand.Uint64(),
+			},
+		}
+		_, _ = rand.Read(evt.MsgHash[:])
+		_, _ = rand.Read(evt.Raw.TransactionHash[:])
+		result = append(result, evt)
+	}
+	return result
+}
+
+func genRandomRelayFailedMessage(length int) []*binding.MessageRelayFailedEvent {
+	result := make([]*binding.MessageRelayFailedEvent, 0)
+	for i := 0; i < length; i++ {
+		evt := &binding.MessageRelayFailedEvent{
+			MessageIndex: rand.Uint64(),
+			Raw: &web3.Log{
+				BlockNumber: rand.Uint64(),
+			},
+			MmrSize: rand.Uint64(),
+		}
+		_, _ = rand.Read(evt.MsgHash[:])
+		_, _ = rand.Read(evt.Raw.TransactionHash[:])
+		_, _ = rand.Read(evt.MmrRoot[:])
 		result = append(result, evt)
 	}
 	return result

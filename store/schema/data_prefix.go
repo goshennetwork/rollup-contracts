@@ -13,8 +13,10 @@ const (
 	L2TokenBridgeDepositFinalizedKey = 0x09
 	L2TokenBridgeDepositFailedKey    = 0x0A
 
-	L1WitnessSentMessageKey = 0x0C // maybe duplicated with TransactionEnqueued
-	L2WitnessSentMessageKey = 0x0D
+	L1WitnessSentMessageKey        = 0x0C // maybe duplicated with TransactionEnqueued
+	L2WitnessSentMessageKey        = 0x0D
+	L1WitnessRelayedMessageKey     = 0x0e // msg index => relayedMessage
+	L1WitnessRelayFailedMessageKey = 0x0f // msg index => RelayFailedMessage
 
 	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
 
@@ -37,4 +39,6 @@ var (
 
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block
+
+	L1RelayerPendingMsgIndex = []byte{0x30} // -> pending l1 relayer msg index
 )

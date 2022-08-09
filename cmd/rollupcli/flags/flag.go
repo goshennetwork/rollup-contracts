@@ -1,6 +1,10 @@
 package flags
 
-import "github.com/urfave/cli/v2"
+import (
+	"math"
+
+	"github.com/urfave/cli/v2"
+)
 
 var AmountFlag = &cli.Float64Flag{
 	Name:     "amount",
@@ -57,6 +61,17 @@ var AccountFlag = &cli.StringFlag{
 	Name:     "account",
 	Usage:    "account address",
 	Required: true,
+}
+
+var AccountsFlag = &cli.StringFlag{
+	Name:  "accounts",
+	Usage: "a list of accounts, separated by \",\"",
+}
+
+var GasLimit = &cli.Uint64Flag{
+	Name:  "gas",
+	Usage: "set max gas limit of a transaction",
+	Value: math.MaxUint64,
 }
 
 var EnabledFlag = &cli.BoolFlag{

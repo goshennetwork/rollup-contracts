@@ -275,3 +275,40 @@ func SerializeCompactMerkleTree(tree *merkle.CompactMerkleTree) []byte {
 	}
 	return value.Bytes()
 }
+
+type MessageRelayedEvent struct {
+	MessageIndex uint64
+	MsgHash      [32]byte
+}
+
+func (s *MessageRelayedEvent) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.MessageIndex).WriteHash(s.MsgHash)
+}
+
+func (s *MessageRelayedEvent) Deserialization(source *codec.ZeroCopySource) (err error) {
+	reader := source.Reader()
+	s.MessageIndex = reader.ReadUint64()
+	s.MsgHash = reader.ReadHash()
+	return reader.Error()
+}
+
+type MessageRelayFailedEvent struct {
+	MessageIndex uint64
+	MsgHash      [32]byte
+	MmrSize      uint64
+	MmrRoot      [32]byte
+}
+
+func (s *MessageRelayFailedEvent) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.MessageIndex).WriteHash(s.MsgHash)
+	sink.WriteUint64(s.MmrSize).WriteHash(s.MmrRoot)
+}
+
+func (s *MessageRelayFailedEvent) Deserialization(source *codec.ZeroCopySource) (err error) {
+	reader := source.Reader()
+	s.MessageIndex = reader.ReadUint64()
+	s.MsgHash = reader.ReadHash()
+	s.MmrSize = reader.ReadUint64()
+	s.MmrRoot = reader.ReadHash()
+	return reader.Error()
+}
