@@ -58,7 +58,7 @@ contract MockMerkleTrie {
         return _res;
     }
 
-    function insertTrieNode(bytes calldata anything) external {
+    function insertPreimage(bytes calldata anything) external {
         _hashdb[keccak256(anything)] = anything;
     }
 }
