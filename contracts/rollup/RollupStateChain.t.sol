@@ -9,6 +9,7 @@ import "./RollupStateChain.sol";
 import "./RollupInputChain.sol";
 import "./ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
+import "./RollupStateChainSpecialCase.sol";
 
 contract TestRollupStateChain is TestBase {
     address sender = address(0x7777); //admin
@@ -200,5 +201,35 @@ contract TestRollupStateChain is TestBase {
         stateInfo.index = 0;
         rollupStateChain.rollbackStateBefore(stateInfo);
         require(rollupStateChain.totalSubmittedState() == 0, "0");
+    }
+
+    /**
+     * test rollupStateChainSpecialCase upgrade
+     */
+    function testSpecialCaseUpgrade() public {
+        // append InputBatch & StateBatch
+        vm.startPrank(address(rollupInputChain));
+        addressManager.rollupInputChainContainer().append(bytes32(0));
+        addressManager.rollupInputChainContainer().append(bytes32(0));
+        addressManager.rollupInputChainContainer().append(bytes32(0));
+        addressManager.rollupInputChainContainer().append(bytes32(0));
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        bytes32[] memory states = new bytes32[](4);
+        rollupStateChain.appendStateBatch(states, 0);
+        address proxy = address(addressManager.rollupStateChain());
+
+        // upgrade rollupStateChain
+        RollupStateChainSpecialCase newRollupStateChain = new RollupStateChainSpecialCase();
+        proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(proxy)), address(newRollupStateChain));
+        vm.stopPrank();
+        newRollupStateChain = RollupStateChainSpecialCase(address(proxy));
+
+        // test special rollback
+        vm.startPrank(address(addressManager.dao()));
+        newRollupStateChain.rollbackSpecialCase(2);
+        require(addressManager.rollupStateChainContainer().chainSize() == 2, "special roll back error");
+        vm.stopPrank();
     }
 }

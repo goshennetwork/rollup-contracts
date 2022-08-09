@@ -38,7 +38,6 @@ contract TestBase {
 
     function _initialize(address _dao) internal {
         dao = _dao;
-        console.logAddress(dao);
         // deploy proxy admin
         proxyAdmin = new ProxyAdmin();
         // deploy AddressManager
