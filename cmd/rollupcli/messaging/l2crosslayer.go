@@ -45,7 +45,7 @@ func l2SendMessageCmd(ctx *cli.Context) error {
 
 	witness := binding.NewL2CrossLayerWitness(conf.L2Genesis.L2CrossLayerWitness, signer.Client)
 	witness.Contract().SetFrom(signer.Address())
-	receipt := witness.SendMessage(web3.HexToAddress(target), hexutil.MustDecode(message)).Sign(signer).SendTransaction(signer)
+	receipt := witness.SendMessage(web3.HexToAddress(target), hexutil.MustDecode(message)).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	log.Infof("Sends a cross layer message, receipt:%s", utils.JsonString(receipt.Thin()))
 	return nil
 }
