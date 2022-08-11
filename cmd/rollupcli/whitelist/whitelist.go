@@ -65,10 +65,10 @@ func proposerWhitelist(ctx *cli.Context) error {
 }
 
 type param struct {
-	signer  *contract.Signer
-	dao     web3.Address
-	target  web3.Address
-	enabled bool
+	signer    *contract.Signer
+	whitelist web3.Address
+	target    web3.Address
+	enabled   bool
 }
 
 func parseCtx(ctx *cli.Context) (*param, error) {
@@ -81,38 +81,38 @@ func parseCtx(ctx *cli.Context) (*param, error) {
 	enabled := ctx.Bool(flags.EnabledFlag.Name)
 	submit := ctx.Bool(flags.SubmitFlag.Name)
 	signer.Submit = submit
-	return &param{signer, conf.L1Addresses.DAO, web3.HexToAddress(acc), enabled}, nil
+	return &param{signer, conf.L1Addresses.Whitelist, web3.HexToAddress(acc), enabled}, nil
 }
 
 func setSequencerWhitelist(params *param) {
-	dao := params.dao
+	whitelist := params.whitelist
 	signer := params.signer
 	sequencer := params.target
 	enabled := params.enabled
-	c := binding.NewWhitelist(dao, signer.Client)
+	c := binding.NewWhitelist(whitelist, signer.Client)
 	c.Contract().SetFrom(signer.Address())
 	receipt := c.SetSequencer(sequencer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
-	log.Info("whitelist set sequencer", "dao", dao, "sequencer", sequencer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
+	log.Info("whitelist set sequencer", "whitelist", whitelist, "sequencer", sequencer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
 }
 
 func setProposerWhitelist(params *param) {
-	dao := params.dao
+	whitelist := params.whitelist
 	signer := params.signer
 	proposer := params.target
 	enabled := params.enabled
-	c := binding.NewWhitelist(dao, signer.Client)
+	c := binding.NewWhitelist(whitelist, signer.Client)
 	c.Contract().SetFrom(signer.Address())
 	receipt := c.SetProposer(proposer, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
-	log.Info("set proposer whitelist", "dao", dao, "proposer", proposer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
+	log.Info("set proposer whitelist", "whitelist", whitelist, "proposer", proposer, "enabled", enabled, "receipt", utils.JsonStr(receipt))
 }
 
 func setChallengerWhitelist(params *param) {
-	dao := params.dao
+	whitelist := params.whitelist
 	signer := params.signer
 	challenger := params.target
 	enabled := params.enabled
-	c := binding.NewWhitelist(dao, signer.Client)
+	c := binding.NewWhitelist(whitelist, signer.Client)
 	c.Contract().SetFrom(signer.Address())
 	receipt := c.SetChallenger(challenger, enabled).Sign(signer).SendTransaction(signer).EnsureNoRevert()
-	log.Info("whitelist set challenger", "dao", dao, "challenger", challenger, "enabled", enabled, "receipt", utils.JsonStr(receipt))
+	log.Info("whitelist set challenger", "whitelist", whitelist, "challenger", challenger, "enabled", enabled, "receipt", utils.JsonStr(receipt))
 }
