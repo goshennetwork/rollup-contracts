@@ -11,10 +11,6 @@ contract RollupStateChainSpecialCase is Initializable {
     //the window to fraud proof
     uint256 public fraudProofWindow;
 
-    function initialize(address _addressResolver, uint256 _fraudProofWindow) public initializer {
-        addressResolver = IAddressResolver(_addressResolver);
-        fraudProofWindow = _fraudProofWindow;
-    }
 
     /**
      * when special case happend , dao will try to make sure system safe
@@ -22,7 +18,7 @@ contract RollupStateChainSpecialCase is Initializable {
     event SpecialCaseRollbacked(uint64 indexed _stateIndex);
 
     function rollbackSpecialCase(uint64 size) public {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed2");
         addressResolver.rollupStateChainContainer().resize(size);
         emit SpecialCaseRollbacked(size);
     }
