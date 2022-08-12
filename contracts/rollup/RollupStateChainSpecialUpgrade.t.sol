@@ -13,7 +13,6 @@ import "./RollupStateChainSpecialCase.sol";
 import "./RollupStateChainSpecialUpgrade.sol";
 
 contract TestRollupStateChainSpecialUpgrade is TestBase {
-
     function setUp() public {}
 
     /**
@@ -22,7 +21,7 @@ contract TestRollupStateChainSpecialUpgrade is TestBase {
      */
     function testSpecialCaseUpgradePass() public {
         // get L1 contract
-        address proxyAdminaddr = 0x5A0be95863ad38fC9De4cE121DA009321D9fBCF2 ;
+        address proxyAdminaddr = 0x5A0be95863ad38fC9De4cE121DA009321D9fBCF2;
         AddressManager addressManager = AddressManager(0x59bbFDD6f1DAAE70CEdEf6FBBa4f623353ed7f93);
         address dao = 0x5e3f6E5E8f2F8cB02f087aA573FadB09867fB09E;
 
@@ -37,7 +36,7 @@ contract TestRollupStateChainSpecialUpgrade is TestBase {
         vm.startPrank(dao);
         // deploy new rollupStateChain
         RollupStateChainSpecialUpgrade rollupStateChainSpecialUpgrade = new RollupStateChainSpecialUpgrade();
-        // set new rollupStateChainSpecialUpgrade as dao 
+        // set new rollupStateChainSpecialUpgrade as dao
         // & transfer ownership of (proxyAdminaddr & addressManager) to new contract
         addressManager.setAddress(AddressName.DAO, address(rollupStateChainSpecialUpgrade));
         ProxyAdmin(proxyAdminaddr).transferOwnership(address(rollupStateChainSpecialUpgrade));
@@ -50,9 +49,9 @@ contract TestRollupStateChainSpecialUpgrade is TestBase {
         console.log(addressManager.dao());
         console.log("addressManager owner:");
         console.log(addressManager.owner());
-        //upgrade rollupStateChain & set proposer blacklist & rollback 
+        //upgrade rollupStateChain & set proposer blacklist & rollback
         //& upgarde oldstatechain &transfer ownership & change dao address
-        rollupStateChainSpecialUpgrade.SpecialCaseUpgrade(dao ,address(addressManager), proxyAdminaddr,2, address(1));
+        rollupStateChainSpecialUpgrade.SpecialCaseUpgrade(dao, address(addressManager), proxyAdminaddr, 2, address(1));
         console.log("upgrade over");
         require(ProxyAdmin(proxyAdminaddr).owner() == dao, "proxyAdminaddr owner error");
         require(addressManager.dao() == dao, "dao address error");
@@ -71,7 +70,7 @@ contract TestRollupStateChainSpecialUpgrade is TestBase {
 
     // if special case , must ensure that ownership can be transferred out ;
     function testTransferOwnership() public {
-        address proxyAdminaddr = 0x5A0be95863ad38fC9De4cE121DA009321D9fBCF2 ;
+        address proxyAdminaddr = 0x5A0be95863ad38fC9De4cE121DA009321D9fBCF2;
         AddressManager addressManager = AddressManager(0x59bbFDD6f1DAAE70CEdEf6FBBa4f623353ed7f93);
         address dao = 0x5e3f6E5E8f2F8cB02f087aA573FadB09867fB09E;
 
@@ -104,7 +103,5 @@ contract TestRollupStateChainSpecialUpgrade is TestBase {
         console.log(addressManager.dao());
         console.log("addressManager owner:");
         console.log(addressManager.owner());
-        
     }
-
 }

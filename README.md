@@ -30,6 +30,9 @@ yarn # install dependences
 yarn format # format contracts code
 yarn build # build contracts
 yarn test # run contracts testcase
+#test special case upgrade 
+forge test --fork-url https://testnet-alpha-l1.goshen.network/rpc/  --fork-block-number 36729 --match-contract "TestRollupStateChainSpecialUpgrade" -v 
+
 yarn gasnap # run contracts testcase and generate gas snapshot file
 yarn clean # clean built contracts
 yarn abigen # build go binding

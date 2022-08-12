@@ -11,7 +11,6 @@ contract RollupStateChainSpecialCase is Initializable {
     //the window to fraud proof
     uint256 public fraudProofWindow;
 
-
     /**
      * when special case happend , dao will try to make sure system safe
      */
