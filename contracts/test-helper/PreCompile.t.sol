@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 import "../interfaces/ForgeVM.sol";
 import "./PreCompile.sol";
 
+import "hardhat/console.sol";
+
 contract TestPreCompile {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -17,7 +19,11 @@ contract TestPreCompile {
 
     function testCheckSig() public {
         bytes32 hash = keccak256(abi.encodePacked("test precomile ecrecover"));
+        console.logBytes32(hash);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privKey, hash);
+        console.logBytes32(r);
+        console.logBytes32(s);
+        console.log(uint256(v));
         precompile.checkSig(hash, r, s, v);
     }
 
@@ -58,5 +64,11 @@ contract TestPreCompile {
         bytes32[2] memory result = precompile.blake2F(rounds, h, m, t, f);
         require(result[0] == bytes32(0xba80a53f981c4d0d6a2797b69f12f6e94c212f14685ac4b74b12bb6fdbffa2d1));
         require(result[1] == bytes32(0x7d87c5392aab792dc252d5de4533cc9518d38aa8dbf1925ab92386edd4009923));
+    }
+
+    function testWriteData() public {
+        bytes32 hash = keccak256(abi.encodePacked("test precomile write data"));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privKey, hash);
+        precompile.writeData(hash, r, s, v);
     }
 }
