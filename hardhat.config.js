@@ -32,7 +32,7 @@ module.exports = {
             allowUnlimitedContractSize: false
         },
         testnet: {
-            url: 'http://172.168.3.70:8501',
+            url: 'https://testnet-alpha.goshen.network/rpc/',
             accounts: [`0x${PRIV_1}`]
         },
         mumbai: {
