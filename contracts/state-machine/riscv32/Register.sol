@@ -51,7 +51,7 @@ library Register {
     uint32 internal constant REG_PC = 32; //x32
 
     function readRegisterBytes4(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 regid
     ) internal view returns (bytes4) {
@@ -63,7 +63,7 @@ library Register {
     }
 
     function readRegister(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 regid
     ) internal view returns (uint32) {
@@ -76,7 +76,7 @@ library Register {
     }
 
     function writeRegister(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 regid,
         uint32 value
@@ -85,7 +85,7 @@ library Register {
     }
 
     function writeRegisterBytes4(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 regid,
         bytes4 value

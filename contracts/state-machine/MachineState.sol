@@ -6,29 +6,35 @@ import "./riscv32/Register.sol";
 import "../libraries/BytesSlice.sol";
 import "./riscv32/Syscall.sol";
 import "../interfaces/IMachineState.sol";
+import "../libraries/HashDB.sol";
 
 contract MachineState is IMachineState {
-    using Memory for mapping(bytes32 => bytes);
-    using Register for mapping(bytes32 => bytes);
-    using Syscall for mapping(bytes32 => bytes);
-    mapping(bytes32 => bytes) hashdb;
+    using HashDB for mapping(bytes32 => HashDB.Preimage);
+    using Memory for mapping(bytes32 => HashDB.Preimage);
+    using Register for mapping(bytes32 => HashDB.Preimage);
+    using Syscall for mapping(bytes32 => HashDB.Preimage);
+    mapping(bytes32 => HashDB.Preimage) hashdb;
 
     function insertPreimage(bytes calldata _node) public {
-        hashdb[keccak256(_node)] = _node;
+        hashdb.insertPreimage(_node);
+    }
+
+    function insertPartialImage(bytes calldata _node, uint32 _index) public {
+        hashdb.insertPartialImage(_node, _index);
     }
 
     function preimage(bytes32 _hash) public view returns (bytes memory _ret, uint32 _len) {
-        _ret = hashdb[_hash];
-        require(_ret.length > 0, "no image");
-        require(_ret.length < uint32((1 << 32) - 1), "image too big");
+        _ret = hashdb.preimage(_hash);
         return (_ret, uint32(_ret.length));
     }
 
     function preimageAt(bytes32 _hash, uint32 pos) public view returns (uint32) {
-        (bytes memory _ret, uint32 length) = preimage(_hash);
+        uint32 _index = uint32(pos / HashDB.PartialSize);
+        (bytes memory _ret, uint32 length) = hashdb.preimageAtIndex(_hash, _index);
         bytes memory _data;
-        uint32 len = length - pos >= 4 ? 4 : length - pos; //overflow safe
-        _data = BytesSlice.toBytes(BytesSlice.slice(_ret, pos, len));
+        uint32 len = _ret.length - pos >= 4 ? 4 : length - pos;
+        //overflow safe
+        _data = BytesSlice.toBytes(BytesSlice.slice(_ret, pos % HashDB.PartialSize, len));
         return BytesEndian.bytes4ToUint32(bytes4(_data));
     }
 

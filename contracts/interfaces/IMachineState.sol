@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 interface IMachineState {
     function insertPreimage(bytes calldata _node) external;
 
-    function preimage(bytes32 _hash) external view returns (bytes memory _ret, uint32 _len);
+    function preimage(bytes32 _hash) external view returns (bytes memory, uint32);
 
     function preimageAt(bytes32 _hash, uint32 pos) external view returns (uint32);
 

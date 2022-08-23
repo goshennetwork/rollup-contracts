@@ -4,11 +4,13 @@ pragma solidity ^0.8.0;
 import "./BytesSlice.sol";
 import "./RLPReader.sol";
 import "./RLPWriter.sol";
+import "./HashDB.sol";
 
 /**
  * @dev Adapted from Optimism
  */
 library MerkleTrie {
+    using HashDB for mapping(bytes32 => HashDB.Preimage);
     using BytesSlice for Slice;
     enum NodeType {
         BranchNode,
@@ -51,7 +53,7 @@ library MerkleTrie {
      * @return _updatedRoot Root hash of the newly constructed trie.
      */
     function update(
-        mapping(bytes32 => bytes) storage _hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
         bytes memory _key,
         bytes memory _value,
         bytes32 _root
@@ -61,7 +63,7 @@ library MerkleTrie {
         if (_root == KECCAK256_RLP_NULL_BYTES) {
             bytes memory dat = _makeLeafNode(key, _value).encoded;
             bytes32 ret = keccak256(dat);
-            _hashdb[ret] = dat;
+            _hashdb.insertPreimage(dat);
             return ret;
         }
 
@@ -75,12 +77,12 @@ library MerkleTrie {
         return TrieNode({ encoded: encoded, decoded: RLPReader.readList(encoded) });
     }
 
-    function loadTrieNode(mapping(bytes32 => bytes) storage hashdb, bytes32 nodeId)
+    function loadTrieNode(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 nodeId)
         private
         view
         returns (TrieNode memory)
     {
-        bytes memory encoded = hashdb[nodeId];
+        bytes memory encoded = hashdb.preimage(nodeId);
         if (encoded.length == 0) {
             bytes memory revertData = BytesSlice.genRevertHex(abi.encodePacked(nodeId));
             uint256 revertDataLength = revertData.length;
@@ -101,7 +103,7 @@ library MerkleTrie {
      * @return _value Value of the key if it exists.
      */
     function get(
-        mapping(bytes32 => bytes) storage _hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
         bytes memory _key,
         bytes32 _root
     ) internal view returns (bool _exists, bytes memory _value) {
@@ -134,7 +136,7 @@ library MerkleTrie {
      * @return _isFinalNode Whether or not we've hit a dead end.
      */
     function _walkNodePath(
-        mapping(bytes32 => bytes) storage _hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
         bytes memory key,
         bytes32 _root
     )
@@ -258,7 +260,7 @@ library MerkleTrie {
      * @return _newPath A new path with the inserted k/v pair and extra supporting nodes.
      */
     function _getNewPath(
-        mapping(bytes32 => bytes) storage _hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
         TrieNode[] memory _path,
         uint256 _pathLength,
         bytes memory key,
@@ -322,7 +324,8 @@ library MerkleTrie {
                 totalNewNodes += 1;
             }
         } else {
-            mapping(bytes32 => bytes) storage hashdb = _hashdb; // to avoid stack too deep
+            //avoid stack too deep
+            mapping(bytes32 => HashDB.Preimage) storage hashdb = _hashdb;
             // Our last node is either an extension node or a leaf node with a different key.
             bytes memory lastNodeKey = _getNodeKey(lastNode);
             uint256 sharedNibbleLength = _getSharedNibbleLength(lastNodeKey, keyRemainder);
@@ -405,7 +408,7 @@ library MerkleTrie {
      * @return _updatedRoot Root hash for the updated trie.
      */
     function _getUpdatedTrieRoot(
-        mapping(bytes32 => bytes) storage _hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
         TrieNode[] memory _nodes,
         bytes memory key
     ) private returns (bytes32 _updatedRoot) {
@@ -453,7 +456,7 @@ library MerkleTrie {
         // Current node should be the root at this point.
         // Simply return the hash of its encoding.
         bytes32 rootHash = keccak256(currentNode.encoded);
-        _hashdb[rootHash] = currentNode.encoded; // root node always hashed.
+        _hashdb.insertPreimage(currentNode.encoded); // root node always hashed.
         return rootHash;
     }
 
@@ -539,16 +542,15 @@ library MerkleTrie {
      * @param _encoded Encoded node to hash.
      * @return _hash Hash of the encoded node. Simply the input if < 32 bytes.
      */
-    function _getNodeHash(mapping(bytes32 => bytes) storage _hashdb, bytes memory _encoded)
+    function _getNodeHash(mapping(bytes32 => HashDB.Preimage) storage _hashdb, bytes memory _encoded)
         private
         returns (bytes memory _hash)
     {
         if (_encoded.length < 32) {
             return _encoded;
         } else {
-            bytes32 encodedHash = keccak256(_encoded);
-            _hashdb[encodedHash] = _encoded;
-            return abi.encodePacked(encodedHash);
+            _hashdb.insertPreimage(_encoded);
+            return abi.encodePacked(keccak256(_encoded));
         }
     }
 

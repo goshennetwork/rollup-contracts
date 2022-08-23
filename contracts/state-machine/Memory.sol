@@ -7,7 +7,7 @@ import "../libraries/BytesEndian.sol";
 
 library Memory {
     function writeMemory(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr,
         uint32 value
@@ -16,7 +16,7 @@ library Memory {
     }
 
     function writeMemoryBytes4(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr,
         bytes4 value
@@ -26,7 +26,7 @@ library Memory {
     }
 
     function writeMemoryByte(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr,
         bytes1 value
@@ -42,7 +42,7 @@ library Memory {
     }
 
     function writeMemoryBytes2(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr,
         bytes2 value
@@ -59,7 +59,7 @@ library Memory {
     }
 
     function writeMemoryBytes32(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr,
         bytes32 val
@@ -72,7 +72,7 @@ library Memory {
     }
 
     function readMemoryBytes2(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr
     ) internal view returns (bytes2) {
@@ -83,7 +83,7 @@ library Memory {
     }
 
     function readMemoryByte(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr
     ) internal view returns (bytes1) {
@@ -93,7 +93,7 @@ library Memory {
     }
 
     function readMemoryBytes4(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr
     ) internal view returns (bytes4) {
@@ -103,7 +103,7 @@ library Memory {
     }
 
     function readMemory(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr
     ) internal view returns (uint32) {
@@ -112,7 +112,7 @@ library Memory {
     }
 
     function readMemoryBytes32(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 ptr
     ) internal view returns (bytes32) {
@@ -127,7 +127,7 @@ library Memory {
     }
 
     function readMemoryString(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         uint32 addr,
         uint32 len

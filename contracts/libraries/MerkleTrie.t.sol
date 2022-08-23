@@ -5,8 +5,9 @@ import "./MerkleTrie.sol";
 import "./console.sol";
 
 contract MockMerkleTrie {
-    using MerkleTrie for mapping(bytes32 => bytes);
-    mapping(bytes32 => bytes) _hashdb;
+    using HashDB for mapping(bytes32 => HashDB.Preimage);
+    using MerkleTrie for mapping(bytes32 => HashDB.Preimage);
+    mapping(bytes32 => HashDB.Preimage) _hashdb;
     mapping(bytes32 => bytes) _rawdb;
     bytes32 public root;
 
@@ -59,7 +60,7 @@ contract MockMerkleTrie {
     }
 
     function insertPreimage(bytes calldata anything) external {
-        _hashdb[keccak256(anything)] = anything;
+        _hashdb.insertPreimage(anything);
     }
 }
 
