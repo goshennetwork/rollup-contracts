@@ -34,6 +34,10 @@ contract Interpretor is IInterpretor, Initializable {
         for (bool halted = false; !halted; ) {
             _i++;
             uint32 _pc = mstate.readRegister(_root, Register.REG_PC);
+            if (_pc == MemoryLayout.HaltMagic) {
+                //halt no need to step
+                break;
+            }
             if (_pc & 3 != 0) {
                 bytes memory _b = abi.encodePacked("invalid pc, last inst is: ", Strings.toHexString(inst));
                 revert(string(_b));
@@ -129,7 +133,7 @@ contract Interpretor is IInterpretor, Initializable {
                 // environment call/break
                 if (csr == 0) {
                     //call
-                    return handleSyscall(root, nextPC);
+                    return (handleSyscall(root, nextPC), false);
                 } else if (csr == 1) {
                     // ebreak: nop
                 } else {
@@ -291,10 +295,10 @@ contract Interpretor is IInterpretor, Initializable {
         }
 
         root = mstate.writeRegister(root, Register.REG_PC, nextPC);
-        return (root, nextPC == MemoryLayout.HaltMagic);
+        return (root, false);
     }
 
-    function handleSyscall(bytes32 _root, uint32 _nextPC) internal returns (bytes32, bool) {
+    function handleSyscall(bytes32 _root, uint32 _nextPC) internal returns (bytes32) {
         uint32 _systemNumer = mstate.readRegister(_root, Register.REG_A7);
         uint32 va0 = mstate.readRegister(_root, Register.REG_A0);
         if (_systemNumer == 0) {
@@ -344,7 +348,7 @@ contract Interpretor is IInterpretor, Initializable {
             _nextPC = MemoryLayout.HaltMagic;
         }
         _root = mstate.writeRegister(_root, Register.REG_PC, _nextPC);
-        return (_root, _nextPC == MemoryLayout.HaltMagic);
+        return _root;
     }
 
     function handleAmo(

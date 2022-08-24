@@ -193,8 +193,10 @@ contract Challenge is IChallenge {
         bytes32 _endState = _stepUpper == systemInfo.endStep
             ? systemInfo.systemEndState
             : disputeTree[DisputeTree.searchNodeWithMidStep(0, systemInfo.endStep, _stepUpper)].midStateRoot;
-        bytes32 executedRoot = factory.executor().executeNextStep(_startState);
-        require(executedRoot != _endState, "state transition is right");
+        (bytes32 executedRoot, bool halt) = factory.executor().executeNextStep(_startState);
+        ///wrong state or already halt shows proposer cheated.True start state never halt,if it is indeed halt, it will
+        //have no next state.
+        require(executedRoot != _endState || halt, "state transition is right");
         _challengeSuccess();
         emit OneStepTransition(_stepLower, _endState, executedRoot);
     }

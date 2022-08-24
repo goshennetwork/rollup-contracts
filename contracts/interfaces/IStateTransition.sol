@@ -21,5 +21,5 @@ interface IStateTransition {
     function verifyFinalState(bytes32 finalState, bytes32 outputRoot) external;
 
     ///@dev Exec one step transition
-    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
+    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash, bool halt);
 }

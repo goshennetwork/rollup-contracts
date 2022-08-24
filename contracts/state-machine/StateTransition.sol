@@ -63,8 +63,7 @@ contract StateTransition is IStateTransition, Initializable {
         require(mstate.mustReadOutput(finalState) == outputRoot, "mismatch root");
     }
 
-    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
-        (nextStateHash, ) = interpretor.step(stateHash);
-        return nextStateHash;
+    function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash, bool halt) {
+        return interpretor.step(stateHash);
     }
 }
