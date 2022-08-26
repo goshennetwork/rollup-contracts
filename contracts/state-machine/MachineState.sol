@@ -23,18 +23,19 @@ contract MachineState is IMachineState {
         hashdb.insertPartialImage(_node, _index);
     }
 
-    function preimage(bytes32 _hash) public view returns (bytes memory _ret, uint32 _len) {
-        _ret = hashdb.preimage(_hash);
-        return (_ret, uint32(_ret.length));
+    function preimage(bytes32 _hash) public view returns (bytes memory _ret) {
+        return hashdb.preimage(_hash);
     }
 
     function preimageAt(bytes32 _hash, uint32 pos) public view returns (uint32) {
         uint32 _index = uint32(pos / HashDB.PartialSize);
-        (bytes memory _ret, uint32 length) = hashdb.preimageAtIndex(_hash, _index);
-        bytes memory _data;
-        uint32 len = _ret.length - pos >= 4 ? 4 : length - pos;
-        //overflow safe
-        _data = BytesSlice.toBytes(BytesSlice.slice(_ret, pos % HashDB.PartialSize, len));
+        uint256 offset = uint256(pos) % HashDB.PartialSize; // convert to local offset
+        bytes memory _ret = hashdb.preimageAtIndex(_hash, _index);
+        uint256 len = _ret.length - offset;
+        if (len > 4) {
+            len = 4;
+        }
+        bytes memory _data = BytesSlice.toBytes(BytesSlice.slice(_ret, offset, len));
         return BytesEndian.bytes4ToUint32(bytes4(_data));
     }
 

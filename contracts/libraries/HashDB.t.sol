@@ -14,7 +14,7 @@ contract TestPartialHashDB {
         bytes memory data = bytes("hello world");
         partialImage.insertPartialImage(data, 0);
         bytes32 _hash = keccak256(data);
-        (bytes memory got, uint32 length) = partialImage.preimageAtIndex(_hash, 0);
+        bytes memory got = partialImage.preimageAtIndex(_hash, 0);
         require(keccak256(got) == _hash, "not equal");
     }
 

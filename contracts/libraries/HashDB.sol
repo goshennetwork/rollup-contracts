@@ -8,7 +8,6 @@ library HashDB {
         uint32 length;
         mapping(uint32 => bytes) partials;
     }
-    //length stored in -1 index
     using HashDB for mapping(bytes32 => Preimage);
     using BytesSlice for Slice;
     uint256 constant PartialSize = 1024;
@@ -18,32 +17,32 @@ library HashDB {
         mapping(bytes32 => Preimage) storage partialImage,
         bytes32 _hash,
         uint32 _index
-    ) internal view returns (bytes memory _ret, uint32 _len) {
+    ) internal view returns (bytes memory) {
         if (_hash == EMPTY_HASH) {
-            return ("", 0);
+            return "";
         }
-        Preimage storage preimage = partialImage[_hash];
-        bytes memory _ret = preimage.partials[_index];
+        Preimage storage _preimage = partialImage[_hash];
+        bytes memory _ret = _preimage.partials[_index];
         require(_ret.length > 0, "not exist");
-        return (_ret, uint32(_ret.length));
+        return _ret;
     }
 
     function insertPartialImage(
         mapping(bytes32 => Preimage) storage partialImage,
-        bytes memory _node,
+        bytes memory _data,
         uint32 _index
     ) internal {
-        uint256 _length = _node.length;
+        uint256 _length = _data.length;
         require(_index * PartialSize < _length, "wrong index");
-        bytes32 _hash = keccak256(_node);
-        Preimage storage preimage = partialImage[_hash];
-        if (preimage.length == 0) {
+        bytes32 _hash = keccak256(_data);
+        Preimage storage _preimage = partialImage[_hash];
+        if (_preimage.length == 0) {
             //not set yet
             require(_length > 0, "empty image exist");
-            preimage.length = uint32(_length);
+            _preimage.length = uint32(_length);
         }
         uint256 _left = (1 + _index) * PartialSize <= _length ? PartialSize : _length % PartialSize;
-        preimage.partials[_index] = BytesSlice.slice(_node, _index * PartialSize, _left).toBytes();
+        _preimage.partials[_index] = BytesSlice.slice(_data, _index * PartialSize, _left).toBytes();
     }
 
     function insertPreimage(mapping(bytes32 => Preimage) storage partialImage, bytes memory _node) internal {
@@ -60,17 +59,15 @@ library HashDB {
         if (_hash == EMPTY_HASH) {
             return "";
         }
-        Preimage storage preimage = partialImage[_hash];
-        require(preimage.length > 0, "no node");
-        uint32 _num = uint32((preimage.length + PartialSize - 1) / PartialSize);
+        Preimage storage _preimage = partialImage[_hash];
+        require(_preimage.length > 0, "no node");
+        uint32 _num = uint32((_preimage.length + PartialSize - 1) / PartialSize);
         bytes[] memory _partials = new bytes[](_num);
-        uint32 _len;
         for (uint32 i = 0; i < _num; i++) {
-            //do not use function, for saving gas
-            _partials[i] = preimage.partials[i];
+            _partials[i] = _preimage.partials[i];
         }
         bytes memory _data = BytesSlice.concat("", _partials);
-        require(_data.length == preimage.length, "no complete");
+        require(_data.length == _preimage.length, "no complete");
         return _data;
     }
 }
