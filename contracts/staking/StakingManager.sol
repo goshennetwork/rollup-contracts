@@ -88,6 +88,9 @@ contract StakingManager is IStakingManager, Initializable {
         require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
         resolver.feeToken().transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
+        //// make info that will effect slash clean.
+        proposerStake.earliestChallengeHeight = 0;
+        proposerStake.firstSlashTime = 0;
         emit DepositClaimed(_proposer, msg.sender, price);
     }
 
@@ -101,6 +104,9 @@ contract StakingManager is IStakingManager, Initializable {
         address _dao = resolver.dao();
         resolver.feeToken().transfer(_dao, price);
         proposerStake.state = StakingState.UNSTAKED;
+        //// make info that will effect slash clean.
+        proposerStake.earliestChallengeHeight = 0;
+        proposerStake.firstSlashTime = 0;
         emit DepositClaimed(_proposer, _dao, price);
     }
 

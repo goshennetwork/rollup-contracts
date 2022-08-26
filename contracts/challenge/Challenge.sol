@@ -73,6 +73,7 @@ contract Challenge is IChallenge {
         Types.StateInfo memory _stateInfo,
         uint256 _minChallengerDeposit
     ) external override {
+        require(stage == ChallengeStage.Uninitialized, "initialized");
         factory = IChallengeFactory(msg.sender);
         systemInfo.systemStartState = _systemStartState;
         creator = _creator;

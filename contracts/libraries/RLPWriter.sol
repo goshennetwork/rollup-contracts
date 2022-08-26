@@ -98,7 +98,7 @@ library RLPWriter {
             }
 
             encoded = new bytes(lenLen + 1);
-            encoded[0] = bytes1(uint8(lenLen + _offset + 55));
+            encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
             for (i = 1; i <= lenLen; i++) {
                 encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
             }
