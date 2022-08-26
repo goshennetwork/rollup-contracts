@@ -9,27 +9,35 @@ library Syscall {
     uint8 constant OUTPUT = 0xff; // output key flag
 
     function writeOutput(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         bytes32 value
     ) internal returns (bytes32) {
         return MerkleTrie.update(hashdb, genKey(OUTPUT), bytes.concat(value), root);
     }
 
-    function readOutput(mapping(bytes32 => bytes) storage hashdb, bytes32 root) internal view returns (bytes32) {
+    function readOutput(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root)
+        internal
+        view
+        returns (bytes32)
+    {
         (bool exist, bytes memory value) = MerkleTrie.get(hashdb, genKey(OUTPUT), root);
         return exist ? bytes32(value) : bytes32(0);
     }
 
     function writeInput(
-        mapping(bytes32 => bytes) storage hashdb,
+        mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
         bytes32 value
     ) internal returns (bytes32) {
         return MerkleTrie.update(hashdb, genKey(INPUT), bytes.concat(value), root);
     }
 
-    function readInput(mapping(bytes32 => bytes) storage hashdb, bytes32 root) internal view returns (bytes32) {
+    function readInput(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root)
+        internal
+        view
+        returns (bytes32)
+    {
         (bool exist, bytes memory value) = MerkleTrie.get(hashdb, genKey(INPUT), root);
         return exist ? bytes32(value) : bytes32(0);
     }

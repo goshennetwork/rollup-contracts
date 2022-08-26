@@ -310,8 +310,8 @@ contract Interpretor is IInterpretor, Initializable {
             //pub fn preimage_len(hash: *const u8) -> usize
             //get preimage len, a0 put hash addr in memory;write out length in a0.
             bytes32 _hash = mstate.readMemoryBytes32(_root, va0);
-            (, uint32 len) = mstate.preimage(_hash);
-            _root = mstate.writeRegister(_root, Register.REG_A0, len);
+            bytes memory _data = mstate.preimage(_hash);
+            _root = mstate.writeRegister(_root, Register.REG_A0, uint32(_data.length));
         } else if (_systemNumer == 3) {
             //pub fn preimage_at(hash: *const u8, offset: usize) -> u32;
             //get preimage's 4 bytes at specific offset, a0 put hash addr, a1 put length of preimage;write out preimage in a0.
