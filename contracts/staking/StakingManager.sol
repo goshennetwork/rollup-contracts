@@ -29,6 +29,9 @@ contract StakingManager is IStakingManager, Initializable {
         require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
         require(resolver.feeToken().transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
+        // make info that will effect slash clean.
+        senderStaking.earliestChallengeHeight = 0;
+        senderStaking.firstSlashTime = 0;
         emit Deposited(msg.sender, price);
     }
 
