@@ -9,7 +9,7 @@ import "../libraries/console.sol";
 import "../interfaces/IAddressResolver.sol";
 
 contract StakingManager is IStakingManager, Initializable {
-    IAddressResolver public resolver;
+    IAddressResolver resolver;
     mapping(address => StakingInfo) public getStakingInfo;
     //price should never change, unless every stakingInfo record the relating info of price.
     uint256 public price;
