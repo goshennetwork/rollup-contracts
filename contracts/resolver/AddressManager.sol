@@ -102,7 +102,7 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
     }
 
     function feeToken() public view returns (IERC20) {
-        return TestERC20(getAddrByHash[AddressName.FEE_TOKEN_HASH]);
+        return IERC20(getAddrByHash[AddressName.FEE_TOKEN_HASH]);
     }
 
     function machineState() public view returns (IMachineState) {

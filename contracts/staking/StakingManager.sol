@@ -9,10 +9,15 @@ import "../libraries/console.sol";
 import "../interfaces/IAddressResolver.sol";
 
 contract StakingManager is IStakingManager, Initializable {
-    IAddressResolver resolver;
+    IAddressResolver public resolver;
     mapping(address => StakingInfo) public getStakingInfo;
     //price should never change, unless every stakingInfo record the relating info of price.
     uint256 public price;
+
+    modifier onlyChallenge() {
+        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only challenge contract permitted");
+        _;
+    }
 
     function initialize(address _resolver, uint256 _price) public initializer {
         resolver = IAddressResolver(_resolver);
@@ -26,7 +31,7 @@ contract StakingManager is IStakingManager, Initializable {
 
     function deposit() external override {
         StakingInfo storage senderStaking = getStakingInfo[msg.sender];
-        require(senderStaking.state == StakingState.UNSTAKED, "only unstacked user can deposit");
+        require(senderStaking.state == StakingState.UNSTAKED, "only unStaked user can deposit");
         require(resolver.feeToken().transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
         emit Deposited(msg.sender, price);
@@ -57,10 +62,8 @@ contract StakingManager is IStakingManager, Initializable {
         uint64 _chainHeight,
         bytes32 _blockHash,
         address _proposer
-    ) external override {
+    ) external override onlyChallenge {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
-        //only challenge.
-        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only challenge contract permitted");
         //unstaked is not allowed
         require(proposerStake.state != StakingState.UNSTAKED, "unStaked unexpected");
         if (proposerStake.firstSlashTime == 0) {
@@ -77,10 +80,8 @@ contract StakingManager is IStakingManager, Initializable {
         emit DepositSlashed(_proposer, msg.sender, _chainHeight, _blockHash);
     }
 
-    function claim(address _proposer, Types.StateInfo memory _stateInfo) external override {
+    function claim(address _proposer, Types.StateInfo memory _stateInfo) external override onlyChallenge {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
-        //only challenge.
-        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only challenge contract permitted");
         require(proposerStake.state == StakingState.SLASHING, "not in slashing");
         IRollupStateChain _stateChain = resolver.rollupStateChain();
         require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
