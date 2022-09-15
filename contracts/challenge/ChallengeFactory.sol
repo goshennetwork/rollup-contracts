@@ -11,8 +11,8 @@ import "../interfaces/IAddressManager.sol";
 
 contract ChallengeFactory is IChallengeFactory, Initializable {
     using Types for Types.StateInfo;
-    mapping(address => bool) public contracts;
-    mapping(bytes32 => address) public challengedStates;
+    mapping(address => bool) public override isChallengeContract;
+    mapping(bytes32 => address) public override getChallengedContract;
     IAddressResolver resolver;
     uint256 public blockLimitPerRound;
     address public override challengeBeacon;
@@ -37,7 +37,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
     ) public {
         require(resolver.whitelist().canChallenge(msg.sender), "only challenger");
         bytes32 _hash = _challengedStateInfo.hash();
-        require(challengedStates[_hash] == address(0), "already challenged");
+        require(getChallengedContract[_hash] == address(0), "already challenged");
         require(resolver.rollupStateChain().verifyStateInfo(_challengedStateInfo), "wrong stateInfo");
         require(!resolver.rollupStateChain().isStateConfirmed(_challengedStateInfo), "state confirmed");
         require(resolver.rollupStateChain().verifyStateInfo(_parentStateInfo), "wrong stateInfo");
@@ -50,8 +50,8 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         );
         bytes memory _data;
         address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
-        contracts[newChallenge] = true;
-        challengedStates[_hash] = newChallenge;
+        isChallengeContract[newChallenge] = true;
+        getChallengedContract[_hash] = newChallenge;
         //maybe do not need to deposit because of the cost create contract?
         require(stakingManager().token().transferFrom(msg.sender, newChallenge, challengerDeposit), "transfer failed");
         IChallenge(newChallenge).create(
@@ -70,10 +70,6 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         );
     }
 
-    function getChallengedContract(bytes32 _stateInfoHash) public view returns (address) {
-        return challengedStates[_stateInfoHash];
-    }
-
     function stakingManager() public view returns (IStakingManager) {
         return resolver.stakingManager();
     }
@@ -88,9 +84,5 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
 
     function dao() public view returns (address) {
         return address(resolver.dao());
-    }
-
-    function isChallengeContract(address _addr) public view returns (bool) {
-        return contracts[_addr];
     }
 }

@@ -26,11 +26,10 @@ contract L2StandardERC20 is IL2StandardERC20, ERC20 {
 
     // slither-disable-next-line external-function
     function supportsInterface(bytes4 _interfaceId) public pure returns (bool) {
-        bytes4 firstSupportedInterface = bytes4(keccak256("supportsInterface(bytes4)"));
-        // ERC165
+        bytes4 firstSupportedInterface = bytes4(keccak256("supportsInterface(bytes4)")); // ERC165
         bytes4 secondSupportedInterface = IL2StandardERC20.l1Token.selector ^
-        IL2StandardERC20.mint.selector ^
-        IL2StandardERC20.burn.selector;
+            IL2StandardERC20.mint.selector ^
+            IL2StandardERC20.burn.selector;
         return _interfaceId == firstSupportedInterface || _interfaceId == secondSupportedInterface;
     }
 
