@@ -23,7 +23,7 @@ contract Challenge is IChallenge {
     // who start challenge.
     address creator;
     //at which l1 block number, the game timeout.
-    uint256 expireAfterBlock;
+    uint256 public expireAfterBlock;
     //fixme: evaluate timeout more legitimate. The dispute solver can delay the challenge by provide step ((1<<256) -1),and choose deadline to repond, and responsible challenger respond in next block ,so the system judge will delay 256*(timeout+1)+timeout,if timeout is 100 this roughly 4.5 Days!
     uint256 proposerTimeLimit;
     //amount challenge get from dispute proposer.
