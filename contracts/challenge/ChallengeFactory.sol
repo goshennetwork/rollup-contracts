@@ -11,8 +11,8 @@ import "../interfaces/IAddressManager.sol";
 
 contract ChallengeFactory is IChallengeFactory, Initializable {
     using Types for Types.StateInfo;
-    mapping(address => bool) contracts;
-    mapping(bytes32 => address) challengedStates;
+    mapping(address => bool) public contracts;
+    mapping(bytes32 => address) public challengedStates;
     IAddressResolver resolver;
     uint256 public blockLimitPerRound;
     address public override challengeBeacon;
@@ -71,9 +71,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
     }
 
     function getChallengedContract(bytes32 _stateInfoHash) public view returns (address) {
-        address _c = challengedStates[_stateInfoHash];
-        require(_c != address(0), "not challenged");
-        return _c;
+        return challengedStates[_stateInfoHash];
     }
 
     function stakingManager() public view returns (IStakingManager) {
