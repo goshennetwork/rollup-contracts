@@ -70,6 +70,25 @@ func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retv
 	return
 }
 
+// ExpireAfterBlock calls the expireAfterBlock method in the solidity contract
+func (_a *Challenge) ExpireAfterBlock(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("expireAfterBlock", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // Factory calls the factory method in the solidity contract
 func (_a *Challenge) Factory(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}

@@ -36,14 +36,10 @@ contract L2StandardERC20 is IL2StandardERC20, ERC20 {
     // slither-disable-next-line external-function
     function mint(address _to, uint256 _amount) public virtual onlyL2Bridge {
         _mint(_to, _amount);
-
-        emit Transfer(address(0), _to, _amount);
     }
 
     // slither-disable-next-line external-function
     function burn(address _from, uint256 _amount) public virtual onlyL2Bridge {
         _burn(_from, _amount);
-
-        emit Transfer(_from, address(0), _amount);
     }
 }

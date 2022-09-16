@@ -27,7 +27,7 @@ interface IChallengeFactory {
         external;
 
     ///@return Challenge contract address
-    ///@notice revert if not exist challenge to given stateIndex
+    ///@notice return address(0) if not exist challenge to given stateIndex
     function getChallengedContract(bytes32 _stateInfoHash) external view returns (address);
 
     ///@return StakingManager
