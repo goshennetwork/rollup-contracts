@@ -50,6 +50,9 @@ library Register {
     //pc
     uint32 internal constant REG_PC = 32; //x32
 
+    //RESERVE
+    uint32 internal constant REG_RESV = 33; // x33
+
     function readRegisterBytes4(
         mapping(bytes32 => HashDB.Preimage) storage hashdb,
         bytes32 root,
