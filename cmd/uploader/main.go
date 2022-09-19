@@ -80,16 +80,12 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 		return err
 	}
 	tx := txn.SetNonce(nonce).Sign(self.signer)
-	_json, err := tx.MarshalJSON()
+	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
+	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
 	if err != nil {
 		return err
 	}
-	log.Info("input batch", "tx", _json, "raw", tx.MarshalRLP())
-	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
-	if err != nil {
-		return err
-	}
-	log.Info("sending append inputBatch tx", "hash", hs, "batchIndex", batches.BatchIndex)
+	log.Info("sending append inputBatch tx", "batchIndex", batches.BatchIndex)
 	return nil
 }
 
@@ -100,16 +96,12 @@ func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint
 		return err
 	}
 	tx := txn.SetNonce(nonce).Sign(self.signer)
-	_json, err := tx.MarshalJSON()
+	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
+	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
 	if err != nil {
 		return err
 	}
-	log.Info("state batch", "tx", _json, "raw", tx.MarshalRLP())
-	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
-	if err != nil {
-		return err
-	}
-	log.Info("sending append stateBatch tx", "hash", hs, "batchIndex", startAt)
+	log.Info("sending append stateBatch tx", "batchIndex", startAt)
 	return nil
 }
 
@@ -120,7 +112,8 @@ func (self *UploadBackend) Start() error {
 }
 
 func (self *UploadBackend) runStateTask() {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTimer(30 * time.Second)
+	first := true
 	defer ticker.Stop()
 
 loop:
@@ -129,6 +122,10 @@ loop:
 		case <-self.quit:
 			return
 		case <-ticker.C:
+			if first {
+				first = false
+				ticker.Reset(time.Minute)
+			}
 			clientInfo, err := self.l2client.L2().GlobalInfo()
 			if err != nil {
 				log.Error("get global info", "err", err)
@@ -174,13 +171,18 @@ loop:
 
 //fixme: now only support one sequencer.
 func (self *UploadBackend) runTxTask() {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(1)
+	first := true
 	defer ticker.Stop()
 	for {
 		select {
 		case <-self.quit:
 			return
 		case <-ticker.C:
+			if first {
+				first = false
+				ticker.Reset(time.Minute)
+			}
 			info, err := self.l2client.L2().GlobalInfo()
 			if err != nil {
 				log.Error("get l2 client info", "err", err)
