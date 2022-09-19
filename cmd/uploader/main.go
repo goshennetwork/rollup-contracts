@@ -83,6 +83,8 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 		interval := time.Now().Sub(self.PendingInputCreatedTime)
 		if interval >= time.Minute { //now timeout 1 minute, just replace last transaction
 			replace = true
+		} else { //wait pending tx
+			return nil
 		}
 	}
 	txn := self.inputChain.AppendInputBatches(batches)
@@ -109,6 +111,8 @@ func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint
 		interval := time.Now().Sub(self.PendingStateCreatedTime)
 		if interval >= time.Minute { //now timeout 1 minute, just replace last transaction
 			replace = true
+		} else { //wait pending tx
+			return nil
 		}
 	}
 	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
