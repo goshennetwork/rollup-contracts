@@ -79,8 +79,13 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 	if err != nil { //network tolerate
 		return err
 	}
-	txn.SetNonce(nonce)
-	hs, err := self.l1client.Eth().SendRawTransaction(txn.Sign(self.signer).MarshalRLP())
+	tx := txn.SetNonce(nonce).Sign(self.signer)
+	_json, err := tx.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	log.Info("input batch", "tx", _json, "raw", tx.MarshalRLP())
+	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
 	if err != nil {
 		return err
 	}
@@ -94,8 +99,13 @@ func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint
 	if err != nil { //network tolerate
 		return err
 	}
-	txn.SetNonce(nonce)
-	hs, err := self.l1client.Eth().SendRawTransaction(txn.Sign(self.signer).MarshalRLP())
+	tx := txn.SetNonce(nonce).Sign(self.signer)
+	_json, err := tx.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	log.Info("state batch", "tx", _json, "raw", tx.MarshalRLP())
+	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
 	if err != nil {
 		return err
 	}
