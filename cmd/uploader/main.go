@@ -68,7 +68,49 @@ type UploadBackend struct {
 }
 
 func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain) *UploadBackend {
+
 	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, make(chan struct{})}
+}
+
+func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) error {
+	txn := self.inputChain.AppendInputBatches(batches)
+	//use confirmed nonce
+	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
+	if err != nil { //network tolerate
+		return err
+	}
+	tx := txn.SetNonce(nonce).Sign(self.signer)
+	_json, err := tx.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	log.Info("input batch", "tx", _json, "raw", tx.MarshalRLP())
+	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	if err != nil {
+		return err
+	}
+	log.Info("sending append inputBatch tx", "hash", hs, "batchIndex", batches.BatchIndex)
+	return nil
+}
+
+func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) error {
+	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
+	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
+	if err != nil { //network tolerate
+		return err
+	}
+	tx := txn.SetNonce(nonce).Sign(self.signer)
+	_json, err := tx.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	log.Info("state batch", "tx", _json, "raw", tx.MarshalRLP())
+	hs, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	if err != nil {
+		return err
+	}
+	log.Info("sending append stateBatch tx", "hash", hs, "batchIndex", startAt)
+	return nil
 }
 
 func (self *UploadBackend) Start() error {
@@ -78,7 +120,7 @@ func (self *UploadBackend) Start() error {
 }
 
 func (self *UploadBackend) runStateTask() {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
 loop:
@@ -122,9 +164,8 @@ loop:
 				pendingStates[i] = l2State
 			}
 			log.Info("try to append state...", "start", l1StateNum, "end", l1StateNum+num)
-			receipt := self.stateChain.AppendStateBatch(pendingStates, l1StateNum).Sign(self.signer).SendTransaction(self.signer)
-			if receipt.IsReverted() {
-				log.Error("append state batch failed", "start", l1StateNum)
+			if err := self.AppendStateBatch(pendingStates, l1StateNum); err != nil {
+				log.Error("append state batch failed", "batcIndex", l1StateNum, "err", err)
 			}
 		}
 	}
@@ -133,88 +174,70 @@ loop:
 
 //fixme: now only support one sequencer.
 func (self *UploadBackend) runTxTask() {
-	timer := time.NewTimer(0)
-	defer timer.Stop()
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-self.quit:
 			return
-		case <-timer.C:
-			timer.Reset(time.Duration(self.handle()))
-		}
-	}
-}
+		case <-ticker.C:
+			info, err := self.l2client.L2().GlobalInfo()
+			if err != nil {
+				log.Error("get l2 client info", "err", err)
+				continue
+			}
+			sss, _ := json.MarshalIndent(info, "", " ")
+			log.Debug("global info", "info", string(sss))
+			totalBatches, err := self.inputChain.ChainHeight()
+			if err != nil {
+				log.Error("l1 get input ChainHeight", "err", err)
+				continue
+			}
+			l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
+			if l2clientTotalBatches < totalBatches {
+				log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", info.L1InputInfo.TotalBatches)
+				continue
+			}
+			l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
+			if l2checkedBatchNum < totalBatches {
+				log.Warn("l2 client have not checked all batches", "checkedBatchNum", info.L2CheckedBlockNum, "l1 total batch", info.L1InputInfo.TotalBatches)
+				continue
+			}
+			pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
+			if err != nil {
+				log.Warn("l1 get pending queue index", "err", err)
+				continue
+			}
+			if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
+				log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", info.L1InputInfo.PendingQueueIndex)
+				continue
+			}
+			if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
+				log.Warn("no block to append", "l2 checked block num", info.L2CheckedBlockNum, "head block number", info.L2HeadBlockNumber)
+				continue
+			}
 
-func (self *UploadBackend) handle() (interval int64) {
-	interval = int64(16 * time.Second)
-
-	info, err := self.l2client.L2().GlobalInfo()
-	if err != nil {
-		log.Error("get l2 client info", "err", err)
-		return
-	}
-	sss, _ := json.MarshalIndent(info, "", " ")
-	log.Debug("global info", "info", string(sss))
-	totalBatches, err := self.inputChain.ChainHeight()
-	if err != nil {
-		log.Error("l1 get input ChainHeight", "err", err)
-		return
-	}
-	l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
-	if l2clientTotalBatches < totalBatches {
-		log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", info.L1InputInfo.TotalBatches)
-		diff := int64(totalBatches - l2clientTotalBatches)
-		utils.EnsureTrue(diff > 0)
-		//every batch wait a block interval
-		interval *= diff
-		return
-	}
-	l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
-	if l2checkedBatchNum < totalBatches {
-		log.Warn("l2 client have not checked all batches", "checkedBatchNum", info.L2CheckedBlockNum, "l1 total batch", info.L1InputInfo.TotalBatches)
-		diff := int64(totalBatches - l2checkedBatchNum)
-		utils.EnsureTrue(diff > 0)
-		//every batch wait a block interval
-		interval *= diff
-		return
-	}
-	pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
-	if err != nil {
-		log.Warn("l1 get pending queue index", "err", err)
-		return
-	}
-	if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
-		log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", info.L1InputInfo.PendingQueueIndex)
-		return
-	}
-	if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
-		log.Warn("no block to append", "l2 checked block num", info.L2CheckedBlockNum, "head block number", info.L2HeadBlockNumber)
-		return
-	}
-
-	//may happen in situation of async
-	if batchCode, err := self.l2client.L2().GetPendingTxBatches(); err != nil {
-		log.Error(err.Error())
-		return
-	} else {
-		if len(batchCode) == 0 {
-			log.Warn("no batch code get")
-			return
-		}
-		//try to decode fist
-		b := new(binding.RollupInputBatches)
-		if err := b.Decode(batchCode); err != nil {
-			log.Error("decode batchCode", "err", err)
-			return
-		}
-		receipt := self.inputChain.AppendInputBatches(b).Sign(self.signer).SendTransaction(self.signer)
-		if receipt.IsReverted() {
-			log.Errorf("append input batch failed: %s", utils.JsonString(receipt))
-			return
+			//may happen in situation of async
+			if batchCode, err := self.l2client.L2().GetPendingTxBatches(); err != nil {
+				log.Error(err.Error())
+				continue
+			} else {
+				if len(batchCode) == 0 {
+					log.Warn("no batch code get")
+					continue
+				}
+				//try to decode fist
+				b := new(binding.RollupInputBatches)
+				if err := b.Decode(batchCode); err != nil {
+					log.Error("decode batchCode", "err", err)
+					continue
+				}
+				if err := self.AppendInputBatch(b); err != nil {
+					log.Error("append input batch failed", "batchIndex", b.BatchIndex, "err", err)
+				}
+			}
 		}
 	}
-	//no err wait for block seal
-	return
 }
 
 func (self *UploadBackend) Stop() error {
