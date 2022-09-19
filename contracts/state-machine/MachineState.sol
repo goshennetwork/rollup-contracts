@@ -160,10 +160,6 @@ contract MachineState is IMachineState {
         return hashdb.readInput(root);
     }
 
-    function genReservedKey(uint32 addr) public pure returns (bytes memory) {
-        return bytes.concat(bytes5(bytes4(addr)));
-    }
-
     function reserve(bytes32 root, uint32 addr) public returns (bytes32) {
         return hashdb.writeRegister(root, Register.REG_RESV, addr);
     }
