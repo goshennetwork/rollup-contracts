@@ -9,17 +9,18 @@ import "../interfaces/IStateTransition.sol";
 import "../interfaces/IAddressResolver.sol";
 import "./MachineState.sol";
 import "./riscv32/Interpretor.sol";
+import "../libraries/Types.sol";
 
 contract StateTransition is IStateTransition, Initializable {
     using MemoryLayout for IMachineState;
     IMachineState public mstate;
     Interpretor interpretor;
     bytes32 public imageStateRoot;
-    uint256 public upgradeHeight;
+    uint64 public upgradeTime;
     bytes32 public pendingImageStateRoot;
     IAddressResolver public resolver;
 
-    event UpgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot);
+    event UpgradeToNewRoot(uint64 timestamp, bytes32 newImageStateRoot);
 
     function initialize(
         bytes32 _imageStateRoot,
@@ -33,27 +34,34 @@ contract StateTransition is IStateTransition, Initializable {
         interpretor.initialize(address(_mstate));
     }
 
-    function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
+    function upgradeToNewRoot(uint64 _upgradeTime, bytes32 newImageStateRoot) public {
         require(msg.sender == address(resolver.dao()), "only dao");
-        require(blockNumber > resolver.rollupStateChainContainer().chainSize(), "illegal height");
+        require(_upgradeTime > block.timestamp, "illegal upgrade time");
         require(newImageStateRoot != bytes32(0), "illegal new root");
-        upgradeHeight = blockNumber;
+        upgradeTime = _upgradeTime;
         pendingImageStateRoot = newImageStateRoot;
 
-        emit UpgradeToNewRoot(blockNumber, newImageStateRoot);
+        emit UpgradeToNewRoot(_upgradeTime, newImageStateRoot);
     }
 
     function generateStartState(
         bytes32 rollupInputHash,
-        uint64 blockNumber,
+        uint64 batchTimestamp,
         bytes32 parentBlockHash
     ) external returns (bytes32) {
         require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
         bytes32 inputHash = keccak256(abi.encodePacked(rollupInputHash, parentBlockHash));
-        if (upgradeHeight > 0 && blockNumber >= upgradeHeight) {
-            imageStateRoot = pendingImageStateRoot;
-            upgradeHeight = 0;
-            pendingImageStateRoot = bytes32(0);
+        if (upgradeTime > 0 && batchTimestamp > upgradeTime) {
+            // use pendingImageStateRoot
+            Types.StateInfo memory _stateInfo;
+            _stateInfo.timestamp = upgradeTime;
+            if (resolver.rollupStateChain().isStateConfirmed(_stateInfo)) {
+                imageStateRoot = pendingImageStateRoot;
+                upgradeTime = 0;
+                pendingImageStateRoot = bytes32(0);
+            } else {
+                return mstate.writeInput(pendingImageStateRoot, inputHash);
+            }
         }
         return mstate.writeInput(imageStateRoot, inputHash);
     }

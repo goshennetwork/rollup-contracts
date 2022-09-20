@@ -45,7 +45,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         bytes32 _inputHash = resolver.rollupInputChain().getInputHash(_challengedStateInfo.index);
         bytes32 _systemStartState = resolver.stateTransition().generateStartState(
             _inputHash,
-            _challengedStateInfo.index,
+            _challengedStateInfo.timestamp,
             _parentStateInfo.blockHash
         );
         bytes memory _data;
