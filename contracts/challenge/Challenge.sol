@@ -51,18 +51,22 @@ contract Challenge is IChallenge {
     }
 
     modifier beforeBlockConfirmed() {
-        require(!factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo), "block confirmed");
+        require(!stateConfirmed(), "block confirmed");
         _;
     }
 
     modifier afterBlockConfirmed() {
-        require(factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo), "block not confirmed");
+        require(stateConfirmed(), "block not confirmed");
         _;
     }
 
     modifier onlyProposer() {
         require(msg.sender == systemInfo.stateInfo.proposer, "only proposer");
         _;
+    }
+
+    function stateConfirmed() public view returns (bool){
+        return factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo);
     }
 
     //when create, creator should deposit at this contract.
