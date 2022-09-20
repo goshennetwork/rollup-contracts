@@ -65,7 +65,7 @@ contract Challenge is IChallenge {
         _;
     }
 
-    function stateConfirmed() public view returns (bool){
+    function stateConfirmed() public view override returns (bool) {
         return factory.rollupStateChain().isStateConfirmed(systemInfo.stateInfo);
     }
 
