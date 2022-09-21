@@ -40,6 +40,12 @@ module.exports = {
             accounts: { // this mnemonic is invalid checksum
                 mnemonic: env.mnemonic
             },
+        },
+        kavatest: {
+            url: 'https://evm.testnet.kava.io',
+            accounts: { // this mnemonic is invalid checksum
+                mnemonic: env.mnemonic
+            },
         }
     }
 };

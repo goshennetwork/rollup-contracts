@@ -1,6 +1,6 @@
 {
   "fraudProofWindow": 3600,
-  "blockLimitPerRound": 5000,
+  "blockLimitPerRound": 500,
   "challengerDeposit": "1",
   "stakingPrice": "1",
   "maxTxGasLimit": 8000000,
