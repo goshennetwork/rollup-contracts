@@ -46,6 +46,12 @@ module.exports = {
             accounts: { // this mnemonic is invalid checksum
                 mnemonic: env.mnemonic
             },
+        },
+        l2dev: {
+            url: 'http://192.168.6.237:23333',
+            accounts: { // this mnemonic is invalid checksum
+                mnemonic: env.mnemonic
+            },
         }
     }
 };

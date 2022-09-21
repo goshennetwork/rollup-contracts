@@ -107,7 +107,7 @@ func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint
 
 func (self *UploadBackend) Start() error {
 	go self.runTxTask()
-	go self.runStateTask()
+	//go self.runStateTask()
 	return nil
 }
 
@@ -169,7 +169,7 @@ loop:
 
 }
 
-//fixme: now only support one sequencer.
+// fixme: now only support one sequencer.
 func (self *UploadBackend) runTxTask() {
 	ticker := time.NewTicker(1)
 	first := true

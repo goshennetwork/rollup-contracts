@@ -17,3 +17,6 @@ isa/
 .openzeppelin/unknown-31337.json
 /build
 .env.json
+
+l2-genesis.json
+rollup-config.json
