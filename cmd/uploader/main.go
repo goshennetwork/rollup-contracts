@@ -112,7 +112,7 @@ func (self *UploadBackend) Start() error {
 }
 
 func (self *UploadBackend) runStateTask() {
-	ticker := time.NewTimer(30 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	first := true
 	defer ticker.Stop()
 
@@ -138,7 +138,7 @@ loop:
 			}
 			l2checkedBatchNum := uint64(clientInfo.L2CheckedBatchNum)
 			if l2checkedBatchNum <= l1StateNum {
-				log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", clientInfo.L2CheckedBatchNum)
+				log.Debug("nothing to append", "l1 state batch num", l1StateNum, "l2 checked batch num", uint64(clientInfo.L2CheckedBatchNum))
 				continue
 			}
 			num := l2checkedBatchNum - l1StateNum
@@ -197,12 +197,12 @@ func (self *UploadBackend) runTxTask() {
 			}
 			l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
 			if l2clientTotalBatches < totalBatches {
-				log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", info.L1InputInfo.TotalBatches)
+				log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", uint64(info.L1InputInfo.TotalBatches))
 				continue
 			}
 			l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
 			if l2checkedBatchNum < totalBatches {
-				log.Warn("l2 client have not checked all batches", "checkedBatchNum", info.L2CheckedBlockNum, "l1 total batch", info.L1InputInfo.TotalBatches)
+				log.Warn("l2 client have not checked all batches", "checkedBatchNum", uint64(info.L2CheckedBatchNum), "l1 total batch", uint64(info.L1InputInfo.TotalBatches))
 				continue
 			}
 			pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
@@ -211,11 +211,11 @@ func (self *UploadBackend) runTxTask() {
 				continue
 			}
 			if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
-				log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", info.L1InputInfo.PendingQueueIndex)
+				log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", uint64(info.L1InputInfo.PendingQueueIndex))
 				continue
 			}
 			if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
-				log.Warn("no block to append", "l2 checked block num", info.L2CheckedBlockNum, "head block number", info.L2HeadBlockNumber)
+				log.Warn("no block to append", "l2 checked block num", uint64(info.L2CheckedBlockNum), "head block number", uint64(info.L2HeadBlockNumber))
 				continue
 			}
 
