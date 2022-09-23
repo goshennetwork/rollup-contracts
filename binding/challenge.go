@@ -165,6 +165,25 @@ func (_a *Challenge) Stage(block ...web3.BlockNumber) (retval0 uint8, err error)
 	return
 }
 
+// StateConfirmed calls the stateConfirmed method in the solidity contract
+func (_a *Challenge) StateConfirmed(block ...web3.BlockNumber) (retval0 bool, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("stateConfirmed", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // txns
 
 // ClaimChallengerWin sends a claimChallengerWin transaction in the solidity contract

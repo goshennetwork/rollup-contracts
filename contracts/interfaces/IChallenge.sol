@@ -33,6 +33,8 @@ interface IChallenge {
 
     function minChallengerDeposit() external view returns (uint256);
 
+    function stateConfirmed() external view returns (bool);
+
     /**
      * @dev Create challenge by challengeFactory.guarantee the info provided true.
      * @param _systemStartState System initial state of program, calculated by executor.
