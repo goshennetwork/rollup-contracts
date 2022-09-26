@@ -75,7 +75,7 @@ library Register {
     }
 
     function genRegisterKey(uint32 regid) private pure returns (bytes memory) {
-        return bytes.concat(bytes1(uint8(regid)));
+        return bytes.concat(bytes4((regid + 1) * 4 + 1));
     }
 
     function writeRegister(

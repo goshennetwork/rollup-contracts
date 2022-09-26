@@ -5,8 +5,8 @@ import "../MemoryLayout.sol";
 import "../../libraries/MerkleTrie.sol";
 
 library Syscall {
-    uint8 constant INPUT = 0xfe; // input key flag
-    uint8 constant OUTPUT = 0xff; // output key flag
+    uint8 constant INPUT = 0x01; // input key flag
+    uint8 constant OUTPUT = 0x02; // output key flag
 
     function writeOutput(
         mapping(bytes32 => HashDB.Preimage) storage hashdb,
@@ -43,6 +43,6 @@ library Syscall {
     }
 
     function genKey(uint8 flag) internal pure returns (bytes memory) {
-        return bytes.concat(bytes1(flag));
+        return bytes.concat(bytes4(uint32(flag)));
     }
 }

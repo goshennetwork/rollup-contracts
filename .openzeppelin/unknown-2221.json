@@ -1,0 +1,400 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x3e31450d47D9d1d91883ADE55b806693E07f2257"
+  },
+  "proxies": [
+    {
+      "address": "0xb7F2869D655D6C8bF786A1a0540964955902a0eF",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xf2690439CE4B14ab6eA15DFE7f97493e72F5945a",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "0e425cc7ab020b036e67468a17a246a4c91df3e8fed8ecdb336cd2b571c4f5d2": {
+      "address": "0xDf3096EdF0FFF8aE167f06621d65CbE6F55e3c48",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "addressResolver",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IAddressResolver)17008",
+            "contract": "ChainStorageContainer",
+            "src": "contracts/rollup/ChainStorageContainer.sol:9"
+          },
+          {
+            "label": "chain",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "ChainStorageContainer",
+            "src": "contracts/rollup/ChainStorageContainer.sol:10"
+          },
+          {
+            "label": "owner",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_string_storage",
+            "contract": "ChainStorageContainer",
+            "src": "contracts/rollup/ChainStorageContainer.sol:13"
+          }
+        ],
+        "types": {
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAddressResolver)17008": {
+            "label": "contract IAddressResolver",
+            "numberOfBytes": "20"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "21f5ae95242bc5c87560bc1b83d7829b051456d222287bec043b552dec43c67b": {
+      "address": "0xf7B01734b8cDaB75D3607dA05d2f46d91129658D",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "mstate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IMachineState)17914",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:15"
+          },
+          {
+            "label": "interpretor",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(Interpretor)44949",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:16"
+          },
+          {
+            "label": "imageStateRoot",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:17"
+          },
+          {
+            "label": "upgradeHeight",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:18"
+          },
+          {
+            "label": "pendingImageStateRoot",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:19"
+          },
+          {
+            "label": "resolver",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IAddressResolver)17008",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:20"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAddressResolver)17008": {
+            "label": "contract IAddressResolver",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMachineState)17914": {
+            "label": "contract IMachineState",
+            "numberOfBytes": "20"
+          },
+          "t_contract(Interpretor)44949": {
+            "label": "contract Interpretor",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "eec6ff5820c285e374b9803d1d464e4d7fe2cc3ede58fe0bd21d8767982a5e98": {
+      "address": "0xE3Ca9b4AC2C4eF2D3082cC95a739c47aa18cC64A",
+      "txHash": "0x284b8b258e033a632c219338ff3f4ea474dbfbc43dd06cd4e1a52b74dd5bb342",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "mstate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IMachineState)17914",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:15"
+          },
+          {
+            "label": "interpretor",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(Interpretor)44963",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:16"
+          },
+          {
+            "label": "imageStateRoot",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:17"
+          },
+          {
+            "label": "upgradeHeight",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:18"
+          },
+          {
+            "label": "pendingImageStateRoot",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:19"
+          },
+          {
+            "label": "resolver",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IAddressResolver)17008",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:20"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAddressResolver)17008": {
+            "label": "contract IAddressResolver",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMachineState)17914": {
+            "label": "contract IMachineState",
+            "numberOfBytes": "20"
+          },
+          "t_contract(Interpretor)44963": {
+            "label": "contract Interpretor",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "473d9b18733aa3a3b1081772acc0f700d0b6a2babb180ffd0a8afb9e24f35956": {
+      "address": "0x302D4f87882D4fA180a7D0D48106c481a39b0677",
+      "txHash": "0x69cb1e610f10834552f5af5c56eda4e959ae8a6986e8c0663385054a64ca4f20",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "mstate",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IMachineState)17914",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:15"
+          },
+          {
+            "label": "interpretor",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(Interpretor)44936",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:16"
+          },
+          {
+            "label": "imageStateRoot",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:17"
+          },
+          {
+            "label": "upgradeHeight",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:18"
+          },
+          {
+            "label": "pendingImageStateRoot",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_bytes32",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:19"
+          },
+          {
+            "label": "resolver",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IAddressResolver)17008",
+            "contract": "StateTransition",
+            "src": "contracts/state-machine/StateTransition.sol:20"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IAddressResolver)17008": {
+            "label": "contract IAddressResolver",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMachineState)17914": {
+            "label": "contract IMachineState",
+            "numberOfBytes": "20"
+          },
+          "t_contract(Interpretor)44936": {
+            "label": "contract Interpretor",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

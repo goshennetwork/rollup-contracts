@@ -174,7 +174,7 @@ async function main() {
         StateChainStorage: stateStorageContainer.address,
         InputChainStorage: inputStorageContainer.address,
         MachineState: machineState.address,
-        StateTransition: inputStorageContainer.address,
+        StateTransition: stateTransition.address,
         L1StandardBridge: l1StandardBridge.address,
         WhiteList: whitelist.address,
     }
