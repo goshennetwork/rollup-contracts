@@ -11,6 +11,10 @@
     {
       "address": "0xf2690439CE4B14ab6eA15DFE7f97493e72F5945a",
       "kind": "transparent"
+    },
+    {
+      "address": "0xa8B4e7E4f02e8da25c6ce3ae59CB1AfFCc862a93",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -383,6 +387,64 @@
           },
           "t_contract(Interpretor)44936": {
             "label": "contract Interpretor",
+            "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "5be0b2995eb8167c9f9c32c483ae7f907db98906e9bb8eb0c3209292d258b9cf": {
+      "address": "0x5326CfF123d9Ac4b2757A46a11Eb4B43890A9146",
+      "layout": {
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "addressResolver",
+            "offset": 2,
+            "slot": "0",
+            "type": "t_contract(IAddressResolver)17008",
+            "contract": "RollupStateChain",
+            "src": "contracts/rollup/RollupStateChain.sol:16"
+          },
+          {
+            "label": "fraudProofWindow",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "RollupStateChain",
+            "src": "contracts/rollup/RollupStateChain.sol:18"
+          }
+        ],
+        "types": {
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IAddressResolver)17008": {
+            "label": "contract IAddressResolver",
             "numberOfBytes": "20"
           },
           "t_uint256": {

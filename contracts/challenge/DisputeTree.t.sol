@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../test-helper/TestBase.sol";
 import "./DisputeTree.sol";
+import "../libraries/console.sol";
 
 contract TestDisputeTree is TestBase {
     mapping(uint256 => DisputeTree.DisputeNode) testTree;
@@ -49,6 +50,17 @@ contract TestDisputeTree is TestBase {
             (uint256 lower, uint256 upper) = DisputeTree.decodeNodeKey(return1);
             require((lower + upper) / 2 == i);
         }
+    }
+
+    function testSearchNodeLowerAndUpper() public view {
+        uint256 return1 = DisputeTree.searchNodeWithMidStep(0, 178112665, 174553700);
+        uint256 return2 = DisputeTree.searchNodeWithMidStep(0, 178112665, 174553701);
+        console.log(return1);
+        console.log(return2);
+        (uint128 lower1, uint128 upper1) = DisputeTree.decodeNodeKey(return1);
+        (uint128 lower2, uint128 upper2) = DisputeTree.decodeNodeKey(return2);
+        console.log(lower1, upper1);
+        console.log(lower2, upper2);
     }
 
     /* test addNewChild

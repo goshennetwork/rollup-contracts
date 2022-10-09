@@ -15,7 +15,7 @@ contract StateTransition is IStateTransition, Initializable {
     IMachineState public mstate;
     Interpretor interpretor;
     bytes32 public imageStateRoot;
-    uint256 public upgradeHeight;
+    uint256 public upgradeBatchIndex;
     bytes32 public pendingImageStateRoot;
     IAddressResolver public resolver;
 
@@ -33,26 +33,26 @@ contract StateTransition is IStateTransition, Initializable {
         interpretor.initialize(address(_mstate));
     }
 
-    function upgradeToNewRoot(uint256 blockNumber, bytes32 newImageStateRoot) public {
+    function upgradeToNewRoot(uint256 batchIndex, bytes32 newImageStateRoot) public {
         require(msg.sender == address(resolver.dao()), "only dao");
-        require(blockNumber > resolver.rollupStateChainContainer().chainSize(), "illegal height");
+        require(batchIndex > resolver.rollupStateChainContainer().chainSize(), "illegal height");
         require(newImageStateRoot != bytes32(0), "illegal new root");
-        upgradeHeight = blockNumber;
+        upgradeBatchIndex = batchIndex;
         pendingImageStateRoot = newImageStateRoot;
 
-        emit UpgradeToNewRoot(blockNumber, newImageStateRoot);
+        emit UpgradeToNewRoot(batchIndex, newImageStateRoot);
     }
 
     function generateStartState(
         bytes32 rollupInputHash,
-        uint64 blockNumber,
+        uint64 batchIndex,
         bytes32 parentBlockHash
     ) external returns (bytes32) {
         require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
         bytes32 inputHash = keccak256(abi.encodePacked(rollupInputHash, parentBlockHash));
-        if (upgradeHeight > 0 && blockNumber >= upgradeHeight) {
+        if (upgradeBatchIndex > 0 && batchIndex >= upgradeBatchIndex) {
             imageStateRoot = pendingImageStateRoot;
-            upgradeHeight = 0;
+            upgradeBatchIndex = 0;
             pendingImageStateRoot = bytes32(0);
         }
         return mstate.writeInput(imageStateRoot, inputHash);

@@ -17,9 +17,9 @@ contract Challenge is IChallenge {
     mapping(uint256 => DisputeTree.DisputeNode) public disputeTree;
     //record every challenger last select node key in disputeTree.
     mapping(address => uint256) public lastSelectedNodeKey;
-    SystemInfo systemInfo;
+    SystemInfo public systemInfo;
     ChallengeStage public stage;
-    ClaimStatus claimStatus;
+    ClaimStatus public claimStatus;
     // who start challenge.
     address creator;
     //at which l1 block number, the game timeout.

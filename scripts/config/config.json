@@ -1,6 +1,6 @@
 {
   "fraudProofWindow": 3600,
-  "blockLimitPerRound": 500,
+  "blockLimitPerRound": 5000,
   "challengerDeposit": "1",
   "stakingPrice": "1",
   "maxTxGasLimit": 8000000,
@@ -8,7 +8,7 @@
   "l2ChainId": 21772,
   "l2TokenBridge": "0xbde0000000000000000000000000000000000bde",
   "l2CrossLayerWitness": "0x2210000000000000000000000000000000000221",
-  "imageStateRoot": "0x1111111111111111111111111111111111111111111111111111111111111111",
+  "imageStateRoot": "0x2ead174930137579e36ccc4d9b5d89c3ad532188617d6f74ed97a5e0c94f90b7",
   "addressName": {
     "DAO": "DAO",
     "ROLLUP_INPUT_CHAIN": "RollupInputChain",
