@@ -128,4 +128,18 @@ interface IChallenge {
      * @param _stateInfo StateInfo to provide the New stateInfo
      */
     function claimChallengerWin(address _challenger, Types.StateInfo memory _stateInfo) external;
+
+    /// @return stateInfo endStep systemStartState systemEndState
+    function systemInfo()
+        external
+        view
+        returns (
+            Types.StateInfo memory stateInfo,
+            uint128 endStep,
+            bytes32 systemStartState,
+            bytes32 systemEndState
+        );
+
+    /// @return claimStatus
+    function claimStatus() external view returns (ClaimStatus);
 }
