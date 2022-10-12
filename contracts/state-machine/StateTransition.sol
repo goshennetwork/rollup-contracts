@@ -15,54 +15,45 @@ contract StateTransition is IStateTransition, Initializable {
     using MemoryLayout for IMachineState;
     IMachineState public mstate;
     Interpretor interpretor;
-    bytes32 public imageStateRoot;
-    uint64 public upgradeTime;
-    bytes32 public pendingImageStateRoot;
     IAddressResolver public resolver;
 
-    event UpgradeToNewRoot(uint64 timestamp, bytes32 newImageStateRoot);
+    bytes32[] private imageStateRoots;
+    uint64[] private upgradeBatchIndexes;
+
+    event UpgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot);
 
     function initialize(
         bytes32 _imageStateRoot,
         IAddressResolver _resolver,
         IMachineState _mstate
     ) public initializer {
-        imageStateRoot = _imageStateRoot;
+        imageStateRoots.push(_imageStateRoot);
+        upgradeBatchIndexes.push(0);
         resolver = _resolver;
         mstate = _mstate;
         interpretor = new Interpretor();
         interpretor.initialize(address(_mstate));
     }
 
-    function upgradeToNewRoot(uint64 _upgradeTime, bytes32 newImageStateRoot) public {
+    function upgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot) public {
         require(msg.sender == address(resolver.dao()), "only dao");
-        require(_upgradeTime > block.timestamp, "illegal upgrade time");
+        require(upgradeBatchIndex >= upgradeBatchIndexes[upgradeBatchIndexes.length - 1], "duplicated upgrade");
+        require(upgradeBatchIndex >= resolver.rollupStateChainContainer().chainSize(), "ill batch index");
         require(newImageStateRoot != bytes32(0), "illegal new root");
-        upgradeTime = _upgradeTime;
-        pendingImageStateRoot = newImageStateRoot;
+        imageStateRoots.push(newImageStateRoot);
+        upgradeBatchIndexes.push(upgradeBatchIndex);
 
-        emit UpgradeToNewRoot(_upgradeTime, newImageStateRoot);
+        emit UpgradeToNewRoot(upgradeBatchIndex, newImageStateRoot);
     }
 
     function generateStartState(
         bytes32 rollupInputHash,
-        uint64 batchTimestamp,
+        uint64 batchIndex,
         bytes32 parentBlockHash
     ) external returns (bytes32) {
         require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
         bytes32 inputHash = keccak256(abi.encodePacked(rollupInputHash, parentBlockHash));
-        if (upgradeTime > 0 && batchTimestamp > upgradeTime) {
-            // use pendingImageStateRoot
-            Types.StateInfo memory _stateInfo;
-            _stateInfo.timestamp = upgradeTime;
-            if (resolver.rollupStateChain().isStateConfirmed(_stateInfo)) {
-                imageStateRoot = pendingImageStateRoot;
-                upgradeTime = 0;
-                pendingImageStateRoot = bytes32(0);
-            } else {
-                return mstate.writeInput(pendingImageStateRoot, inputHash);
-            }
-        }
+        bytes32 imageStateRoot = getImageRoot(batchIndex);
         return mstate.writeInput(imageStateRoot, inputHash);
     }
 
@@ -74,5 +65,18 @@ contract StateTransition is IStateTransition, Initializable {
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
         (nextStateHash, ) = interpretor.step(stateHash);
         return nextStateHash;
+    }
+
+    function getImageRoot(uint64 batchIndex) public view returns (bytes32) {
+        uint256 stateRootsNum = imageStateRoots.length;
+        bytes32 result = imageStateRoots[0];
+        for (uint256 i = 0; i < stateRootsNum; i++) {
+            if (upgradeBatchIndexes[i] <= batchIndex) {
+                result = imageStateRoots[i];
+            } else {
+                return result;
+            }
+        }
+        return result;
     }
 }

@@ -2,18 +2,18 @@
 pragma solidity ^0.8.0;
 
 interface IStateTransition {
-    function upgradeToNewRoot(uint64 timestamp, bytes32 newImageStateRoot) external;
+    function upgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot) external;
 
     /**
     * @dev Only Challenge factory permitted, because it acts like a button to switch different version of system
     * @param rollupInputHash RollupInput hash in RollupInputChain
-    * @param batchTimestamp state's timestamp in RollupStateChain(same as RollupInputChain)
+    * @param batchIndex state's index in RollupStateChain(same as RollupInputChain)
     * @param parentBlockHash Parent block's hash
 
     */
     function generateStartState(
         bytes32 rollupInputHash,
-        uint64 batchTimestamp,
+        uint64 batchIndex,
         bytes32 parentBlockHash
     ) external returns (bytes32);
 
