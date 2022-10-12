@@ -22,4 +22,6 @@ interface IStateTransition {
 
     ///@dev Exec one step transition
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash);
+
+    function getImageRoot(uint64 batchIndex) external view returns (bytes32);
 }

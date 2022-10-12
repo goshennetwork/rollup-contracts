@@ -67,7 +67,7 @@ contract StateTransition is IStateTransition, Initializable {
         return nextStateHash;
     }
 
-    function getImageRoot(uint64 batchIndex) public view returns (bytes32) {
+    function getImageRoot(uint64 batchIndex) public view override returns (bytes32) {
         uint256 stateRootsNum = imageStateRoots.length;
         bytes32 result = imageStateRoots[0];
         for (uint256 i = 0; i < stateRootsNum; i++) {
