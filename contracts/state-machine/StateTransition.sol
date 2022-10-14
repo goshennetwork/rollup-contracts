@@ -38,7 +38,7 @@ contract StateTransition is IStateTransition, Initializable {
     function upgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot) public {
         require(msg.sender == address(resolver.dao()), "only dao");
         require(upgradeBatchIndex >= upgradeBatchIndexes[upgradeBatchIndexes.length - 1], "duplicated upgrade");
-        require(upgradeBatchIndex >= resolver.rollupStateChainContainer().chainSize(), "ill batch index");
+        require(upgradeBatchIndex > resolver.rollupStateChainContainer().chainSize(), "ill batch index");
         require(newImageStateRoot != bytes32(0), "illegal new root");
         imageStateRoots.push(newImageStateRoot);
         upgradeBatchIndexes.push(upgradeBatchIndex);

@@ -198,6 +198,7 @@ contract Challenge is IChallenge {
         bytes32 _endState = _stepUpper == systemInfo.endStep
             ? systemInfo.systemEndState
             : disputeTree[DisputeTree.searchNodeWithMidStep(0, systemInfo.endStep, _stepUpper)].midStateRoot;
+        require(_endState != bytes32(0), "not revealed");
         bytes32 executedRoot = factory.executor().executeNextStep(_startState);
         require(executedRoot != _endState, "state transition is right");
         _challengeSuccess();

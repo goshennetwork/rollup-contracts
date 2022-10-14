@@ -23,7 +23,6 @@ contract TestStateTransition is TestBase, StateTransition {
         vm.startPrank(sender);
         bytes32 root = hex"2ead174930137579e36ccc4d9b5d89c3ad532188617d6f74ed97a5e0c94f90b7";
         console.log(msg.sender, address(this));
-        this.upgradeToNewRoot(0, root);
         this.upgradeToNewRoot(1, root);
         // modify root
         this.upgradeToNewRoot(1, root);
