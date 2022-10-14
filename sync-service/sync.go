@@ -24,7 +24,6 @@ type SyncService struct {
 	db       *store.Storage
 	quit     chan struct{}
 	wg       sync.WaitGroup
-	version  uint32
 	running  uint32
 }
 
@@ -41,15 +40,6 @@ func NewSyncService(diskdb schema.PersistStore,
 
 func (self *SyncService) isRunning() bool {
 	return atomic.LoadUint32(&self.running) == 1
-}
-
-func (self *SyncService) updateVersion() {
-	v := self.Version()
-	atomic.StoreUint32(&self.version, v+1)
-}
-
-func (self *SyncService) Version() uint32 {
-	return atomic.LoadUint32(&self.version)
 }
 
 func (self *SyncService) Start() error {
@@ -174,7 +164,7 @@ func (self *SyncService) startL1Sync() error {
 			writer.SetLastSyncedL1Timestamp(b.Timestamp)
 			writer.SetLastSyncedL1Hash(b.Hash)
 			writer.Commit()
-			self.updateVersion()
+			writer.SetL1DbVersion(writer.GetL1DbVersion() + 1)
 			log.Info("roll back")
 			continue
 		}

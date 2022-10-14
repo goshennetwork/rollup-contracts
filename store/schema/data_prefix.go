@@ -36,8 +36,9 @@ var (
 	L2CompactMerkleTreeKey             = []byte{0x17}
 	LastSyncedL2HeightKey              = []byte{0x18}
 	LastSyncedL1Hash                   = []byte{0x19}
-	HighestL1CheckPointInfo            = []byte{0x1a} //rollback to this l1 height point, this point is simply last LastSyncedL1Height
-	PendingL1CheckPointInfo            = []byte{0x1b}
+	HighestL1CheckPointInfoKey         = []byte{0x1a} //rollback to this l1 height point, this point is simply last LastSyncedL1Height
+	PendingL1CheckPointInfoKey         = []byte{0x1b}
+	L1DbVersionKey                     = []byte{0x1c}
 
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block

@@ -88,11 +88,15 @@ func (self *StorageWriter) SetLastSyncedL1Hash(hash web3.Hash) {
 }
 
 func (self *StorageWriter) SetHighestL1CheckPointInfo(info *schema.L1CheckPointInfo) {
-	self.overlay.Put(schema.HighestL1CheckPointInfo, codec.SerializeToBytes(info))
+	self.overlay.Put(schema.HighestL1CheckPointInfoKey, codec.SerializeToBytes(info))
 }
 
 func (self *StorageWriter) SetPendingL1CheckPointInfo(info *schema.L1CheckPointInfo) {
-	self.overlay.Put(schema.PendingL1CheckPointInfo, codec.SerializeToBytes(info))
+	self.overlay.Put(schema.PendingL1CheckPointInfoKey, codec.SerializeToBytes(info))
+}
+
+func (self *StorageWriter) SetL1DbVersion(version uint64) {
+	self.overlay.Put(schema.L1DbVersionKey, codec.NewZeroCopySink(nil).WriteUint64BE(version).Bytes())
 }
 
 // GetLastSyncedL1Timestamp get last synced l1 timestamp, if not exist, return nil
@@ -112,8 +116,17 @@ func (self *StorageWriter) Commit() {
 	self.overlay.CommitTo()
 }
 
+func (self *StorageWriter) GetL1DbVersion() uint64 {
+	v, err := self.overlay.Get(schema.L1DbVersionKey)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return 0
+	}
+	return codec.NewZeroCopyReader(v).ReadUint64BE()
+}
+
 func (self *StorageWriter) GetHighestL1CheckPointInfo() *schema.L1CheckPointInfo {
-	v, err := self.overlay.Get(schema.HighestL1CheckPointInfo)
+	v, err := self.overlay.Get(schema.HighestL1CheckPointInfoKey)
 	utils.Ensure(err)
 	if len(v) == 0 {
 		return nil
@@ -125,7 +138,7 @@ func (self *StorageWriter) GetHighestL1CheckPointInfo() *schema.L1CheckPointInfo
 }
 
 func (self *StorageWriter) GetPendingL1CheckPointInfo() *schema.L1CheckPointInfo {
-	v, err := self.overlay.Get(schema.PendingL1CheckPointInfo)
+	v, err := self.overlay.Get(schema.PendingL1CheckPointInfoKey)
 	utils.Ensure(err)
 	if len(v) == 0 {
 		return nil
