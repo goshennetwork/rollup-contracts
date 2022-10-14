@@ -83,6 +83,18 @@ func (self *StorageWriter) SetLastSyncedL1Timestamp(lastTimestamp uint64) {
 	self.overlay.Put(schema.LastSyncedL1TimestampKey, codec.NewZeroCopySink(nil).WriteUint64(lastTimestamp).Bytes())
 }
 
+func (self *StorageWriter) SetLastSyncedL1Hash(hash web3.Hash) {
+	self.overlay.Put(schema.LastSyncedL1Hash, codec.NewZeroCopySink(nil).WriteHash(hash).Bytes())
+}
+
+func (self *StorageWriter) SetHighestL1CheckPointInfo(info *schema.L1CheckPointInfo) {
+	self.overlay.Put(schema.HighestL1CheckPointInfo, codec.SerializeToBytes(info))
+}
+
+func (self *StorageWriter) SetPendingL1CheckPointInfo(info *schema.L1CheckPointInfo) {
+	self.overlay.Put(schema.PendingL1CheckPointInfo, codec.SerializeToBytes(info))
+}
+
 // GetLastSyncedL1Timestamp get last synced l1 timestamp, if not exist, return nil
 func (self *StorageWriter) GetLastSyncedL1Timestamp() *uint64 {
 	v, err := self.overlay.Get(schema.LastSyncedL1TimestampKey)
@@ -100,6 +112,42 @@ func (self *StorageWriter) Commit() {
 	self.overlay.CommitTo()
 }
 
+func (self *StorageWriter) GetHighestL1CheckPointInfo() *schema.L1CheckPointInfo {
+	v, err := self.overlay.Get(schema.HighestL1CheckPointInfo)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil
+	}
+	ret := new(schema.L1CheckPointInfo)
+	err = ret.Deserialization(codec.NewZeroCopySource(v))
+	utils.Ensure(err)
+	return ret
+}
+
+func (self *StorageWriter) GetPendingL1CheckPointInfo() *schema.L1CheckPointInfo {
+	v, err := self.overlay.Get(schema.PendingL1CheckPointInfo)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil
+	}
+	ret := new(schema.L1CheckPointInfo)
+	err = ret.Deserialization(codec.NewZeroCopySource(v))
+	utils.Ensure(err)
+	return ret
+}
+
+func (self *StorageWriter) GetLastSyncedL1Hash() web3.Hash {
+	v, err := self.overlay.Get(schema.LastSyncedL1Hash)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return web3.Hash{}
+	}
+	hash, err := codec.NewZeroCopySource(v).ReadHash()
+	utils.Ensure(err)
+
+	return hash
+}
+
 func (self *StorageWriter) GetLastSyncedL1Height() uint64 {
 	v, err := self.overlay.Get(schema.LastSyncedL1HeightKey)
 	utils.Ensure(err)
@@ -115,6 +163,7 @@ func (self *StorageWriter) GetLastSyncedL1Height() uint64 {
 func (self *StorageWriter) SetLastSyncedL2Height(height uint64) {
 	self.overlay.Put(schema.LastSyncedL2HeightKey, codec.NewZeroCopySink(nil).WriteUint64(height).Bytes())
 }
+
 func (self *StorageWriter) GetLastSyncedL2Height() uint64 {
 	v, err := self.overlay.Get(schema.LastSyncedL2HeightKey)
 	utils.Ensure(err)
@@ -146,6 +195,26 @@ func (self *StorageWriter) GetL2CompactMerkleTree() (uint64, []web3.Hash, error)
 		return 0, []web3.Hash{}, nil
 	}
 	return schema.DeserializeCompactMerkleTree(v)
+}
+
+// DirtyKeys suppose there is only write operation, just return all write key
+func (self *StorageWriter) DirtyKeys() [][]byte {
+	b := make([][]byte, 0, 1024)
+	self.overlay.(*overlaydb.OverlayDB).GetWriteSet().ForEach(
+		func(key, val []byte) {
+			if len(val) == 0 {
+				//suppose only support write operation just panic
+				panic(1)
+			}
+			_copy := make([]byte, len(key))
+			copy(_copy, key)
+			b = append(b, _copy)
+		})
+	return b
+}
+
+func (self *StorageWriter) DeleteKey(key []byte) {
+	self.overlay.Delete(key)
 }
 
 type ReadOnlyDB struct {

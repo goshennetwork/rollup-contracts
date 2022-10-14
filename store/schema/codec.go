@@ -275,3 +275,36 @@ func SerializeCompactMerkleTree(tree *merkle.CompactMerkleTree) []byte {
 	}
 	return value.Bytes()
 }
+
+type L1CheckPointInfo struct {
+	StartPoint uint64
+	EndPoint   uint64
+	DirtyKey   [][]byte
+}
+
+func (s *L1CheckPointInfo) OldEnough() bool {
+	return s.EndPoint >= s.StartPoint+32
+}
+func (s *L1CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.StartPoint)
+	sink.WriteUint64(s.EndPoint)
+	for _, key := range s.DirtyKey {
+		sink.WriteVarBytes(key)
+	}
+}
+
+func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err error) {
+	reader := source.Reader()
+	s.StartPoint = reader.ReadUint64()
+	s.EndPoint = reader.ReadUint64()
+	var keys [][]byte
+	for {
+		if reader.Len() == 0 { // nothing to read
+			break
+		}
+		key := reader.ReadVarBytes()
+		keys = append(keys, key)
+	}
+	s.DirtyKey = keys
+	return reader.Error()
+}
