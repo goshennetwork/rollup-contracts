@@ -134,10 +134,8 @@ func (self *SyncService) startL1Sync() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		if l1Height > self.conf.MinConfirmBlockNum {
-			l1Height -= self.conf.MinConfirmBlockNum
-		} else {
-			log.Warn("l1 block too low")
+		if isSetup && startHeight+self.conf.MinConfirmBlockNum < l1Height+2 { //only setup period make sure first 2 block must confirmed
+			log.Warn("l1 block too low,waiting..")
 			continue
 		}
 		endHeight, err := CalcEndBlock(startHeight, l1Height)
