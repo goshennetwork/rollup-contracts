@@ -280,6 +280,7 @@ type L1CheckPointInfo struct {
 	StartPoint uint64
 	EndPoint   uint64
 	DirtyKey   [][]byte
+	DirtyValue [][]byte
 }
 
 func (s *L1CheckPointInfo) OldEnough() bool {
@@ -291,20 +292,32 @@ func (s *L1CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
 	for _, key := range s.DirtyKey {
 		sink.WriteVarBytes(key)
 	}
+	for _, value := range s.DirtyValue {
+		sink.WriteVarBytes(value)
+	}
 }
 
 func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err error) {
 	reader := source.Reader()
 	s.StartPoint = reader.ReadUint64()
 	s.EndPoint = reader.ReadUint64()
-	var keys [][]byte
+	var all [][]byte
 	for {
 		if reader.Len() == 0 { // nothing to read
 			break
 		}
-		key := reader.ReadVarBytes()
-		keys = append(keys, key)
+		data := reader.ReadVarBytes()
+		all = append(all, data)
 	}
-	s.DirtyKey = keys
+	if len(all)%2 != 0 {
+		//should never happen
+		panic(1)
+	}
+	_copy := make([][]byte, len(all)/2)
+	copy(_copy, all[:len(all)/2])
+	s.DirtyKey = _copy
+	_copy = make([][]byte, len(all)/2)
+	copy(_copy, all[len(all)/2:])
+	s.DirtyValue = _copy
 	return reader.Error()
 }

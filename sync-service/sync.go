@@ -59,7 +59,7 @@ func (self *SyncService) Start() error {
 }
 
 // RollPending  try rollback pending and highest info, and return the start height
-func (self *SyncService) RollBack(writer *store.StorageWriter) uint64 {
+func RollBack(writer *store.StorageWriter) uint64 {
 	pendingInfo := writer.GetPendingL1CheckPointInfo()
 	if pendingInfo == nil { //if there is no pending info, wired, just panic
 		panic(1)
@@ -68,15 +68,17 @@ func (self *SyncService) RollBack(writer *store.StorageWriter) uint64 {
 	if highestInfo == nil { //if there is no highest info, wired just panic
 		panic(1)
 	}
-	for _, k := range pendingInfo.DirtyKey {
-		writer.DeleteKey(k)
+	for i := 0; i < len(pendingInfo.DirtyKey); i++ {
+		reverse := len(pendingInfo.DirtyKey) - 1 - i
+		writer.Cover(pendingInfo.DirtyKey[reverse], pendingInfo.DirtyValue[reverse])
 	}
-	for _, k := range highestInfo.DirtyKey {
-		writer.DeleteKey(k)
+	for i := 0; i < len(highestInfo.DirtyKey); i++ {
+		reverse := len(highestInfo.DirtyKey) - 1 - i
+		writer.Cover(highestInfo.DirtyKey[reverse], highestInfo.DirtyValue[reverse])
 	}
 	//now clean confirm and pending info
-	writer.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil})
-	writer.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil})
+	writer.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil, nil})
+	writer.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil, nil})
 	return highestInfo.StartPoint
 }
 
@@ -114,6 +116,8 @@ func (self *SyncService) startL2Sync() error {
 
 func (self *SyncService) startL1Sync() error {
 	lastHeight := self.db.GetLastSyncedL1Height()
+	isSetup := lastHeight == 0
+	round := 0
 	startHeight := lastHeight + 1
 	for {
 		select {
@@ -142,6 +146,11 @@ func (self *SyncService) startL1Sync() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
+		//be sure setup first 2 round will not roll back.
+		if isSetup && round < 2 { //ez first 2 block
+			round++
+			endHeight = startHeight
+		}
 		//now check whether reorg first
 		lastHash := self.db.GetLastSyncedL1Hash()
 		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastHeight), false)
@@ -152,19 +161,19 @@ func (self *SyncService) startL1Sync() error {
 		}
 		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback to former 32 block simply
 			writer := self.db.Writer()
-			startHeight = self.RollBack(writer)
+			startHeight = RollBack(writer)
 			lastEnd := startHeight - 1
-			writer.SetLastSyncedL1Height(lastEnd)
 			b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastEnd), false)
 			if err != nil {
 				log.Warnf("l1 network err: %s", err)
 				time.Sleep(15 * time.Second)
 				continue
 			}
+			writer.SetLastSyncedL1Height(lastEnd)
 			writer.SetLastSyncedL1Timestamp(b.Timestamp)
 			writer.SetLastSyncedL1Hash(b.Hash)
-			writer.Commit()
 			writer.SetL1DbVersion(writer.GetL1DbVersion() + 1)
+			writer.Commit()
 			log.Info("roll back")
 			continue
 		}
@@ -202,34 +211,37 @@ func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
 	if err != nil {
 		return err
 	}
-	overlay.SetLastSyncedL1Timestamp(block.Timestamp)
-	overlay.SetLastSyncedL1Height(endHeight)
 	//now check point
 	highestCheckpointInfo := overlay.GetHighestL1CheckPointInfo()
+	dirtyk, dirtyv := overlay.Dirty()
 	if highestCheckpointInfo == nil { //first, just record as highest check point info
-		overlay.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{startHeight, endHeight, overlay.DirtyKeys()})
+		overlay.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{startHeight, endHeight, dirtyk, dirtyv})
 	} else {
 		pendingCheckpoint := overlay.GetPendingL1CheckPointInfo()
 		if pendingCheckpoint == nil {
 			//open a new pend
-			pendingCheckpoint = &schema.L1CheckPointInfo{startHeight, endHeight, nil}
+			pendingCheckpoint = &schema.L1CheckPointInfo{startHeight, endHeight + 1, nil, nil}
 		} else {
 			//check consistence of pending key
-			if pendingCheckpoint.StartPoint != startHeight { //wired should never happen
+			if pendingCheckpoint.EndPoint != startHeight { //wired should never happen
 				//not consistence
 				panic(1)
 			}
 		}
-		pendingCheckpoint.DirtyKey = append(pendingCheckpoint.DirtyKey, overlay.DirtyKeys()...)
-		pendingCheckpoint.EndPoint = endHeight
+		pendingCheckpoint.DirtyKey = append(pendingCheckpoint.DirtyKey, dirtyk...)
+		pendingCheckpoint.DirtyValue = append(pendingCheckpoint.DirtyValue, dirtyv...)
+		pendingCheckpoint.EndPoint = endHeight + 1
 		if pendingCheckpoint.OldEnough() { //reached, just make pending to highest
 			overlay.SetHighestL1CheckPointInfo(pendingCheckpoint)
 			//remove pending info, next pending start is end +1
-			overlay.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{endHeight + 1, endHeight + 1, nil})
+			overlay.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{endHeight + 1, endHeight + 1, nil, nil})
 		} else { //not reach height, just add to pending
 			overlay.SetPendingL1CheckPointInfo(pendingCheckpoint)
 		}
 	}
+	overlay.SetLastSyncedL1Timestamp(block.Timestamp)
+	overlay.SetLastSyncedL1Height(endHeight)
+	overlay.SetLastSyncedL1Hash(block.Hash)
 	overlay.Commit()
 	return nil
 }
@@ -401,7 +413,7 @@ func CalcEndBlock(start, largest uint64) (uint64, error) {
 	if largest < start {
 		return 0, fmt.Errorf("beyond: start %d, largest %d", start, largest)
 	}
-	calc := start + 32 //every 32 range
+	calc := start + 1024 // every 1024 range
 	if (calc) < largest {
 		return calc, nil
 	} else {

@@ -211,8 +211,9 @@ func (self *StorageWriter) GetL2CompactMerkleTree() (uint64, []web3.Hash, error)
 }
 
 // DirtyKeys suppose there is only write operation, just return all write key
-func (self *StorageWriter) DirtyKeys() [][]byte {
+func (self *StorageWriter) Dirty() ([][]byte, [][]byte) {
 	b := make([][]byte, 0, 1024)
+	v := make([][]byte, 0, 1024)
 	self.overlay.(*overlaydb.OverlayDB).GetWriteSet().ForEach(
 		func(key, val []byte) {
 			if len(val) == 0 {
@@ -222,12 +223,22 @@ func (self *StorageWriter) DirtyKeys() [][]byte {
 			_copy := make([]byte, len(key))
 			copy(_copy, key)
 			b = append(b, _copy)
+
+			//copy old value
+			old, _ := self.overlay.(*overlaydb.OverlayDB).Store.Get(key)
+			_copy = make([]byte, len(old))
+			copy(_copy, old)
+			v = append(v, _copy)
 		})
-	return b
+	return b, v
 }
 
-func (self *StorageWriter) DeleteKey(key []byte) {
-	self.overlay.Delete(key)
+func (self *StorageWriter) Cover(key []byte, value []byte) {
+	if len(value) == 0 {
+		self.overlay.Delete(key)
+	} else {
+		self.overlay.Put(key, value)
+	}
 }
 
 type ReadOnlyDB struct {

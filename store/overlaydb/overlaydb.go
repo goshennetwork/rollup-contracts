@@ -25,7 +25,7 @@ import (
 )
 
 type OverlayDB struct {
-	store common.PersistStore
+	Store common.PersistStore
 	memdb *MemDB
 	dbErr error
 }
@@ -35,7 +35,7 @@ const initkvNum = 128
 
 func NewOverlayDB(store common.PersistStore) *OverlayDB {
 	return &OverlayDB{
-		store: store,
+		Store: store,
 		memdb: NewMemDB(initCap, initkvNum),
 	}
 }
@@ -60,7 +60,7 @@ func (self *OverlayDB) Get(key []byte) (value []byte, err error) {
 		return value, nil
 	}
 
-	value, err = self.store.Get(key)
+	value, err = self.Store.Get(key)
 	if err != nil {
 		if err == common.ErrNotFound {
 			return nil, nil
@@ -90,7 +90,7 @@ func (self *OverlayDB) CommitTo() {
 			batch.Put(key, val)
 		}
 	})
-	if err := self.store.BatchCommit(batch); err != nil {
+	if err := self.Store.BatchCommit(batch); err != nil {
 		panic(err)
 	}
 }
@@ -102,7 +102,7 @@ func (self *OverlayDB) GetWriteSet() *MemDB {
 // param key is referenced by iterator
 func (self *OverlayDB) NewIterator(key []byte) common.StoreIterator {
 	prefixRange := util.BytesPrefix(key)
-	backIter := self.store.NewIterator(key)
+	backIter := self.Store.NewIterator(key)
 	memIter := self.memdb.NewIterator(prefixRange)
 
 	return NewJoinIter(memIter, backIter)
