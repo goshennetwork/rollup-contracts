@@ -18,23 +18,25 @@ import (
 )
 
 type SyncService struct {
-	conf     *config.RollupCliConfig
-	l1client *jsonrpc.Client
-	l2client *jsonrpc.Client
-	db       *store.Storage
-	quit     chan struct{}
-	wg       sync.WaitGroup
-	running  uint32
+	conf      *config.RollupCliConfig
+	l1client  *jsonrpc.Client
+	l2client  *jsonrpc.Client
+	db        *store.Storage
+	quit      chan struct{}
+	wg        sync.WaitGroup
+	dirtyLock *sync.Mutex
+	running   uint32
 }
 
-func NewSyncService(diskdb schema.PersistStore,
+func NewSyncService(diskdb schema.PersistStore, dirtyLock *sync.Mutex,
 	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig) *SyncService {
 	return &SyncService{
-		db:       store.NewStorage(diskdb),
-		conf:     cfg,
-		l1client: l1client,
-		l2client: l2client,
-		quit:     make(chan struct{}),
+		db:        store.NewStorage(diskdb),
+		conf:      cfg,
+		l1client:  l1client,
+		l2client:  l2client,
+		quit:      make(chan struct{}),
+		dirtyLock: dirtyLock,
 	}
 }
 
@@ -134,7 +136,7 @@ func (self *SyncService) startL1Sync() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		if isSetup && startHeight+self.conf.MinConfirmBlockNum < l1Height+2 { //only setup period make sure first 2 block must confirmed
+		if isSetup && startHeight+self.conf.MinConfirmBlockNum+2 > l1Height { //only setup period make sure first 2 block must confirmed
 			log.Warn("l1 block too low,waiting..")
 			continue
 		}
@@ -151,18 +153,24 @@ func (self *SyncService) startL1Sync() error {
 		}
 		//now check whether reorg first
 		lastHash := self.db.GetLastSyncedL1Hash()
-		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastHeight), false)
+		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(startHeight-1), false)
 		if err != nil {
 			log.Warnf("l1 network err: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback to former 32 block simply
+		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback, make sure grap the del lock,
+			//which will make change history record
+			self.dirtyLock.Lock()
+
 			writer := self.db.Writer()
 			startHeight = RollBack(writer)
 			lastEnd := startHeight - 1
 			b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastEnd), false)
 			if err != nil {
+				//unlock
+				self.dirtyLock.Unlock()
+
 				log.Warnf("l1 network err: %s", err)
 				time.Sleep(15 * time.Second)
 				continue
@@ -172,6 +180,8 @@ func (self *SyncService) startL1Sync() error {
 			writer.SetLastSyncedL1Hash(b.Hash)
 			writer.SetL1DbVersion(writer.GetL1DbVersion() + 1)
 			writer.Commit()
+			self.dirtyLock.Unlock()
+
 			log.Info("roll back")
 			continue
 		}

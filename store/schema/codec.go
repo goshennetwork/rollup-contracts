@@ -321,3 +321,20 @@ func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err er
 	s.DirtyValue = _copy
 	return reader.Error()
 }
+
+type L2CheckPointInfo struct {
+	StartPoint    uint64
+	MaxBatchIndex uint64
+}
+
+func (s *L2CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.StartPoint)
+	sink.WriteUint64(s.MaxBatchIndex)
+}
+
+func (s *L2CheckPointInfo) Deserialization(source *codec.ZeroCopySource) error {
+	reader := source.Reader()
+	s.StartPoint = reader.ReadUint64()
+	s.MaxBatchIndex = reader.ReadUint64()
+	return reader.Error()
+}

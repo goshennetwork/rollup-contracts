@@ -17,10 +17,8 @@ const (
 	L2WitnessSentMessageKey = 0x0D
 
 	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
-	L2ClientProofPrefix         = 0x11 //batch index -> read-storage-proof
-
-	L1MMRDataPrefix = 0x16
-	L2MMRDataPrefix = 0x17
+L2ClientProofPrefix         = 0x11 //batch index -> read-storage-proof	L1MMRDataPrefix             = 0x16
+	L2MMRDataPrefix             = 0x17
 
 	AddressNamePrefix = 0x20 // name -> address
 )
@@ -42,4 +40,7 @@ var (
 
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block
+	L2ClientVersion          = []byte{0x22} //-> l2 client version
+	L2ClientConfirmPoint     = []byte{0x23} // -> l2 client confirm point info
+	L2ClientPendingPoint     = []byte{0x24} // -> l2 client pending point info
 )
