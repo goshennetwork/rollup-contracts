@@ -88,22 +88,6 @@ func (self *Store) GetPendingCheckPoint() *schema.L2CheckPointInfo {
 	return d
 }
 
-func (self *Store) StoreConfirmCheckpoint(info *schema.L2CheckPointInfo) {
-	self.store.Put(schema.L2ClientConfirmPoint, codec.SerializeToBytes(info))
-}
-
-func (self *Store) GetConfirmCheckPoint() *schema.L2CheckPointInfo {
-	v, err := self.store.Get(schema.L2ClientConfirmPoint)
-	utils.Ensure(err)
-	if len(v) == 0 {
-		return &schema.L2CheckPointInfo{}
-	}
-	d := new(schema.L2CheckPointInfo)
-	err = d.Deserialization(codec.NewZeroCopySource(v))
-	utils.Ensure(err)
-	return d
-}
-
 func (self *Store) StoreCheckedBlockNum(batchIndex, blockNum uint64) {
 	self.store.Put(genBatchIndexKey(batchIndex), codec.NewZeroCopySink(nil).WriteUint64(blockNum).Bytes())
 }

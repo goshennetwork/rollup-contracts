@@ -41,6 +41,5 @@ var (
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block
 	L2ClientVersion          = []byte{0x22} //-> l2 client version
-	L2ClientConfirmPoint     = []byte{0x23} // -> l2 client confirm point info
-	L2ClientPendingPoint     = []byte{0x24} // -> l2 client pending point info
+	L2ClientPendingPoint     = []byte{0x23} // -> l2 client pending point info
 )

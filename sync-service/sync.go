@@ -193,6 +193,7 @@ func (self *SyncService) startL1Sync() error {
 			continue
 		}
 		startHeight = endHeight + 1
+		isSetup = false
 		log.Debugf("l1 sync to :%d", endHeight)
 	}
 }
