@@ -1,9 +1,12 @@
 package binding
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
 
+	"github.com/andybalholm/brotli"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/laizy/web3"
@@ -114,8 +117,24 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte) error {
 	}
 
 	version := reader.ReadUint8()
-	if version != 0 {
-		return fmt.Errorf("unknown batch version: %d", version)
+	// filter out err first, cause follows may change reader
+	if reader.Error() != nil {
+		return reader.Error()
+	}
+
+codeSelctor:
+	switch version {
+	case 0: //normal, use origin reader
+		break codeSelctor
+	case 1: // brotli, decode to rlp code first, then replace reader to handle as normal
+		if reader.Len() == 0 {
+			return fmt.Errorf("no brotli code")
+		}
+		brotliCode := b[reader.Pos():]
+		rlpcode, err := ioutil.ReadAll(brotli.NewReader())
+
+	default:
+		return fmt.Errorf("unsupported version %d", version)
 	}
 
 	rawBatchesData := reader.ReadBytes(reader.Len())
@@ -139,7 +158,6 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte) error {
 		})
 	}
 
-	return nil
 }
 
 // decode batch info and check in info correctness
