@@ -199,8 +199,12 @@ func (self *SyncService) startL1Sync() error {
 }
 
 func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
+	block, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(endHeight), false) // get block first
+	if err != nil {
+		return err
+	}
 	overlay := self.db.Writer()
-	err := self.syncRollupInputChain(overlay, startHeight, endHeight)
+	err = self.syncRollupInputChain(overlay, startHeight, endHeight)
 	if err != nil {
 		return err
 	}
@@ -213,10 +217,6 @@ func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
 		return err
 	}
 	err = self.syncL1Bridge(overlay, startHeight, endHeight)
-	if err != nil {
-		return err
-	}
-	block, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(endHeight), false)
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,6 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		// get transaction
 		tx, err := self.l1client.Eth().GetTransactionByHash(batch.Raw.TransactionHash)
 		if err != nil {
-			log.Errorf("sync fetch sequenced batch tx, %s", err)
 			return err
 		}
 		txs = append(txs, tx)
@@ -290,8 +289,7 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		utils.Ensure(err)
 		b := &binding.RollupInputBatches{}
 		if err := b.Decode(batchData); err != nil {
-			log.Errorf("decode input batches failed, err: %s", err)
-			return err
+			return fmt.Errorf("decode input batches failed, err: %s", err)
 		}
 		queueHash := schema.CalcQueueHash(nil)
 		if b.QueueNum > 0 {
