@@ -323,18 +323,21 @@ func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err er
 }
 
 type L2CheckPointInfo struct {
-	StartPoint    uint64
-	MaxBatchIndex uint64
+	StartPoint  uint64
+	BatchIndex  uint64
+	BlockNumber uint64
 }
 
 func (s *L2CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
 	sink.WriteUint64(s.StartPoint)
-	sink.WriteUint64(s.MaxBatchIndex)
+	sink.WriteUint64(s.BatchIndex)
+	sink.WriteUint64(s.BlockNumber)
 }
 
 func (s *L2CheckPointInfo) Deserialization(source *codec.ZeroCopySource) error {
 	reader := source.Reader()
 	s.StartPoint = reader.ReadUint64()
-	s.MaxBatchIndex = reader.ReadUint64()
+	s.BatchIndex = reader.ReadUint64()
+	s.BlockNumber = reader.ReadUint64()
 	return reader.Error()
 }
