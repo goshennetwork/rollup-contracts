@@ -183,41 +183,6 @@ func (self *UploadBackend) runTxTask() {
 				first = false
 				ticker.Reset(time.Minute)
 			}
-			info, err := self.l2client.L2().GlobalInfo()
-			if err != nil {
-				log.Error("get l2 client info", "err", err)
-				continue
-			}
-			sss, _ := json.MarshalIndent(info, "", " ")
-			log.Debug("global info", "info", string(sss))
-			totalBatches, err := self.inputChain.ChainHeight()
-			if err != nil {
-				log.Error("l1 get input ChainHeight", "err", err)
-				continue
-			}
-			l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
-			if l2clientTotalBatches < totalBatches {
-				log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", uint64(info.L1InputInfo.TotalBatches))
-				continue
-			}
-			l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
-			if l2checkedBatchNum < totalBatches {
-				log.Warn("l2 client have not checked all batches", "checkedBatchNum", uint64(info.L2CheckedBatchNum), "l1 total batch", uint64(info.L1InputInfo.TotalBatches))
-				continue
-			}
-			pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
-			if err != nil {
-				log.Warn("l1 get pending queue index", "err", err)
-				continue
-			}
-			if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
-				log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", uint64(info.L1InputInfo.PendingQueueIndex))
-				continue
-			}
-			if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
-				log.Warn("no block to append", "l2 checked block num", uint64(info.L2CheckedBlockNum), "head block number", uint64(info.L2HeadBlockNumber))
-				continue
-			}
 
 			//may happen in situation of async
 			if batchCode, err := self.l2client.L2().GetPendingTxBatches(); err != nil {
@@ -240,6 +205,69 @@ func (self *UploadBackend) runTxTask() {
 			}
 		}
 	}
+}
+
+func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, error) {
+	info, err := self.l2client.L2().GlobalInfo()
+	if err != nil {
+		return nil, fmt.Errorf("get l2 client info: %w", err)
+	}
+	log.Debug("global info", "info", utils.JsonString(info))
+	totalBatches, err := self.inputChain.ChainHeight()
+	if err != nil {
+		return nil, fmt.Errorf("l1 get input ChainHeight: %w", err)
+	}
+	l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
+	if l2clientTotalBatches < totalBatches {
+		return nil, fmt.Errorf("total batches not equal, waiting..., l1 total input batch num: %d, l2 synced total batch num: %d", totalBatches, uint64(info.L1InputInfo.TotalBatches))
+	}
+	l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
+	if l2checkedBatchNum < totalBatches {
+		return nil, fmt.Errorf("l2 client have not checked all batches, checkedBatchNum: %d, l1 total batch: %d", uint64(info.L2CheckedBatchNum), uint64(info.L1InputInfo.TotalBatches))
+	}
+	pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
+	if err != nil {
+		return nil, fmt.Errorf("l1 get pending queue index: %w", err)
+	}
+	if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex { //waiting l2 client catch up to newest state
+		return nil, fmt.Errorf("pending queue index not equal, waiting..., l1 pendingQueueIndex: %d, l2 synced pendingQueueIndex: %d", pendingQueueIndex, uint64(info.L1InputInfo.PendingQueueIndex))
+	}
+	if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
+		return nil, fmt.Errorf("no block to append, l2 checked block num: %d, head block number: %d", uint64(info.L2CheckedBlockNum), uint64(info.L2HeadBlockNumber))
+	}
+	l2CheckedBlockNum := uint64(info.L2CheckedBlockNum)
+	maxBlockes := uint64(info.L2HeadBlockNumber) - l2CheckedBlockNum + 1
+	//todo: now simple limit upload size.should limit calldata size instead
+	if maxBlockes > 512 {
+		maxBlockes = 512
+	}
+	//batches := &binding.RollupInputBatches{
+	//	QueueStart: uint64(info.L1InputInfo.PendingQueueIndex),
+	//	BatchIndex: uint64(info.L2CheckedBatchNum),
+	//}
+	//var batchesData []byte
+	//startQueueHeight, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(l2CheckedBlockNum-1), false)
+	//for i := uint64(0); i < maxBlockes; i++ {
+	//	blockNumber := i + l2CheckedBlockNum
+	//	block := self.EthBackend.BlockChain().GetBlockByNumber(blockNumber)
+	//	if block == nil { // should not happen except chain reorg
+	//		log.Warn("nil block", "blockNumber", blockNumber)
+	//		return nil
+	//	}
+	//	txs := block.Transactions()
+	//	l2txs := FilterOrigin(txs)
+	//	batches.QueueNum = block.Header().TotalExecutedQueueNum() - startQueueHeight
+	//	if len(l2txs) > 0 {
+	//		batches.SubBatches = append(batches.SubBatches, &binding.SubBatch{Timestamp: block.Time(), Txs: l2txs})
+	//	}
+	//	newBatch := batches.Encode()
+	//	if len(newBatch)+4 < consts.MaxRollupInputBatchSize {
+	//		batchesData = newBatch
+	//	}
+	//}
+	//log.Info("generate batch", "index", batches.BatchIndex, "size", len(batchesData))
+	//return batchesData
+
 }
 
 func (self *UploadBackend) Stop() error {
