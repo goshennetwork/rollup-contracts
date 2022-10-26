@@ -1,8 +1,9 @@
 package binding
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
 
@@ -15,6 +16,25 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
 )
+
+type CounterRead struct {
+	r       io.Reader
+	counter uint64
+	rawNum  uint64
+}
+
+func NewCounterReader(r io.Reader, limit uint64) io.Reader {
+	return &CounterRead{r, 0, limit}
+}
+
+func (self *CounterRead) Read(b []byte) (n int, e error) {
+	n, err := self.r.Read(b)
+	self.counter += uint64(n)
+	if self.counter > self.rawNum {
+		return n, fmt.Errorf("out of rawNum")
+	}
+	return n, err
+}
 
 // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
 // subBatchLeftTimeDiff([]uint32) + batchesData
@@ -131,8 +151,13 @@ codeSelctor:
 			return fmt.Errorf("no brotli code")
 		}
 		brotliCode := b[reader.Pos():]
-		rlpcode, err := ioutil.ReadAll(brotli.NewReader())
-
+		//now limit to 4 mb
+		rlpcode, err := ioutil.ReadAll(NewCounterReader(brotli.NewReader(bytes.NewReader(brotliCode)), 4*1024*1024))
+		if err != nil {
+			return err
+		}
+		//now transfer rlp code to reader
+		reader = codec.NewZeroCopyReader(rlpcode)
 	default:
 		return fmt.Errorf("unsupported version %d", version)
 	}
@@ -157,7 +182,7 @@ codeSelctor:
 			Txs:       b,
 		})
 	}
-
+	return nil
 }
 
 // decode batch info and check in info correctness
