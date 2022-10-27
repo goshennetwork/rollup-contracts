@@ -46,17 +46,18 @@ func (self *InputChain) GetInfo() *schema.InputChainInfo {
 	return bed
 }
 
-func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) {
+func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) error {
 	info := self.GetInfo()
 	for _, queue := range queues {
-		if info.QueueSize != queue.QueueIndex {
-			panic(fmt.Errorf("wrong queue index, expect: %d, found: %d", info.QueueSize, queue.QueueIndex))
+		if info.QueueSize != queue.QueueIndex { // check consistent, wired situation will happen when l1 roll back some block
+			return fmt.Errorf("wrong queue index, expect: %d, found: %d", info.QueueSize, queue.QueueIndex)
 		}
 		txn := schema.EnqueuedTransactionFromEvent(queue)
 		self.putEnqueuedTransaction(txn)
 		info.QueueSize += 1
 	}
 	self.putInfo(info)
+	return nil
 }
 
 func (self *InputChain) GetAppendedTransaction(index uint64) (*schema.AppendedTransaction, error) {
@@ -107,18 +108,20 @@ func (self *InputChain) GetEnqueuedTransactions(startIndex uint64, num uint64) (
 }
 
 //will update info in memory
-func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppendedEvent) {
+func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppendedEvent) error {
 	info := self.GetInfo()
 	for _, batch := range batches {
-		if batch.Index != info.TotalBatches {
-			panic(fmt.Errorf("wrong batch index, expect: %d, found: %d", info.TotalBatches, batch.Index))
+		if batch.Index != info.TotalBatches { //happen when roll back
+			return fmt.Errorf("wrong batch index, expect: %d, found: %d", info.TotalBatches, batch.Index)
 		}
 
 		// check the queue info
-		if info.PendingQueueIndex != batch.StartQueueIndex {
-			panic(fmt.Errorf("wrong start queue index, expect:%d, found:%d", info.PendingQueueIndex, batch.StartQueueIndex))
+		if info.PendingQueueIndex != batch.StartQueueIndex { // wired batch
+			return fmt.Errorf("wrong start queue index, expect:%d, found:%d", info.PendingQueueIndex, batch.StartQueueIndex)
 		}
-		utils.EnsureTrue(info.PendingQueueIndex+batch.QueueNum <= info.QueueSize)
+		if info.PendingQueueIndex+batch.QueueNum > info.QueueSize { // reach unlocated queue, wired
+			return fmt.Errorf("wired batch or queue found, local queue size: %d, batch queue num: %d, pending queue index: %d", info.QueueSize, batch.QueueNum, info.PendingQueueIndex)
+		}
 
 		txn := &schema.AppendedTransaction{
 			Proposer:        batch.Proposer,
@@ -133,6 +136,7 @@ func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppe
 		info.PendingQueueIndex += batch.QueueNum
 	}
 	self.putInfo(info)
+	return nil
 }
 
 //returned data already trim function selector in calldata

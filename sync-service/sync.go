@@ -10,11 +10,15 @@ import (
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/jsonrpc"
-	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
 	"github.com/ontology-layer-2/rollup-contracts/store"
 	"github.com/ontology-layer-2/rollup-contracts/store/schema"
+)
+
+var (
+	ErrNoBlock = errors.New("no block")
+	ErrNoTx    = errors.New("no transaction")
 )
 
 type SyncService struct {
@@ -154,7 +158,10 @@ func (self *SyncService) startL1Sync() error {
 		//now check whether reorg first
 		lastHash := self.db.GetLastSyncedL1Hash()
 		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(startHeight-1), false)
-		if err != nil {
+		if err != nil || b == nil {
+			if err == nil {
+				err = ErrNoBlock
+			}
 			log.Warnf("l1 network err: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
@@ -167,7 +174,10 @@ func (self *SyncService) startL1Sync() error {
 			startHeight = RollBack(writer)
 			lastEnd := startHeight - 1
 			b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastEnd), false)
-			if err != nil {
+			if err != nil || b == nil {
+				if err == nil {
+					err = ErrNoBlock
+				}
 				//unlock
 				self.dirtyLock.Unlock()
 
@@ -186,8 +196,7 @@ func (self *SyncService) startL1Sync() error {
 			continue
 		}
 
-		err = self.syncL1Contracts(startHeight, endHeight)
-		if err != nil {
+		if err := self.syncL1Contracts(startHeight, endHeight); err != nil {
 			log.Warnf("l1 sync error: %s", err)
 			time.Sleep(15 * time.Second)
 			continue
@@ -200,25 +209,24 @@ func (self *SyncService) startL1Sync() error {
 
 func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
 	block, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(endHeight), false) // get block first
-	if err != nil {
+	if err != nil || block == nil {
+		if err == nil {
+			err = ErrNoBlock
+		}
 		return err
 	}
 	overlay := self.db.Writer()
-	err = self.syncRollupInputChain(overlay, startHeight, endHeight)
-	if err != nil {
-		return err
+	if err := self.syncRollupInputChain(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync rollup input chain: %w", err)
 	}
-	err = self.syncRollupStateChain(overlay, startHeight, endHeight)
-	if err != nil {
-		return err
+	if err := self.syncRollupStateChain(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync rollup state chain: %w", err)
 	}
-	err = self.syncL1Witness(overlay, startHeight, endHeight)
-	if err != nil {
-		return err
+	if err := self.syncL1Witness(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync l1 witness: %w", err)
 	}
-	err = self.syncL1Bridge(overlay, startHeight, endHeight)
-	if err != nil {
-		return err
+	if err := self.syncL1Bridge(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync l1 bridge: %w", err)
 	}
 	//now check point
 	highestCheckpointInfo := overlay.GetHighestL1CheckPointInfo()
@@ -271,22 +279,31 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 	for _, batch := range batches {
 		// get transaction
 		tx, err := self.l1client.Eth().GetTransactionByHash(batch.Raw.TransactionHash)
-		if err != nil {
+		if err != nil || tx == nil {
+			if err == nil {
+				err = ErrNoTx
+			}
 			return err
 		}
 		txs = append(txs, tx)
 		txBatchIndexes = append(txBatchIndexes, batch.Index)
 	}
 	inputStore := kvdb.InputChain()
-	inputStore.StoreEnqueuedTransaction(queues...)
-	inputStore.StoreSequencerBatches(batches...)
+	if err := inputStore.StoreEnqueuedTransaction(queues...); err != nil {
+		return err
+	}
+	if err := inputStore.StoreSequencerBatches(batches...); err != nil {
+		return err
+	}
 	inputStore.StoreSequencerBatchData(txs, txBatchIndexes)
 	info := inputStore.GetInfo()
 	log.Infof("queueTotalSize: %d, inputChain totalSize: %d", info.QueueSize, info.TotalBatches)
 	//now check
 	for _, batch := range batches {
 		batchData, err := inputStore.GetSequencerBatchData(batch.Index)
-		utils.Ensure(err)
+		if err != nil {
+			return err
+		}
 		b := &binding.RollupInputBatches{}
 		if err := b.Decode(batchData); err != nil {
 			return fmt.Errorf("decode input batches failed, err: %s", err)
@@ -323,11 +340,11 @@ func (self *SyncService) syncL1Bridge(kvdb *store.StorageWriter, startHeight, en
 	l1TokenBridge := binding.NewL1StandardBridge(self.conf.L1Addresses.L1StandardBridge, self.l1client)
 	depositEvts, err := l1TokenBridge.FilterDepositInitiatedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
-		return fmt.Errorf("syncL1Bridge: filter eth deposit, %s", err)
+		return fmt.Errorf("filter eth deposit, %s", err)
 	}
 	withdrawalEvts, err := l1TokenBridge.FilterWithdrawalFinalizedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
-		return fmt.Errorf("syncL1Bridge: filter eth withdrawal, %s", err)
+		return fmt.Errorf("filter eth withdrawal, %s", err)
 	}
 
 	l1BridgeStore := kvdb.L1TokenBridge()
@@ -347,10 +364,12 @@ func (self *SyncService) syncRollupStateChain(kvdb *store.StorageWriter, startHe
 	rollupStateContract := binding.NewRollupStateChain(self.conf.L1Addresses.RollupStateChain, self.l1client)
 	statesBatches, err := rollupStateContract.FilterStateBatchAppendedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
-		return err
+		return fmt.Errorf("filter state batch appended event: %w", err)
 	}
 	stateStore := kvdb.StateChain()
-	stateStore.StoreBatchInfo(statesBatches...)
+	if err := stateStore.StoreBatchInfo(statesBatches...); err != nil {
+		return fmt.Errorf("store batch info: %w", err)
+	}
 	info := stateStore.GetInfo()
 	log.Infof("total state chain size: %d", info.TotalSize)
 	return nil

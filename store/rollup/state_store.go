@@ -2,6 +2,7 @@ package rollup
 
 import (
 	"encoding/binary"
+	"errors"
 
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
@@ -28,14 +29,18 @@ func NewStateMemStore() *StateChain {
 }
 
 // update info in memory
-func (self *StateChain) StoreBatchInfo(states ...*binding.StateBatchAppendedEvent) {
+func (self *StateChain) StoreBatchInfo(states ...*binding.StateBatchAppendedEvent) error {
 	info := self.GetInfo()
 	for _, state := range states {
 		blockNumber := state.Raw.BlockNumber
-		utils.EnsureTrue(info.LastEventBlock < blockNumber || (info.LastEventBlock == blockNumber && info.LastEventIndex < state.Raw.LogIndex))
+		if !(info.LastEventBlock < blockNumber) && !(info.LastEventBlock == blockNumber && info.LastEventIndex < state.Raw.LogIndex) {
+			return errors.New("older state event found") //may happen when roll back happen, just return, re sync to check l1 block number
+		}
 
 		// rollback happend if info.TotalSize > state.StartIndex
-		utils.EnsureTrue(info.TotalSize >= state.StartIndex)
+		if info.TotalSize < state.StartIndex { // when a gap appear, maybe one mid block is rolled back
+			return errors.New("wired state found")
+		}
 		self.putStateBatchInfo(state)
 		info.TotalSize = state.StartIndex + uint64(len(state.BlockHash))
 		info.LastEventBlock = state.Raw.BlockNumber
@@ -43,6 +48,7 @@ func (self *StateChain) StoreBatchInfo(states ...*binding.StateBatchAppendedEven
 	}
 
 	self.StoreInfo(info)
+	return nil
 }
 
 func (self *StateChain) putStateBatchInfo(states *binding.StateBatchAppendedEvent) {

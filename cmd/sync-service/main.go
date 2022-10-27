@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"sync"
 
 	"github.com/laizy/log"
 	"github.com/laizy/web3/jsonrpc"
@@ -27,7 +28,7 @@ func main() {
 	l2client, err := jsonrpc.NewClient(cfg.L1Rpc)
 	utils.Ensure(err)
 	utils.Ensure(err)
-	syncService := sync_service.NewSyncService(db, l1client, l2client, &cfg)
+	syncService := sync_service.NewSyncService(db, &sync.Mutex{}, l1client, l2client, &cfg)
 	syncService.Start()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
