@@ -166,7 +166,7 @@ func (self *SyncService) startL1Sync() error {
 			time.Sleep(15 * time.Second)
 			continue
 		}
-		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback, make sure grap the del lock,
+		rollback := func() {
 			//which will make change history record
 			self.dirtyLock.Lock()
 
@@ -182,8 +182,7 @@ func (self *SyncService) startL1Sync() error {
 				self.dirtyLock.Unlock()
 
 				log.Warnf("l1 network err: %s", err)
-				time.Sleep(15 * time.Second)
-				continue
+				return
 			}
 			writer.SetLastSyncedL1Height(lastEnd)
 			writer.SetLastSyncedL1Timestamp(b.Timestamp)
@@ -191,13 +190,19 @@ func (self *SyncService) startL1Sync() error {
 			writer.SetL1DbVersion(writer.GetL1DbVersion() + 1)
 			writer.Commit()
 			self.dirtyLock.Unlock()
-
 			log.Info("roll back")
+			return
+		}
+
+		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback, make sure grap the del lock,
+			rollback()
 			continue
 		}
 
 		if err := self.syncL1Contracts(startHeight, endHeight); err != nil {
-			log.Warnf("l1 sync error: %s", err)
+			//wired situation happened ,try to rollback
+			log.Warnf("l1 sync error: %s,trying to rollback", err)
+			rollback()
 			time.Sleep(15 * time.Second)
 			continue
 		}
