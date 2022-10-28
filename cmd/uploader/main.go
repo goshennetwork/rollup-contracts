@@ -9,6 +9,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -238,6 +240,7 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 	batches := &binding.RollupInputBatches{
 		QueueStart: uint64(info.L1InputInfo.PendingQueueIndex),
 		BatchIndex: uint64(info.L2CheckedBatchNum),
+		Version:    binding.BrotliEncodeType, //use brotli
 	}
 	var batchesData []byte
 	startBlock, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(l2CheckedBlockNum-1), false)
@@ -256,7 +259,7 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 				err = ErrNoBlock
 			}
 		}
-		txs := block.Transactions
+		txs := FromWeb3Tx(block.Transactions)
 		l2txs := FilterOrigin(txs)
 		queueNum := block.Header.Difficulty.Uint64() - 1
 		batches.QueueNum = queueNum - startQueueHeight
@@ -303,10 +306,19 @@ func checkPermission(stakingManager *binding.StakingManager, whitelist *binding.
 	return nil
 }
 
-func FilterOrigin(txs []*web3.Transaction) []*web3.Transaction {
-	ret := make([]*web3.Transaction, 0, len(txs))
+func FromWeb3Tx(txs []*web3.Transaction) (ret []*types.Transaction) {
 	for _, tx := range txs {
-		if tx.Nonce >= 1<<63 { // is queue
+		n := new(types.Transaction)
+		utils.Ensure(rlp.DecodeBytes(tx.MarshalRLP(), &n))
+		ret = append(ret, n)
+	}
+	return
+}
+
+func FilterOrigin(txs []*types.Transaction) []*types.Transaction {
+	ret := make([]*types.Transaction, 0, len(txs))
+	for _, tx := range txs {
+		if tx.Nonce() >= 1<<63 { // is queue
 			continue
 		} else {
 			ret = append(ret, tx)
