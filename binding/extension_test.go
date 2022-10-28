@@ -5,21 +5,20 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/laizy/web3"
 )
 
 func TestInputBatchCodec(t *testing.T) {
-	txData := &types.LegacyTx{}
 
 	testCase := []*RollupInputBatches{
 		{ //only 2 sub batch
 			SubBatches: []*SubBatch{
 				{
-					Txs: []*types.Transaction{types.NewTx(txData)},
+					Txs: []*web3.Transaction{},
 				},
 				{
-					Txs: []*types.Transaction{types.NewTx(txData)},
+					Txs: []*web3.Transaction{},
 				},
 			},
 		},

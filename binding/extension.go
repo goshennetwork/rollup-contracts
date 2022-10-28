@@ -8,7 +8,6 @@ import (
 	"math"
 
 	"github.com/andybalholm/brotli"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -49,7 +48,7 @@ type RollupInputBatches struct {
 
 type SubBatch struct {
 	Timestamp uint64
-	Txs       []*types.Transaction
+	Txs       []*web3.Transaction
 }
 
 func (self *RollupInputBatches) Calldata() []byte {
@@ -74,7 +73,7 @@ func (self *RollupInputBatches) EncodeWithoutIndex() []byte {
 		return sink.WriteUint64BE(0).Bytes()
 	}
 	sink.WriteUint64BE(batchNum).WriteUint64BE(self.SubBatches[0].Timestamp)
-	txes := [][]*types.Transaction{self.SubBatches[0].Txs}
+	txes := [][]*web3.Transaction{self.SubBatches[0].Txs}
 	for i := 1; i < len(self.SubBatches); i++ {
 		b := self.SubBatches[i]
 		prev := self.SubBatches[i-1].Timestamp
@@ -93,6 +92,7 @@ func (self *RollupInputBatches) EncodeWithoutIndex() []byte {
 	return sink.Bytes()
 }
 
+//now use broli
 func (self *RollupInputBatches) Encode() []byte {
 	sink := codec.NewZeroCopySink(nil)
 	sink.WriteUint64BE(self.BatchIndex)
@@ -167,7 +167,7 @@ codeSelctor:
 		return reader.Error()
 	}
 
-	txs := make([][]*types.Transaction, 0)
+	txs := make([][]*web3.Transaction, 0)
 	err := rlp.DecodeBytes(rawBatchesData, &txs)
 	if err != nil {
 		return err

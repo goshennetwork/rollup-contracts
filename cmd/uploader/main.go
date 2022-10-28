@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -16,6 +16,10 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
+)
+
+var (
+	ErrNoBlock = errors.New("no block")
 )
 
 func main() {
@@ -185,22 +189,12 @@ func (self *UploadBackend) runTxTask() {
 			}
 
 			//may happen in situation of async
-			if batchCode, err := self.l2client.L2().GetPendingTxBatches(); err != nil {
+			if batch, err := self.getPendingTxBatches(); err != nil {
 				log.Error(err.Error())
 				continue
 			} else {
-				if len(batchCode) == 0 {
-					log.Warn("no batch code get")
-					continue
-				}
-				//try to decode fist
-				b := new(binding.RollupInputBatches)
-				if err := b.Decode(batchCode); err != nil {
-					log.Error("decode batchCode", "err", err)
-					continue
-				}
-				if err := self.AppendInputBatch(b); err != nil {
-					log.Error("append input batch failed", "batchIndex", b.BatchIndex, "err", err)
+				if err := self.AppendInputBatch(batch); err != nil {
+					log.Error("append input batch failed", "batchIndex", batch.BatchIndex, "err", err)
 				}
 			}
 		}
@@ -241,34 +235,48 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 	if maxBlockes > 512 {
 		maxBlockes = 512
 	}
-	//batches := &binding.RollupInputBatches{
-	//	QueueStart: uint64(info.L1InputInfo.PendingQueueIndex),
-	//	BatchIndex: uint64(info.L2CheckedBatchNum),
-	//}
-	//var batchesData []byte
-	//startQueueHeight, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(l2CheckedBlockNum-1), false)
-	//for i := uint64(0); i < maxBlockes; i++ {
-	//	blockNumber := i + l2CheckedBlockNum
-	//	block := self.EthBackend.BlockChain().GetBlockByNumber(blockNumber)
-	//	if block == nil { // should not happen except chain reorg
-	//		log.Warn("nil block", "blockNumber", blockNumber)
-	//		return nil
-	//	}
-	//	txs := block.Transactions()
-	//	l2txs := FilterOrigin(txs)
-	//	batches.QueueNum = block.Header().TotalExecutedQueueNum() - startQueueHeight
-	//	if len(l2txs) > 0 {
-	//		batches.SubBatches = append(batches.SubBatches, &binding.SubBatch{Timestamp: block.Time(), Txs: l2txs})
-	//	}
-	//	newBatch := batches.Encode()
-	//	if len(newBatch)+4 < consts.MaxRollupInputBatchSize {
-	//		batchesData = newBatch
-	//	}
-	//}
-	//log.Info("generate batch", "index", batches.BatchIndex, "size", len(batchesData))
-	//return batchesData
+	batches := &binding.RollupInputBatches{
+		QueueStart: uint64(info.L1InputInfo.PendingQueueIndex),
+		BatchIndex: uint64(info.L2CheckedBatchNum),
+	}
+	var batchesData []byte
+	startBlock, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(l2CheckedBlockNum-1), false)
+	if err != nil || startBlock == nil {
+		if err == nil {
+			err = ErrNoBlock
+		}
+		return nil, err
+	}
+	startQueueHeight := startBlock.Difficulty.Uint64() - 1
+	for i := uint64(0); i < maxBlockes; i++ {
+		blockNumber := i + l2CheckedBlockNum
+		block, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(blockNumber), true)
+		if err != nil || block == nil {
+			if err == nil {
+				err = ErrNoBlock
+			}
+		}
+		txs := block.Transactions
+		l2txs := FilterOrigin(txs)
+		queueNum := block.Header.Difficulty.Uint64() - 1
+		batches.QueueNum = queueNum - startQueueHeight
+		if len(l2txs) > 0 {
+			batches.SubBatches = append(batches.SubBatches, &binding.SubBatch{Timestamp: block.Timestamp, Txs: l2txs})
+		}
+		newBatch := batches.Encode()
+		if len(newBatch)+4 < MaxRollupInputBatchSize {
+			batchesData = newBatch
+		}
+	}
+	log.Info("generate batch", "index", batches.BatchIndex, "size", len(batchesData))
+	return batches, nil
 
 }
+
+const MaxL1TxSize = 128 * 1024
+const TxBaseSize = 213
+
+const MaxRollupInputBatchSize = MaxL1TxSize*48/128 - TxBaseSize // 48KB
 
 func (self *UploadBackend) Stop() error {
 	close(self.quit)
@@ -293,4 +301,16 @@ func checkPermission(stakingManager *binding.StakingManager, whitelist *binding.
 	}
 
 	return nil
+}
+
+func FilterOrigin(txs []*web3.Transaction) []*web3.Transaction {
+	ret := make([]*web3.Transaction, 0, len(txs))
+	for _, tx := range txs {
+		if tx.Nonce >= 1<<63 { // is queue
+			continue
+		} else {
+			ret = append(ret, tx)
+		}
+	}
+	return ret
 }
