@@ -197,7 +197,6 @@ codeSelctor:
 	if reader.Error() != nil {
 		return reader.Error()
 	}
-	fmt.Println("rawBatchesData: ", rawBatchesData)
 
 	txs := make([][]*types.Transaction, 0)
 	err := rlp.DecodeBytes(rawBatchesData, &txs)
