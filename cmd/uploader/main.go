@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
@@ -267,13 +268,20 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 			batches.SubBatches = append(batches.SubBatches, &binding.SubBatch{Timestamp: block.Timestamp, Txs: l2txs})
 		}
 		newBatch := batches.Encode()
-		if len(newBatch)+4 < MaxRollupInputBatchSize {
+		if len(newBatch)+4 < MaxRollupInputBatchSize && tryDecodeInRust(newBatch) == nil {
 			batchesData = newBatch
 		}
 	}
+	newBatches := &binding.RollupInputBatches{}
+	utils.Ensure(newBatches.Decode(batchesData))
 	log.Info("generate batch", "index", batches.BatchIndex, "size", len(batchesData))
-	return batches, nil
+	return newBatches, nil
+}
 
+func tryDecodeInRust(code []byte) error {
+	cmdName := "brotli-bin"
+	cmd := exec.Command(cmdName, fmt.Sprintf("%x", code))
+	return cmd.Run()
 }
 
 const MaxL1TxSize = 128 * 1024
