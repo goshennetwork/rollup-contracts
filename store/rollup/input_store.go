@@ -33,11 +33,24 @@ func (self *InputChain) putInfo(info *schema.InputChainInfo) {
 	self.store.Put(schema.CurrentRollupInputChainInfoKey, codec.SerializeToBytes(info))
 }
 
+func (self *InputChain) StoreQueueSize(size uint64) {
+	self.store.Put(schema.CurrentQueueSizeKey, codec.NewZeroCopySink(nil).WriteUint64BE(size).Bytes())
+}
+
+func (self *InputChain) QueueSize() uint64 {
+	data, err := self.store.Get(schema.CurrentQueueSizeKey)
+	utils.Ensure(err)
+	if len(data) == 0 { // not exist
+		return 0
+	}
+	return binary.BigEndian.Uint64(data)
+}
+
 func (self *InputChain) GetInfo() *schema.InputChainInfo {
 	data, err := self.store.Get(schema.CurrentRollupInputChainInfoKey)
 	utils.Ensure(err)
 	if len(data) == 0 { // not exist
-		return &schema.InputChainInfo{0, 0, 0}
+		return &schema.InputChainInfo{0, 0}
 	}
 	source := codec.NewZeroCopySource(data)
 	bed := &schema.InputChainInfo{}
@@ -47,16 +60,18 @@ func (self *InputChain) GetInfo() *schema.InputChainInfo {
 }
 
 func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) error {
-	info := self.GetInfo()
+	size := self.QueueSize()
 	for _, queue := range queues {
-		if info.QueueSize != queue.QueueIndex { // check consistent, wired situation will happen when l1 roll back some block
-			return fmt.Errorf("wrong queue index, expect: %d, found: %d", info.QueueSize, queue.QueueIndex)
+		if size > queue.QueueIndex { // check consistent, wired situation will happen when l1 roll back some block,but old queue is permitted.
+			return fmt.Errorf("wrong queue index, expect: %d, found: %d", size, queue.QueueIndex)
 		}
-		txn := schema.EnqueuedTransactionFromEvent(queue)
-		self.putEnqueuedTransaction(txn)
-		info.QueueSize += 1
+		if size == queue.QueueIndex { // only update, when equal
+			txn := schema.EnqueuedTransactionFromEvent(queue)
+			self.putEnqueuedTransaction(txn)
+			size += 1
+		}
 	}
-	self.putInfo(info)
+	self.StoreQueueSize(size)
 	return nil
 }
 
@@ -108,32 +123,37 @@ func (self *InputChain) GetEnqueuedTransactions(startIndex uint64, num uint64) (
 }
 
 //will update info in memory
-func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppendedEvent) error {
+func (self *InputChain) StoreSequencerBatches(queueSize uint64, batches ...*binding.InputBatchAppendedEvent) error {
 	info := self.GetInfo()
 	for _, batch := range batches {
-		if batch.Index != info.TotalBatches { //happen when roll back
+		if batch.Index > info.TotalBatches { //happen when roll back, old is permitted
 			return fmt.Errorf("wrong batch index, expect: %d, found: %d", info.TotalBatches, batch.Index)
 		}
 
 		// check the queue info
-		if info.PendingQueueIndex != batch.StartQueueIndex { // wired batch
+		if batch.StartQueueIndex > info.PendingQueueIndex { // wired batch
 			return fmt.Errorf("wrong start queue index, expect:%d, found:%d", info.PendingQueueIndex, batch.StartQueueIndex)
 		}
-		if info.PendingQueueIndex+batch.QueueNum > info.QueueSize { // reach unlocated queue, wired
-			return fmt.Errorf("wired batch or queue found, local queue size: %d, batch queue num: %d, pending queue index: %d", info.QueueSize, batch.QueueNum, info.PendingQueueIndex)
+		if batch.StartQueueIndex+batch.QueueNum > queueSize { // reach unlocated queue, wired
+			return fmt.Errorf("wired batch or queue found, local queue size: %d, batch queue num: %d, pending queue index: %d", queueSize, batch.QueueNum, info.PendingQueueIndex)
 		}
-
-		txn := &schema.AppendedTransaction{
-			Proposer:        batch.Proposer,
-			Index:           batch.Index,
-			StartQueueIndex: batch.StartQueueIndex,
-			QueueNum:        batch.QueueNum,
-			InputHash:       batch.InputHash,
+		if batch.Index == info.TotalBatches {
+			//now should consistent
+			if batch.StartQueueIndex != info.PendingQueueIndex {
+				//wired, mayble should never happen?
+				panic(1)
+			}
+			txn := &schema.AppendedTransaction{
+				Proposer:        batch.Proposer,
+				Index:           batch.Index,
+				StartQueueIndex: batch.StartQueueIndex,
+				QueueNum:        batch.QueueNum,
+				InputHash:       batch.InputHash,
+			}
+			self.store.Put(genRollupInputBatchKey(batch.Index), codec.SerializeToBytes(txn))
+			info.TotalBatches += 1
+			info.PendingQueueIndex += batch.QueueNum
 		}
-
-		self.store.Put(genRollupInputBatchKey(batch.Index), codec.SerializeToBytes(txn))
-		info.TotalBatches += 1
-		info.PendingQueueIndex += batch.QueueNum
 	}
 	self.putInfo(info)
 	return nil

@@ -24,7 +24,7 @@ func TestCtcStore_AppendSequencerBatch(t *testing.T) {
 	ctc := NewInputMemStore()
 	ctc.StoreEnqueuedTransaction(genQueueElement(0, 1, 1))
 	ctc.StoreEnqueuedTransaction(genQueueElement(1, 1, 1))
-	ctc.StoreSequencerBatches(genTransactionBatchInfo(0, 2, 0))
+	ctc.StoreSequencerBatches(0, genTransactionBatchInfo(0, 2, 0))
 }
 
 func genTransactionBatchInfo(batchIndex, batchSize, prevTotalElements uint64) *binding.InputBatchAppendedEvent {

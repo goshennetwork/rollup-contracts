@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/laizy/web3"
+	"github.com/laizy/web3/utils"
+	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/store"
 	"github.com/ontology-layer-2/rollup-contracts/store/leveldbstore"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type Client interface {
@@ -24,7 +25,7 @@ func (c *MockClient) GetBlockByNumber(i uint64) (web3.Hash, uint64) {
 func (c *MockClient) BlockNumber() uint64 {
 	seed := rand.New(rand.NewSource(time.Now().Unix() + int64(c.count)))
 	c.count += 1
-	if c.count > 2 && seed.Intn(2) == 1 { //50% to rollback
+	if c.count > 2 && seed.Intn(10) == 1 { //10% to rollback
 		var h web3.Hash
 		seed.Read(h[:])
 		c.hashes[c.count-1] = h
@@ -33,7 +34,7 @@ func (c *MockClient) BlockNumber() uint64 {
 }
 
 type MockClient struct {
-	hashes [10001]web3.Hash
+	hashes [50001]web3.Hash
 	count  uint64
 }
 
@@ -58,54 +59,37 @@ type rollbackService struct {
 
 func (self *rollbackService) syncL1Contracts(startHeight, endHeight uint64) error {
 	fmt.Println("start: ", startHeight, "end: ", endHeight)
-	overlay := self.db.Writer()
-	//only write ez key
-	overlay.L2Client().StoreTotalCheckedBatchNum(endHeight)
-	overlay.L2Client().StoreCheckedBlockNum(endHeight, endHeight+1)
-	//
-	bhash, btime := self.l1client.GetBlockByNumber(endHeight)
-	//now check point
-	highestCheckpointInfo := overlay.GetHighestL1CheckPointInfo()
-	dirtyk, dirtyv := overlay.Dirty()
-	if highestCheckpointInfo == nil { //first, just record as highest check point info
-		overlay.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{startHeight, endHeight, dirtyk, dirtyv})
-	} else {
-		pendingCheckpoint := overlay.GetPendingL1CheckPointInfo()
-		if pendingCheckpoint == nil {
-			//open a new pend
-			pendingCheckpoint = &schema.L1CheckPointInfo{startHeight, endHeight + 1, nil, nil}
-		} else {
-			//check consistence of pending key
-			if pendingCheckpoint.EndPoint != startHeight { //wired should never happen
-				//not consistence
-				panic(1)
-			}
-		}
-		pendingCheckpoint.DirtyKey = append(pendingCheckpoint.DirtyKey, dirtyk...)
-		pendingCheckpoint.DirtyValue = append(pendingCheckpoint.DirtyValue, dirtyv...)
-		pendingCheckpoint.EndPoint = endHeight + 1
-		if pendingCheckpoint.OldEnough() { //reached, just make pending to highest
-			overlay.SetHighestL1CheckPointInfo(pendingCheckpoint)
-			//remove pending info, next pending start is end +1
-			overlay.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{endHeight + 1, endHeight + 1, nil, nil})
-		} else { //not reach height, just add to pending
-			overlay.SetPendingL1CheckPointInfo(pendingCheckpoint)
-		}
+	hash, t := self.l1client.GetBlockByNumber(endHeight) // get block first
+	overlay1, overlay2, overlay3 := self.db.Writer(), self.db.Writer(), self.db.Writer()
+	overlay1.L2Client().StoreTotalCheckedBatchNum(endHeight)
+	overlay1.L2Client().StoreCheckedBlockNum(endHeight, endHeight+1)
+	queues := make([]*binding.TransactionEnqueuedEvent, endHeight-startHeight+1)
+	msgs := make([]*binding.MessageSentEvent, endHeight-startHeight+1)
+	for i, _ := range queues {
+		index := startHeight + uint64(i) - 1
+		queues[i] = &binding.TransactionEnqueuedEvent{QueueIndex: index}
+		msgs[i] = &binding.MessageSentEvent{MessageIndex: index, Raw: &web3.Log{}}
 	}
-	overlay.SetLastSyncedL1Timestamp(btime)
-	overlay.SetLastSyncedL1Height(endHeight)
-	overlay.SetLastSyncedL1Hash(bhash)
-	overlay.Commit()
+	utils.Ensure(overlay2.InputChain().StoreEnqueuedTransaction(queues...))
+	utils.Ensure(overlay3.L1CrossLayerWitness().StoreSentMessage(msgs))
+	overlay1.StoreHighestL1CheckPointInfo1(startHeight)
+	overlay2.StoreHighestL1CheckPointInfo2(startHeight)
+	overlay3.StoreHighestL1CheckPointInfo3(startHeight)
+	overlay3.Commit()
+	overlay2.Commit()
+	overlay1.SetLastSyncedL1Timestamp(t)
+	overlay1.SetLastSyncedL1Height(endHeight)
+	overlay1.SetLastSyncedL1Hash(hash)
+	overlay1.Commit()
 	return nil
 }
-
 func (self rollbackService) run() {
 	lastHeight := self.db.GetLastSyncedL1Height()
 	isSetup := lastHeight == 0
 	round := 0
 	startHeight := lastHeight + 1
 	for {
-		if startHeight >= 10000 {
+		if startHeight >= 50000 {
 			return
 		}
 
@@ -135,7 +119,9 @@ func (self rollbackService) run() {
 		bhash, _ := self.l1client.GetBlockByNumber(startHeight - 1)
 		if lastHash != (web3.Hash{}) && bhash != lastHash { //reorg happen, just rollback to former 32 block simply
 			writer := self.db.Writer()
-			startHeight = RollBack(writer)
+			startHeight = RollBack(writer, 1)
+			RollBack(writer, 2)
+			RollBack(writer, 3)
 			fmt.Println("roll back")
 			lastEnd := startHeight - 1
 			bhash, btime := self.l1client.GetBlockByNumber(lastEnd)

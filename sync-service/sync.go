@@ -65,27 +65,43 @@ func (self *SyncService) Start() error {
 }
 
 // RollPending  try rollback pending and highest info, and return the start height
-func RollBack(writer *store.StorageWriter) uint64 {
-	pendingInfo := writer.GetPendingL1CheckPointInfo()
-	if pendingInfo == nil { //if there is no pending info, wired, just panic
+func RollBack(writer *store.StorageWriter, f byte) uint64 {
+	switch f {
+	case 1:
+		info1 := writer.GetHighestL1CheckPointInfo1()
+		if info1 == nil { //wired, panic
+			panic(1)
+		}
+		for i := 0; i < len(info1.DirtyKey); i++ {
+			reverse := len(info1.DirtyKey) - 1 - i
+			writer.Cover(info1.DirtyKey[reverse], info1.DirtyValue[reverse])
+		}
+		return info1.StartPoint
+	case 2:
+		info2 := writer.GetHighestL1CheckPointInfo2()
+		if info2 == nil {
+			panic(1)
+		}
+		for i := 0; i < len(info2.DirtyKey); i++ {
+			reverse := len(info2.DirtyKey) - 1 - i
+			writer.Cover(info2.DirtyKey[reverse], info2.DirtyValue[reverse])
+		}
+		return info2.StartPoint
+
+	case 3:
+		info3 := writer.GetHighestL1CheckPointInfo3()
+
+		if info3 == nil {
+			panic(1)
+		}
+		for i := 0; i < len(info3.DirtyKey); i++ {
+			reverse := len(info3.DirtyKey) - 1 - i
+			writer.Cover(info3.DirtyKey[reverse], info3.DirtyValue[reverse])
+		}
+		return info3.StartPoint
+	default:
 		panic(1)
 	}
-	highestInfo := writer.GetHighestL1CheckPointInfo()
-	if highestInfo == nil { //if there is no highest info, wired just panic
-		panic(1)
-	}
-	for i := 0; i < len(pendingInfo.DirtyKey); i++ {
-		reverse := len(pendingInfo.DirtyKey) - 1 - i
-		writer.Cover(pendingInfo.DirtyKey[reverse], pendingInfo.DirtyValue[reverse])
-	}
-	for i := 0; i < len(highestInfo.DirtyKey); i++ {
-		reverse := len(highestInfo.DirtyKey) - 1 - i
-		writer.Cover(highestInfo.DirtyKey[reverse], highestInfo.DirtyValue[reverse])
-	}
-	//now clean confirm and pending info
-	writer.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil, nil})
-	writer.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{highestInfo.StartPoint, highestInfo.StartPoint, nil, nil})
-	return highestInfo.StartPoint
 }
 
 func (self *SyncService) startL2Sync() error {
@@ -122,6 +138,8 @@ func (self *SyncService) startL2Sync() error {
 
 func (self *SyncService) startL1Sync() error {
 	lastHeight := self.db.GetLastSyncedL1Height()
+	timer := time.NewTimer(0)
+	defer timer.Stop()
 	isSetup := lastHeight == 0
 	round := 0
 	startHeight := lastHeight + 1
@@ -129,7 +147,7 @@ func (self *SyncService) startL1Sync() error {
 		select {
 		case <-self.quit:
 			return nil
-		default:
+		case <-timer.C:
 		}
 		if startHeight < self.conf.DeployOnL1Height { //speedup
 			startHeight = self.conf.DeployOnL1Height
@@ -137,17 +155,17 @@ func (self *SyncService) startL1Sync() error {
 		l1Height, err := self.l1client.Eth().BlockNumber()
 		if err != nil {
 			log.Warnf("l1 get block number error: %s", err)
-			time.Sleep(15 * time.Second)
+			timer.Reset(2000)
 			continue
 		}
 		if isSetup && startHeight+self.conf.MinConfirmBlockNum+2 > l1Height { //only setup period make sure first 2 block must confirmed
 			log.Warn("l1 block too low,waiting..")
-			continue
+			timer.Reset(100)
 		}
 		endHeight, err := CalcEndBlock(startHeight, l1Height)
 		if err != nil {
 			log.Warnf("l1 sync service: %s", err)
-			time.Sleep(15 * time.Second)
+			timer.Reset(2000)
 			continue
 		}
 		//be sure setup first 2 round will not roll back.
@@ -155,23 +173,24 @@ func (self *SyncService) startL1Sync() error {
 			round++
 			endHeight = startHeight
 		}
-		//now check whether reorg first
-		lastHash := self.db.GetLastSyncedL1Hash()
 		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(startHeight-1), false)
 		if err != nil || b == nil {
 			if err == nil {
 				err = ErrNoBlock
 			}
 			log.Warnf("l1 network err: %s", err)
-			time.Sleep(15 * time.Second)
+			timer.Reset(2000)
 			continue
 		}
-		rollback := func() {
+		rollback := func(flag byte) {
+			if flag == 0 { //no need to rollback
+				return
+			}
 			//which will make change history record
 			self.dirtyLock.Lock()
 
 			writer := self.db.Writer()
-			startHeight = RollBack(writer)
+			startHeight = RollBack(writer, flag)
 			lastEnd := startHeight - 1
 			b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(lastEnd), false)
 			if err != nil || b == nil {
@@ -193,91 +212,122 @@ func (self *SyncService) startL1Sync() error {
 			log.Info("roll back")
 			return
 		}
-
-		if lastHash != (web3.Hash{}) && b.Hash != lastHash { //reorg happen, just rollback, make sure grap the del lock,
-			rollback()
-			continue
+		confirmedEndHeight := l1Height
+		if confirmedEndHeight > 32 {
+			confirmedEndHeight -= 32
+		}
+		confirmedLastHeight := self.db.GetConfirmedLastSyncedL1Height()
+		confirmedStartHeight := confirmedLastHeight + 1
+		if confirmedStartHeight < self.conf.DeployOnL1Height {
+			confirmedStartHeight = self.conf.DeployOnL1Height
+		}
+		confirmedEndHeight, err = CalcEndBlock(confirmedStartHeight, confirmedEndHeight)
+		if err == nil { //ignore confirmed calc block
+			if err := self.syncConfirmSyncL1Contracts(confirmedStartHeight, confirmedEndHeight); err != nil { //only network error
+				log.Warnf("sync confirmed l1 contract failed: %s", err) //confirmed sync do not effect unsafe sync
+			}
 		}
 
-		if err := self.syncL1Contracts(startHeight, endHeight); err != nil {
+		if flag, err := self.syncL1Contracts(startHeight, endHeight); err != nil {
 			//wired situation happened ,try to rollback
 			log.Warnf("l1 sync error: %s,trying to rollback", err)
-			rollback()
-			time.Sleep(15 * time.Second)
+			rollback(flag)
+			timer.Reset(2000)
 			continue
 		}
 		startHeight = endHeight + 1
 		isSetup = false
 		log.Debugf("l1 sync to :%d", endHeight)
+		timer.Reset(0)
 	}
 }
 
-func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) error {
+//duplicated sync is fine
+
+func (self *SyncService) syncConfirmSyncL1Contracts(startHeight, endHeight uint64) error {
+	overlay := self.db.Writer()
+	if err := self.syncRollupStateChain(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync rollup state chain: %w", err)
+	}
+	if err := self.syncL1Bridge(overlay, startHeight, endHeight); err != nil {
+		return fmt.Errorf("sync l1 bridge: %w", err)
+	}
+	overlay.StoreConfirmedLastSyncedL1Height(endHeight)
+	overlay.Commit()
+	return nil
+}
+
+func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) (byte, error) {
 	block, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(endHeight), false) // get block first
 	if err != nil || block == nil {
 		if err == nil {
 			err = ErrNoBlock
 		}
-		return err
+		return 0, err
 	}
-	overlay := self.db.Writer()
-	if err := self.syncRollupInputChain(overlay, startHeight, endHeight); err != nil {
-		return fmt.Errorf("sync rollup input chain: %w", err)
+	queueStore, inputBatchStore, crossLayerStore := self.db.Writer(), self.db.Writer(), self.db.Writer()
+	err, dirtyQueue := self.SyncRollupInputQueues(queueStore, startHeight, endHeight)
+	if err != nil {
+		return 1, fmt.Errorf("sync rollup input queue: %w", err)
 	}
-	if err := self.syncRollupStateChain(overlay, startHeight, endHeight); err != nil {
-		return fmt.Errorf("sync rollup state chain: %w", err)
+	err, dirtyInputBatch := self.syncRollupInputChainBatches(inputBatchStore, queueStore, startHeight, endHeight)
+	if err != nil {
+		return 2, fmt.Errorf("sync rollup input chain: %w", err)
 	}
-	if err := self.syncL1Witness(overlay, startHeight, endHeight); err != nil {
-		return fmt.Errorf("sync l1 witness: %w", err)
+	err, dirtyCrossLayer := self.syncL1Witness(crossLayerStore, startHeight, endHeight)
+	if err != nil {
+		return 3, fmt.Errorf("sync l1 witness: %w", err)
 	}
-	if err := self.syncL1Bridge(overlay, startHeight, endHeight); err != nil {
-		return fmt.Errorf("sync l1 bridge: %w", err)
+	if dirtyQueue {
+		queueStore.StoreHighestL1CheckPointInfo1(startHeight)
 	}
-	//now check point
-	highestCheckpointInfo := overlay.GetHighestL1CheckPointInfo()
-	dirtyk, dirtyv := overlay.Dirty()
-	if highestCheckpointInfo == nil { //first, just record as highest check point info
-		overlay.SetHighestL1CheckPointInfo(&schema.L1CheckPointInfo{startHeight, endHeight, dirtyk, dirtyv})
-	} else {
-		pendingCheckpoint := overlay.GetPendingL1CheckPointInfo()
-		if pendingCheckpoint == nil {
-			//open a new pend
-			pendingCheckpoint = &schema.L1CheckPointInfo{startHeight, endHeight + 1, nil, nil}
-		} else {
-			//check consistence of pending key
-			if pendingCheckpoint.EndPoint != startHeight { //wired should never happen
-				//not consistence
-				panic(1)
-			}
-		}
-		pendingCheckpoint.DirtyKey = append(pendingCheckpoint.DirtyKey, dirtyk...)
-		pendingCheckpoint.DirtyValue = append(pendingCheckpoint.DirtyValue, dirtyv...)
-		pendingCheckpoint.EndPoint = endHeight + 1
-		if pendingCheckpoint.OldEnough() { //reached, just make pending to highest
-			overlay.SetHighestL1CheckPointInfo(pendingCheckpoint)
-			//remove pending info, next pending start is end +1
-			overlay.SetPendingL1CheckPointInfo(&schema.L1CheckPointInfo{endHeight + 1, endHeight + 1, nil, nil})
-		} else { //not reach height, just add to pending
-			overlay.SetPendingL1CheckPointInfo(pendingCheckpoint)
-		}
+	if dirtyInputBatch {
+		inputBatchStore.StoreHighestL1CheckPointInfo2(startHeight)
 	}
-	overlay.SetLastSyncedL1Timestamp(block.Timestamp)
-	overlay.SetLastSyncedL1Height(endHeight)
-	overlay.SetLastSyncedL1Hash(block.Hash)
-	overlay.Commit()
-	return nil
+	if dirtyCrossLayer {
+		crossLayerStore.StoreHighestL1CheckPointInfo3(startHeight)
+	}
+	queueStore.Commit()
+	crossLayerStore.Commit()
+	inputBatchStore.SetLastSyncedL1Timestamp(block.Timestamp)
+	inputBatchStore.SetLastSyncedL1Height(endHeight)
+	inputBatchStore.SetLastSyncedL1Hash(block.Hash)
+	inputBatchStore.Commit()
+	return 0, nil
 }
 
-func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
+func (self *SyncService) SyncRollupInputQueues(kvdb *store.StorageWriter, startHeight, endHeight uint64) (error, bool) {
 	rollupInputContract := binding.NewRollupInputChain(self.conf.L1Addresses.RollupInputChain, self.l1client)
 	queues, err := rollupInputContract.FilterTransactionEnqueuedEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
-		return err
+		return err, false
 	}
+	if len(queues) > 0 {
+		//r1cs debug
+		lastQueue := queues[len(queues)-1]
+		log.Info("r1cs debug transaction enqueued event", "lastQueueIdex", lastQueue.QueueIndex, "lastBlockHash", lastQueue.Raw.BlockHash, "lastBlockNumber", lastQueue.Raw.BlockNumber)
+	}
+	inputStore := kvdb.InputChain()
+	beforeNum := inputStore.QueueSize()
+	if err := inputStore.StoreEnqueuedTransaction(queues...); err != nil {
+		return err, false
+	}
+	return nil, inputStore.QueueSize()-beforeNum > 0
+}
+
+func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, queueStore *store.StorageWriter, startHeight, endHeight uint64) (error, bool) {
+	rollupInputContract := binding.NewRollupInputChain(self.conf.L1Addresses.RollupInputChain, self.l1client)
+
 	batches, err := rollupInputContract.FilterInputBatchAppendedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
-		log.Errorf("sync fetch sequenced batch err:%s", err)
-		return err
+		log.Errorf("sync fetch sequenced batch err: %s", err)
+		return err, false
+	}
+	inputStore := kvdb.InputChain()
+	beforeNum := inputStore.GetInfo().TotalBatches
+	if len(batches) > 0 { //r1cs debug
+		last := batches[len(batches)-1]
+		log.Info("r1cs debug input batches event", "lastBatchIndex", last.Index, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber, "startBlockNumber", startHeight)
 	}
 	txs := make([]*web3.Transaction, 0)
 	txBatchIndexes := make([]uint64, 0)
@@ -288,57 +338,58 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 			if err == nil {
 				err = ErrNoTx
 			}
-			return err
+			return err, false
 		}
 		txs = append(txs, tx)
 		txBatchIndexes = append(txBatchIndexes, batch.Index)
 	}
-	inputStore := kvdb.InputChain()
-	if err := inputStore.StoreEnqueuedTransaction(queues...); err != nil {
-		return err
-	}
-	if err := inputStore.StoreSequencerBatches(batches...); err != nil {
-		return err
+	queueSize := queueStore.InputChain().QueueSize()
+	if err := inputStore.StoreSequencerBatches(queueSize, batches...); err != nil {
+		return err, false
 	}
 	inputStore.StoreSequencerBatchData(txs, txBatchIndexes)
 	info := inputStore.GetInfo()
-	log.Infof("queueTotalSize: %d, inputChain totalSize: %d", info.QueueSize, info.TotalBatches)
+	log.Infof("queueTotalSize: %d, inputChain totalSize: %d", queueSize, info.TotalBatches)
 	//now check
 	for _, batch := range batches {
 		batchData, err := inputStore.GetSequencerBatchData(batch.Index)
 		if err != nil {
-			return err
+			return err, false
 		}
 		b := &binding.RollupInputBatches{}
 		if err := b.Decode(batchData); err != nil {
-			return fmt.Errorf("decode input batches failed, err: %s", err)
+			return fmt.Errorf("decode input batches failed, err: %s", err), false
 		}
 		queueHash := schema.CalcQueueHash(nil)
 		if b.QueueNum > 0 {
-			queues, err := inputStore.GetEnqueuedTransactions(b.QueueStart, b.QueueNum)
+			queues, err := queueStore.InputChain().GetEnqueuedTransactions(b.QueueStart, b.QueueNum)
 			if err != nil {
-				return err
+				return err, false
 			}
 			queueHash = schema.CalcQueueHash(queues)
 		}
 		h := b.InputHash(queueHash)
 		if h != batch.InputHash {
-			return fmt.Errorf("get wrong input, expected hash:%x, but %x", batch.InputHash, h)
+			return fmt.Errorf("get wrong input, expected hash:%x, but %x", batch.InputHash, h), false
 		}
 	}
-	return nil
+
+	return nil, info.TotalBatches-beforeNum > 0
 }
 
-func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
+func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) (error, bool) {
 	l1Witness := binding.NewL1CrossLayerWitness(self.conf.L1Addresses.L1CrossLayerWitness, self.l1client)
 	l1SentMsgs, err := l1Witness.FilterMessageSentEvent(nil, nil, nil, startHeight, endHeight)
 	if err != nil {
-		return fmt.Errorf("syncL1Witness: filter sent message, %s", err)
+		return fmt.Errorf("syncL1Witness: filter sent message, %s", err), false
 	}
 	l1BridgeStore := kvdb.L1CrossLayerWitness()
-	l1BridgeStore.StoreSentMessage(l1SentMsgs)
+	beforeNum := l1BridgeStore.TotalMessage()
+	if err := l1BridgeStore.StoreSentMessage(l1SentMsgs); err != nil {
+		return fmt.Errorf("store sent message: %w", err), false
+	}
 	log.Infof("syncL1Witness: from %d to %d", startHeight, endHeight)
-	return nil
+	return nil, l1BridgeStore.TotalMessage()-beforeNum > 0
 }
 
 func (self *SyncService) syncL1Bridge(kvdb *store.StorageWriter, startHeight, endHeight uint64) error {
@@ -370,6 +421,10 @@ func (self *SyncService) syncRollupStateChain(kvdb *store.StorageWriter, startHe
 	statesBatches, err := rollupStateContract.FilterStateBatchAppendedEvent(nil, nil, startHeight, endHeight)
 	if err != nil {
 		return fmt.Errorf("filter state batch appended event: %w", err)
+	}
+	if len(statesBatches) > 0 { // r1cs debug
+		last := statesBatches[len(statesBatches)-1]
+		log.Info("r1cs debug state batches", "lastBatchIndex", last.StartIndex, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber)
 	}
 	stateStore := kvdb.StateChain()
 	if err := stateStore.StoreBatchInfo(statesBatches...); err != nil {

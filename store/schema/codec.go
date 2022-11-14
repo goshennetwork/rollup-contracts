@@ -138,20 +138,17 @@ func EnqueuedTransactionFromEvent(e *binding.TransactionEnqueuedEvent) *Enqueued
 type InputChainInfo struct {
 	PendingQueueIndex uint64
 	TotalBatches      uint64
-	QueueSize         uint64
 }
 
 func (i *InputChainInfo) Serialization(sink *codec.ZeroCopySink) {
 	sink.WriteUint64(i.PendingQueueIndex)
 	sink.WriteUint64(i.TotalBatches)
-	sink.WriteUint64(i.QueueSize)
 }
 
 func (i *InputChainInfo) DeSerialization(source *codec.ZeroCopySource) error {
 	reader := source.Reader()
 	i.PendingQueueIndex = reader.ReadUint64()
 	i.TotalBatches = reader.ReadUint64()
-	i.QueueSize = reader.ReadUint64()
 	return reader.Error()
 }
 
@@ -278,17 +275,12 @@ func SerializeCompactMerkleTree(tree *merkle.CompactMerkleTree) []byte {
 
 type L1CheckPointInfo struct {
 	StartPoint uint64
-	EndPoint   uint64
 	DirtyKey   [][]byte
 	DirtyValue [][]byte
 }
 
-func (s *L1CheckPointInfo) OldEnough() bool {
-	return s.EndPoint >= s.StartPoint+32
-}
 func (s *L1CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
 	sink.WriteUint64(s.StartPoint)
-	sink.WriteUint64(s.EndPoint)
 	for _, key := range s.DirtyKey {
 		sink.WriteVarBytes(key)
 	}
@@ -300,7 +292,6 @@ func (s *L1CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
 func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err error) {
 	reader := source.Reader()
 	s.StartPoint = reader.ReadUint64()
-	s.EndPoint = reader.ReadUint64()
 	var all [][]byte
 	for {
 		if reader.Len() == 0 { // nothing to read

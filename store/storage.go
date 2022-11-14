@@ -87,12 +87,61 @@ func (self *StorageWriter) SetLastSyncedL1Hash(hash web3.Hash) {
 	self.overlay.Put(schema.LastSyncedL1Hash, codec.NewZeroCopySink(nil).WriteHash(hash).Bytes())
 }
 
-func (self *StorageWriter) SetHighestL1CheckPointInfo(info *schema.L1CheckPointInfo) {
-	self.overlay.Put(schema.HighestL1CheckPointInfoKey, codec.SerializeToBytes(info))
+func (self *StorageWriter) StoreHighestL1CheckPointInfo1(start uint64) {
+	info := self.GetHighestL1CheckPointInfo1()
+	dirtyK, dirtyV := self.Dirty()
+	if info == nil {
+		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
+	} else {
+		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
+			info.DirtyKey = append(info.DirtyKey, dirtyK...)
+			info.DirtyValue = append(info.DirtyValue, dirtyV...)
+		}
+		if start > info.StartPoint {
+			//update info
+			info.StartPoint = start
+			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
+		}
+	}
+	self.overlay.Put(schema.HighestL1CheckPointInfo1Key, codec.SerializeToBytes(info))
 }
 
-func (self *StorageWriter) SetPendingL1CheckPointInfo(info *schema.L1CheckPointInfo) {
-	self.overlay.Put(schema.PendingL1CheckPointInfoKey, codec.SerializeToBytes(info))
+func (self *StorageWriter) StoreHighestL1CheckPointInfo2(start uint64) {
+	info := self.GetHighestL1CheckPointInfo2()
+	dirtyK, dirtyV := self.Dirty()
+	if info == nil {
+		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
+	} else {
+		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
+			info.DirtyKey = append(info.DirtyKey, dirtyK...)
+			info.DirtyValue = append(info.DirtyValue, dirtyV...)
+		}
+		if start > info.StartPoint {
+			//update info
+			info.StartPoint = start
+			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
+		}
+	}
+	self.overlay.Put(schema.HighestL1CheckPointInfo2Key, codec.SerializeToBytes(info))
+}
+
+func (self *StorageWriter) StoreHighestL1CheckPointInfo3(start uint64) {
+	info := self.GetHighestL1CheckPointInfo3()
+	dirtyK, dirtyV := self.Dirty()
+	if info == nil {
+		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
+	} else {
+		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
+			info.DirtyKey = append(info.DirtyKey, dirtyK...)
+			info.DirtyValue = append(info.DirtyValue, dirtyV...)
+		}
+		if start > info.StartPoint {
+			//update info
+			info.StartPoint = start
+			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
+		}
+	}
+	self.overlay.Put(schema.HighestL1CheckPointInfo3Key, codec.SerializeToBytes(info))
 }
 
 func (self *StorageWriter) SetL1DbVersion(version uint64) {
@@ -125,8 +174,8 @@ func (self *StorageWriter) GetL1DbVersion() uint64 {
 	return codec.NewZeroCopyReader(v).ReadUint64BE()
 }
 
-func (self *StorageWriter) GetHighestL1CheckPointInfo() *schema.L1CheckPointInfo {
-	v, err := self.overlay.Get(schema.HighestL1CheckPointInfoKey)
+func (self *StorageWriter) GetHighestL1CheckPointInfo1() *schema.L1CheckPointInfo {
+	v, err := self.overlay.Get(schema.HighestL1CheckPointInfo1Key)
 	utils.Ensure(err)
 	if len(v) == 0 {
 		return nil
@@ -137,8 +186,46 @@ func (self *StorageWriter) GetHighestL1CheckPointInfo() *schema.L1CheckPointInfo
 	return ret
 }
 
-func (self *StorageWriter) GetPendingL1CheckPointInfo() *schema.L1CheckPointInfo {
-	v, err := self.overlay.Get(schema.PendingL1CheckPointInfoKey)
+func (self *StorageWriter) GetHighestL1CheckStartPoint() uint64 {
+	min := uint64(1<<64 - 1)
+	info1 := self.GetHighestL1CheckPointInfo1()
+	info2 := self.GetHighestL1CheckPointInfo2()
+	info3 := self.GetHighestL1CheckPointInfo3()
+	if info1 == nil && info2 == nil && info3 == nil {
+		return 0
+	}
+	if info1 != nil {
+		if info1.StartPoint < min {
+			min = info1.StartPoint
+		}
+	}
+	if info2 != nil {
+		if info2.StartPoint < min {
+			min = info2.StartPoint
+		}
+	}
+	if info3 != nil {
+		if info3.StartPoint < min {
+			min = info3.StartPoint
+		}
+	}
+	return min
+}
+
+func (self *StorageWriter) GetHighestL1CheckPointInfo2() *schema.L1CheckPointInfo {
+	v, err := self.overlay.Get(schema.HighestL1CheckPointInfo2Key)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil
+	}
+	ret := new(schema.L1CheckPointInfo)
+	err = ret.Deserialization(codec.NewZeroCopySource(v))
+	utils.Ensure(err)
+	return ret
+}
+
+func (self *StorageWriter) GetHighestL1CheckPointInfo3() *schema.L1CheckPointInfo {
+	v, err := self.overlay.Get(schema.HighestL1CheckPointInfo3Key)
 	utils.Ensure(err)
 	if len(v) == 0 {
 		return nil
@@ -175,6 +262,22 @@ func (self *StorageWriter) GetLastSyncedL1Height() uint64 {
 
 func (self *StorageWriter) SetLastSyncedL2Height(height uint64) {
 	self.overlay.Put(schema.LastSyncedL2HeightKey, codec.NewZeroCopySink(nil).WriteUint64(height).Bytes())
+}
+
+func (self *StorageWriter) GetConfirmedLastSyncedL1Height() uint64 {
+	v, err := self.overlay.Get(schema.LastSyncConfirmedL1HeightKey)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return 0
+	}
+	height, err := codec.NewZeroCopySource(v).ReadUint64()
+	utils.Ensure(err)
+
+	return height
+}
+
+func (self *StorageWriter) StoreConfirmedLastSyncedL1Height(height uint64) {
+	self.overlay.Put(schema.LastSyncConfirmedL1HeightKey, codec.NewZeroCopySink(nil).WriteUint64(height).Bytes())
 }
 
 func (self *StorageWriter) GetLastSyncedL2Height() uint64 {
