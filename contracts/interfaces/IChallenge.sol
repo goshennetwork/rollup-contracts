@@ -128,4 +128,58 @@ interface IChallenge {
      * @param _stateInfo StateInfo to provide the New stateInfo
      */
     function claimChallengerWin(address _challenger, Types.StateInfo memory _stateInfo) external;
+
+    /**
+     * @dev get last selected node key of challenger
+     * @return the node key of specific challenger
+     * @notice the creator of challenger also recorded in here.
+     */
+    function lastSelectedNodeKey(address _challenger) external view returns (uint256);
+
+    /**
+     * @dev return challenge system info
+     * @return stateInfo state info of challenged state
+     * @return endStep system end step index
+     * @return systemStartState system start state
+     * @return systemEndState system end state
+     */
+    function systemInfo()
+        external
+        view
+        returns (
+            Types.StateInfo memory stateInfo,
+            uint128 endStep,
+            bytes32 systemStartState,
+            bytes32 systemEndState
+        );
+
+    /**
+     * @dev get dispute tree of specific node key
+     * @param _nodeKey the node key of dispute node in tree
+     * @return parent the node key of parent node,if this node is not exist, parent is zero
+     * @return challenger the challenger who open this node
+     * @return expireAfterBlock if l1 block number larger than this, then this node is expired
+     * @return midStateRoot the mid state root of this node
+     */
+    function disputeTree(uint256 _nodeKey)
+        external
+        view
+        returns (
+            uint256 parent,
+            address challenger,
+            uint256 expireAfterBlock,
+            bytes32 midStateRoot
+        );
+
+    /// @return stage of this challenge
+    function stage() external view returns (ChallengeStage);
+
+    /// @return claim status of this challenge
+    function claimStatus() external view returns (ClaimStatus);
+
+    /// @return in stage 1, the challenge expired after this block.
+    function expireAfterBlock() external view returns (uint256);
+
+    /// @return ask provided challenger can claim the cake or not
+    function canClaimTheCake(address _challenger) external view returns (bool);
 }
