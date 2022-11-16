@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	ErrNoBlock = errors.New("no block")
-	ErrNoTx    = errors.New("no transaction")
+	ErrNoBlock    = errors.New("no block")
+	ErrNoTx       = errors.New("no transaction")
+	ErrShortQueue = errors.New("shortage of queue")
 )
 
 type SyncService struct {
@@ -86,6 +87,7 @@ func RollBack(writer *store.StorageWriter, f byte) uint64 {
 			reverse := len(info2.DirtyKey) - 1 - i
 			writer.Cover(info2.DirtyKey[reverse], info2.DirtyValue[reverse])
 		}
+
 		return info2.StartPoint
 
 	case 3:
@@ -272,6 +274,9 @@ func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) (byte, e
 	}
 	err, dirtyInputBatch := self.syncRollupInputChainBatches(inputBatchStore, queueStore, startHeight, endHeight)
 	if err != nil {
+		if errors.Is(err, ErrShortQueue) {
+			return 1, fmt.Errorf("sync rollup input chain: %w", err)
+		}
 		return 2, fmt.Errorf("sync rollup input chain: %w", err)
 	}
 	err, dirtyCrossLayer := self.syncL1Witness(crossLayerStore, startHeight, endHeight)
@@ -344,6 +349,11 @@ func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, 
 		txBatchIndexes = append(txBatchIndexes, batch.Index)
 	}
 	queueSize := queueStore.InputChain().QueueSize()
+	for _, batch := range batches {
+		if batch.StartQueueIndex+batch.QueueNum > queueSize {
+			return ErrShortQueue, false
+		}
+	}
 	if err := inputStore.StoreSequencerBatches(queueSize, batches...); err != nil {
 		return err, false
 	}
