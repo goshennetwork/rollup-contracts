@@ -84,11 +84,9 @@ interface IMachineState {
 
     function readInput(bytes32 root) external view returns (bytes32);
 
-    function genReservedKey(uint32 addr) external pure returns (bytes memory);
+    function reserve(bytes32 root, uint32 addr) external returns (bytes32);
 
-    function lr(bytes32 root, uint32 addr) external returns (bytes32);
-
-    function sc(bytes32 root, uint32 addr) external returns (bytes32);
+    function unReserve(bytes32 root) external returns (bytes32);
 
     function isReserved(bytes32 root, uint32 addr) external view returns (bool);
 }

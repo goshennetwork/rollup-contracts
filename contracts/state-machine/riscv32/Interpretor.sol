@@ -363,16 +363,16 @@ contract Interpretor is IInterpretor, Initializable {
         uint32 result = t;
         if (fn7 == 2 && rs2 == 0) {
             //lr.w 从内存中地址为 x[rs1]中加载四个字节，符号位扩展后写入 x[rd]，并对这个内存字注册保留。
-            root = mstate.lr(root, vrs1);
+            root = mstate.reserve(root, vrs1);
         } else if (fn7 == 3) {
             //sc.w 内存地址 x[rs1]上存在加载保留，将 x[rs2]寄存器中的 4 字节数存入该地址。如果存入成功， 向寄存器 x[rd]中存入 0，否则存入一个非 0 的错误码
             result = mstate.isReserved(root, vrs1) ? 0 : 1;
             if (result == 0) {
                 t = vrs2;
-                root = mstate.sc(root, vrs1);
+                root = mstate.unReserve(root);
             }
         } else if (fn7 == 1) {
-            //amoswap.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 x[rs2]的值， 把 x[rd]设为 t
+            //amoswap.w : rd = M[rs1]; swap(rd, rs2); M[rs1] = rd
             t = vrs2;
         } else if (fn7 == 0) {
             //amoadd.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t+x[rs2]，把 x[rd] 设为符号位扩展的 t

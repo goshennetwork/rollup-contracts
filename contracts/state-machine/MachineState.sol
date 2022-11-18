@@ -160,23 +160,15 @@ contract MachineState is IMachineState {
         return hashdb.readInput(root);
     }
 
-    function genReservedKey(uint32 addr) public pure returns (bytes memory) {
-        return bytes.concat(bytes5(bytes4(addr)));
+    function reserve(bytes32 root, uint32 addr) public returns (bytes32) {
+        return hashdb.writeRegister(root, Register.REG_RESV, addr);
     }
 
-    function lr(bytes32 root, uint32 addr) public returns (bytes32) {
-        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes.concat(bytes1(uint8(1))), root);
-    }
-
-    function sc(bytes32 root, uint32 addr) public returns (bytes32) {
-        return MerkleTrie.update(hashdb, genReservedKey(addr), bytes.concat(bytes1(uint8(0))), root);
+    function unReserve(bytes32 root) public returns (bytes32) {
+        return hashdb.writeRegister(root, Register.REG_RESV, 0);
     }
 
     function isReserved(bytes32 root, uint32 addr) public view returns (bool) {
-        (bool exist, bytes memory value) = MerkleTrie.get(hashdb, genReservedKey(addr), root);
-        if (!exist) {
-            return false;
-        }
-        return bytes1(value) == bytes1(uint8(1));
+        return hashdb.readRegister(root, Register.REG_RESV) == addr;
     }
 }
