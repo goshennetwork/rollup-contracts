@@ -3,6 +3,7 @@ module github.com/ontology-layer-2/rollup-contracts
 go 1.16
 
 require (
+	github.com/andybalholm/brotli v1.0.4
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/laizy/log v0.1.0
 	github.com/laizy/web3 v0.1.14-0.20220801034644-528b47955083

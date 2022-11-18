@@ -2,13 +2,16 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -16,6 +19,10 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
+)
+
+var (
+	ErrNoBlock = errors.New("no block")
 )
 
 func main() {
@@ -183,64 +190,104 @@ func (self *UploadBackend) runTxTask() {
 				first = false
 				ticker.Reset(time.Minute)
 			}
-			info, err := self.l2client.L2().GlobalInfo()
-			if err != nil {
-				log.Error("get l2 client info", "err", err)
-				continue
-			}
-			sss, _ := json.MarshalIndent(info, "", " ")
-			log.Debug("global info", "info", string(sss))
-			totalBatches, err := self.inputChain.ChainHeight()
-			if err != nil {
-				log.Error("l1 get input ChainHeight", "err", err)
-				continue
-			}
-			l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
-			if l2clientTotalBatches < totalBatches {
-				log.Warn("total batches not equal, waiting...", "l1 total input batch num", totalBatches, "l2 synced total batch num", uint64(info.L1InputInfo.TotalBatches))
-				continue
-			}
-			l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
-			if l2checkedBatchNum < totalBatches {
-				log.Warn("l2 client have not checked all batches", "checkedBatchNum", uint64(info.L2CheckedBatchNum), "l1 total batch", uint64(info.L1InputInfo.TotalBatches))
-				continue
-			}
-			pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
-			if err != nil {
-				log.Warn("l1 get pending queue index", "err", err)
-				continue
-			}
-			if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex {
-				log.Warn("pending queue index not equal, waiting...", "l1 pendingQueueIndex", pendingQueueIndex, "l2 synced pendingQueueIndex", uint64(info.L1InputInfo.PendingQueueIndex))
-				continue
-			}
-			if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
-				log.Warn("no block to append", "l2 checked block num", uint64(info.L2CheckedBlockNum), "head block number", uint64(info.L2HeadBlockNumber))
-				continue
-			}
 
 			//may happen in situation of async
-			if batchCode, err := self.l2client.L2().GetPendingTxBatches(); err != nil {
+			if batch, err := self.getPendingTxBatches(); err != nil {
 				log.Error(err.Error())
 				continue
 			} else {
-				if len(batchCode) == 0 {
-					log.Warn("no batch code get")
-					continue
-				}
-				//try to decode fist
-				b := new(binding.RollupInputBatches)
-				if err := b.Decode(batchCode); err != nil {
-					log.Error("decode batchCode", "err", err)
-					continue
-				}
-				if err := self.AppendInputBatch(b); err != nil {
-					log.Error("append input batch failed", "batchIndex", b.BatchIndex, "err", err)
+				if err := self.AppendInputBatch(batch); err != nil {
+					log.Error("append input batch failed", "batchIndex", batch.BatchIndex, "err", err)
 				}
 			}
 		}
 	}
 }
+
+func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, error) {
+	info, err := self.l2client.L2().GlobalInfo()
+	if err != nil {
+		return nil, fmt.Errorf("get l2 client info: %w", err)
+	}
+	log.Debug("global info", "info", utils.JsonString(info))
+	totalBatches, err := self.inputChain.ChainHeight()
+	if err != nil {
+		return nil, fmt.Errorf("l1 get input ChainHeight: %w", err)
+	}
+	l2clientTotalBatches := uint64(info.L1InputInfo.TotalBatches)
+	if l2clientTotalBatches < totalBatches {
+		return nil, fmt.Errorf("total batches not equal, waiting..., l1 total input batch num: %d, l2 synced total batch num: %d", totalBatches, uint64(info.L1InputInfo.TotalBatches))
+	}
+	l2checkedBatchNum := uint64(info.L2CheckedBatchNum)
+	if l2checkedBatchNum < totalBatches {
+		return nil, fmt.Errorf("l2 client have not checked all batches, checkedBatchNum: %d, l1 total batch: %d", uint64(info.L2CheckedBatchNum), uint64(info.L1InputInfo.TotalBatches))
+	}
+	pendingQueueIndex, err := self.inputChain.PendingQueueIndex()
+	if err != nil {
+		return nil, fmt.Errorf("l1 get pending queue index: %w", err)
+	}
+	if uint64(info.L1InputInfo.PendingQueueIndex) != pendingQueueIndex { //waiting l2 client catch up to newest state
+		return nil, fmt.Errorf("pending queue index not equal, waiting..., l1 pendingQueueIndex: %d, l2 synced pendingQueueIndex: %d", pendingQueueIndex, uint64(info.L1InputInfo.PendingQueueIndex))
+	}
+	if info.L2HeadBlockNumber < info.L2CheckedBlockNum {
+		return nil, fmt.Errorf("no block to append, l2 checked block num: %d, head block number: %d", uint64(info.L2CheckedBlockNum), uint64(info.L2HeadBlockNumber))
+	}
+	l2CheckedBlockNum := uint64(info.L2CheckedBlockNum)
+	maxBlockes := uint64(info.L2HeadBlockNumber) - l2CheckedBlockNum + 1
+	//todo: now simple limit upload size.should limit calldata size instead
+	if maxBlockes > 512 {
+		maxBlockes = 512
+	}
+	batches := &binding.RollupInputBatches{
+		QueueStart: uint64(info.L1InputInfo.PendingQueueIndex),
+		BatchIndex: uint64(info.L2CheckedBatchNum),
+		Version:    binding.BrotliEncodeType, //use brotli
+	}
+	var batchesData []byte
+	startBlock, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(l2CheckedBlockNum-1), false)
+	if err != nil || startBlock == nil {
+		if err == nil {
+			err = ErrNoBlock
+		}
+		return nil, err
+	}
+	startQueueHeight := startBlock.Difficulty.Uint64() - 1
+	for i := uint64(0); i < maxBlockes; i++ {
+		blockNumber := i + l2CheckedBlockNum
+		block, err := self.l2client.Eth().GetBlockByNumber(web3.BlockNumber(blockNumber), true)
+		if err != nil || block == nil {
+			if err == nil {
+				err = ErrNoBlock
+			}
+		}
+		txs := FromWeb3Tx(block.Transactions)
+		l2txs := FilterOrigin(txs)
+		queueNum := block.Header.Difficulty.Uint64() - 1
+		batches.QueueNum = queueNum - startQueueHeight
+		if len(l2txs) > 0 {
+			batches.SubBatches = append(batches.SubBatches, &binding.SubBatch{Timestamp: block.Timestamp, Txs: l2txs})
+		}
+		newBatch := batches.Encode()
+		if len(newBatch)+4 < MaxRollupInputBatchSize && tryDecodeInRust(newBatch) == nil {
+			batchesData = newBatch
+		}
+	}
+	newBatches := &binding.RollupInputBatches{}
+	utils.Ensure(newBatches.Decode(batchesData))
+	log.Info("generate batch", "index", batches.BatchIndex, "size", len(batchesData))
+	return newBatches, nil
+}
+
+func tryDecodeInRust(code []byte) error {
+	cmdName := "brotli-bin"
+	cmd := exec.Command(cmdName, fmt.Sprintf("%x", code))
+	return cmd.Run()
+}
+
+const MaxL1TxSize = 128 * 1024
+const TxBaseSize = 213
+
+const MaxRollupInputBatchSize = MaxL1TxSize*48/128 - TxBaseSize // 48KB
 
 func (self *UploadBackend) Stop() error {
 	close(self.quit)
@@ -265,4 +312,25 @@ func checkPermission(stakingManager *binding.StakingManager, whitelist *binding.
 	}
 
 	return nil
+}
+
+func FromWeb3Tx(txs []*web3.Transaction) (ret []*types.Transaction) {
+	for _, tx := range txs {
+		n := new(types.Transaction)
+		utils.Ensure(rlp.DecodeBytes(tx.MarshalRLP(), &n))
+		ret = append(ret, n)
+	}
+	return
+}
+
+func FilterOrigin(txs []*types.Transaction) []*types.Transaction {
+	ret := make([]*types.Transaction, 0, len(txs))
+	for _, tx := range txs {
+		if tx.Nonce() >= 1<<63 { // is queue
+			continue
+		} else {
+			ret = append(ret, tx)
+		}
+	}
+	return ret
 }
