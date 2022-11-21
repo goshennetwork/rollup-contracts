@@ -122,12 +122,7 @@ func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer
 }
 
 func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
-	defer func() {
-		e := recover()
-		if e != nil {
-			err = fmt.Errorf("recover err: %s", e)
-		}
-	}()
+	//panic may happen when l1 rollback
 	txn := self.inputChain.AppendInputBatches(batches)
 	//use confirmed nonce
 	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
@@ -136,21 +131,47 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 	}
 	tx := txn.SetNonce(nonce).Sign(self.signer)
 	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
-	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
-	if err != nil {
+	txHash, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	if err != nil { // may happen when nonce equal
 		return err
 	}
 	log.Info("sending append inputBatch tx", "batchIndex", batches.BatchIndex)
-	return nil
+	return self.L1WaitTransactionConfirmed(txHash)
 }
 
-func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) (err error) {
-	defer func() {
-		e := recover()
-		if e != nil {
-			err = fmt.Errorf("recover err: %s", e)
+func (u *UploadBackend) L1WaitTransactionConfirmed(txHash web3.Hash) error {
+	client := u.l1client
+	ticker := time.NewTicker(5 * time.Second)
+	timeout := time.NewTimer(10 * time.Minute)
+	for {
+		select {
+		case <-u.quit:
+			return errors.New("closed")
+		case <-timeout.C:
+			return fmt.Errorf("wait tx %s timeout", txHash)
+		case <-ticker.C:
+			height, err := client.Eth().BlockNumber()
+			if err != nil {
+				log.Error("blockNumber", "err", err)
+				continue
+			}
+			r, err := client.Eth().GetTransactionReceipt(txHash)
+			if err != nil {
+				log.Debugf("GetTransactionReceipt: %w", err)
+				continue
+			}
+			if r != nil { // transaction included, make sure tx will not roll back, save gas
+				if r.BlockNumber+32 <= height { //confirmed
+					log.Infof("%s tx confirmed", txHash)
+					return nil
+				}
+			}
+			// not included, continue
 		}
-	}()
+	}
+}
+
+func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) error {
 	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
 	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
 	if err != nil { //network tolerate
@@ -158,12 +179,12 @@ func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint
 	}
 	tx := txn.SetNonce(nonce).Sign(self.signer)
 	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
-	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	txHash, err := self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
 	if err != nil {
 		return err
 	}
 	log.Info("sending append stateBatch tx", "batchIndex", startAt)
-	return nil
+	return self.L1WaitTransactionConfirmed(txHash)
 }
 
 func (self *UploadBackend) Start() error {
