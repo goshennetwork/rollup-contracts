@@ -72,9 +72,47 @@ func (self *Store) GetTotalCheckedBlockNum(batchIndex uint64) uint64 {
 	return d
 }
 
+func (self *Store) StoreReadStorageProof(batchIndex uint64, proofs [][]byte) {
+	sink := codec.NewZeroCopySink(nil)
+	sink.WriteUint64(uint64(len(proofs)))
+	for _, proof := range proofs {
+		sink.WriteVarBytes(proof)
+	}
+	self.store.Put(genProofKey(batchIndex), sink.Bytes())
+}
+
+func (self *Store) GetReadStorageProof(batchIndex uint64) [][]byte {
+	v, err := self.store.Get(genProofKey(batchIndex))
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return nil
+	}
+	source := codec.NewZeroCopySource(v)
+	num, eof := source.NextUint64()
+	if eof {
+		return nil
+	}
+	proofs := make([][]byte, 0)
+	for i := uint64(0); i < num; i++ {
+		data, _, ill, eof := source.NextVarBytes()
+		if ill || eof {
+			return nil
+		}
+		proofs = append(proofs, data)
+	}
+	return proofs
+}
+
 func genBatchIndexKey(batchIndex uint64) []byte {
 	var b [9]byte
 	b[0] = schema.L2ClientCheckBlockNumPrefix
+	binary.BigEndian.PutUint64(b[1:], batchIndex)
+	return b[:]
+}
+
+func genProofKey(batchIndex uint64) []byte {
+	var b [9]byte
+	b[0] = schema.L2ClientProofPrefix
 	binary.BigEndian.PutUint64(b[1:], batchIndex)
 	return b[:]
 }

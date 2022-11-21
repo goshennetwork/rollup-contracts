@@ -17,6 +17,7 @@ const (
 	L2WitnessSentMessageKey = 0x0D
 
 	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
+	L2ClientProofPrefix         = 0x11 //batch index -> read-storage-proof
 
 	L1MMRDataPrefix = 0x16
 	L2MMRDataPrefix = 0x17
