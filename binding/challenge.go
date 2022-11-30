@@ -42,6 +42,44 @@ func (_a *Challenge) Contract() *contract.Contract {
 
 // calls
 
+// CanClaimTheCake calls the canClaimTheCake method in the solidity contract
+func (_a *Challenge) CanClaimTheCake(challenger web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("canClaimTheCake", web3.EncodeBlock(block...), challenger)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// ClaimStatus calls the claimStatus method in the solidity contract
+func (_a *Challenge) ClaimStatus(block ...web3.BlockNumber) (retval0 uint8, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("claimStatus", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // DisputeTree calls the disputeTree method in the solidity contract
 func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, retval3 [32]byte, err error) {
 	var out map[string]interface{}
@@ -179,6 +217,34 @@ func (_a *Challenge) StateConfirmed(block ...web3.BlockNumber) (retval0 bool, er
 
 	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
 		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// SystemInfo calls the systemInfo method in the solidity contract
+func (_a *Challenge) SystemInfo(block ...web3.BlockNumber) (retval0 StateInfo, retval1 *big.Int, retval2 [32]byte, retval3 [32]byte, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("systemInfo", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["stateInfo"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+	if err = mapstructure.Decode(out["endStep"], &retval1); err != nil {
+		err = fmt.Errorf("failed to encode output at index 1")
+	}
+	if err = mapstructure.Decode(out["systemStartState"], &retval2); err != nil {
+		err = fmt.Errorf("failed to encode output at index 2")
+	}
+	if err = mapstructure.Decode(out["systemEndState"], &retval3); err != nil {
+		err = fmt.Errorf("failed to encode output at index 3")
 	}
 
 	return
