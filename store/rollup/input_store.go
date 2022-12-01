@@ -62,7 +62,7 @@ func (self *InputChain) GetInfo() *schema.InputChainInfo {
 func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) error {
 	size := self.QueueSize()
 	for _, queue := range queues {
-		if size > queue.QueueIndex { // check consistent, wired situation will happen when l1 roll back some block,but old queue is permitted.
+		if queue.QueueIndex > size { // check consistent, wired situation will happen when l1 roll back some block,but old queue is permitted.
 			return fmt.Errorf("wrong queue index, expect: %d, found: %d", size, queue.QueueIndex)
 		}
 		if size == queue.QueueIndex { // only update, when equal

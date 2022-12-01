@@ -87,61 +87,41 @@ func (self *StorageWriter) SetLastSyncedL1Hash(hash web3.Hash) {
 	self.overlay.Put(schema.LastSyncedL1Hash, codec.NewZeroCopySink(nil).WriteHash(hash).Bytes())
 }
 
-func (self *StorageWriter) StoreHighestL1CheckPointInfo1(start uint64) {
-	info := self.GetHighestL1CheckPointInfo1()
+func (self *StorageWriter) newInfo(info *schema.L1CheckPointInfo, start uint64) *schema.L1CheckPointInfo {
 	dirtyK, dirtyV := self.Dirty()
 	if info == nil {
-		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
-	} else {
-		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
-			info.DirtyKey = append(info.DirtyKey, dirtyK...)
-			info.DirtyValue = append(info.DirtyValue, dirtyV...)
-		}
-		if start > info.StartPoint {
-			//update info
-			info.StartPoint = start
-			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
-		}
+		return &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
 	}
-	self.overlay.Put(schema.HighestL1CheckPointInfo1Key, codec.SerializeToBytes(info))
+	if start < info.StartPoint { // old， just ignore
+		return info
+	}
+
+	if start > info.StartPoint+32 { //confirmed
+		//update info
+		info.StartPoint = start
+		info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
+	}
+	//not confirmed
+	// duplicated happen after rollback, so maybe just append?
+	info.DirtyKey = append(info.DirtyKey, dirtyK...)
+	info.DirtyValue = append(info.DirtyValue, dirtyV...)
+
+	return info
+}
+
+func (self *StorageWriter) StoreHighestL1CheckPointInfo1(start uint64) {
+	info := self.GetHighestL1CheckPointInfo1()
+	self.overlay.Put(schema.HighestL1CheckPointInfo1Key, codec.SerializeToBytes(self.newInfo(info, start)))
 }
 
 func (self *StorageWriter) StoreHighestL1CheckPointInfo2(start uint64) {
 	info := self.GetHighestL1CheckPointInfo2()
-	dirtyK, dirtyV := self.Dirty()
-	if info == nil {
-		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
-	} else {
-		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
-			info.DirtyKey = append(info.DirtyKey, dirtyK...)
-			info.DirtyValue = append(info.DirtyValue, dirtyV...)
-		}
-		if start > info.StartPoint {
-			//update info
-			info.StartPoint = start
-			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
-		}
-	}
-	self.overlay.Put(schema.HighestL1CheckPointInfo2Key, codec.SerializeToBytes(info))
+	self.overlay.Put(schema.HighestL1CheckPointInfo2Key, codec.SerializeToBytes(self.newInfo(info, start)))
 }
 
 func (self *StorageWriter) StoreHighestL1CheckPointInfo3(start uint64) {
 	info := self.GetHighestL1CheckPointInfo3()
-	dirtyK, dirtyV := self.Dirty()
-	if info == nil {
-		info = &schema.L1CheckPointInfo{start, dirtyK, dirtyV}
-	} else {
-		if start == info.StartPoint { // duplicated happen after rollback, so maybe just append?
-			info.DirtyKey = append(info.DirtyKey, dirtyK...)
-			info.DirtyValue = append(info.DirtyValue, dirtyV...)
-		}
-		if start > info.StartPoint {
-			//update info
-			info.StartPoint = start
-			info.DirtyKey, info.DirtyValue = dirtyK, dirtyV
-		}
-	}
-	self.overlay.Put(schema.HighestL1CheckPointInfo3Key, codec.SerializeToBytes(info))
+	self.overlay.Put(schema.HighestL1CheckPointInfo3Key, codec.SerializeToBytes(self.newInfo(info, start)))
 }
 
 func (self *StorageWriter) SetL1DbVersion(version uint64) {
