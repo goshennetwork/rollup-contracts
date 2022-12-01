@@ -145,6 +145,7 @@ func (self *SyncService) startL1Sync() error {
 	isSetup := lastHeight == 0
 	round := 0
 	startHeight := lastHeight + 1
+	errSpan := 10 * time.Second
 	for {
 		select {
 		case <-self.quit:
@@ -157,17 +158,18 @@ func (self *SyncService) startL1Sync() error {
 		l1Height, err := self.l1client.Eth().BlockNumber()
 		if err != nil {
 			log.Warnf("l1 get block number error: %s", err)
-			timer.Reset(2000)
+			timer.Reset(errSpan)
 			continue
 		}
 		if isSetup && startHeight+self.conf.MinConfirmBlockNum+2 > l1Height { //only setup period make sure first 2 block must confirmed
 			log.Warn("l1 block too low,waiting..")
-			timer.Reset(100)
+			timer.Reset(errSpan)
+			continue
 		}
 		endHeight, err := CalcEndBlock(startHeight, l1Height)
 		if err != nil {
 			log.Warnf("l1 sync service: %s", err)
-			timer.Reset(2000)
+			timer.Reset(errSpan)
 			continue
 		}
 		//be sure setup first 2 round will not roll back.
@@ -181,7 +183,7 @@ func (self *SyncService) startL1Sync() error {
 				err = ErrNoBlock
 			}
 			log.Warnf("l1 network err: %s", err)
-			timer.Reset(2000)
+			timer.Reset(errSpan)
 			continue
 		}
 		rollback := func(flag byte) {
@@ -234,7 +236,7 @@ func (self *SyncService) startL1Sync() error {
 			//wired situation happened ,try to rollback
 			log.Warnf("l1 sync error: %s,trying to rollback", err)
 			rollback(flag)
-			timer.Reset(2000)
+			timer.Reset(errSpan)
 			continue
 		}
 		startHeight = endHeight + 1
