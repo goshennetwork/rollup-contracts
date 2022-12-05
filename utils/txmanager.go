@@ -208,10 +208,7 @@ func (t *TxManager) WaitAndChange(tx *web3.Transaction, flexNonce bool, reGas ..
 				/// maybe tx already confirmed, check it
 				continue
 			}
-
-			//recontruct success, replace old tx
-			tx = newTx
-			if newTx, err := t.SendTx(tx, flexNonce, reGas...); err != nil {
+			if newTx, err := t.SendTx(newTx, flexNonce, reGas...); err != nil {
 				//tx err
 				log.Errorf("sendRawTransaction: %w", err)
 				continue
