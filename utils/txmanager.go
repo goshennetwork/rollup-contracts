@@ -148,6 +148,7 @@ func (t *TxManager) SendTx(tx *web3.Transaction, flexNonce bool, reGas ...bool) 
 	defer timer.Stop()
 	for range timer.C {
 		timer.Reset(3 * time.Second)
+		tx = t.SignTx(tx) // sign tx first
 
 		if hash, err := t.Client.Eth().SendRawTransaction(t.SignTx(tx).MarshalRLP()); err != nil {
 			if strings.Contains(err.Error(), "transaction underpriced") {
