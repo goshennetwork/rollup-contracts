@@ -140,20 +140,19 @@ func (t *TxManager) ReConstruct(tx *web3.Transaction, flexNonce bool, reGas ...b
 			return tx, fmt.Errorf("execution reverted: %s", result.RevertReason)
 		}
 	}
-	return tx, nil
+	return t.SignTx(tx), nil
 }
 
 func (t *TxManager) SendTx(tx *web3.Transaction, flexNonce bool, reGas ...bool) (*web3.Transaction, error) {
+
 	timer := time.NewTimer(0)
 	defer timer.Stop()
 	for range timer.C {
 		timer.Reset(3 * time.Second)
-		tx = t.SignTx(tx) // sign tx first
-
-		if hash, err := t.Client.Eth().SendRawTransaction(t.SignTx(tx).MarshalRLP()); err != nil {
-			if strings.Contains(err.Error(), "transaction underpriced") {
+		if hash, err := t.Client.Eth().SendRawTransaction(tx.MarshalRLP()); err != nil {
+			if strings.Contains(err.Error(), "transaction underpriced") || strings.Contains(err.Error(), "already known") {
 				log.Warn("send raw transaction", "hash", hash, "err", err)
-				//under price, just restruct
+				//under price or same tx, just restruct
 				newTx, err := t.ReConstruct(tx, flexNonce, reGas...)
 				if err != nil {
 					return tx, err
@@ -180,6 +179,7 @@ func (t *TxManager) WaitAndChange(tx *web3.Transaction, flexNonce bool, reGas ..
 	if t.priceLimit != nil && tx.GasPrice > t.priceLimit.Uint64() {
 		tx.GasPrice = t.priceLimit.Uint64()
 	}
+	tx = t.SignTx(tx)
 
 	if newTx, err := t.SendTx(tx, flexNonce, reGas...); err != nil { //at this time, nonce error could not indicate the tx confirmed, so just return error
 		//tx err
@@ -187,12 +187,16 @@ func (t *TxManager) WaitAndChange(tx *web3.Transaction, flexNonce bool, reGas ..
 	} else {
 		tx = newTx
 	}
+	// store 2 hash, because async of txpool, maybe miner already chose the tx and is packing, but the txpool have not changed yet
+	var sentTx [2]web3.Hash
+	sentTx[0] = tx.Hash()
 
 	ddl := time.NewTicker(3 * time.Minute)
 	defer ddl.Stop()
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 	nonceErr := 0
+	i := 0
 	for {
 		select {
 		case <-ddl.C:
@@ -209,36 +213,45 @@ func (t *TxManager) WaitAndChange(tx *web3.Transaction, flexNonce bool, reGas ..
 				/// maybe tx already confirmed, check it
 				continue
 			}
+
+			//recontruct success, do not replace old tx until client accept it
 			if newTx, err := t.SendTx(newTx, flexNonce, reGas...); err != nil {
 				//tx err
 				log.Errorf("sendRawTransaction: %w", err)
 				continue
 			} else {
+				i++
 				//now replace success
 				tx = newTx
+				sentTx[i%2] = tx.Hash()
 			}
 			log.Info("transaction replayed", "hash", tx.Hash())
 		case <-ticker.C:
-			r, err := t.Client.Eth().GetTransactionReceipt(tx.Hash())
-			if err != nil {
-				log.Error("getTransactionReceipt", "err", err)
-				continue
-			}
+			for _, hash := range sentTx {
+				if hash == (web3.Hash{}) {
+					continue
+				}
+				r, err := t.Client.Eth().GetTransactionReceipt(hash)
+				if err != nil {
+					log.Error("getTransactionReceipt", "err", err)
+					continue
+				}
 
-			if r != nil {
-				nonceErr = 0 //find out receipt, clean nonce error
-				//check confirmed Block
-				blockNumber := t.BlockNumber()
-				if blockNumber < r.BlockNumber { // wired, maye rollback or rpc client balancing
-					continue
+				if r != nil {
+					nonceErr = 0 //find out receipt, clean nonce error
+					//check confirmed Block
+					blockNumber := t.BlockNumber()
+					if blockNumber < r.BlockNumber { // wired, maye rollback or rpc client balancing
+						continue
+					}
+					confirms := blockNumber - r.BlockNumber + 1
+					if confirms < t.confirmHeight { // not confirmed yet
+						log.Warn("tx confirming", "hash", hash, "confirm block number", confirms)
+						continue
+					}
+					log.Infof("tx %s confirmed", hash)
+					return hash, nil
 				}
-				confirms := blockNumber - r.BlockNumber + 1
-				if confirms < t.confirmHeight { // not confirmed yet
-					log.Warn("tx confirming", "hash", tx.Hash(), "confirm block number", confirms)
-					continue
-				}
-				log.Infof("tx %s confirmed", tx.Hash())
-				return tx.Hash(), nil
 			}
 		}
 	}
