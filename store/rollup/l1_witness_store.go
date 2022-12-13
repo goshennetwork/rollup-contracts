@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -31,20 +32,33 @@ func (self *L1WitnessStore) StoreSentMessage(msgs []*binding.MessageSentEvent) e
 		if msg.MessageIndex > num { //ignore duplicated msg
 			return fmt.Errorf("mismatch message, want %d, but %d", num, msg.MessageIndex)
 		}
-		if msg.MessageIndex == num {
-			tree.AppendHash(getMsgHash(sink, msg))
-			sink.Reset()
-			key := genL1SentMessageKey(msg.MessageIndex)
-			self.store.Put(key, codec.SerializeToBytes(&schema.CrossLayerSentMessage{
-				BlockNumber:  msg.Raw.BlockNumber,
-				MessageIndex: msg.MessageIndex,
-				Target:       msg.Target,
-				Sender:       msg.Sender,
-				MMRRoot:      msg.MmrRoot,
-				Message:      msg.Message,
-			}))
-			num++
+		txn := &schema.CrossLayerSentMessage{
+			BlockNumber:  msg.Raw.BlockNumber,
+			MessageIndex: msg.MessageIndex,
+			Target:       msg.Target,
+			Sender:       msg.Sender,
+			MMRRoot:      msg.MmrRoot,
+			Message:      msg.Message,
 		}
+		if msg.MessageIndex != num { //roll back happen, check
+			old, err := self.GetSentMessage(msg.MessageIndex)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(codec.SerializeToBytes(old), codec.SerializeToBytes(txn)) {
+				continue
+			} else {
+				/// find inconsistent, return error to rollback
+				return fmt.Errorf("inconsistent CrossLayerSentMessage, index: %d", msg.MessageIndex)
+			}
+		}
+
+		tree.AppendHash(getMsgHash(sink, msg))
+		sink.Reset()
+		key := genL1SentMessageKey(msg.MessageIndex)
+		self.store.Put(key, codec.SerializeToBytes(txn))
+		num++
+
 	}
 	self.mmr.StoreCompactMerkleTree(tree)
 	self.StoreTotalMessage(num)

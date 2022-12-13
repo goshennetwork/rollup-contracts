@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -65,11 +66,21 @@ func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionE
 		if queue.QueueIndex > size { // check consistent, wired situation will happen when l1 roll back some block,but old queue is permitted.
 			return fmt.Errorf("wrong queue index, expect: %d, found: %d", size, queue.QueueIndex)
 		}
-		if size == queue.QueueIndex { // only update, when equal
-			txn := schema.EnqueuedTransactionFromEvent(queue)
-			self.putEnqueuedTransaction(txn)
-			size += 1
+		txn := schema.EnqueuedTransactionFromEvent(queue)
+
+		if size != queue.QueueIndex { //old queue, check whether is the same, otherwise rollback happended
+			oldTxn, err := self.GetEnqueuedTransaction(queue.QueueIndex)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(codec.SerializeToBytes(oldTxn), codec.SerializeToBytes(txn)) {
+				continue
+			} else { // find out inconsistent
+				return fmt.Errorf("enqueue tx inconsistant, queueIndex: %d")
+			}
 		}
+		self.putEnqueuedTransaction(txn)
+		size += 1
 	}
 	self.StoreQueueSize(size)
 	return nil
@@ -143,17 +154,28 @@ func (self *InputChain) StoreSequencerBatches(queueSize uint64, batches ...*bind
 				//wired, mayble should never happen?
 				panic(1)
 			}
-			txn := &schema.AppendedTransaction{
-				Proposer:        batch.Proposer,
-				Index:           batch.Index,
-				StartQueueIndex: batch.StartQueueIndex,
-				QueueNum:        batch.QueueNum,
-				InputHash:       batch.InputHash,
-			}
-			self.store.Put(genRollupInputBatchKey(batch.Index), codec.SerializeToBytes(txn))
-			info.TotalBatches += 1
-			info.PendingQueueIndex += batch.QueueNum
 		}
+		txn := &schema.AppendedTransaction{
+			Proposer:        batch.Proposer,
+			Index:           batch.Index,
+			StartQueueIndex: batch.StartQueueIndex,
+			QueueNum:        batch.QueueNum,
+			InputHash:       batch.InputHash,
+		}
+		if batch.Index < info.TotalBatches { // old batch when roll back happen, check the info
+			oldtx, err := self.GetAppendedTransaction(batch.Index)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(codec.SerializeToBytes(oldtx), codec.SerializeToBytes(txn)) {
+				continue
+			} else { // inconsistent just rollback
+				return fmt.Errorf("find inconsistent input batch, index: %d", batch.Index)
+			}
+		}
+		self.store.Put(genRollupInputBatchKey(batch.Index), codec.SerializeToBytes(txn))
+		info.TotalBatches = batch.Index + 1
+		info.PendingQueueIndex += batch.QueueNum
 	}
 	self.putInfo(info)
 	return nil

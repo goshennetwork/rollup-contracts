@@ -10,6 +10,7 @@ import (
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/jsonrpc"
+	"github.com/laizy/web3/utils"
 	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/ontology-layer-2/rollup-contracts/config"
 	"github.com/ontology-layer-2/rollup-contracts/store"
@@ -312,14 +313,13 @@ func (self *SyncService) SyncRollupInputQueues(kvdb *store.StorageWriter, startH
 	if len(queues) > 0 {
 		//r1cs debug
 		lastQueue := queues[len(queues)-1]
-		log.Info("r1cs debug transaction enqueued event", "lastQueueIdex", lastQueue.QueueIndex, "lastBlockHash", lastQueue.Raw.BlockHash, "lastBlockNumber", lastQueue.Raw.BlockNumber)
+		log.Info("r1cs debug transaction enqueued event", "startQueueIndex", queues[0].QueueIndex, "lastQueueIndex", lastQueue.QueueIndex, "lastBlockHash", lastQueue.Raw.BlockHash, "lastBlockNumber", lastQueue.Raw.BlockNumber)
 	}
 	inputStore := kvdb.InputChain()
-	beforeNum := inputStore.QueueSize()
 	if err := inputStore.StoreEnqueuedTransaction(queues...); err != nil {
 		return err, false
 	}
-	return nil, inputStore.QueueSize()-beforeNum > 0
+	return nil, len(queues) > 0
 }
 
 func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, queueStore *store.StorageWriter, startHeight, endHeight uint64) (error, bool) {
@@ -331,10 +331,9 @@ func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, 
 		return err, false
 	}
 	inputStore := kvdb.InputChain()
-	beforeNum := inputStore.GetInfo().TotalBatches
 	if len(batches) > 0 { //r1cs debug
 		last := batches[len(batches)-1]
-		log.Info("r1cs debug input batches event", "lastBatchIndex", last.Index, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber, "startBlockNumber", startHeight)
+		log.Info("r1cs debug input batches event", "firstBatchIndex", batches[0].Index, "lastBatchIndex", last.Index, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber, "startBlockNumber", startHeight)
 	}
 	txs := make([]*web3.Transaction, 0)
 	txBatchIndexes := make([]uint64, 0)
@@ -382,11 +381,11 @@ func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, 
 		}
 		h := b.InputHash(queueHash)
 		if h != batch.InputHash {
-			return fmt.Errorf("get wrong input, expected hash:%x, but %x", batch.InputHash, h), false
+			return fmt.Errorf("get wrong input, expected hash:%x, but %s, batchInfo: %s", batch.InputHash, h.String(), utils.JsonString(batch)), false
 		}
 	}
 
-	return nil, info.TotalBatches-beforeNum > 0
+	return nil, len(batches) > 0
 }
 
 func (self *SyncService) syncL1Witness(kvdb *store.StorageWriter, startHeight, endHeight uint64) (error, bool) {
