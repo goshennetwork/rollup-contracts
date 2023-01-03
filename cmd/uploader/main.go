@@ -316,6 +316,7 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 			if err == nil {
 				err = ErrNoBlock
 			}
+			return nil, err
 		}
 		txs := FromWeb3Tx(block.Transactions)
 		l2txs := FilterOrigin(txs)
