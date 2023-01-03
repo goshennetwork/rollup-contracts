@@ -94,14 +94,14 @@ interface IChallenge {
     /**
      * @dev Anyone has deposited in this challengeGame can select one branch in dispute tree.which means selected dispute
      * nodes' start system state is right,and the nodes' end system state is wrong.
-     * @param _parentNodeKey The parent node key in disputeTree.When we select a dispute branch, it must derived from exist larger disputeNode, we call it parent node
+     * @param _parentNodeKeys The parent node key in disputeTree.When we select a dispute branch, it must derived from exist larger disputeNode, we call it parent node
      * i.e. A node present 0->4 stateTransition, B node present 0->2 stateTransition,0->2 is driven by 0->4,so A is parent node.
-     * @param _isLeft Select whether left or right bisection child of parent node.i.e. parent node present 0->4 transition, left child is
+     * @param _Nth Select whether left or right bisection child of parent node.i.e. parent node present 0->4 transition, left child is
      * 0->2, right child is 2->4.
      * @notice Revert if chose more than one branch; or parent node not exist;or has no provided mid state;
      * or one step node is the parent.
      */
-    function selectDisputeBranch(uint256[] calldata _parentNodeKey, bool[] calldata _isLeft) external;
+    function selectDisputeBranch(uint256[] calldata _parentNodeKeys, uint128[] calldata _Nth) external;
 
     event OneStepTransition(uint256 startStep, bytes32 revealedRoot, bytes32 executedRoot);
 
