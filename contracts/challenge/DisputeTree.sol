@@ -6,7 +6,6 @@ library DisputeTree {
         uint256 parent;
         address challenger;
         uint256 expireAfterBlock;
-        bytes32 endStateRoot;
     }
 
     function middle(uint128 _lower, uint128 _upper) internal pure returns (uint128) {
@@ -21,7 +20,7 @@ library DisputeTree {
         uint128 _n,
         uint128 _lower,
         uint128 _upper
-    ) internal pure returns (uint128,uint128, uint128) {
+    ) internal pure returns (uint128, uint256) {
         uint128 _stepNum = _upper - _lower;
         require(_stepNum > 1, "can't divide oneStep");
         if (_stepNum < _nSection) {
@@ -37,7 +36,7 @@ library DisputeTree {
             /// @dev not last
             _newUpper = _lower + _piece * (_n + 1);
         }
-        return (_nSection,_newLower, _newUpper);
+        return (_nSection, encodeNodeKey(_newLower, _newUpper));
     }
 
     function encodeNodeKey(uint128 _stepLower, uint128 _stepUpper) internal pure returns (uint256) {
@@ -49,26 +48,26 @@ library DisputeTree {
         stepUpper = uint128(nodeKey >> 128);
     }
 
-    function searchNodeWithEndStep(
-        uint128 _stepLower,
-        uint128 _stepUpper,
-        uint256 _EndStep
-    ) internal pure returns (uint256) {
-        while (_stepUpper - _stepLower > 1) {
-            uint128 _stateStep = middle(_stepLower, _stepUpper);
-            if (_midStep < _stateStep) {
-                //so wanted is in left child.
-                _stepUpper = _stateStep;
-            } else if (_midStep > _stateStep) {
-                //so wanted is in right.
-                _stepLower = _stateStep;
-            } else {
-                //find out.
-                return encodeNodeKey(_stepLower, _stepUpper);
-            }
-        }
-        revert("not found");
-    }
+    //    function searchNodeWithEndStep(
+    //        uint128 _stepLower,
+    //        uint128 _stepUpper,
+    //        uint256 _EndStep
+    //    ) internal pure returns (uint256) {
+    //        while (_stepUpper - _stepLower > 1) {
+    //            uint128 _stateStep = middle(_stepLower, _stepUpper);
+    //            if (_midStep < _stateStep) {
+    //                //so wanted is in left child.
+    //                _stepUpper = _stateStep;
+    //            } else if (_midStep > _stateStep) {
+    //                //so wanted is in right.
+    //                _stepLower = _stateStep;
+    //            } else {
+    //                //find out.
+    //                return encodeNodeKey(_stepLower, _stepUpper);
+    //            }
+    //        }
+    //        revert("not found");
+    //    }
 
     function addNewChild(
         mapping(uint256 => DisputeNode) storage tree,
@@ -82,10 +81,9 @@ library DisputeTree {
         require(parent.parent != 0, "parent not exist");
         (uint128 stepLower, uint128 stepUpper) = decodeNodeKey(_parentKey);
         require(stepUpper > stepLower + 1, "one step have no child");
-        (,stepLower, stepUpper) = nSection(_NSection, _Nth, stepLower, stepUpper);
-        uint256 _childKey = encodeNodeKey(stepLower, stepUpper);
+        (, uint256 _childKey) = nSection(_NSection, _Nth, stepLower, stepUpper);
         DisputeNode storage node = tree[_childKey];
-        require(node.parent != 0 && node.expireAfterBlock==0, "already init");
+        require(node.parent != 0 && node.expireAfterBlock == 0, "Err Node");
         node.challenger = _challenger;
         node.expireAfterBlock = _expireAfterBlock;
         return _childKey;
@@ -116,18 +114,16 @@ library DisputeTree {
         uint64 _depth;
         bool _oneBranch = true;
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
-        uint128 _tempStepLower;
-        uint128 _tempStepUpper;
         while (_stepUpper - _stepLower > 1) {
             _depth++;
             uint256 _nodeKey;
             uint256 _tempNextNodeKey;
             /// @dev maybe remained step num less than n section.
-            uint128 _tempNSection=_nSection;
+            uint128 _tempNSection = _nSection;
             for (uint128 i = 0; i < _tempNSection; i++) {
-                (_tempNSection,_tempStepLower, _tempStepUpper) = nSection(_nSection, i, _stepLower, _stepUpper);
-                uint256 _nodeKey = encodeNodeKey(_tempStepLower, _tempStepUpper);
-                if (tree[_nodeKey].parent != 0) {
+                uint256 _nodeKey;
+                (_tempNSection, _nodeKey) = nSection(_nSection, i, _stepLower, _stepUpper);
+                if (tree[_nodeKey].parent != 0 && tree[_nodeKey].expireAfterBlock != 0) {
                     if (_tempNextNodeKey != 0) {
                         /// @notice deplicated, so there is more than one branch todo: maybe just return, no need to go on?
                         _oneBranch = false;

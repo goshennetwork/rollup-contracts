@@ -52,40 +52,52 @@ interface IChallenge {
         uint256 _minChallengerDeposit
     ) external;
 
-    event ChallengeInitialized(uint128 _systemEndStep, bytes32 _midSystemState);
+    event ChallengeInitialized(uint128 _systemEndStep, bytes32[] _subStates);
 
     /**
-     * @dev Initialize challenge info, provide endStep and mid system state of program.
-     * @param _endStep End step index of system state of program,must larger than 1.
+     * @dev Initialize challenge info, provide endStep and sub states of root node
+     * @param endStep End step index of system state of program,must larger than 1.
      * @param _systemEndState End system state, 0 is illegal, and end state must be "correct"(the program is halt, and the output is consistent with outputRoot).
-     * @param _midSystemState Mid state root of system,0 is illegal.
+     * @param _subStates sub states of root node, 0 is illegal.
+     * @notice required:
+     * - 1.Only stage Started
+     * - 2.Only proposer
+     * - 3.Proposer must initialize in time; the step nums should larger than N Section of challenge game; end system state can not be zero; sub states num is N_Section-1
+     * - 4.The final state is proven properly(proposer should provide needed preimage to StateMachine)
+     * - 5.The sub branch node if root node is not exist(should never happen), and the state is not provided yet(should never happen), the sub state should not be zero
      */
     function initialize(
-        uint64 _endStep,
+        uint64 endStep,
         bytes32 _systemEndState,
-        bytes32 _midSystemState
+        bytes32[] calldata _subStates
     ) external;
 
     event MidStateRevealed(uint256[] nodeKeys, bytes32[] stateRoots);
 
     /**
-     * @dev Proposer reveal the node's midRoots, he can reveal in advance.
-     * @param _nodeKeys The revealed keys in disputeTree in order.
-     * @param _stateRoots The revealed mid state roots of above nodeKey,0 state root is illegal.
-     * @notice Revert if provide empty slice, slice's length different or not revealed in time；or stateHash is equal to 0;or
-     * attempt to re-reveal exist midState.
+     * @dev Proposer reveal the node's branch step state.
+     * @param _parentNodeKeys The parent node which need to reveal its branch step state
+     * @param _stateRoots The branch step state of  parent node,0 state root is illegal.Duplicated step state is ignored, so when parent
+     * is 0-5, and branch num is 3, only need to provide state of step 1 and step 2. step 5 is surely revealed in advance
+     * @notice required:
+     * - 1.The challenged state is in fraud proof window
+     * - 2.There is at least one parent node key, and the parent node num should less than state num
+     * - 3.Parent must exist and reveal time not beyond the expire time
+     * - 4.The parent node must not node be one step node
+     * - 5.Can not reveal a parent node's branch state twice
+     * - 6.State revealed can't be zero
      */
-    function revealMidStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots) external;
+    function revealSubStates(uint256[] calldata _parentNodeKeys, bytes32[] calldata _stateRoots) external;
 
     event ProposerTimeout(uint256 nodeKey);
 
     /**
      * @dev proposer only need to do 2 kinds of action:
      * 1: initialize challenge info after challenge started.
-     * 2: provide mid state when challenge running.
-     * if one of above timeout, anyone can call this to end challenge game.
-     * @param _nodeKey If proposer timeout doing 1st situation, node key can easily set to 0.
-     * Otherwise, in 2nd situation, _nodeKey is the disputeNode key which proposer didn't reveal in expireTime.
+     * 2: provide step state when challenge running.
+     * if one of these actions timeout, anyone can call this function to end challenge game
+     * @param _nodeKey If proposer timeout doing 1st situation, node key can easily set to 0
+     * Otherwise, in 2nd situation, _nodeKey is the disputeNode key which proposer didn't reveal its branch in expireTime
      */
     function proposerTimeout(uint256 _nodeKey) external;
 
@@ -94,12 +106,14 @@ interface IChallenge {
     /**
      * @dev Anyone has deposited in this challengeGame can select one branch in dispute tree.which means selected dispute
      * nodes' start system state is right,and the nodes' end system state is wrong.
-     * @param _parentNodeKeys The parent node key in disputeTree.When we select a dispute branch, it must derived from exist larger disputeNode, we call it parent node
+     * @param _parentNodeKeys The parent node key in disputeTree.When a dispute branch is selected, it must derived from exist larger disputeNode, we call it parent node
      * i.e. A node present 0->4 stateTransition, B node present 0->2 stateTransition,0->2 is driven by 0->4,so A is parent node.
-     * @param _Nth Select whether left or right bisection child of parent node.i.e. parent node present 0->4 transition, left child is
-     * 0->2, right child is 2->4.
-     * @notice Revert if chose more than one branch; or parent node not exist;or has no provided mid state;
-     * or one step node is the parent.
+     * @param _Nth the chosen node is index number of parent branch, if parent node is divided into 5 branch, the last branch is index 4.
+     * @notice  required:
+     * - 1.The challenged state is in fraud windows.
+     * - 2.Parent node should not be one step node, one step can't be divided
+     * - 3.A challenger can only select one branch, and challenger need to deposit at challenge contract first
+     * - 4.Parent node should exist and has been revealed by provider,(if node is revealed by provider, the sub branch node will be created by provider).
      */
     function selectDisputeBranch(uint256[] calldata _parentNodeKeys, uint128[] calldata _Nth) external;
 
