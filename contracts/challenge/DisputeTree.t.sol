@@ -6,7 +6,7 @@ import "./DisputeTree.sol";
 
 contract TestDisputeTree is TestBase {
     mapping(uint256 => DisputeTree.DisputeNode) testTree;
-    uint128 constant N_SECTION = 2;
+    uint128 N_SECTION = 2;
 
     //test middle special case
     function testMiddle() public pure {
@@ -23,6 +23,41 @@ contract TestDisputeTree is TestBase {
         require(return3 == 2, "middle compute error");
     }
 
+    function test3Section() public {
+        uint128 _start = 0;
+        uint128 _end = 10;
+        N_SECTION = 3;
+        uint256 _key2;
+        uint256 _key1;
+        uint256 _key0;
+        uint128 _sections;
+        /// @dev split 0,10 to 3 piece, 0,3 3,6 6,10
+        (_sections, _key0) = DisputeTree.nSection(N_SECTION, 0, _start, _end);
+        require(_key0 == DisputeTree.encodeNodeKey(0, 3) && _sections == 3, "wrong section0");
+        (_sections, _key1) = DisputeTree.nSection(N_SECTION, 1, _start, _end);
+        require(_key1 == DisputeTree.encodeNodeKey(3, 6) && _sections == 3, "wrong section1");
+        (_sections, _key2) = DisputeTree.nSection(N_SECTION, 2, _start, _end);
+        require(_key2 == DisputeTree.encodeNodeKey(6, 10) && _sections == 3, "wrong section2");
+    }
+
+    function testSectionFewSteps() public {
+        N_SECTION = 10;
+        uint256 _key0;
+        uint256 _key1;
+        uint256 _key2;
+        uint128 _sections;
+        uint128 _start = 0;
+        uint128 _end = 2;
+        (_sections, _key0) = DisputeTree.nSection(N_SECTION, 0, _start, _end);
+        require(_key0 == DisputeTree.encodeNodeKey(0, 1) && _sections == 2, "wrong section0");
+        (_sections, _key1) = DisputeTree.nSection(N_SECTION, 1, _start, _end);
+        require(_key1 == DisputeTree.encodeNodeKey(1, 2) && _sections == 2, "wrong section1");
+
+        /// should revert
+        vm.expectRevert("Out of N Section");
+        (_sections, _key2) = DisputeTree.nSection(N_SECTION, 2, _start, _end);
+    }
+
     //test middle special case
     function testFailMiddle() public {
         //when _upper < _lower , revert
@@ -36,21 +71,6 @@ contract TestDisputeTree is TestBase {
         (uint128 _lower, uint128 _upper) = DisputeTree.decodeNodeKey(encoded);
         require(_lower == lower && upper == _upper, "decode lower error");
     }
-
-    //    //test Search Node not find
-    //    function testSearchNodeWithMidStepNotFind() public {
-    //        vm.expectRevert("not found");
-    //        DisputeTree.searchNodeWithEndStep(1, 10, 10);
-    //    }
-    //
-    //    //test Search Node pass
-    //    function testSearchNode2() public pure {
-    //        for (uint256 i = 2; i < 10; i++) {
-    //            uint256 return1 = DisputeTree.searchNodeWithEndStep(1, 10, i);
-    //            (uint256 lower, uint256 upper) = DisputeTree.decodeNodeKey(return1);
-    //            require((lower + upper) / 2 == i);
-    //        }
-    //    }
 
     /* test addNewChild
    1.test Fail */
@@ -66,29 +86,30 @@ contract TestDisputeTree is TestBase {
 
     //test Fail if sub state not proven
     //when sub state is proven, the node already exist and its expire time is zero
-    function testAddNewChildWithMidStateRootNotProven() public {
+    function testAddNewChildWithSubStateNotProven() public {
         DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(1, address(1), 100);
         testTree[DisputeTree.encodeNodeKey(1, 10)] = node;
         vm.expectRevert("Err Node");
         DisputeTree.addNewChild(testTree, 2, 1, DisputeTree.encodeNodeKey(1, 10), 100, address(1));
     }
 
-    //    //test Fail already init
-    //    //when node.parent != 0 , revert (already init)
-    //    function testAddNewChildAlreadyInit() public {
-    //        uint256 return1 = DisputeTree.searchNodeWithEndStep(1, 10, 6);
-    //        DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(1, address(1), 100, bytes32("0x0"));
-    //        testTree[return1] = node;
-    //        //(5,7)
-    //        (uint128 stepLower, uint128 stepUpper) = DisputeTree.decodeNodeKey(return1);
-    //        stepLower = DisputeTree.middle(stepLower, stepUpper);
-    //        //(6,7)
-    //        uint256 _childKey = DisputeTree.encodeNodeKey(stepLower, stepUpper);
-    //        DisputeTree.DisputeNode storage childnode = testTree[_childKey];
-    //        childnode.parent = 1;
-    //        vm.expectRevert("already init");
-    //        DisputeTree.addNewChild(testTree, 2, 1, return1, 100, address(1));
-    //    }
+    //test Fail already init
+    //when selected branch has already been selected revert (Err Node)
+    function testAddNewChildAlreadySelected() public {
+        uint256 return1 = DisputeTree.encodeNodeKey(1, 10);
+        DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(1, address(1), 100);
+        testTree[return1] = node;
+        //(5,7)
+        (uint128 stepLower, uint128 stepUpper) = DisputeTree.decodeNodeKey(return1);
+        stepLower = DisputeTree.middle(stepLower, stepUpper);
+        //(6,7)
+        uint256 _childKey = DisputeTree.encodeNodeKey(stepLower, stepUpper);
+        DisputeTree.DisputeNode storage childnode = testTree[_childKey];
+        childnode.parent = 1;
+        DisputeTree.addNewChild(testTree, 2, 1, return1, 100, address(1));
+        vm.expectRevert("Err Node");
+        DisputeTree.addNewChild(testTree, 2, 1, return1, 100, address(1));
+    }
 
     /* test addNewChild
 2.test Pass */
@@ -143,46 +164,4 @@ contract TestDisputeTree is TestBase {
         require(stepLower3 == 1 && stepUpper3 == 2, "one step case error");
         require(depth3 == 1 && oneBranch3 == true, "one step case depth&branch error");
     }
-
-    //    /*test removeSelfBranch*/
-    //
-    //    //test Fail when tree[_leafKey].parent == 0
-    //    function testFailRemoveSelfBranch() public {
-    //        uint256 leafkey1 = DisputeTree.encodeNodeKey(1, 10);
-    //        DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(0, address(1), 100, bytes32("0x0"));
-    //        testTree[leafkey1] = node;
-    //        DisputeTree.removeSelfBranch(testTree, leafkey1);
-    //    }
-
-    //    //test-remove
-    //    function testRemoveSelfBranch() public {
-    //        //1.root node condition: _parentKey == _leafKey
-    //        uint256 leafkey1 = DisputeTree.encodeNodeKey(1, 10);
-    //        DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(leafkey1, address(1), 100, bytes32("0x0"));
-    //        testTree[leafkey1] = node;
-    //        DisputeTree.removeSelfBranch(testTree, leafkey1);
-    //        require(testTree[leafkey1].parent == 0, "root node remove error");
-    //
-    //        //2.remove one branch
-    //        uint256 leafkey2 = DisputeTree.encodeNodeKey(1, 10);
-    //        DisputeTree.DisputeNode memory node2 = DisputeTree.DisputeNode(leafkey2, address(1), 100, bytes32("0x0"));
-    //        testTree[leafkey2] = node2;
-    //        // add two child , get two branches
-    //        DisputeTree.addNewChild(testTree, N_SECTION, 1, leafkey2, 100, address(1));
-    //        DisputeTree.addNewChild(testTree, N_SECTION, 0, leafkey2, 100, address(1));
-    //
-    //        //before remove , testTree[1,10] first LeafNode is [1,5]
-    //        (uint256 key1, , ) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
-    //        (uint128 stepLower1, uint128 stepUpper1) = DisputeTree.decodeNodeKey(key1);
-    //        require(stepLower1 == 1 && stepUpper1 == 5, "before remove error");
-    //
-    //        //remove
-    //        uint256 leafkey3 = DisputeTree.encodeNodeKey(1, 5);
-    //        DisputeTree.removeSelfBranch(testTree, leafkey3);
-    //
-    //        //after remove , testTree[1,10] first LeafNode is [5,10]
-    //        (uint256 key2, , ) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
-    //        (uint128 stepLower2, uint128 stepUpper2) = DisputeTree.decodeNodeKey(key2);
-    //        require(stepLower2 == 5 && stepUpper2 == 10, "remove one branch error");
-    //    }
 }
