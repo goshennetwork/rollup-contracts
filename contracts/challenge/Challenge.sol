@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
-    uint128 constant N_SECTION = 1 << 8;
+    uint128 constant N_SECTION = 7;
     mapping(uint128 => bytes32) public stepState; /// @dev step number => state
     IChallengeFactory public factory;
     uint256 public override minChallengerDeposit;
@@ -152,10 +152,10 @@ contract Challenge is IChallenge {
         stage2
         onlyProposer
     {
-        require(_nodeKeys.length < _stateRoots.length && _nodeKeys.length > 0, "illegal length");
+        require(_nodeKeys.length <= _stateRoots.length && _nodeKeys.length > 0, "illegal length");
         uint256 j = 0;
         uint256 _blockNumber = block.number;
-        for (uint256 i = 0; i < _stateRoots.length; i = UnsafeMath.unsafeIncrement(i)) {
+        for (uint256 i = 0; i < _nodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _nodeKey = _nodeKeys[i];
             require(
                 disputeTree[_nodeKey].parent != 0 && disputeTree[_nodeKey].expireAfterBlock > _blockNumber,
@@ -165,21 +165,19 @@ contract Challenge is IChallenge {
             (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
             uint128 _tempLower;
             uint128 _tempUpper;
-            for (uint256 i = 0; i < _tempNSection; i = UnsafeMath.unsafeIncrement(i)) {
+            for (uint256 ii = 0; ii < _tempNSection - 1; ii = UnsafeMath.unsafeIncrement(ii)) {
                 bytes32 _stateRoot = _stateRoots[j];
                 j = UnsafeMath.unsafeIncrement(j);
                 /// @dev change tempNSection if remained step num less than N_SECTION
                 uint256 _tempNodeKey;
-                (_tempNSection, _tempNodeKey) = DisputeTree.nSection(N_SECTION, uint128(i), _stepLower, _stepUpper);
+                (_tempNSection, _tempNodeKey) = DisputeTree.nSection(N_SECTION, uint128(ii), _stepLower, _stepUpper);
                 require(disputeTree[_tempNodeKey].parent == 0, "already exist");
                 disputeTree[_tempNodeKey].parent = _nodeKey;
 
                 require(_stateRoot != 0, "wrong state root");
                 (, uint128 _tempUpper) = DisputeTree.decodeNodeKey(_tempNodeKey);
-                if (stepState[_tempUpper] == 0) {
-                    /// @notice duplicated step do not override
-                    stepState[_tempUpper] = _stateRoot;
-                }
+                require(stepState[_tempUpper] == 0, "already revealed");
+                stepState[_tempUpper] = _stateRoot;
             }
         }
         emit MidStateRevealed(_nodeKeys, _stateRoots);
