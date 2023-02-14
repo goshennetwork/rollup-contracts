@@ -21,6 +21,7 @@ var (
 	ErrNoBlock    = errors.New("no block")
 	ErrNoTx       = errors.New("no transaction")
 	ErrShortQueue = errors.New("shortage of queue")
+	ErrInputHash  = errors.New("inconsistent input hash")
 )
 
 type SyncService struct {
@@ -178,15 +179,6 @@ func (self *SyncService) startL1Sync() error {
 			round++
 			endHeight = startHeight
 		}
-		b, err := self.l1client.Eth().GetBlockByNumber(web3.BlockNumber(startHeight-1), false)
-		if err != nil || b == nil {
-			if err == nil {
-				err = ErrNoBlock
-			}
-			log.Warnf("l1 network err: %s", err)
-			timer.Reset(errSpan)
-			continue
-		}
 		rollback := func(flag byte) {
 			if flag == 0 { //no need to rollback
 				return
@@ -218,8 +210,8 @@ func (self *SyncService) startL1Sync() error {
 			return
 		}
 		confirmedEndHeight := l1Height
-		if confirmedEndHeight > 32 {
-			confirmedEndHeight -= 32
+		if confirmedEndHeight > self.conf.MinConfirmBlockNum {
+			confirmedEndHeight -= self.conf.MinConfirmBlockNum
 		}
 		confirmedLastHeight := self.db.GetConfirmedLastSyncedL1Height()
 		confirmedStartHeight := confirmedLastHeight + 1
@@ -233,6 +225,9 @@ func (self *SyncService) startL1Sync() error {
 			}
 		}
 
+		if startHeight+self.conf.MinConfirmBlockNum > endHeight {
+			startHeight = endHeight - self.conf.MinConfirmBlockNum
+		}
 		if flag, err := self.syncL1Contracts(startHeight, endHeight); err != nil {
 			//wired situation happened ,try to rollback
 			log.Warnf("l1 sync error: %s,trying to rollback", err)
@@ -277,7 +272,7 @@ func (self *SyncService) syncL1Contracts(startHeight, endHeight uint64) (byte, e
 	}
 	err, dirtyInputBatch := self.syncRollupInputChainBatches(inputBatchStore, queueStore, startHeight, endHeight)
 	if err != nil {
-		if errors.Is(err, ErrShortQueue) {
+		if errors.Is(err, ErrShortQueue) || errors.Is(err, ErrInputHash) {
 			return 1, fmt.Errorf("sync rollup input chain: %w", err)
 		}
 		return 2, fmt.Errorf("sync rollup input chain: %w", err)
@@ -381,7 +376,8 @@ func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, 
 		}
 		h := b.InputHash(queueHash)
 		if h != batch.InputHash {
-			return fmt.Errorf("get wrong input, expected hash:%x, but %s, batchInfo: %s", batch.InputHash, h.String(), utils.JsonString(batch)), false
+			log.Errorf("get wrong input, expected hash:%x, but %s, batchInfo: %s", batch.InputHash, h.String(), utils.JsonString(batch))
+			return ErrInputHash, false
 		}
 	}
 
