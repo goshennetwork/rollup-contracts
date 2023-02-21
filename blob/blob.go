@@ -19,19 +19,16 @@ const BLOB_VERSION = 0
 
 /// one field is reserved for head element
 const DataElementNum = params.FieldElementsPerBlob - 1
-const MaxDataByte = DataElementNum * 31 /// every data element store 31 byte, the first byte is always zero
+const MaxDataByte = DataElementNum * 31 /// every data element store 31 byte, the last byte is always zero
 
 func Encode(data []byte) (ret []*types.Blob, err error) {
 	if len(data) == 0 {
 		return nil, errors.New("empty data")
 	}
 
-	byteNum := 0
 	for len(data) > 0 {
-		switch len(data) > MaxDataByte {
-		case true:
-			byteNum = MaxDataByte
-		case false: //not overhead, just store length
+		byteNum := MaxDataByte
+		if len(data) < MaxDataByte {
 			byteNum = len(data)
 		}
 
