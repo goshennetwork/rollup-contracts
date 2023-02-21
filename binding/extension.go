@@ -2,6 +2,7 @@ package binding
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,12 +16,32 @@ import (
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
+	"github.com/ontology-layer-2/rollup-contracts/blob"
 )
 
 const (
 	NormalEncodeType = iota
 	BrotliEncodeType
 )
+
+const BrotliEnabledMask = 1
+const BlobEnabledMask = 1 << 1
+
+func BrotliEnabled(version uint8) bool {
+	return version&BrotliEnabledMask > 0
+}
+
+func BlobEnabled(version uint8) bool {
+	return version&BlobEnabledMask > 0
+}
+
+func (self *RollupInputBatches) BlobEnabled() bool {
+	return BlobEnabled(self.Version)
+}
+
+func (self *RollupInputBatches) BrotliEnabled() bool {
+	return BrotliEnabled(self.Version)
+}
 
 type CounterRead struct {
 	r       io.Reader
@@ -99,16 +120,13 @@ func (self *RollupInputBatches) EncodeWithoutIndex(version byte) []byte {
 	for _, dfff := range diffs {
 		sink.WriteUint32BE(dfff)
 	}
+	sink.WriteByte(version) //write version
 	rlpTx, err := rlp.EncodeToBytes(txs)
 	if err != nil {
 		panic(err)
 	}
-	sink.WriteByte(version) //write version
 	code := rlpTx
-	switch version {
-	case NormalEncodeType: //no need to handle rlpcode
-		break
-	case BrotliEncodeType:
+	if BrotliEnabled(version) { // if brotli enabled, compress
 		//now compress rlp code
 		buffer := &bytes.Buffer{}
 		writer := brotli.NewWriter(buffer)
@@ -119,8 +137,60 @@ func (self *RollupInputBatches) EncodeWithoutIndex(version byte) []byte {
 		code = buffer.Bytes() //now write encoded
 	}
 
+	if self.BlobEnabled() { //just need to append blob num and version hash
+		blobs, err := blob.Encode(code)
+		utils.Ensure(err)
+		//write blob num
+		///check blob num, make sure byte will not change num value
+		if len(blobs) != int(byte(len(blobs))) {
+			panic(1)
+		}
+		sink.WriteByte(byte(len(blobs)))
+		for _, v := range blobs {
+			commitment, ok := v.ComputeCommitment()
+			utils.EnsureTrue(ok)
+			sink.WriteBytes(commitment.ComputeVersionedHash().Bytes())
+		}
+		return sink.Bytes()
+	}
+
 	sink.WriteBytes(code)
 	return sink.Bytes()
+}
+
+func (self *RollupInputBatches) Blobs() ([]*types.Blob, error) {
+	if !self.BlobEnabled() {
+		return nil, errors.New("do not support blob")
+	}
+	if len(self.SubBatches) == 0 { //no blob
+		return nil, nil
+	}
+	_, _, txs := self.TxsInfo()
+	rlpTx, err := rlp.EncodeToBytes(txs)
+	if err != nil {
+		panic(err)
+	}
+	code := rlpTx
+	if self.BrotliEnabled() { // if brotli enabled, compress
+		//now compress rlp code
+		buffer := &bytes.Buffer{}
+		writer := brotli.NewWriter(buffer)
+		_, err := writer.Write(rlpTx)
+		utils.Ensure(err)
+		utils.Ensure(writer.Flush())
+		utils.Ensure(writer.Close())
+		code = buffer.Bytes() //now write encoded
+	}
+
+	//just need to append blob num and version hash
+	blobs, err := blob.Encode(code)
+	utils.Ensure(err)
+	//write blob num
+	///check blob num, make sure byte will not change num value
+	if len(blobs) != int(byte(len(blobs))) {
+		panic(1)
+	}
+	return blobs, nil
 }
 
 func (self *RollupInputBatches) Encode() []byte {
@@ -144,7 +214,8 @@ func safeAdd(x, y uint64) uint64 {
 	return x + y
 }
 
-func (self *RollupInputBatches) DecodeWithoutIndex(b []byte) error {
+/// Although the batches tx info may hide in blob, just append the origin tx to slice.
+func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.BlobOracle) error {
 	reader := codec.NewZeroCopyReader(b)
 	self.QueueNum = reader.ReadUint64BE()
 	self.QueueStart = reader.ReadUint64BE()
@@ -172,11 +243,31 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte) error {
 		return reader.Error()
 	}
 
-codeSelctor:
-	switch version {
-	case NormalEncodeType: //normal, use origin reader
-		break codeSelctor
-	case BrotliEncodeType: // brotli, decode to rlp code first, then replace reader to handle as normal
+	self.Version = version
+	if self.BlobEnabled() { //blob append blob num and versionHash
+		if len(oracle) == 0 {
+			return errors.New("no blob oracle")
+		}
+		blobNum := reader.ReadUint8()
+		versionHashes := make([][32]byte, blobNum)
+		for i := uint8(0); i < blobNum; i++ {
+			versionHashes[i] = reader.ReadHash()
+			if reader.Error() != nil {
+				return reader.Error()
+			}
+		}
+		blobs, err := oracle[0].GetBlobsWithCommitmentVersions(versionHashes...)
+		if err != nil {
+			return fmt.Errorf("get blobs with commitment version: %w", err)
+		}
+		data, err := blob.Decode(blobs)
+		if err != nil {
+			return fmt.Errorf("decode blobs: %w", err)
+		}
+		reader = codec.NewZeroCopyReader(data)
+	}
+
+	if self.BrotliEnabled() {
 		if reader.Len() == 0 {
 			return fmt.Errorf("no brotli code")
 		}
@@ -188,10 +279,7 @@ codeSelctor:
 		}
 		//now transfer rlp code to reader
 		reader = codec.NewZeroCopyReader(rlpcode)
-	default:
-		return fmt.Errorf("unsupported version %d", version)
 	}
-	self.Version = version
 
 	rawBatchesData := reader.ReadBytes(reader.Len())
 	if reader.Error() != nil {
@@ -217,8 +305,8 @@ codeSelctor:
 }
 
 // decode batch info and check in info correctness
-func (self *RollupInputBatches) Decode(b []byte) error {
+func (self *RollupInputBatches) Decode(b []byte, oracle ...blob.BlobOracle) error {
 	reader := codec.NewZeroCopyReader(b[:8])
 	self.BatchIndex = reader.ReadUint64BE()
-	return self.DecodeWithoutIndex(b[8:])
+	return self.DecodeWithoutIndex(b[8:], oracle...)
 }

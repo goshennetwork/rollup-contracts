@@ -10,7 +10,7 @@ import (
 )
 
 /*
-element_0[0..0,uint32(rawLength),byte(version)]
+element_0[byte(version),uint32(rawLength),0..0]
 
 element_1...element_4095: store bytes31(data),so make sure filedElement is less than module, because the kzg use little endien encode, so last byte set to 0.
 */
@@ -85,7 +85,7 @@ func ReadDataElement(blob *types.Blob, index int) (ret []byte, next bool, err er
 
 	source := blob[index]
 	if source[31] > 0 { ///last byte should always be zero
-		return ret, false, fmt.Errorf("data element first byte not zeroed")
+		return ret, false, fmt.Errorf("data element last byte not zeroed")
 	}
 	maxNum := index * 31
 	dest := make([]byte, 31)

@@ -160,7 +160,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
     // batchesData: version(1) + brotli(rlp([][]transaction))
-    // batchesData: version(1<<1) | {0,1}, + uint8(blob_num); so 0b_10 means rlp encode, 0b_11 means brotli encode
+    // batchesData: version(1<<1) | {0,1}; so 0b_10 means rlp encode, 0b_11 means brotli encode
+    // if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
     /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
         require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
@@ -226,31 +227,31 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
             // ignore batch index; record input msgdata hash, queue hash
             uint8 _version;
-            uint8 _blobNum;
             assembly {
                 _version := shr(248, calldataload(_batchDataPos))
             }
             _batchDataPos += 1;
-            assembly {
-                _blobNum := shr(248, calldataload(_batchDataPos))
-            }
-            _batchDataPos += 1;
-
-            require(_blobNum > 0, "no blob");
             if (_version & BLOB_MASK == 0) {
                 /// @dev blob not enabled
                 _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
             } else {
                 /// @dev blob enabled
-                bytes32[] memory _versionedHashList = new bytes32[](_blobNum);
+                uint8 _blobNum;
+                assembly {
+                    _blobNum := shr(248, calldataload(_batchDataPos))
+                }
+                _batchDataPos += 1;
+                require(_blobNum > 0, "no blob");
+                bytes32 _tempVersionHash;
                 for (uint256 _i = 0; _i < _blobNum; _i++) {
                     bytes32 _versionHash = EVMDataHash.datahash(_i);
                     require(_versionHash != bytes32(0), "empty blob");
-                    _versionedHashList[_i] = _versionHash;
+                    assembly {
+                        _tempVersionHash := calldataload(_batchDataPos)
+                    }
+                    require(_tempVersionHash == _versionHash, "insonsistent version hash");
                 }
-                bytes32 inputHash = keccak256(
-                    abi.encodePacked(keccak256(msg.data[12:]), _queueHashes, _versionedHashList)
-                );
+                bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
             }
         }
 

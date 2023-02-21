@@ -138,11 +138,11 @@ func (_a *ChallengeFactory) Executor(block ...web3.BlockNumber) (retval0 web3.Ad
 }
 
 // GetChallengedContract calls the getChallengedContract method in the solidity contract
-func (_a *ChallengeFactory) GetChallengedContract(val0 [32]byte, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+func (_a *ChallengeFactory) GetChallengedContract(arg0 [32]byte, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("getChallengedContract", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("getChallengedContract", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
@@ -157,11 +157,11 @@ func (_a *ChallengeFactory) GetChallengedContract(val0 [32]byte, block ...web3.B
 }
 
 // IsChallengeContract calls the isChallengeContract method in the solidity contract
-func (_a *ChallengeFactory) IsChallengeContract(val0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *ChallengeFactory) IsChallengeContract(arg0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("isChallengeContract", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("isChallengeContract", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}

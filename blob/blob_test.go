@@ -72,6 +72,7 @@ func TestCommit(t *testing.T) {
 				h := crypto.Keccak256Hash(commitment[:])
 				h[0] = 0x01
 				assert.Equal(t, ch, h)
+				t.Log(ch)
 			}
 		})
 	}
@@ -100,8 +101,8 @@ func TestProof(t *testing.T) {
 					assert.True(t, bls.FrFrom32(&polynomial[i], elem))
 				}
 
-				x := uint64(2)
 				var xFr bls.Fr
+				x := uint64(2)
 				bls.AsFr(&xFr, x)
 				var value bls.Fr
 				kzg.EvaluatePolyInEvaluationForm(&value, polynomial[:], &xFr)

@@ -43,11 +43,11 @@ func (_a *Challenge) Contract() *contract.Contract {
 // calls
 
 // DisputeTree calls the disputeTree method in the solidity contract
-func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, retval3 [32]byte, err error) {
+func (_a *Challenge) DisputeTree(arg0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, retval3 [32]byte, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("disputeTree", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("disputeTree", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
@@ -109,11 +109,11 @@ func (_a *Challenge) Factory(block ...web3.BlockNumber) (retval0 web3.Address, e
 }
 
 // LastSelectedNodeKey calls the lastSelectedNodeKey method in the solidity contract
-func (_a *Challenge) LastSelectedNodeKey(val0 web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+func (_a *Challenge) LastSelectedNodeKey(arg0 web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("lastSelectedNodeKey", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("lastSelectedNodeKey", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}

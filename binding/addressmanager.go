@@ -138,11 +138,11 @@ func (_a *AddressManager) GetAddr(name string, block ...web3.BlockNumber) (retva
 }
 
 // GetAddrByHash calls the getAddrByHash method in the solidity contract
-func (_a *AddressManager) GetAddrByHash(val0 [32]byte, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+func (_a *AddressManager) GetAddrByHash(arg0 [32]byte, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("getAddrByHash", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("getAddrByHash", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
