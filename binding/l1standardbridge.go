@@ -62,11 +62,11 @@ func (_a *L1StandardBridge) CrossLayerWitness(block ...web3.BlockNumber) (retval
 }
 
 // Deposits calls the deposits method in the solidity contract
-func (_a *L1StandardBridge) Deposits(val0 web3.Address, val1 web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+func (_a *L1StandardBridge) Deposits(arg0 web3.Address, arg1 web3.Address, block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("deposits", web3.EncodeBlock(block...), val0, val1)
+	out, err = _a.c.Call("deposits", web3.EncodeBlock(block...), arg0, arg1)
 	if err != nil {
 		return
 	}

@@ -43,11 +43,11 @@ func (_a *Whitelist) Contract() *contract.Contract {
 // calls
 
 // CanChallenge calls the canChallenge method in the solidity contract
-func (_a *Whitelist) CanChallenge(val0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *Whitelist) CanChallenge(arg0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("canChallenge", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("canChallenge", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
@@ -62,11 +62,11 @@ func (_a *Whitelist) CanChallenge(val0 web3.Address, block ...web3.BlockNumber) 
 }
 
 // CanPropose calls the canPropose method in the solidity contract
-func (_a *Whitelist) CanPropose(val0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *Whitelist) CanPropose(arg0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("canPropose", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("canPropose", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
@@ -81,11 +81,11 @@ func (_a *Whitelist) CanPropose(val0 web3.Address, block ...web3.BlockNumber) (r
 }
 
 // CanSequence calls the canSequence method in the solidity contract
-func (_a *Whitelist) CanSequence(val0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *Whitelist) CanSequence(arg0 web3.Address, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("canSequence", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("canSequence", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}

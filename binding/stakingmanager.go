@@ -43,11 +43,11 @@ func (_a *StakingManager) Contract() *contract.Contract {
 // calls
 
 // GetStakingInfo calls the getStakingInfo method in the solidity contract
-func (_a *StakingManager) GetStakingInfo(val0 web3.Address, block ...web3.BlockNumber) (retval0 uint8, retval1 uint64, retval2 uint64, retval3 uint64, retval4 [32]byte, err error) {
+func (_a *StakingManager) GetStakingInfo(arg0 web3.Address, block ...web3.BlockNumber) (retval0 uint8, retval1 uint64, retval2 uint64, retval3 uint64, retval4 [32]byte, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("getStakingInfo", web3.EncodeBlock(block...), val0)
+	out, err = _a.c.Call("getStakingInfo", web3.EncodeBlock(block...), arg0)
 	if err != nil {
 		return
 	}
