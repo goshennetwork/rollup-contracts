@@ -62,11 +62,11 @@ func (_a *L2CrossLayerWitness) CrossLayerSender(block ...web3.BlockNumber) (retv
 }
 
 // MmrRoots calls the mmrRoots method in the solidity contract
-func (_a *L2CrossLayerWitness) MmrRoots(arg0 uint64, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
+func (_a *L2CrossLayerWitness) MmrRoots(val0 uint64, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("mmrRoots", web3.EncodeBlock(block...), arg0)
+	out, err = _a.c.Call("mmrRoots", web3.EncodeBlock(block...), val0)
 	if err != nil {
 		return
 	}
@@ -81,11 +81,11 @@ func (_a *L2CrossLayerWitness) MmrRoots(arg0 uint64, block ...web3.BlockNumber) 
 }
 
 // SuccessRelayedMessages calls the successRelayedMessages method in the solidity contract
-func (_a *L2CrossLayerWitness) SuccessRelayedMessages(arg0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *L2CrossLayerWitness) SuccessRelayedMessages(val0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("successRelayedMessages", web3.EncodeBlock(block...), arg0)
+	out, err = _a.c.Call("successRelayedMessages", web3.EncodeBlock(block...), val0)
 	if err != nil {
 		return
 	}
