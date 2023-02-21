@@ -43,11 +43,11 @@ func (_a *L1CrossLayerWitness) Contract() *contract.Contract {
 // calls
 
 // BlockedMessages calls the blockedMessages method in the solidity contract
-func (_a *L1CrossLayerWitness) BlockedMessages(arg0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *L1CrossLayerWitness) BlockedMessages(val0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("blockedMessages", web3.EncodeBlock(block...), arg0)
+	out, err = _a.c.Call("blockedMessages", web3.EncodeBlock(block...), val0)
 	if err != nil {
 		return
 	}
@@ -138,11 +138,11 @@ func (_a *L1CrossLayerWitness) Paused(block ...web3.BlockNumber) (retval0 bool, 
 }
 
 // SuccessRelayedMessages calls the successRelayedMessages method in the solidity contract
-func (_a *L1CrossLayerWitness) SuccessRelayedMessages(arg0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
+func (_a *L1CrossLayerWitness) SuccessRelayedMessages(val0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("successRelayedMessages", web3.EncodeBlock(block...), arg0)
+	out, err = _a.c.Call("successRelayedMessages", web3.EncodeBlock(block...), val0)
 	if err != nil {
 		return
 	}

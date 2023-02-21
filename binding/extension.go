@@ -25,7 +25,7 @@ const (
 )
 
 const BrotliEnabledMask = 1
-const BlobEnabledMask = 1 << 1
+const BlobEnabledMask = 1 << 7
 
 func BrotliEnabled(version uint8) bool {
 	return version&BrotliEnabledMask > 0
