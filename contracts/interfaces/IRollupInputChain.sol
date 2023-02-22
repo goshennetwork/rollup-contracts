@@ -53,6 +53,7 @@ interface IRollupInputChain {
     // batchesData: version(0) + rlp([][]transaction)
      *
      * @notice Revert if:
+     * - sender isn't EOA
      * - sender isn't staking
      * - batchIndex not equal to pending batch index
      * - queue_start_index not equal to pending queue index

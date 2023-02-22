@@ -164,6 +164,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
     /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
+        require(msg.sender == tx.origin, "only EOA");
         require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
