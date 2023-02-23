@@ -32,7 +32,7 @@ func TestEncode(t *testing.T) {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
 			b, err := Encode(testCase)
 			assert.NoError(t, err, "encode")
-			decoded, err := Decode(b)
+			decoded, err := ReadAll(b)
 			assert.NoError(t, err, "decode")
 			assert.Equal(t, testCase, decoded)
 		})
@@ -72,7 +72,7 @@ func TestCommit(t *testing.T) {
 				h := crypto.Keccak256Hash(commitment[:])
 				h[0] = 0x01
 				assert.Equal(t, ch, h)
-				t.Log(ch)
+				//t.Log(ch)
 			}
 		})
 	}

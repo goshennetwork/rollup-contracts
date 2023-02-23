@@ -214,7 +214,6 @@ func safeAdd(x, y uint64) uint64 {
 	return x + y
 }
 
-/// Although the batches tx info may hide in blob, just append the origin tx to slice.
 func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.BlobOracle) error {
 	reader := codec.NewZeroCopyReader(b)
 	self.QueueNum = reader.ReadUint64BE()
@@ -260,7 +259,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 		if err != nil {
 			return fmt.Errorf("get blobs with commitment version: %w", err)
 		}
-		data, err := blob.Decode(blobs)
+		data, err := blob.ReadAll(blobs)
 		if err != nil {
 			return fmt.Errorf("decode blobs: %w", err)
 		}
