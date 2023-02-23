@@ -14,8 +14,6 @@ element_0[byte(version),uint32(rawLength),0..0]
 element_1...element_4095: store bytes31(data),so make sure filedElement is less than module, because the kzg use little endien encode, so last byte set to 0.
 */
 
-const BLOB_VERSION = 0
-
 /// one field is reserved for head element
 const DataElementNum = params.FieldElementsPerBlob - 1
 const MaxDataByte = DataElementNum * 31 /// every data element store 31 byte, the last byte is always zero
@@ -32,7 +30,7 @@ func Encode(data []byte) (ret []*types.Blob, err error) {
 		if head {
 			/// first element is head element for storing global info
 			/// write length to head
-			WriteHeadElement(blob, BLOB_VERSION, uint32(len(data)))
+			WriteHeadElement(blob, uint32(len(data)))
 			offset += 1
 			head = false
 		}
@@ -50,14 +48,13 @@ func Encode(data []byte) (ret []*types.Blob, err error) {
 	return ret, nil
 }
 
-func WriteHeadElement(blob *types.Blob, version byte, length uint32) {
-	blob[0][0] = version
-	binary.BigEndian.PutUint32(blob[0][1:5], length)
+func WriteHeadElement(blob *types.Blob, length uint32) {
+	binary.BigEndian.PutUint32(blob[0][0:4], length)
 }
 
-func ReadHeadElement(blob *types.Blob) (version byte, length uint32) {
+func ReadHeadElement(blob *types.Blob) (length uint32) {
 	headElement := blob[0]
-	return headElement[0], binary.BigEndian.Uint32(headElement[1:5])
+	return binary.BigEndian.Uint32(headElement[0:4])
 }
 
 //WriteDataElement write first 31 byte to the data element
@@ -87,10 +84,7 @@ func ReadAll(blobs []*types.Blob) (data []byte, err error) {
 	if len(blobs) == 0 {
 		return nil, errors.New("no blobs")
 	}
-	version, l := ReadHeadElement(blobs[0])
-	if version != BLOB_VERSION {
-		return nil, errors.New("wrong version")
-	}
+	l := ReadHeadElement(blobs[0])
 	data = make([]byte, l)
 	offset := 0
 	for i, v := range blobs {
