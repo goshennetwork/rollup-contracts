@@ -11,6 +11,7 @@ import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
 import "../libraries/RLPWriter.sol";
 import "../libraries/UnsafeSign.sol";
+import "../libraries/EVMDataHash.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
@@ -19,6 +20,8 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant GAS_PRICE = 1_000_000_000;
     uint256 public constant VALUE = 0;
     uint64 public constant INITIAL_ENQUEUE_NONCE = 1 << 63;
+    uint8 constant BLOB_MASK = 1 << 1;
+    uint8 constant ENCODE_TYPE_MASK = 1 << 0;
 
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxWitnessTxExecGasLimit; // ~ 300w
@@ -156,7 +159,12 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
+    // batchesData: version(1) + brotli(rlp([][]transaction))
+    // batchesData: version(1<<1) | {0,1}; so 0b_10 means rlp encode, 0b_11 means brotli encode
+    // if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
+    /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
+        require(msg.sender == tx.origin, "only EOA");
         require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
         require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
@@ -188,6 +196,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         bytes32 _inputHash;
         uint64 _timestamp;
         if (_batchNum == 0) {
+            /// @dev if there is no batch, no need to
             require(_queueNum > 0, "nothing to append");
             require(msg.data.length == _batchDataPos, "wrong calldata");
             _timestamp = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
@@ -218,8 +227,35 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             }
             require(_timestamp <= _nextTimestamp, "last batch timestamp too high");
             // ignore batch index; record input msgdata hash, queue hash
-            _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
+            uint8 _version;
+            assembly {
+                _version := shr(248, calldataload(_batchDataPos))
+            }
+            _batchDataPos += 1;
+            if (_version & BLOB_MASK == 0) {
+                /// @dev blob not enabled
+                _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
+            } else {
+                /// @dev blob enabled
+                uint8 _blobNum;
+                assembly {
+                    _blobNum := shr(248, calldataload(_batchDataPos))
+                }
+                _batchDataPos += 1;
+                require(_blobNum > 0, "no blob");
+                bytes32 _tempVersionHash;
+                for (uint256 _i = 0; _i < _blobNum; _i++) {
+                    bytes32 _versionHash = EVMDataHash.datahash(_i);
+                    require(_versionHash != bytes32(0), "empty blob");
+                    assembly {
+                        _tempVersionHash := calldataload(_batchDataPos)
+                    }
+                    require(_tempVersionHash == _versionHash, "insonsistent version hash");
+                }
+                bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
+            }
         }
+
         _chain.append(_inputHash);
         lastTimestamp = _timestamp;
         emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);

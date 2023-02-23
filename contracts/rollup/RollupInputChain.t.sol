@@ -287,7 +287,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.startPrank(testAddress);
         whitelist.setSequencer(testAddress2, true);
         vm.stopPrank();
-        vm.startPrank(testAddress2);
+        vm.startPrank(testAddress2, testAddress2);
         vm.expectRevert("Sequencer should be staking");
         rollupInputChain.appendInputBatch();
         vm.stopPrank();
@@ -297,7 +297,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when  msg.data.length < 36
     // revert ("wrong len")
     function testAppendWrongBatchDataLength() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         vm.expectRevert("wrong len");
         helpCall(address(rollupInputChain), bytes("0x0"));
         vm.stopPrank();
@@ -314,7 +314,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when  _batchIndex != chainHeight()
     // revert ("wrong batch index")
     function testAppendInputBatchWrongBatchIndex() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         uint64 invalidIndex = rollupInputChain.chainHeight() + 10;
         vm.expectRevert("wrong batch index");
         fakeAppendInputBatch(invalidIndex, 0, 1, 1, 0, bytes("0x0"));
@@ -325,7 +325,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when  _queueStartIndex != pendingQueueIndex
     // revert ("incorrect pending queue index")
     function testAppendInputBatchQueueStartIndex() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         vm.expectRevert("incorrect pending queue index");
         fakeAppendInputBatch(0, 0, 1, 1, 0, bytes("0x0")); //it will always work
         vm.stopPrank();
@@ -365,7 +365,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when _nextPendingQueueIndex(queueStart + queueNum) > queuedTxInfos.length
     // revert ("attempt to append unavailable queue")
     function testAppendInputBatchInvalidNextPendingQueueIndex() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         vm.expectRevert("attempt to append unavailable queue");
         fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
         vm.stopPrank();
@@ -375,7 +375,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when _queueNum <= 0
     // revert ("nothing to append")
     function testAppendInputBatchInvalidQueueNum() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         vm.expectRevert("nothing to append");
         fakeAppendInputBatch(0, 0, 0, 0, 0, bytes("0x0"));
         vm.stopPrank();
@@ -390,7 +390,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         enqueue2(bytes("0x0"));
         vm.stopPrank();
 
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         bytes memory data = new bytes(502); //because _batchDataPos always change, 502 will cover almost all
         uint64 batchIndex = 0;
         uint64 queueNum = 1;
@@ -428,7 +428,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         enqueue2(bytes("0x0"));
         vm.stopPrank();
 
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
         vm.expectRevert("wrong batch timestamp");
         fakeAppendInputBatch(1, 1, 1, 1, 0, bytes("0x0")); //This situation can work in many occasions
@@ -439,7 +439,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     // when _timestamp > _nextTimestamp
     // revert ("last batch timestamp too high")
     function testAppendInputBatchTooHighTimestamp() public {
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         uint64 time = uint64(block.timestamp) + 10;
         vm.expectRevert("last batch timestamp too high");
         fakeAppendInputBatch(0, 0, 0, 1, time, bytes("0x0"));
@@ -457,7 +457,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         enqueue2(bytes("0x0"));
         vm.stopPrank();
 
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         bytes32 _queueHashes = getrollupInputChainQueueHash(0, 1);
         bytes memory info = getinfo(1, 0, 0, 0, "");
         bytes32 inputhash = keccak256(abi.encodePacked(keccak256(info), _queueHashes));
@@ -530,7 +530,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         enqueue2(bytes("0x0"));
         vm.stopPrank();
 
-        vm.startPrank(testAddress);
+        vm.startPrank(testAddress, testAddress);
         fakeAppendInputBatch(0, 1, 0, 1, 0, bytes("0x0"));
 
         bytes32 _queueHashes = getrollupInputChainQueueHash(1, 1);
@@ -539,6 +539,5 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.expectEmit(true, true, false, true);
         emit InputBatchAppended(testAddress, 1, 1, 1, inputhash);
         fakeAppendInputBatch(1, 1, 1, 1, 2, bytes("0x0")); //it will always work
-        vm.stopPrank();
     }
 }

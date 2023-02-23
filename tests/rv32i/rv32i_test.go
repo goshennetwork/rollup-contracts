@@ -16,6 +16,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/abi"
 	"github.com/laizy/web3/hardhat"
+	"github.com/laizy/web3/utils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ontology-layer-2/rollup-contracts/tests"
 	"github.com/pkg/errors"
@@ -188,7 +189,7 @@ func newCase() *testCase {
 	vmevm := tests.NewEVMWithCode(map[common.Address][]byte{ramAddr: ramA.DeployedBytecode})
 	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
 	mdb := trie.NewDatabase(memorydb.New())
-	trie, err := trie.New(common.Hash{}, mdb)
+	trie, err := trie.New(common.Hash{}, common.Hash{}, mdb)
 	if err != nil {
 		panic(err)
 	}
@@ -215,10 +216,17 @@ func (this *testCase) copyRam(ram map[uint32]uint32) ([]byte, error) {
 		binary.LittleEndian.PutUint32(vv[:], v)
 		this.ramTrie.Update(kk, vv)
 	}
-	if _, err := this.ramTrie.Commit(nil); err != nil {
+	hash, nodeSet, err := this.ramTrie.Commit(true)
+	if err != nil {
 		panic(err)
 	}
-	err := this.mdb.Commit(this.ramTrie.Hash(), false, func(hash common.Hash) {
+
+	fmt.Println(nodeSet.Len())
+	n := trie.NewMergedNodeSet()
+	utils.Ensure(n.Merge(nodeSet))
+	utils.Ensure(this.mdb.Update(n))
+
+	err = this.mdb.Commit(hash, false, func(hash common.Hash) {
 		node, err := this.mdb.Node(hash)
 		if err != nil {
 			panic(err)
