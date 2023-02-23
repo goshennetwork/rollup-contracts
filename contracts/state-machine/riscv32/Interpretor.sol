@@ -339,6 +339,14 @@ contract Interpretor is IInterpretor, Initializable {
             uint32 v = mstate.readRegister(_root, Register.REG_A4);
             address signer = ecrecover(hash, uint8(v + 27), r, s);
             _root = mstate.writeMemoryAddr(_root, va0, signer);
+        } else if (_systemNumer == 7) {
+            // hash: the blob version hash, index: 0-4095, output: [u8;32]
+            //pub fn blob_at(hash: *const u8, index: usize, output: *mut u8);
+            bytes32 hash = mstate.readMemoryBytes32(_root, va0);
+            uint32 index = mstate.readRegister(_root, Register.REG_A1);
+            uint32 va2 = mstate.readRegister(_root, Register.REG_A2);
+            bytes32 element = mstate.readBlobAt(hash, index);
+            _root = mstate.writeMemoryBytes32(_root, va2, element);
         } else {
             //invalid sys num
             _nextPC = MemoryLayout.HaltMagic;

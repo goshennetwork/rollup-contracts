@@ -11,7 +11,7 @@ import "../interfaces/IChainStorageContainer.sol";
 import "../libraries/Constants.sol";
 import "../libraries/RLPWriter.sol";
 import "../libraries/UnsafeSign.sol";
-import "../libraries/EVMDataHash.sol";
+import "../libraries/EVMPreCompiled.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
@@ -245,7 +245,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                 require(_blobNum > 0, "no blob");
                 bytes32 _tempVersionHash;
                 for (uint256 _i = 0; _i < _blobNum; _i++) {
-                    bytes32 _versionHash = EVMDataHash.datahash(_i);
+                    bytes32 _versionHash = EVMPreCompiled.datahash(_i);
                     require(_versionHash != bytes32(0), "empty blob");
                     assembly {
                         _tempVersionHash := calldataload(_batchDataPos)
