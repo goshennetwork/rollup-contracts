@@ -257,7 +257,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 		if err != nil {
 			return fmt.Errorf("get blobs with commitment version: %w", err)
 		}
-		data, err := blob.Decode(blobs)
+		data, err := blob.ReadAll(blobs)
 		if err != nil {
 			return fmt.Errorf("decode blobs: %w", err)
 		}
