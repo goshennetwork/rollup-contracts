@@ -138,8 +138,7 @@ func (self *RollupInputBatches) EncodeWithoutIndex(version byte) []byte {
 	}
 
 	if self.BlobEnabled() { //just need to append blob num and version hash
-		blobs, err := blob.Encode(code)
-		utils.Ensure(err)
+		blobs := blob.Encode(code)
 		//write blob num
 		///check blob num, make sure byte will not change num value
 		if len(blobs) != int(byte(len(blobs))) {
@@ -183,8 +182,7 @@ func (self *RollupInputBatches) Blobs() ([]*types.Blob, error) {
 	}
 
 	//just need to append blob num and version hash
-	blobs, err := blob.Encode(code)
-	utils.Ensure(err)
+	blobs := blob.Encode(code)
 	//write blob num
 	///check blob num, make sure byte will not change num value
 	if len(blobs) != int(byte(len(blobs))) {
@@ -259,7 +257,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 		if err != nil {
 			return fmt.Errorf("get blobs with commitment version: %w", err)
 		}
-		data, err := blob.ReadAll(blobs)
+		data, err := blob.Decode(blobs)
 		if err != nil {
 			return fmt.Errorf("decode blobs: %w", err)
 		}

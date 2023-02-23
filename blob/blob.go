@@ -6,95 +6,51 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/laizy/web3/utils/codec"
 )
 
-/*
-element_0[byte(version),uint32(rawLength),0..0]
+const BytesPerBlob = 31 * params.FieldElementsPerBlob
 
-element_1...element_4095: store bytes31(data),so make sure filedElement is less than module, because the kzg use little endien encode, so last byte set to 0.
-*/
+func encodeLenAndAlign(data []byte) []byte {
+	lenData := uint32(len(data))
+	numBlobs := (lenData + 4 + BytesPerBlob - 1) / BytesPerBlob
+	output := make([]byte, numBlobs*BytesPerBlob)
+	binary.BigEndian.PutUint32(output, lenData)
+	copy(output[4:], data)
+	return output
+}
 
-/// one field is reserved for head element
-const DataElementNum = params.FieldElementsPerBlob - 1
-const MaxDataByte = DataElementNum * 31 /// every data element store 31 byte, the last byte is always zero
-
-func Encode(data []byte) (ret []*types.Blob, err error) {
-	if len(data) == 0 {
-		return nil, errors.New("empty data")
+func decodeLen(data []byte) ([]byte, error) {
+	lenData := binary.BigEndian.Uint32(data)
+	if lenData+4 > uint32(len(data)) {
+		return nil, errors.New("wrong blob format: data len mismatch")
 	}
+	return data[4 : 4+lenData], nil
+}
 
-	head := true
-	for len(data) > 0 {
-		offset := 0
+func Encode(data []byte) (ret []*types.Blob) {
+	reader := codec.NewZeroCopyReader(encodeLenAndAlign(data))
+	for reader.Len() > 0 {
 		blob := &types.Blob{}
-		if head {
-			/// first element is head element for storing global info
-			/// write length to head
-			WriteHeadElement(blob, uint32(len(data)))
-			offset += 1
-			head = false
-		}
-		byteNum := (params.FieldElementsPerBlob - offset) * 31
-		if len(data) < byteNum {
-			byteNum = len(data)
-		}
-
-		for i := 0; i < (byteNum+30)/31; i += 1 {
-			_ = WriteDataElement(blob, i+offset, data[31*i:])
+		for i := 0; i < params.FieldElementsPerBlob; i++ {
+			val := reader.ReadBytes(31)
+			copy(blob[i][:], val)
 		}
 		ret = append(ret, blob)
-		data = data[byteNum:]
 	}
-	return ret, nil
+
+	return ret
 }
 
-func WriteHeadElement(blob *types.Blob, length uint32) {
-	binary.BigEndian.PutUint32(blob[0][0:4], length)
-}
-
-func ReadHeadElement(blob *types.Blob) (length uint32) {
-	headElement := blob[0]
-	return binary.BigEndian.Uint32(headElement[0:4])
-}
-
-//WriteDataElement write first 31 byte to the data element
-func WriteDataElement(blob *types.Blob, index int, data []byte) error {
-	var b [32]byte
-	copy(b[:31], data)
-	blob[index] = b
-	return nil
-}
-
-func ReadData(blob *types.Blob, isHead bool) (data []byte) {
-	l := params.FieldElementsPerBlob
-	index := 0
-	if isHead {
-		l -= 1
-		index += 1
-	}
-	data = make([]byte, l*31)
-	offset := 0
-	for ; index < len(blob); index++ {
-		copy(data[offset:], blob[index][:31])
-		offset += 31
-	}
-	return data
-}
-func ReadAll(blobs []*types.Blob) (data []byte, err error) {
-	if len(blobs) == 0 {
-		return nil, errors.New("no blobs")
-	}
-	l := ReadHeadElement(blobs[0])
-	data = make([]byte, l)
-	offset := 0
-	for i, v := range blobs {
-		d := ReadData(v, i == 0)
-		copy(data[offset:], d)
-		offset += len(d)
-		if uint32(offset) >= l {
-			break
+func Decode(blobs []*types.Blob) ([]byte, error) {
+	sink := codec.NewZeroCopySink(nil)
+	for _, blob := range blobs {
+		for _, v := range blob {
+			if v[31] != 0 {
+				return nil, errors.New("wrong blob format: elem too large")
+			}
+			sink.WriteBytes(v[:31])
 		}
 	}
-
-	return data, nil
+	return decodeLen(sink.Bytes())
 }

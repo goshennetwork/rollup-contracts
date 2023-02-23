@@ -8,9 +8,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/kzg"
+	"github.com/ethereum/go-ethereum/params"
 	"github.com/protolambda/go-kzg/bls"
 	"github.com/stretchr/testify/assert"
 )
+
+/// one field is reserved for head element
+const DataElementNum = params.FieldElementsPerBlob - 1
+const MaxDataByte = DataElementNum * 31 /// every data element store 31 byte, the last byte is always zero
 
 func genRandomData(length int) []byte {
 	s := rand.NewSource(time.Now().Unix())
@@ -30,9 +35,8 @@ func TestEncode(t *testing.T) {
 	}
 	for i, testCase := range testCases {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
-			b, err := Encode(testCase)
-			assert.NoError(t, err, "encode")
-			decoded, err := ReadAll(b)
+			b := Encode(testCase)
+			decoded, err := Decode(b)
 			assert.NoError(t, err, "decode")
 			assert.Equal(t, testCase, decoded)
 		})
@@ -49,8 +53,7 @@ func TestCommit(t *testing.T) {
 	}
 	for i, testCase := range testCases {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
-			b, err := Encode([]byte(testCase))
-			assert.NoError(t, err, "encode")
+			b := Encode([]byte(testCase))
 			for i := range b {
 				blob := b[i]
 				commitment, ok := blob.ComputeCommitment()
@@ -88,8 +91,7 @@ func TestProof(t *testing.T) {
 	}
 	for i, testCase := range testCases {
 		t.Run(fmt.Sprintf("test case %d", i), func(t *testing.T) {
-			b, err := Encode([]byte(testCase))
-			assert.NoError(t, err, "encode")
+			b := Encode([]byte(testCase))
 			for i := range b {
 				blob := b[i]
 				commitment, ok := blob.ComputeCommitment()
