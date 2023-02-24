@@ -8,6 +8,8 @@ library EVMPreCompiled {
 
     //    bytes32 constant FAKE_VERSION_HASH_LIST_1 = bytes32(uint256(0xffff));
 
+    address constant POINT_EVALUATION_PRECOMPILE_ADDRESS = address(0x14);
+
     function datahash(uint256 _index) internal returns (bytes32) {
         if (_index == 0) {
             return FAKE_VERSION_HASH_LIST_0;
@@ -23,7 +25,8 @@ library EVMPreCompiled {
     // Expected output: next 32 bytes
     // input kzg point: next 48 bytes
     // Quotient kzg: next 48 bytes
-    function point_evaluation_precompile(bytes memory d) internal {
-        revert("todo");
+    function point_evaluation_precompile(bytes memory d) internal view {
+        (bool ok, ) = POINT_EVALUATION_PRECOMPILE_ADDRESS.staticcall(abi.encodePacked(d));
+        require(ok, "point_evaluation failed");
     }
 }

@@ -16,8 +16,8 @@ contract MachineState is IMachineState {
     using Syscall for mapping(bytes32 => HashDB.Preimage);
     mapping(bytes32 => HashDB.Preimage) hashdb;
 
-    using BlobDB for mapping(bytes32 => uint256[4096]);
-    mapping(bytes32 => uint256[4096]) blobdb;
+    using BlobDB for mapping(bytes32 => uint256[]);
+    mapping(bytes32 => uint256[]) blobdb;
 
     function insertBlobAt(
         bytes32 _versionHash,
