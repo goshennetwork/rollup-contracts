@@ -21,12 +21,12 @@ contract MachineState is IMachineState {
 
     function insertBlobAt(
         bytes32 _versionHash,
-        uint256 _x,
+        uint64 _index,
         uint256 _y,
         bytes1[48] memory _commitment,
         bytes1[48] memory _proof
     ) public {
-        blobdb.insertBlobAt(_versionHash, _x, _y, _commitment, _proof);
+        blobdb.insertBlobAt(_versionHash, _index, _y, _commitment, _proof);
     }
 
     function readBlobAt(bytes32 _versionHash, uint32 _index) public view returns (bytes32) {

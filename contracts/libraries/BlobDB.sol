@@ -4,22 +4,37 @@ import "./EVMPreCompiled.sol";
 
 library BlobDB {
     uint32 constant FIELD_ELEMENTS_PERBLOB = 4096;
-
+    uint256 constant W1 = 39033254847818212395286706435128746857159659164139250548781411570340225835782;
+    uint256 constant BLS_MODULE = 52435875175126190479447740508185965837690552500527637822603658699938581184513;
     uint256 constant EXIST_FLAG = 1;
-
     using BlobDB for mapping(bytes32 => uint256[]);
 
+    function calcWn(uint64 n) internal pure returns (uint256) {
+        if (n == 0) {
+            return 1;
+        }
+        uint256 ret = W1;
+        for (uint64 i = 1; i < n; i++) {
+            assembly {
+                ret := mulmod(ret, W1, BLS_MODULE)
+            }
+        }
+        return ret;
+    }
+
+    /// @notice index over 4096 also make point evaludation pass, but it is useless, because L2 OS will not read index that >=4096
     function insertBlobAt(
         mapping(bytes32 => uint256[]) storage db,
         bytes32 versionHash,
-        uint256 x,
+        uint64 index,
         uint256 y,
         bytes1[48] memory commitment,
         bytes1[48] memory proof
     ) internal {
+        uint256 x = calcWn(index);
         EVMPreCompiled.point_evaluation_precompile(abi.encodePacked(versionHash, x, y, commitment, proof));
         /// @notice y is checked in precompiled logic, sure never overflow
-        db[versionHash][x] = y + EXIST_FLAG;
+        db[versionHash][index] = y + EXIST_FLAG;
     }
 
     function readBlobAt(
