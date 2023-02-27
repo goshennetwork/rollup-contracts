@@ -21,7 +21,7 @@ contract MachineState is IMachineState {
 
     function insertBlobAt(
         bytes32 _versionHash,
-        uint64 _index,
+        uint32 _index,
         uint256 _y,
         bytes1[48] memory _commitment,
         bytes1[48] memory _proof

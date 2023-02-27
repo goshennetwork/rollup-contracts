@@ -26,7 +26,7 @@ library BlobDB {
     function insertBlobAt(
         mapping(bytes32 => uint256[]) storage db,
         bytes32 versionHash,
-        uint64 index,
+        uint32 index,
         uint256 y,
         bytes1[48] memory commitment,
         bytes1[48] memory proof
