@@ -26,7 +26,7 @@ library EVMPreCompiled {
     // input kzg point: next 48 bytes
     // Quotient kzg: next 48 bytes
     function point_evaluation_precompile(bytes memory d) internal view {
-        (bool ok, ) = POINT_EVALUATION_PRECOMPILE_ADDRESS.staticcall(abi.encodePacked(d));
+        (bool ok, ) = POINT_EVALUATION_PRECOMPILE_ADDRESS.staticcall(d);
         require(ok, "point_evaluation failed");
     }
 }
