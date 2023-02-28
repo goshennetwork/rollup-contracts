@@ -7,6 +7,7 @@ import "../libraries/BytesSlice.sol";
 import "./riscv32/Syscall.sol";
 import "../interfaces/IMachineState.sol";
 import "../libraries/HashDB.sol";
+import "../libraries/BlobDB.sol";
 
 contract MachineState is IMachineState {
     using HashDB for mapping(bytes32 => HashDB.Preimage);
@@ -14,6 +15,23 @@ contract MachineState is IMachineState {
     using Register for mapping(bytes32 => HashDB.Preimage);
     using Syscall for mapping(bytes32 => HashDB.Preimage);
     mapping(bytes32 => HashDB.Preimage) hashdb;
+
+    using BlobDB for mapping(bytes32 => uint256[]);
+    mapping(bytes32 => uint256[]) blobdb;
+
+    function insertBlobAt(
+        bytes32 _versionHash,
+        uint32 _index,
+        uint256 _y,
+        bytes1[48] memory _commitment,
+        bytes1[48] memory _proof
+    ) public {
+        blobdb.insertBlobAt(_versionHash, _index, _y, _commitment, _proof);
+    }
+
+    function readBlobAt(bytes32 _versionHash, uint32 _index) public view returns (bytes32) {
+        return blobdb.readBlobAt(_versionHash, _index);
+    }
 
     function insertPreimage(bytes calldata _node) public {
         hashdb.insertPreimage(_node);
