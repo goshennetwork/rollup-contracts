@@ -14,16 +14,16 @@ contract Challenge is IChallenge {
     uint256 public override minChallengerDeposit;
 
     //so the last step and 0 step's state is not in node's state root.
-    mapping(uint256 => DisputeTree.DisputeNode) public disputeTree;
+    mapping(uint256 => DisputeTree.DisputeNode) public override disputeTree;
     //record every challenger last select node key in disputeTree.
-    mapping(address => uint256) public lastSelectedNodeKey;
-    SystemInfo systemInfo;
-    ChallengeStage public stage;
-    ClaimStatus claimStatus;
+    mapping(address => uint256) public override lastSelectedNodeKey;
+    SystemInfo public override systemInfo;
+    ChallengeStage public override stage;
+    ClaimStatus public override claimStatus;
     // who start challenge.
     address creator;
     //at which l1 block number, the game timeout.
-    uint256 public expireAfterBlock;
+    uint256 public override expireAfterBlock;
     //fixme: evaluate timeout more legitimate. The dispute solver can delay the challenge by provide step ((1<<256) -1),and choose deadline to repond, and responsible challenger respond in next block ,so the system judge will delay 256*(timeout+1)+timeout,if timeout is 100 this roughly 4.5 Days!
     uint256 proposerTimeLimit;
     //amount challenge get from dispute proposer.
@@ -277,6 +277,10 @@ contract Challenge is IChallenge {
         _canWithdraw += (_scale * rewardAmount) / _pieces;
         lastSelectedNodeKey[_challenger] = 0;
         require(token.transfer(_challenger, _canWithdraw), "transfer failed");
+    }
+
+    function canClaimTheCake(address _challenger) public view returns (bool) {
+        return lastSelectedNodeKey[_challenger] != 0;
     }
 
     //finish game and rollback the dispute l2 block & slash the dispute proposer.
