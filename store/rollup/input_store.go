@@ -76,7 +76,7 @@ func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionE
 			if bytes.Equal(codec.SerializeToBytes(oldTxn), codec.SerializeToBytes(txn)) {
 				continue
 			} else { // find out inconsistent
-				return fmt.Errorf("enqueue tx inconsistant, queueIndex: %d")
+				return fmt.Errorf("enqueue tx inconsistant, queueIndex: %d", queue.QueueIndex)
 			}
 		}
 		self.putEnqueuedTransaction(txn)
