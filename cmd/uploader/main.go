@@ -79,7 +79,13 @@ func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer
 	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, make(chan struct{})}
 }
 
-func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) error {
+func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = fmt.Errorf("recover err: %s", e)
+		}
+	}()
 	txn := self.inputChain.AppendInputBatches(batches)
 	//use confirmed nonce
 	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
@@ -96,7 +102,13 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 	return nil
 }
 
-func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) error {
+func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) (err error) {
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = fmt.Errorf("recover err: %s", e)
+		}
+	}()
 	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
 	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
 	if err != nil { //network tolerate
