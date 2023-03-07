@@ -306,9 +306,9 @@ func (self *SyncService) SyncRollupInputQueues(kvdb *store.StorageWriter, startH
 		return err, false
 	}
 	if len(queues) > 0 {
-		//r1cs debug
+		// debug
 		lastQueue := queues[len(queues)-1]
-		log.Info("r1cs debug transaction enqueued event", "startQueueIndex", queues[0].QueueIndex, "lastQueueIndex", lastQueue.QueueIndex, "lastBlockHash", lastQueue.Raw.BlockHash, "lastBlockNumber", lastQueue.Raw.BlockNumber)
+		log.Info("debug transaction enqueued event", "startQueueIndex", queues[0].QueueIndex, "lastQueueIndex", lastQueue.QueueIndex, "lastBlockHash", lastQueue.Raw.BlockHash, "lastBlockNumber", lastQueue.Raw.BlockNumber)
 	}
 	inputStore := kvdb.InputChain()
 	if err := inputStore.StoreEnqueuedTransaction(queues...); err != nil {
@@ -326,9 +326,9 @@ func (self *SyncService) syncRollupInputChainBatches(kvdb *store.StorageWriter, 
 		return err, false
 	}
 	inputStore := kvdb.InputChain()
-	if len(batches) > 0 { //r1cs debug
+	if len(batches) > 0 { //debug
 		last := batches[len(batches)-1]
-		log.Info("r1cs debug input batches event", "firstBatchIndex", batches[0].Index, "lastBatchIndex", last.Index, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber, "startBlockNumber", startHeight)
+		log.Info("debug input batches event", "firstBatchIndex", batches[0].Index, "lastBatchIndex", last.Index, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber, "startBlockNumber", startHeight)
 	}
 	txs := make([]*web3.Transaction, 0)
 	txBatchIndexes := make([]uint64, 0)
@@ -429,9 +429,9 @@ func (self *SyncService) syncRollupStateChain(kvdb *store.StorageWriter, startHe
 	if err != nil {
 		return fmt.Errorf("filter state batch appended event: %w", err)
 	}
-	if len(statesBatches) > 0 { // r1cs debug
+	if len(statesBatches) > 0 { // debug
 		last := statesBatches[len(statesBatches)-1]
-		log.Info("r1cs debug state batches", "lastBatchIndex", last.StartIndex, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber)
+		log.Info("debug state batches", "lastBatchIndex", last.StartIndex, "lastBlockHash", last.Raw.BlockHash, "lastBlockNumber", last.Raw.BlockNumber)
 	}
 	stateStore := kvdb.StateChain()
 	if err := stateStore.StoreBatchInfo(statesBatches...); err != nil {
