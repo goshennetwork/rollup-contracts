@@ -138,20 +138,17 @@ func EnqueuedTransactionFromEvent(e *binding.TransactionEnqueuedEvent) *Enqueued
 type InputChainInfo struct {
 	PendingQueueIndex uint64
 	TotalBatches      uint64
-	QueueSize         uint64
 }
 
 func (i *InputChainInfo) Serialization(sink *codec.ZeroCopySink) {
 	sink.WriteUint64(i.PendingQueueIndex)
 	sink.WriteUint64(i.TotalBatches)
-	sink.WriteUint64(i.QueueSize)
 }
 
 func (i *InputChainInfo) DeSerialization(source *codec.ZeroCopySource) error {
 	reader := source.Reader()
 	i.PendingQueueIndex = reader.ReadUint64()
 	i.TotalBatches = reader.ReadUint64()
-	i.QueueSize = reader.ReadUint64()
 	return reader.Error()
 }
 
@@ -274,4 +271,64 @@ func SerializeCompactMerkleTree(tree *merkle.CompactMerkleTree) []byte {
 		value.WriteHash(hash)
 	}
 	return value.Bytes()
+}
+
+type L1CheckPointInfo struct {
+	StartPoint uint64
+	DirtyKey   [][]byte
+	DirtyValue [][]byte
+}
+
+func (s *L1CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.StartPoint)
+	for _, key := range s.DirtyKey {
+		sink.WriteVarBytes(key)
+	}
+	for _, value := range s.DirtyValue {
+		sink.WriteVarBytes(value)
+	}
+}
+
+func (s *L1CheckPointInfo) Deserialization(source *codec.ZeroCopySource) (err error) {
+	reader := source.Reader()
+	s.StartPoint = reader.ReadUint64()
+	var all [][]byte
+	for {
+		if reader.Len() == 0 { // nothing to read
+			break
+		}
+		data := reader.ReadVarBytes()
+		all = append(all, data)
+	}
+	if len(all)%2 != 0 {
+		//should never happen
+		panic(1)
+	}
+	_copy := make([][]byte, len(all)/2)
+	copy(_copy, all[:len(all)/2])
+	s.DirtyKey = _copy
+	_copy = make([][]byte, len(all)/2)
+	copy(_copy, all[len(all)/2:])
+	s.DirtyValue = _copy
+	return reader.Error()
+}
+
+type L2CheckPointInfo struct {
+	StartPoint  uint64
+	BatchIndex  uint64
+	BlockNumber uint64
+}
+
+func (s *L2CheckPointInfo) Serialization(sink *codec.ZeroCopySink) {
+	sink.WriteUint64(s.StartPoint)
+	sink.WriteUint64(s.BatchIndex)
+	sink.WriteUint64(s.BlockNumber)
+}
+
+func (s *L2CheckPointInfo) Deserialization(source *codec.ZeroCopySource) error {
+	reader := source.Reader()
+	s.StartPoint = reader.ReadUint64()
+	s.BatchIndex = reader.ReadUint64()
+	s.BlockNumber = reader.ReadUint64()
+	return reader.Error()
 }

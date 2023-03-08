@@ -1,6 +1,7 @@
 package rollup
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 
@@ -33,11 +34,24 @@ func (self *InputChain) putInfo(info *schema.InputChainInfo) {
 	self.store.Put(schema.CurrentRollupInputChainInfoKey, codec.SerializeToBytes(info))
 }
 
+func (self *InputChain) StoreQueueSize(size uint64) {
+	self.store.Put(schema.CurrentQueueSizeKey, codec.NewZeroCopySink(nil).WriteUint64BE(size).Bytes())
+}
+
+func (self *InputChain) QueueSize() uint64 {
+	data, err := self.store.Get(schema.CurrentQueueSizeKey)
+	utils.Ensure(err)
+	if len(data) == 0 { // not exist
+		return 0
+	}
+	return binary.BigEndian.Uint64(data)
+}
+
 func (self *InputChain) GetInfo() *schema.InputChainInfo {
 	data, err := self.store.Get(schema.CurrentRollupInputChainInfoKey)
 	utils.Ensure(err)
 	if len(data) == 0 { // not exist
-		return &schema.InputChainInfo{0, 0, 0}
+		return &schema.InputChainInfo{0, 0}
 	}
 	source := codec.NewZeroCopySource(data)
 	bed := &schema.InputChainInfo{}
@@ -46,17 +60,30 @@ func (self *InputChain) GetInfo() *schema.InputChainInfo {
 	return bed
 }
 
-func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) {
-	info := self.GetInfo()
+func (self *InputChain) StoreEnqueuedTransaction(queues ...*binding.TransactionEnqueuedEvent) error {
+	size := self.QueueSize()
 	for _, queue := range queues {
-		if info.QueueSize != queue.QueueIndex {
-			panic(fmt.Errorf("wrong queue index, expect: %d, found: %d", info.QueueSize, queue.QueueIndex))
+		if queue.QueueIndex > size { // check consistent, wired situation will happen when l1 roll back some block,but old queue is permitted.
+			return fmt.Errorf("wrong queue index, expect: %d, found: %d", size, queue.QueueIndex)
 		}
 		txn := schema.EnqueuedTransactionFromEvent(queue)
+
+		if size != queue.QueueIndex { //old queue, check whether is the same, otherwise rollback happended
+			oldTxn, err := self.GetEnqueuedTransaction(queue.QueueIndex)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(codec.SerializeToBytes(oldTxn), codec.SerializeToBytes(txn)) {
+				continue
+			} else { // find out inconsistent
+				return fmt.Errorf("enqueue tx inconsistant, queueIndex: %d", queue.QueueIndex)
+			}
+		}
 		self.putEnqueuedTransaction(txn)
-		info.QueueSize += 1
+		size += 1
 	}
-	self.putInfo(info)
+	self.StoreQueueSize(size)
+	return nil
 }
 
 func (self *InputChain) GetAppendedTransaction(index uint64) (*schema.AppendedTransaction, error) {
@@ -107,19 +134,27 @@ func (self *InputChain) GetEnqueuedTransactions(startIndex uint64, num uint64) (
 }
 
 //will update info in memory
-func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppendedEvent) {
+func (self *InputChain) StoreSequencerBatches(queueSize uint64, batches ...*binding.InputBatchAppendedEvent) error {
 	info := self.GetInfo()
 	for _, batch := range batches {
-		if batch.Index != info.TotalBatches {
-			panic(fmt.Errorf("wrong batch index, expect: %d, found: %d", info.TotalBatches, batch.Index))
+		if batch.Index > info.TotalBatches { //happen when roll back, old is permitted
+			return fmt.Errorf("wrong batch index, expect: %d, found: %d", info.TotalBatches, batch.Index)
 		}
 
 		// check the queue info
-		if info.PendingQueueIndex != batch.StartQueueIndex {
-			panic(fmt.Errorf("wrong start queue index, expect:%d, found:%d", info.PendingQueueIndex, batch.StartQueueIndex))
+		if batch.StartQueueIndex > info.PendingQueueIndex { // wired batch
+			return fmt.Errorf("wrong start queue index, expect:%d, found:%d", info.PendingQueueIndex, batch.StartQueueIndex)
 		}
-		utils.EnsureTrue(info.PendingQueueIndex+batch.QueueNum <= info.QueueSize)
-
+		if batch.StartQueueIndex+batch.QueueNum > queueSize { // reach unlocated queue, wired
+			return fmt.Errorf("wired batch or queue found, local queue size: %d, batch queue num: %d, pending queue index: %d", queueSize, batch.QueueNum, info.PendingQueueIndex)
+		}
+		if batch.Index == info.TotalBatches {
+			//now should consistent
+			if batch.StartQueueIndex != info.PendingQueueIndex {
+				//wired, mayble should never happen?
+				panic(1)
+			}
+		}
 		txn := &schema.AppendedTransaction{
 			Proposer:        batch.Proposer,
 			Index:           batch.Index,
@@ -127,12 +162,23 @@ func (self *InputChain) StoreSequencerBatches(batches ...*binding.InputBatchAppe
 			QueueNum:        batch.QueueNum,
 			InputHash:       batch.InputHash,
 		}
-
+		if batch.Index < info.TotalBatches { // old batch when roll back happen, check the info
+			oldtx, err := self.GetAppendedTransaction(batch.Index)
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(codec.SerializeToBytes(oldtx), codec.SerializeToBytes(txn)) {
+				continue
+			} else { // inconsistent just rollback
+				return fmt.Errorf("find inconsistent input batch, index: %d", batch.Index)
+			}
+		}
 		self.store.Put(genRollupInputBatchKey(batch.Index), codec.SerializeToBytes(txn))
-		info.TotalBatches += 1
+		info.TotalBatches = batch.Index + 1
 		info.PendingQueueIndex += batch.QueueNum
 	}
 	self.putInfo(info)
+	return nil
 }
 
 //returned data already trim function selector in calldata

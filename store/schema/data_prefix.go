@@ -18,9 +18,8 @@ const (
 
 	L2ClientCheckBlockNumPrefix = 0x10 //batch index -> checked l2 block num
 	L2ClientProofPrefix         = 0x11 //batch index -> read-storage-proof
-
-	L1MMRDataPrefix = 0x16
-	L2MMRDataPrefix = 0x17
+	L1MMRDataPrefix             = 0x16
+	L2MMRDataPrefix             = 0x17
 
 	AddressNamePrefix = 0x20 // name -> address
 )
@@ -35,7 +34,18 @@ var (
 	L1CompactMerkleTreeKey             = []byte{0x16}
 	L2CompactMerkleTreeKey             = []byte{0x17}
 	LastSyncedL2HeightKey              = []byte{0x18}
+	LastSyncedL1Hash                   = []byte{0x19}
+	HighestL1CheckPointInfo1Key        = []byte{0x1a} //rollback to this l1 height point, this point is simply last LastSyncedL1Height
+	HighestL1CheckPointInfo2Key        = []byte{0x1b}
+	HighestL1CheckPointInfo3Key        = []byte{0x1c}
+	L1DbVersionKey                     = []byte{0x1d}
+	L1WitnessSentMessageNumPrefix      = []byte{0x1e}
+	LastSyncConfirmedL1HeightKey       = []byte{0x1f}
 
 	L2ClientCheckBatchNumKey = []byte{0x20} //-> checked batch num
 	CurrentQueueBlockKey     = []byte{0x21} //-> head queue block
+	L2ClientVersion          = []byte{0x22} //-> l2 client version
+	L2ClientPendingPoint     = []byte{0x23} // -> l2 client pending point info
+
+	CurrentQueueSizeKey = []byte{0x30}
 )

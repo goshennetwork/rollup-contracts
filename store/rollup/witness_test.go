@@ -49,7 +49,9 @@ func TestL1Witness(t *testing.T) {
 	m := 5
 	n := 10
 	msgs := genRandomSentMessage(n)
-	l1Witness.StoreSentMessage(msgs)
+	if err := l1Witness.StoreSentMessage(msgs); err != nil {
+		t.Fatal(err)
+	}
 	proof, err := mmrStore.GetCompactMerkleTree().InclusionProof(uint64(m), uint64(n))
 	if err != nil {
 		t.Fatal(err)
@@ -99,7 +101,7 @@ func genRandomSentMessage(length int) []*binding.MessageSentEvent {
 	result := make([]*binding.MessageSentEvent, 0)
 	for i := 0; i < length; i++ {
 		evt := &binding.MessageSentEvent{
-			MessageIndex: rand.Uint64(),
+			MessageIndex: uint64(i),
 			Raw: &web3.Log{
 				BlockNumber: rand.Uint64(),
 			},

@@ -57,6 +57,37 @@ func (self *Store) GetTotalCheckedBatchNum() uint64 {
 	return d
 }
 
+func (self *Store) SetVersion(version uint64) {
+	self.store.Put(schema.L2ClientVersion, codec.NewZeroCopySink(nil).WriteUint64(version).Bytes())
+}
+
+func (self *Store) GetVersion() uint64 {
+	v, err := self.store.Get(schema.L2ClientVersion)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return 0
+	}
+	d, err := codec.NewZeroCopySource(v).ReadUint64()
+	utils.Ensure(err)
+	return d
+}
+
+func (self *Store) StorePendingCheckpoint(info *schema.L2CheckPointInfo) {
+	self.store.Put(schema.L2ClientPendingPoint, codec.SerializeToBytes(info))
+}
+
+func (self *Store) GetPendingCheckPoint() *schema.L2CheckPointInfo {
+	v, err := self.store.Get(schema.L2ClientPendingPoint)
+	utils.Ensure(err)
+	if len(v) == 0 {
+		return &schema.L2CheckPointInfo{}
+	}
+	d := new(schema.L2CheckPointInfo)
+	err = d.Deserialization(codec.NewZeroCopySource(v))
+	utils.Ensure(err)
+	return d
+}
+
 func (self *Store) StoreCheckedBlockNum(batchIndex, blockNum uint64) {
 	self.store.Put(genBatchIndexKey(batchIndex), codec.NewZeroCopySink(nil).WriteUint64(blockNum).Bytes())
 }
