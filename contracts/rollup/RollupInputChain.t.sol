@@ -267,6 +267,15 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         return keccak256(rlpTx);
     }
 
+    function testForceInput() public {
+        //enqueue
+        vm.startPrank(address(l1CrossLayerWitness), testAddress);
+        enqueue2("");
+        vm.stopPrank();
+        vm.warp((block.timestamp + 1) << 20);
+        rollupInputChain.forceFlushQueue(0, 1);
+    }
+
     //Test appendInputBatch
     /**1.Test Fail**/
 
