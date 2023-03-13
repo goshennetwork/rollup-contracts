@@ -85,6 +85,7 @@ type L1ChainDeployConfig struct {
 	FraudProofWindow         uint64 // block number
 	MaxEnqueueTxGasLimit     uint64
 	MaxWitnessTxExecGasLimit uint64
+	ForceDelayedSeconds      uint64
 	L2CrossLayerWitness      web3.Address
 	L2StandardBridge         web3.Address
 	L2ChainId                uint64

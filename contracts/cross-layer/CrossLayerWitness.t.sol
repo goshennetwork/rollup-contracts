@@ -50,7 +50,7 @@ contract TestCrossLayerWitness {
         StakingManager stakingManager = new StakingManager();
         stakingManager.initialize(address(addressManager), 0);
         rollupInputChain = new RollupInputChain();
-        rollupInputChain.initialize(address(addressManager), 15000000, 3000000, 1234);
+        rollupInputChain.initialize(address(addressManager), 15000000, 3000000, 1234, 1);
         ChainStorageContainer stateStorageContainer = new ChainStorageContainer();
         stateStorageContainer.initialize(AddressName.ROLLUP_STATE_CHAIN, address(addressManager));
         address stateStorage = address(stateStorageContainer);

@@ -109,11 +109,11 @@ func DeployStakingManager(signer *contract.Signer, resolver web3.Address, price 
 }
 
 func DeployRollupInputChain(signer *contract.Signer, addrMan web3.Address, maxEnqueueTxGasLimit,
-	maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *binding.RollupInputChain {
+	maxWitnessTxExecGasLimit uint64, l2ChainID uint64, forceDelayedSeconds uint64) *binding.RollupInputChain {
 	receipt := binding.DeployRollupInputChain(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 	rollupInputChain := binding.NewRollupInputChain(receipt.ContractAddress, signer.Client)
 	rollupInputChain.Contract().SetFrom(signer.Address())
-	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+	rollupInputChain.Initialize(addrMan, maxEnqueueTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID, forceDelayedSeconds).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
 	return rollupInputChain
 }
@@ -184,7 +184,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 	inputChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupInputChain")
 	stateChainContainer := DeployChainStorage(signer, addrMan.Contract().Addr(), "RollupStateChain")
 
-	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxWitnessTxExecGasLimit, cfg.L2ChainId)
+	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxWitnessTxExecGasLimit, cfg.L2ChainId, cfg.ForceDelayedSeconds)
 	rollupStateChain := DeployRollupStateChain(signer, addrMan.Contract().Addr(), cfg.FraudProofWindow)
 
 	var feeToken *binding.ERC20

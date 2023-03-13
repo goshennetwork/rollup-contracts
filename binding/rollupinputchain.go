@@ -175,6 +175,25 @@ func (_a *RollupInputChain) ChainHeight(block ...web3.BlockNumber) (retval0 uint
 	return
 }
 
+// ForceDelayedSeconds calls the forceDelayedSeconds method in the solidity contract
+func (_a *RollupInputChain) ForceDelayedSeconds(block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("forceDelayedSeconds", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // GetInputHash calls the getInputHash method in the solidity contract
 func (_a *RollupInputChain) GetInputHash(inputIndex uint64, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
 	var out map[string]interface{}
@@ -361,12 +380,68 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 	return _a.c.Txn("enqueue", target, gasLimit, data, nonce, r, s, v)
 }
 
+// ForceFlushQueue sends a forceFlushQueue transaction in the solidity contract
+func (_a *RollupInputChain) ForceFlushQueue(queueStartIndex uint64, queueNum uint64) *contract.Txn {
+	return _a.c.Txn("forceFlushQueue", queueStartIndex, queueNum)
+}
+
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *contract.Txn {
-	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID)
+func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64, forceDelayedSeconds uint64) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID, forceDelayedSeconds)
+}
+
+// SetForceDelayedSeconds sends a setForceDelayedSeconds transaction in the solidity contract
+func (_a *RollupInputChain) SetForceDelayedSeconds(forceDelayedSeconds uint64) *contract.Txn {
+	return _a.c.Txn("setForceDelayedSeconds", forceDelayedSeconds)
 }
 
 // events
+
+func (_a *RollupInputChain) ForceFlushedTopicFilter(proposer []web3.Address, index []uint64) [][]web3.Hash {
+
+	var proposerRule []interface{}
+	for _, proposerItem := range proposer {
+		proposerRule = append(proposerRule, proposerItem)
+	}
+
+	var indexRule []interface{}
+	for _, indexItem := range index {
+		indexRule = append(indexRule, indexItem)
+	}
+
+	var query [][]interface{}
+	query = append(query, []interface{}{ForceFlushedEventID}, proposerRule, indexRule)
+
+	topics, err := contract.MakeTopics(query...)
+	utils.Ensure(err)
+
+	return topics
+}
+
+func (_a *RollupInputChain) FilterForceFlushedEvent(proposer []web3.Address, index []uint64, startBlock uint64, endBlock ...uint64) ([]*ForceFlushedEvent, error) {
+	topic := _a.ForceFlushedTopicFilter(proposer, index)
+
+	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ForceFlushedEvent, 0)
+	evts := _a.c.Abi.Events["ForceFlushed"]
+	for _, log := range logs {
+		args, err := evts.ParseLog(log)
+		if err != nil {
+			return nil, err
+		}
+		var evtItem ForceFlushedEvent
+		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
+		if err != nil {
+			return nil, err
+		}
+		evtItem.Raw = log
+		res = append(res, &evtItem)
+	}
+	return res, nil
+}
 
 func (_a *RollupInputChain) InitializedTopicFilter() [][]web3.Hash {
 

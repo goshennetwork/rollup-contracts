@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/laizy/web3"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
 	"github.com/laizy/web3/utils"
@@ -145,12 +144,12 @@ func (self *InputChain) GetSequencerBatchData(index uint64) ([]byte, error) {
 	return v, nil
 }
 
-func (self *InputChain) StoreSequencerBatchData(txs []*web3.Transaction, indexes []uint64) {
-	if len(txs) != len(indexes) {
-		panic(fmt.Errorf("wrong num of batch data and indexes, %d vs %d", len(txs), len(indexes)))
+func (self *InputChain) StoreSequencerBatchData(txInputs [][]byte, indexes []uint64) {
+	if len(txInputs) != len(indexes) {
+		panic(fmt.Errorf("wrong num of batch data and indexes, %d vs %d", len(txInputs), len(indexes)))
 	}
-	for i, tx := range txs {
-		self.store.Put(genRollupInputBatchDataKey(indexes[i]), tx.Input[4:])
+	for i, txInput := range txInputs {
+		self.store.Put(genRollupInputBatchDataKey(indexes[i]), txInput[4:])
 	}
 }
 

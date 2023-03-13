@@ -29,6 +29,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     mapping(address => uint64) nonces;
 
     uint64 public override lastTimestamp;
+    uint64 public override forceDelayedSeconds;
 
     IAddressResolver addressResolver;
 
@@ -46,12 +47,19 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         address _addressResolver,
         uint64 _maxTxGasLimit,
         uint64 _maxWitnessTxExecGasLimit,
-        uint64 _l2ChainID
+        uint64 _l2ChainID,
+        uint64 _forceDelayedSeconds
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxWitnessTxExecGasLimit = _maxWitnessTxExecGasLimit;
         l2ChainID = _l2ChainID;
+        forceDelayedSeconds = _forceDelayedSeconds;
+    }
+
+    function setForceDelayedSeconds(uint64 _forceDelayedSeconds) public {
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        forceDelayedSeconds = _forceDelayedSeconds;
     }
 
     function enqueue(
@@ -156,6 +164,33 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         return result;
     }
 
+    function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) public {
+        require(_queueNum > 0, "no queue");
+        require(_queueStartIndex == pendingQueueIndex, "index mismatch");
+        require(_queueStartIndex + _queueNum <= queuedTxInfos.length, "overhead");
+        uint64 lastQueue = _queueStartIndex + _queueNum - 1;
+        require(queuedTxInfos[lastQueue].timestamp + forceDelayedSeconds < block.timestamp, "in time");
+
+        /// @dev now try to append it to input
+        uint64 _batchIndex = chainHeight();
+        pendingQueueIndex = _queueStartIndex + _queueNum;
+        /// @dev to keep data structr consistent with appendInputBatch, just struct an input
+        bytes memory _input = new bytes(8 + 8 + 8); ///@dev queueNum | queueStartIndex | subBatchNum
+        uint256 _data = _queueNum << (256 - 1);
+        _data += _queueStartIndex << (256 - 64 - 1);
+        /// @dev sub batch is zero
+        uint256 _ptr;
+        assembly {
+            _ptr := add(_input, 0)
+            mstore(add(_ptr, 0x20), _data)
+        }
+        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
+        bytes32 _inputHash = _calcInputHash(keccak256(_input), _queueHashes);
+        addressResolver.rollupInputChainContainer().append(_inputHash);
+        lastTimestamp = queuedTxInfos[lastQueue].timestamp;
+        emit ForceFlushed(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
+    }
+
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
@@ -196,11 +231,10 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         bytes32 _inputHash;
         uint64 _timestamp;
         if (_batchNum == 0) {
-            /// @dev if there is no batch, no need to
+            /// @dev if there is no batch, just check data is right.
             require(_queueNum > 0, "nothing to append");
             require(msg.data.length == _batchDataPos, "wrong calldata");
-            _timestamp = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
-            _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
+            _timestamp = queuedTxInfos[pendingQueueIndex - 1].timestamp;
         } else {
             assembly {
                 _timestamp := shr(192, calldataload(_batchDataPos))
@@ -232,10 +266,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                 _version := shr(248, calldataload(_batchDataPos))
             }
             _batchDataPos += 1;
-            if (_version & BLOB_MASK == 0) {
-                /// @dev blob not enabled
-                _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
-            } else {
+            if (_version & BLOB_MASK == 0) {} else {
                 /// @dev blob enabled
                 uint8 _blobNum;
                 assembly {
@@ -252,13 +283,17 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                     }
                     require(_tempVersionHash == _versionHash, "insonsistent version hash");
                 }
-                bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
             }
         }
 
+        _inputHash = _calcInputHash(keccak256(msg.data[12:]), _queueHashes);
         _chain.append(_inputHash);
         lastTimestamp = _timestamp;
         emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
+    }
+
+    function _calcInputHash(bytes32 _dataHash, bytes32 _queueHash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_dataHash, _queueHash));
     }
 
     function chainHeight() public view returns (uint64) {

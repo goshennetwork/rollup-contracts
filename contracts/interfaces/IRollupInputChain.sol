@@ -21,6 +21,14 @@ interface IRollupInputChain {
         bytes32 inputHash
     );
 
+    event ForceFlushed(
+        address indexed proposer,
+        uint64 indexed index,
+        uint64 startQueueIndex,
+        uint64 queueNum,
+        bytes32 inputHash
+    );
+
     /**
      * @dev Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2.Normal EOA just need
      to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function
@@ -64,6 +72,22 @@ interface IRollupInputChain {
      */
     function appendInputBatch() external;
 
+    /**
+     * @dev set force delayed seconds, when a queued tx expired after the force delayed seconds, everyone can force append it to input.
+     * @param _forceDelayedSeconds  with which, the enqueued tx can't be force push
+     * @notice only permitted by dao
+     */
+    function setForceDelayedSeconds(uint64 _forceDelayedSeconds) external;
+
+    /**
+     * @dev force flush queue if tx queued is already expire forceDelayedSeconds
+     * @param _queueStartIndex start queue index
+     * @param _queueNum total queue num to force flush
+     * @notice required:
+     * - the newest tx has expired forceDelayedSeconds
+     */
+    function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) external;
+
     ///@return total sequenced input num
     function chainHeight() external view returns (uint64);
 
@@ -83,4 +107,7 @@ interface IRollupInputChain {
 
     /// @return sender's nonce
     function getNonceByAddress(address _sender) external view returns (uint64);
+
+    /// @return the force second delayed time for a queue to batch
+    function forceDelayedSeconds() external view returns (uint64);
 }
