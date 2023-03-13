@@ -170,7 +170,7 @@ async function main() {
     tx = await stakingManager.initialize(addressManager.address, ethers.utils.parseEther(config.stakingPrice));
     console.log("stakingManager initialized, tx: %s", tx.hash);
     tx = await rollupInputChain.initialize(addressManager.address, config.maxTxGasLimit, config.maxCrossLayerTxGasLimit,
-        config.l2ChainId,config.forceDelayedSeconds);
+        config.l2ChainId, config.forceDelayedSeconds);
     console.log("rollupInputChain initialized, tx: %s", tx.hash);
     tx = await stateStorageContainer.initialize(config.addressName.ROLLUP_STATE_CHAIN, addressManager.address);
     console.log("stateStorageContainer initialized, tx: %s", tx.hash);
