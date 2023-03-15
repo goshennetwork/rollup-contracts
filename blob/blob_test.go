@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/kzg"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/ontology-layer-2/rollup-contracts/blob/kzg"
+	"github.com/ontology-layer-2/rollup-contracts/blob/params"
 	"github.com/protolambda/go-kzg/bls"
 	"github.com/stretchr/testify/assert"
 )
