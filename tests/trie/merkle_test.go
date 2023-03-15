@@ -52,7 +52,7 @@ func newCase() *testCase {
 	vmenv := tests.NewEVMWithCode(map[common.Address][]byte{contractAddr: ars.DeployedBytecode})
 	sender := vm.AccountRef(common.BytesToAddress([]byte("test")))
 	db := trie.NewDatabase(memorydb.New())
-	emptyTrie, err := trie.New(common.Hash{}, common.Hash{}, db)
+	emptyTrie, err := trie.New(common.Hash{}, db)
 	if err != nil {
 		panic(err)
 	}
@@ -103,10 +103,7 @@ func (this *testCase) checkUpdate(key, value []byte) error {
 	*/
 	startRoot := this.trie.Hash()
 	this.trie.Update(key, value)
-	_, nodeSet, _ := this.trie.Commit(true)
-	m := trie.NewMergedNodeSet()
-	m.Merge(nodeSet)
-	this.db.Update(m)
+	this.trie.Commit(nil)
 	fmt.Printf("updated: key: 0x%x, value: 0x%x, newRoot: %s\n", key, value, this.trie.Hash())
 	input, err := this.cAbi.Methods["checkUpdate"].EncodeIDAndInput(key, value, startRoot, this.trie.Hash())
 	if err != nil {

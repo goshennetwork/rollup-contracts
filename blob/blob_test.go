@@ -74,7 +74,7 @@ func TestCommit(t *testing.T) {
 
 				h := crypto.Keccak256Hash(commitment[:])
 				h[0] = 0x01
-				assert.Equal(t, ch, h)
+				assert.Equal(t, ch[:], h[:])
 				//t.Log(ch)
 			}
 		})
