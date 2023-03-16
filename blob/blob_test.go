@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/kzg"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/ontology-layer-2/rollup-contracts/blob/kzg"
+	"github.com/ontology-layer-2/rollup-contracts/blob/params"
 	"github.com/protolambda/go-kzg/bls"
 	"github.com/stretchr/testify/assert"
 )
@@ -74,7 +74,7 @@ func TestCommit(t *testing.T) {
 
 				h := crypto.Keccak256Hash(commitment[:])
 				h[0] = 0x01
-				assert.Equal(t, ch, h)
+				assert.Equal(t, ch[:], h[:])
 				//t.Log(ch)
 			}
 		})
