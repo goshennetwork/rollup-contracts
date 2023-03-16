@@ -6,7 +6,7 @@
 which gosimports || cd /tmp/; go install github.com/rinchsan/gosimports/cmd/gosimports@latest; cd -
 
 unset dirs files
-# remote out first line of go list, because first line is root dir
+# remove out the first line of go list, because the first line is root dir
 dirs=$(go list -f {{.Dir}} ./... | tail -n +2 )
 
 for d in $dirs
