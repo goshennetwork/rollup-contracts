@@ -10,6 +10,10 @@ dirs=$(go list -f {{.Dir}} ./... )
 
 for d in $dirs
 do
+  if [ "$d" = "node_modules" ]; then
+      continue
+  fi
+  done
     for f in $d/*.go
     do
     files="${files} $f"
