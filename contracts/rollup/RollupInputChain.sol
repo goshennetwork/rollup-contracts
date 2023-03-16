@@ -29,9 +29,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     mapping(address => uint64) nonces;
 
     uint64 public override lastTimestamp;
-    uint64 public override forceDelayedSeconds;
 
     IAddressResolver addressResolver;
+
+    //updates slot in testnet
+    uint64 public override forceDelayedSeconds;
 
     // store L1 -> L2 tx
     struct QueueTxInfo {
