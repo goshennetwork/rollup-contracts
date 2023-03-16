@@ -26,7 +26,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint256 public constant GAS_PRICE = 1_000_000_000;
     uint256 public constant VALUE = 0;
     uint64 public constant INITIAL_ENQUEUE_NONCE = 1 << 63;
-    uint8 constant BLOB_MASK = 1 << 1;
+    uint8 constant BLOB_ENABLED_MASK = 1 << 7;
     uint8 constant ENCODE_TYPE_MASK = 1 << 0;
 
     uint64 public maxEnqueueTxGasLimit;
@@ -170,7 +170,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
     // batchesData: version(1) + brotli(rlp([][]transaction))
-    // batchesData: version(1<<1) | {0,1}; so 0b_10 means rlp encode, 0b_11 means brotli encode
+    // batchesData: version(1<<7) | {0,1} if the blob is enabled, there is no tx data need to upload.
     // if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
     /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
@@ -247,7 +247,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                 _version := shr(248, calldataload(_batchDataPos))
             }
             _batchDataPos += 1;
-            if (_version & BLOB_MASK != 0) {
+            if (_version & BLOB_ENABLED_MASK != 0) {
                 /// @dev blob enabled
                 uint8 _blobNum;
                 assembly {
