@@ -6,13 +6,11 @@
 which gosimports || cd /tmp/; go install github.com/rinchsan/gosimports/cmd/gosimports@latest; cd -
 
 unset dirs files
-dirs=$(go list -f {{.Dir}} ./... )
+# remote out first line of go list, because first line is root dir
+dirs=$(go list -f {{.Dir}} ./... | tail -n +2 )
 
 for d in $dirs
 do
-  if [ "$d" = "node_modules" ]; then
-      continue
-  fi
     for f in $d/*.go
     do
     files="${files} $f"
