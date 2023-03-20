@@ -14,6 +14,11 @@ import "../libraries/UnsafeSign.sol";
 import "../libraries/EVMPreCompiled.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
+    // store L1 -> L2 tx
+    struct QueueTxInfo {
+        bytes32 transactionHash;
+        uint64 timestamp;
+    }
     uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
     uint256 public constant MAX_ENQUEUE_TX_SIZE = 30000; // l2 node set to 32KB
     uint256 public constant MAX_WITNESS_TX_SIZE = 10000;
@@ -32,18 +37,12 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     IAddressResolver addressResolver;
 
-    //updates slot in testnet
-    uint64 public override forceDelayedSeconds;
-
-    // store L1 -> L2 tx
-    struct QueueTxInfo {
-        bytes32 transactionHash;
-        uint64 timestamp;
-    }
-
     QueueTxInfo[] queuedTxInfos;
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
+
+    //updates slot in testnet
+    uint64 public override forceDelayedSeconds;
 
     function initialize(
         address _addressResolver,
