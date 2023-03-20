@@ -76,6 +76,10 @@ interface IRollupInputChain {
      * @param _queueStartIndex start queue index
      * @param _queueNum total queue num to force flush
      * @notice required:
+     * - only EOA
+     * - queue start index is right
+     * - queue num should larger than 0
+     * - total queue not overhead
      * - the newest tx has expired forceDelayedSeconds
      */
     function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) external;
