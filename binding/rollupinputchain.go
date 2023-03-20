@@ -397,52 +397,6 @@ func (_a *RollupInputChain) SetForceDelayedSeconds(forceDelayedSeconds uint64) *
 
 // events
 
-func (_a *RollupInputChain) ForceFlushedTopicFilter(proposer []web3.Address, index []uint64) [][]web3.Hash {
-
-	var proposerRule []interface{}
-	for _, proposerItem := range proposer {
-		proposerRule = append(proposerRule, proposerItem)
-	}
-
-	var indexRule []interface{}
-	for _, indexItem := range index {
-		indexRule = append(indexRule, indexItem)
-	}
-
-	var query [][]interface{}
-	query = append(query, []interface{}{ForceFlushedEventID}, proposerRule, indexRule)
-
-	topics, err := contract.MakeTopics(query...)
-	utils.Ensure(err)
-
-	return topics
-}
-
-func (_a *RollupInputChain) FilterForceFlushedEvent(proposer []web3.Address, index []uint64, startBlock uint64, endBlock ...uint64) ([]*ForceFlushedEvent, error) {
-	topic := _a.ForceFlushedTopicFilter(proposer, index)
-
-	logs, err := _a.c.FilterLogsWithTopic(topic, startBlock, endBlock...)
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*ForceFlushedEvent, 0)
-	evts := _a.c.Abi.Events["ForceFlushed"]
-	for _, log := range logs {
-		args, err := evts.ParseLog(log)
-		if err != nil {
-			return nil, err
-		}
-		var evtItem ForceFlushedEvent
-		err = json.Unmarshal([]byte(utils.JsonStr(args)), &evtItem)
-		if err != nil {
-			return nil, err
-		}
-		evtItem.Raw = log
-		res = append(res, &evtItem)
-	}
-	return res, nil
-}
-
 func (_a *RollupInputChain) InitializedTopicFilter() [][]web3.Hash {
 
 	var query [][]interface{}

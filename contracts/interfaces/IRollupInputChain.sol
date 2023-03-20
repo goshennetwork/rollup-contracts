@@ -21,14 +21,6 @@ interface IRollupInputChain {
         bytes32 inputHash
     );
 
-    event ForceFlushed(
-        address indexed proposer,
-        uint64 indexed index,
-        uint64 startQueueIndex,
-        uint64 queueNum,
-        bytes32 inputHash
-    );
-
     /**
      * @dev Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2.Normal EOA just need
      to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function

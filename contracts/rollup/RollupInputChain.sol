@@ -166,6 +166,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     }
 
     function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) public {
+        require(msg.sender == tx.origin, "only EOA");
         require(_queueNum > 0, "no queue");
         require(_queueStartIndex == pendingQueueIndex, "index mismatch");
         require(_queueStartIndex + _queueNum <= queuedTxInfos.length, "overhead");
@@ -189,7 +190,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         bytes32 _inputHash = _calcInputHash(keccak256(_input), _queueHashes);
         addressResolver.rollupInputChainContainer().append(_inputHash);
         lastTimestamp = queuedTxInfos[lastQueue].timestamp;
-        emit ForceFlushed(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
+        emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
     }
 
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +

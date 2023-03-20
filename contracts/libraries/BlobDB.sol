@@ -22,7 +22,10 @@ library BlobDB {
         return ret;
     }
 
-    /// @notice index over 4096 also make point evaludation pass, but it is useless, because L2 OS will not read index that >=4096
+    /// @notice index over 4096 also make point evaluation pass, but it is useless, because L2 OS will not read index that >=4096
+    /// @dev the y is decided by sequencer, but the insertBlobAt method is used by challenger.So DO NOT assume the y is
+    /// satisfied with application protocol that should be checked within L2 OS.So if the y is larger than modules, challenger
+    /// should module it too.
     function insertBlobAt(
         mapping(bytes32 => uint256[]) storage db,
         bytes32 versionHash,
