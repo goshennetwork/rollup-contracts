@@ -273,7 +273,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         enqueue2("");
         vm.stopPrank();
         vm.warp((block.timestamp + 1) << 20);
+        vm.startPrank(testAddress, testAddress);
         rollupInputChain.forceFlushQueue(0, 1);
+        vm.stopPrank();
     }
 
     //Test appendInputBatch
