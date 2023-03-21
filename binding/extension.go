@@ -24,8 +24,8 @@ const (
 	BrotliEncodeType
 )
 
-const BrotliEnabledMask = 1
-const BlobEnabledMask = 1 << 7
+const BrotliEnabledMask uint8 = 1
+const BlobEnabledMask uint8 = 1 << 7
 
 func BrotliEnabled(version uint8) bool {
 	return version&BrotliEnabledMask > 0
@@ -33,6 +33,14 @@ func BrotliEnabled(version uint8) bool {
 
 func BlobEnabled(version uint8) bool {
 	return version&BlobEnabledMask > 0
+}
+
+func (self *RollupInputBatches) SetBlob(enabled bool) {
+	if enabled {
+		self.Version = self.Version | BlobEnabledMask
+	} else {
+		self.Version = self.Version & (^BlobEnabledMask)
+	}
 }
 
 func (self *RollupInputBatches) BlobEnabled() bool {

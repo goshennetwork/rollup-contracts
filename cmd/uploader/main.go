@@ -28,6 +28,7 @@ var (
 func main() {
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
 	submit := flag.Bool("submit", false, "whether submit tx to node")
+	blobEnabled := flag.Bool("blob", false, "whether enable blob tx")
 	flag.Parse()
 	var cfg config.RollupCliConfig
 	utils.Ensure(utils.LoadJsonFile(*cfgName, &cfg))
@@ -57,7 +58,7 @@ func main() {
 	inputChain.Contract().SetFrom(signer.Address())
 	l2Client, err := jsonrpc.NewClient(cfg.L2Rpc)
 	utils.Ensure(err)
-	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain)
+	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled)
 	uploader.Start()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
@@ -66,17 +67,19 @@ func main() {
 }
 
 type UploadBackend struct {
-	l2client   *jsonrpc.Client
-	l1client   *jsonrpc.Client
-	signer     *contract.Signer
-	stateChain *binding.RollupStateChain
-	inputChain *binding.RollupInputChain
-	quit       chan struct{}
+	l2client    *jsonrpc.Client
+	l1client    *jsonrpc.Client
+	signer      *contract.Signer
+	stateChain  *binding.RollupStateChain
+	inputChain  *binding.RollupInputChain
+	blobEnabled bool
+
+	quit chan struct{}
 }
 
-func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain) *UploadBackend {
+func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, blobEnabled bool) *UploadBackend {
 
-	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, make(chan struct{})}
+	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, blobEnabled, make(chan struct{})}
 }
 
 func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
@@ -208,6 +211,8 @@ func (self *UploadBackend) runTxTask() {
 				log.Error(err.Error())
 				continue
 			} else {
+				//set batch type
+				batch.SetBlob(self.blobEnabled)
 				if err := self.AppendInputBatch(batch); err != nil {
 					log.Error("append input batch failed", "batchIndex", batch.BatchIndex, "err", err)
 				}
