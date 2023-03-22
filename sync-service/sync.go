@@ -172,7 +172,6 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 
 	txInputs := make([][]byte, 0)
 	txBatchIndexes := make([]uint64, 0)
-	coder := codec.NewZeroCopySink(nil)
 	for _, batch := range batches {
 		tx, err := self.l1client.Eth().GetTransactionByHash(batch.Raw.TransactionHash)
 		if err != nil {
@@ -183,15 +182,13 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		var input []byte
 		switch id := tx.Input[:4]; {
 		case bytes.Equal(id, rollupInputContract.Contract().Abi.Methods["forceFlushQueue"].ID()):
+			coder := codec.NewZeroCopySink(nil)
 			/// need to construct input manually
 			/// contruct input, consistant with append batch's input:batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64)
 			coder.WriteBytes(rollupInputContract.Contract().Abi.Methods["appendInputBatch"].ID())
 			coder.WriteUint64BE(batch.Index).WriteUint64BE(batch.QueueNum).WriteUint64BE(batch.StartQueueIndex).WriteUint64BE(0)
 			txBatchIndexes = append(txBatchIndexes, batch.Index)
-			d := coder.Bytes()
-			input = make([]byte, len(d))
-			copy(input, d)
-			coder.Reset()
+			input = coder.Bytes()
 		case bytes.Equal(id, rollupInputContract.Contract().Abi.Methods["appendInputBatch"].ID()):
 			input = tx.Input
 		}
