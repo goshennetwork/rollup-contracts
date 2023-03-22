@@ -13,7 +13,7 @@ exclude="$PWD/node_modules"
 
 for d in $dirs
 do
-  # 当$d等于当前目录下的node_modules文件夹时，跳过当前迭代
+  # ignore node_modules dir
       if [ "$d" == "$exclude" ]; then
         echo "$d"
         continue
