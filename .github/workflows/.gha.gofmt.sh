@@ -9,13 +9,10 @@ unset dirs files
 
 dirs=$(go list -f {{.Dir}} ./... )
 
-exclude="$PWD/node_modules"
-
 for d in $dirs
 do
-  # ignore node_modules dir
-      if [ "$d" == "$exclude" ]; then
-        echo "$d"
+  # ignore node_modules and sub dir
+      if [[ $d == *"node_modules"* ]]; then
         continue
         fi
     for f in $d/*.go
