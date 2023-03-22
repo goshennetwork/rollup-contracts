@@ -267,14 +267,28 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         return keccak256(rlpTx);
     }
 
-    function testForceInput() public {
+    /// @dev test force flush success
+    function testForceFlush() public {
         //enqueue
         vm.startPrank(address(l1CrossLayerWitness), testAddress);
         enqueue2("");
         vm.stopPrank();
         vm.warp((block.timestamp + 1) << 20);
-        vm.startPrank(testAddress, testAddress);
-        rollupInputChain.forceFlushQueue(0, 1);
+        vm.startPrank(address(0xeeee), address(0xeeee));
+        fakeAppendInputBatch(0, 1, 0, 0, 0, "");
+        vm.stopPrank();
+    }
+
+    /// @dev try to flush batch will failed
+    function testForceFlushBatch() public {
+        //enqueue
+        vm.startPrank(address(l1CrossLayerWitness), testAddress);
+        enqueue2("");
+        vm.stopPrank();
+        vm.warp((block.timestamp + 1) << 20);
+        vm.startPrank(address(0xeeee), address(0xeeee));
+        vm.expectRevert("malicious queue");
+        fakeAppendInputBatch(0, 1, 0, 1, 0, "");
         vm.stopPrank();
     }
 
@@ -287,7 +301,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     function testAppendInputBatchNotSequencer() public {
         vm.startPrank(testAddress2, testAddress2);
         vm.expectRevert("only sequencer");
-        rollupInputChain.appendInputBatch();
+        fakeAppendInputBatch(0, 0, 0, 0, 0, "");
         vm.stopPrank();
     }
 
@@ -300,7 +314,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
         vm.startPrank(testAddress2, testAddress2);
         vm.expectRevert("Sequencer should be staking");
-        rollupInputChain.appendInputBatch();
+        fakeAppendInputBatch(0, 0, 0, 0, 0, "");
         vm.stopPrank();
     }
 
@@ -366,10 +380,21 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             timeDiff = new uint32[](batchNum - 1); //alwayes length = batchNum -1
             _info = abi.encodePacked(batchIndex, queueNum, pendingQueueIndex, subBatchNum, time0Start, timeDiff, data);
         }
-        (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
-        );
-        require(success, "failed");
+        _info = abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info);
+        address addr = address(rollupInputChain);
+        assembly {
+            let _ptr := add(_info, 0x20)
+            let _len := mload(add(_info, 0))
+            let result := call(gas(), addr, 0, _ptr, _len, 0, 0)
+            returndatacopy(0, 0, returndatasize())
+            switch result
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
+        }
     }
 
     //test Fail _nextPendingQueueIndex

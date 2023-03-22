@@ -53,6 +53,8 @@ interface IRollupInputChain {
     // batchesData: version(0) + rlp([][]transaction)
      *
      * @notice Revert if:
+     * - if it is a force flush action:
+     *  - there is no batch num
      * - sender isn't EOA
      * - sender isn't staking
      * - batchIndex not equal to pending batch index
@@ -70,19 +72,6 @@ interface IRollupInputChain {
      * @notice only permitted by dao
      */
     function setForceDelayedSeconds(uint64 _forceDelayedSeconds) external;
-
-    /**
-     * @dev force flush queue if tx queued is already expire forceDelayedSeconds
-     * @param _queueStartIndex start queue index
-     * @param _queueNum total queue num to force flush
-     * @notice required:
-     * - only EOA
-     * - queue start index is right
-     * - queue num should larger than 0
-     * - total queue not overhead
-     * - the newest tx has expired forceDelayedSeconds
-     */
-    function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) external;
 
     ///@return total sequenced input num
     function chainHeight() external view returns (uint64);

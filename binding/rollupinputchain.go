@@ -380,11 +380,6 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 	return _a.c.Txn("enqueue", target, gasLimit, data, nonce, r, s, v)
 }
 
-// ForceFlushQueue sends a forceFlushQueue transaction in the solidity contract
-func (_a *RollupInputChain) ForceFlushQueue(queueStartIndex uint64, queueNum uint64) *contract.Txn {
-	return _a.c.Txn("forceFlushQueue", queueStartIndex, queueNum)
-}
-
 // Initialize sends a initialize transaction in the solidity contract
 func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64, forceDelayedSeconds uint64) *contract.Txn {
 	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID, forceDelayedSeconds)

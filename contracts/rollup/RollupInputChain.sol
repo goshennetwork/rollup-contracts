@@ -165,34 +165,6 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         return result;
     }
 
-    function forceFlushQueue(uint64 _queueStartIndex, uint64 _queueNum) public {
-        require(msg.sender == tx.origin, "only EOA");
-        require(_queueNum > 0, "no queue");
-        require(_queueStartIndex == pendingQueueIndex, "index mismatch");
-        require(_queueStartIndex + _queueNum <= queuedTxInfos.length, "overhead");
-        uint64 lastQueue = _queueStartIndex + _queueNum - 1;
-        require(queuedTxInfos[lastQueue].timestamp + forceDelayedSeconds < block.timestamp, "in time");
-
-        /// @dev now try to append it to input
-        uint64 _batchIndex = chainHeight();
-        pendingQueueIndex = _queueStartIndex + _queueNum;
-        /// @dev to keep data structr consistent with appendInputBatch, just struct an input
-        bytes memory _input = new bytes(8 + 8 + 8); ///@dev queueNum | queueStartIndex | subBatchNum
-        uint256 _data = _queueNum << (256 - 1);
-        _data += _queueStartIndex << (256 - 64 - 1);
-        /// @dev sub batch is zero
-        uint256 _ptr;
-        assembly {
-            _ptr := add(_input, 0)
-            mstore(add(_ptr, 0x20), _data)
-        }
-        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        bytes32 _inputHash = _calcInputHash(keccak256(_input), _queueHashes);
-        addressResolver.rollupInputChainContainer().append(_inputHash);
-        lastTimestamp = queuedTxInfos[lastQueue].timestamp;
-        emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
-    }
-
     // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
@@ -202,10 +174,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
         require(msg.sender == tx.origin, "only EOA");
-        require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
-        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
-        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
         uint64 _batchIndex;
         assembly {
             _batchIndex := shr(192, calldataload(4))
@@ -220,6 +189,21 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
+        /// @dev check whether is force flush queue, if not, only sequencer permitted
+        bool _isForceQueue;
+        if (_queueNum > 0) {
+            /// force queue should at least flush one queue
+            if (queuedTxInfos[_nextPendingQueueIndex - 1].timestamp + forceDelayedSeconds < block.timestamp) {
+                _isForceQueue = true;
+            }
+        }
+        if (!_isForceQueue) {
+            //no force queue, check permission
+            require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
+            require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        }
+        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
+
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
         uint64 _batchDataPos = 4 + 8 + 8 + 8;
         //4byte function selector, 3 uint64
@@ -238,6 +222,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(msg.data.length == _batchDataPos, "wrong calldata");
             _timestamp = queuedTxInfos[pendingQueueIndex - 1].timestamp;
         } else {
+            require(!_isForceQueue, "malicious queue");
             assembly {
                 _timestamp := shr(192, calldataload(_batchDataPos))
             }
