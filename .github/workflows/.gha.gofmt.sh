@@ -6,11 +6,18 @@
 which gosimports || cd /tmp/; go install github.com/rinchsan/gosimports/cmd/gosimports@latest; cd -
 
 unset dirs files
-# remove out the first line of go list, because the first line is root dir
-dirs=$(go list -f {{.Dir}} ./... | tail -n +2 )
+
+dirs=$(go list -f {{.Dir}} ./... )
+
+exclude="$PWD/node_modules"
 
 for d in $dirs
 do
+  # 当$d等于当前目录下的node_modules文件夹时，跳过当前迭代
+      if [ "$d" == "$exclude" ]; then
+        echo "$d"
+        continue
+        fi
     for f in $d/*.go
     do
     files="${files} $f"
