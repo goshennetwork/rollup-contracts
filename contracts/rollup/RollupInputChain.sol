@@ -13,6 +13,9 @@ import "../libraries/RLPWriter.sol";
 import "../libraries/UnsafeSign.sol";
 import "../libraries/EVMPreCompiled.sol";
 
+/// @dev for test
+import "../libraries/console.sol";
+
 contract RollupInputChain is IRollupInputChain, Initializable {
     // store L1 -> L2 tx
     struct QueueTxInfo {
@@ -262,7 +265,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                     assembly {
                         _tempVersionHash := calldataload(_batchDataPos)
                     }
-                    require(_tempVersionHash == _versionHash, "insonsistent version hash");
+                    console.log("testtesttest");
+                    console.logBytes32(_tempVersionHash);
+                    console.logBytes32(_versionHash);
+                    require(_tempVersionHash == _versionHash, "inconsistent version hash");
+                    _batchDataPos+=32;
                 }
             }
         }

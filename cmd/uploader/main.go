@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -19,6 +21,7 @@ import (
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
+	"github.com/goshennetwork/rollup-contracts/blob"
 )
 
 var (
@@ -58,12 +61,42 @@ func main() {
 	inputChain.Contract().SetFrom(signer.Address())
 	l2Client, err := jsonrpc.NewClient(cfg.L2Rpc)
 	utils.Ensure(err)
+
 	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled)
+	if *blobEnabled {
+		commitOracle := blob.NewMockOracle()
+		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled, commitOracle)
+		http.HandleFunc("/blobOracle", func(w http.ResponseWriter, r *http.Request) {
+			// 在这里编写处理请求的代码
+			// 从请求中获取名为"name"的参数的值
+			versionHashHex := r.FormValue("versionHash")
+			if versionHashHex == "" {
+				return
+			}
+			versionHash := web3.HexToHash(versionHashHex)
+			blob_, err := commitOracle.GetBlobsWithCommitmentVersions(versionHash)
+			if err != nil {
+				return
+			}
+			fmt.Println(*blob_[0])
+			// 将响应转换为JSON格式并发送回客户端
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(blob_[0]); err != nil {
+				return
+			}
+		})
+	}
 	uploader.Start()
+
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
+
+	if *blobEnabled {
+		http.ListenAndServe(":8181", nil)
+	}
 	<-ch
 	uploader.Stop()
+
 }
 
 type UploadBackend struct {
@@ -75,11 +108,17 @@ type UploadBackend struct {
 	blobEnabled bool
 
 	quit chan struct{}
+	///blobOracle used for store oracle locally, only for test phase
+	blobOracle blob.BlobOracle
 }
 
-func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, blobEnabled bool) *UploadBackend {
+func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, blobEnabled bool, blobOracle ...blob.BlobOracle) *UploadBackend {
 
-	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, blobEnabled, make(chan struct{})}
+	var oracle blob.BlobOracle
+	if len(blobOracle) > 0 {
+		oracle = blobOracle[0]
+	}
+	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, blobEnabled, make(chan struct{}), oracle}
 }
 
 func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
@@ -213,11 +252,40 @@ func (self *UploadBackend) runTxTask() {
 			} else {
 				//set batch type
 				batch.SetBlob(self.blobEnabled)
+
+				/// now try to feed blob oracle if needed
+				if self.blobOracle != nil && self.blobEnabled {
+					self.feedBlobOracle(batch)
+				}
 				if err := self.AppendInputBatch(batch); err != nil {
 					log.Error("append input batch failed", "batchIndex", batch.BatchIndex, "err", err)
 				}
 			}
 		}
+	}
+}
+
+func (self *UploadBackend) feedBlobOracle(batch *binding.RollupInputBatches) {
+	switch self.blobOracle.(type) {
+	case *blob.MockOracle:
+		blobs, err := batch.Blobs()
+		if err != nil { //should never heppen
+			panic(err)
+		}
+		for _, b := range blobs {
+			commitment, ok := b.ComputeCommitment()
+			if !ok {
+				panic(1)
+			}
+			if err := self.blobOracle.(*blob.MockOracle).VerifyAndRecordBlob(commitment.ComputeVersionedHash(), commitment, b); err != nil {
+				//should never happen
+				panic(err)
+			}
+
+		}
+	default:
+		//unexpected
+		panic(1)
 	}
 }
 

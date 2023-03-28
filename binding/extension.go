@@ -17,6 +17,7 @@ import (
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
+	"github.com/laizy/web3/utils/common/hexutil"
 )
 
 const (
@@ -73,6 +74,10 @@ func (self *CounterRead) Read(b []byte) (n int, e error) {
 // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
 // subBatchLeftTimeDiff([]uint32) + batchesData
 // batchesData: version(0) + rlp([][]transaction)
+// batchesData: version(1) + brotli(rlp([][]transaction))
+// batchesData: version(1<<7) | {0,1} if the blob is enabled, there is no tx data need to upload.
+// if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
+/// @dev if there is no sub batch, the version is ignored
 type RollupInputBatches struct {
 	//BatchIndex ignored when calc hash, because its useless in l2 system
 	BatchIndex uint64
@@ -250,7 +255,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 
 	self.Version = version
 	if self.BlobEnabled() { //blob append blob num and versionHash
-		if len(oracle) == 0 {
+		if len(oracle) == 0 || oracle[0] == nil {
 			return errors.New("no blob oracle")
 		}
 		blobNum := reader.ReadUint8()
@@ -261,7 +266,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 				return reader.Error()
 			}
 		}
-		blobs, err := oracle[0].GetBlobsWithCommitmentVersions(versionHashes...)
+		blobs, _, err := oracle[0].GetBlobsWithCommitmentVersions(versionHashes...)
 		if err != nil {
 			return fmt.Errorf("get blobs with commitment version: %w", err)
 		}

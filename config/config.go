@@ -39,6 +39,7 @@ const (
 type RollupCliConfig struct {
 	L1Rpc              string
 	L2Rpc              string
+	BlobOracle         string
 	PrivKey            string
 	DeployOnL1Height   uint64
 	MinConfirmBlockNum uint64
