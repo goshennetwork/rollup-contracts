@@ -19,6 +19,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         bytes32 transactionHash;
         uint64 timestamp;
     }
+
     uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
     uint256 public constant MAX_ENQUEUE_TX_SIZE = 30000; // l2 node set to 32KB
     uint256 public constant MAX_WITNESS_TX_SIZE = 10000;
@@ -175,23 +176,29 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     function appendInputBatch() public {
         require(msg.sender == tx.origin, "only EOA");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
+
+        /// @dev decode necessary info
         uint64 _batchIndex;
-        assembly {
-            _batchIndex := shr(192, calldataload(4))
-        }
-        require(_batchIndex == chainHeight(), "wrong batch index");
         uint64 _queueNum;
         uint64 _queueStartIndex;
+        uint64 _batchNum;
         assembly {
+            _batchIndex := shr(192, calldataload(4))
             _queueNum := shr(192, calldataload(12))
             _queueStartIndex := shr(192, calldataload(20))
+            _batchNum := shr(192, calldataload(28))
         }
+        uint64 _batchDataPos = 4 + 8 + 8 + 8 + 8;
+
+        /// @notice check provided info is right
+        require(_batchIndex == chainHeight(), "wrong batch index");
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
-        /// @dev check whether is force flush queue, if not, only sequencer permitted
+
+        /// @notice check whether is force flush queue, if not, only sequencer permitted
         bool _isForceQueue;
-        if (_queueNum > 0) {
+        if (_queueNum > 0 && _batchNum == 0) {
             /// force queue should at least flush one queue
             if (queuedTxInfos[_nextPendingQueueIndex - 1].timestamp + forceDelayedSeconds < block.timestamp) {
                 _isForceQueue = true;
@@ -202,27 +209,15 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
             require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         }
-        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
 
-        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        uint64 _batchDataPos = 4 + 8 + 8 + 8;
-        //4byte function selector, 3 uint64
-        pendingQueueIndex = _nextPendingQueueIndex;
-        //check sequencer timestamp
-        uint64 _batchNum;
-        assembly {
-            _batchNum := shr(192, calldataload(_batchDataPos))
-        }
-        _batchDataPos += 8;
         bytes32 _inputHash;
         uint64 _timestamp;
         if (_batchNum == 0) {
             /// @dev if there is no batch, just check data is right.
             require(_queueNum > 0, "nothing to append");
             require(msg.data.length == _batchDataPos, "wrong calldata");
-            _timestamp = queuedTxInfos[pendingQueueIndex - 1].timestamp;
+            _timestamp = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
         } else {
-            require(!_isForceQueue, "malicious queue");
             assembly {
                 _timestamp := shr(192, calldataload(_batchDataPos))
             }
@@ -273,9 +268,15 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             }
         }
 
+        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
         _inputHash = _calcInputHash(keccak256(msg.data[12:]), _queueHashes);
-        _chain.append(_inputHash);
+
+        /// @dev change storage state
+        //4byte function selector, 3 uint64
+        pendingQueueIndex = _nextPendingQueueIndex;
         lastTimestamp = _timestamp;
+        addressResolver.rollupInputChainContainer().append(_inputHash);
+
         emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
     }
 

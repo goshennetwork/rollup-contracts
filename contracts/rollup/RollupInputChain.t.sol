@@ -287,7 +287,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         vm.stopPrank();
         vm.warp((block.timestamp + 1) << 20);
         vm.startPrank(address(0xeeee), address(0xeeee));
-        vm.expectRevert("malicious queue");
+        vm.expectRevert("only sequencer");
         fakeAppendInputBatch(0, 1, 0, 1, 0, "");
         vm.stopPrank();
     }
