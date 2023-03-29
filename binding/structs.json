@@ -304,34 +304,6 @@
       "EventID": "DisputeBranchSelected(address,uint256[],uint256)",
       "EventName": "DisputeBranchSelectedEventID"
     },
-    "ForceFlushedEvent": {
-      "Name": "ForceFlushedEvent",
-      "Fields": [
-        {
-          "Name": "proposer",
-          "Type": "web3.Address"
-        },
-        {
-          "Name": "index",
-          "Type": "uint64"
-        },
-        {
-          "Name": "startQueueIndex",
-          "Type": "uint64"
-        },
-        {
-          "Name": "queueNum",
-          "Type": "uint64"
-        },
-        {
-          "Name": "inputHash",
-          "Type": "[32]byte"
-        }
-      ],
-      "IsEvent": true,
-      "EventID": "ForceFlushed(address,uint64,uint64,uint64,bytes32)",
-      "EventName": "ForceFlushedEventID"
-    },
     "InitializedEvent": {
       "Name": "InitializedEvent",
       "Fields": [

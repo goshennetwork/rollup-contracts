@@ -161,18 +161,6 @@ type DisputeBranchSelectedEvent struct {
 	Raw *web3.Log
 }
 
-var ForceFlushedEventID = crypto.Keccak256Hash([]byte("ForceFlushed(address,uint64,uint64,uint64,bytes32)"))
-
-type ForceFlushedEvent struct {
-	Proposer        web3.Address
-	Index           uint64
-	StartQueueIndex uint64
-	QueueNum        uint64
-	InputHash       [32]byte
-
-	Raw *web3.Log
-}
-
 var InitializedEventID = crypto.Keccak256Hash([]byte("Initialized(uint8)"))
 
 type InitializedEvent struct {
