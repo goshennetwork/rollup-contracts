@@ -253,7 +253,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                 _version := shr(248, calldataload(_batchDataPos))
             }
             _batchDataPos += 1;
-            if (_version & BLOB_MASK == 0) {} else {
+            if (_version & BLOB_MASK != 0) {
                 /// @dev blob enabled
                 uint8 _blobNum;
                 assembly {
