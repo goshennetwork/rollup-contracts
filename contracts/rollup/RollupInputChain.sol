@@ -210,7 +210,6 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         }
 
-        bytes32 _inputHash;
         uint64 _timestamp;
         if (_batchNum == 0) {
             /// @dev if there is no batch, just check data is right.
@@ -269,10 +268,9 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         }
 
         bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        _inputHash = _calcInputHash(keccak256(msg.data[12:]), _queueHashes);
+        bytes32 _inputHash = _calcInputHash(keccak256(msg.data[12:]), _queueHashes);
 
         /// @dev change storage state
-        //4byte function selector, 3 uint64
         pendingQueueIndex = _nextPendingQueueIndex;
         lastTimestamp = _timestamp;
         addressResolver.rollupInputChainContainer().append(_inputHash);
