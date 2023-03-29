@@ -56,7 +56,7 @@ contract TestChallengeFactory is ChallengeFactory {
         stateStorageContainer = new ChainStorageContainer();
         stateStorageContainer.initialize("testAddress", address(addressManager));
         rollupinputchain = new RollupInputChain();
-        rollupinputchain.initialize(address(addressManager), 15000000, 3000000, 1234);
+        rollupinputchain.initialize(address(addressManager), 15000000, 3000000, 1234, 1);
         inputStorageContainer = new ChainStorageContainer();
         inputStorageContainer.initialize("testAddress", address(addressManager));
         stateTransition = new MockStateTransition();

@@ -175,6 +175,25 @@ func (_a *RollupInputChain) ChainHeight(block ...web3.BlockNumber) (retval0 uint
 	return
 }
 
+// ForceDelayedSeconds calls the forceDelayedSeconds method in the solidity contract
+func (_a *RollupInputChain) ForceDelayedSeconds(block ...web3.BlockNumber) (retval0 uint64, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("forceDelayedSeconds", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // GetInputHash calls the getInputHash method in the solidity contract
 func (_a *RollupInputChain) GetInputHash(inputIndex uint64, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
 	var out map[string]interface{}
@@ -362,8 +381,13 @@ func (_a *RollupInputChain) Enqueue(target web3.Address, gasLimit uint64, data [
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64) *contract.Txn {
-	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID)
+func (_a *RollupInputChain) Initialize(addressResolver web3.Address, maxTxGasLimit uint64, maxWitnessTxExecGasLimit uint64, l2ChainID uint64, forceDelayedSeconds uint64) *contract.Txn {
+	return _a.c.Txn("initialize", addressResolver, maxTxGasLimit, maxWitnessTxExecGasLimit, l2ChainID, forceDelayedSeconds)
+}
+
+// SetForceDelayedSeconds sends a setForceDelayedSeconds transaction in the solidity contract
+func (_a *RollupInputChain) SetForceDelayedSeconds(forceDelayedSeconds uint64) *contract.Txn {
+	return _a.c.Txn("setForceDelayedSeconds", forceDelayedSeconds)
 }
 
 // events

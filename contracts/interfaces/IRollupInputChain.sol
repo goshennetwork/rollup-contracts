@@ -53,6 +53,8 @@ interface IRollupInputChain {
     // batchesData: version(0) + rlp([][]transaction)
      *
      * @notice Revert if:
+     * - if it is a force flush action:
+     *  - there is no batch num
      * - sender isn't EOA
      * - sender isn't staking
      * - batchIndex not equal to pending batch index
@@ -63,6 +65,13 @@ interface IRollupInputChain {
      * - next lastTimestamp larger than next pending queue timestamp, which making sequencer stuck(make sure next_lastTimestamp <=pending_queue_timestamp)
      */
     function appendInputBatch() external;
+
+    /**
+     * @dev set force delayed seconds, when a queued tx expired after the force delayed seconds, everyone can force append it to input.
+     * @param _forceDelayedSeconds  with which, the enqueued tx can't be force push
+     * @notice only permitted by dao
+     */
+    function setForceDelayedSeconds(uint64 _forceDelayedSeconds) external;
 
     ///@return total sequenced input num
     function chainHeight() external view returns (uint64);
@@ -83,4 +92,7 @@ interface IRollupInputChain {
 
     /// @return sender's nonce
     function getNonceByAddress(address _sender) external view returns (uint64);
+
+    /// @return the force second delayed time for a queue to batch
+    function forceDelayedSeconds() external view returns (uint64);
 }

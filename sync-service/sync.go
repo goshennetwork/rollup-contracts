@@ -165,10 +165,12 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		log.Errorf("sync fetch sequenced batch err:%s", err)
 		return err
 	}
+
+	inputStore := kvdb.InputChain()
+
 	txs := make([]*web3.Transaction, 0)
 	txBatchIndexes := make([]uint64, 0)
 	for _, batch := range batches {
-		// get transaction
 		tx, err := self.l1client.Eth().GetTransactionByHash(batch.Raw.TransactionHash)
 		if err != nil {
 			log.Errorf("sync fetch sequenced batch tx, %s", err)
@@ -177,7 +179,6 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		txs = append(txs, tx)
 		txBatchIndexes = append(txBatchIndexes, batch.Index)
 	}
-	inputStore := kvdb.InputChain()
 	inputStore.StoreEnqueuedTransaction(queues...)
 	inputStore.StoreSequencerBatches(batches...)
 	inputStore.StoreSequencerBatchData(txs, txBatchIndexes)

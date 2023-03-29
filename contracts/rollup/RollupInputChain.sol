@@ -14,6 +14,12 @@ import "../libraries/UnsafeSign.sol";
 import "../libraries/EVMPreCompiled.sol";
 
 contract RollupInputChain is IRollupInputChain, Initializable {
+    // store L1 -> L2 tx
+    struct QueueTxInfo {
+        bytes32 transactionHash;
+        uint64 timestamp;
+    }
+
     uint256 public constant MIN_ENQUEUE_TX_GAS = 500000;
     uint256 public constant MAX_ENQUEUE_TX_SIZE = 30000; // l2 node set to 32KB
     uint256 public constant MAX_WITNESS_TX_SIZE = 10000;
@@ -32,26 +38,30 @@ contract RollupInputChain is IRollupInputChain, Initializable {
 
     IAddressResolver addressResolver;
 
-    // store L1 -> L2 tx
-    struct QueueTxInfo {
-        bytes32 transactionHash;
-        uint64 timestamp;
-    }
-
     QueueTxInfo[] queuedTxInfos;
     // index of the first queue element not yet included
     uint64 public override pendingQueueIndex;
+
+    //updates slot in testnet
+    uint64 public override forceDelayedSeconds;
 
     function initialize(
         address _addressResolver,
         uint64 _maxTxGasLimit,
         uint64 _maxWitnessTxExecGasLimit,
-        uint64 _l2ChainID
+        uint64 _l2ChainID,
+        uint64 _forceDelayedSeconds
     ) public initializer {
         addressResolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxWitnessTxExecGasLimit = _maxWitnessTxExecGasLimit;
         l2ChainID = _l2ChainID;
+        forceDelayedSeconds = _forceDelayedSeconds;
+    }
+
+    function setForceDelayedSeconds(uint64 _forceDelayedSeconds) public {
+        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        forceDelayedSeconds = _forceDelayedSeconds;
     }
 
     function enqueue(
@@ -165,42 +175,47 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     /// @dev if there is no sub batch, the version is ignored
     function appendInputBatch() public {
         require(msg.sender == tx.origin, "only EOA");
-        require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
-        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
-        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
+
+        /// @dev decode necessary info
         uint64 _batchIndex;
-        assembly {
-            _batchIndex := shr(192, calldataload(4))
-        }
-        require(_batchIndex == chainHeight(), "wrong batch index");
         uint64 _queueNum;
         uint64 _queueStartIndex;
+        uint64 _batchNum;
         assembly {
+            _batchIndex := shr(192, calldataload(4))
             _queueNum := shr(192, calldataload(12))
             _queueStartIndex := shr(192, calldataload(20))
+            _batchNum := shr(192, calldataload(28))
         }
+        uint64 _batchDataPos = 4 + 8 + 8 + 8 + 8;
+
+        /// @notice check provided info is right
+        require(_batchIndex == chainHeight(), "wrong batch index");
         require(_queueStartIndex == pendingQueueIndex, "incorrect pending queue index");
         uint64 _nextPendingQueueIndex = _queueStartIndex + _queueNum;
         require(_nextPendingQueueIndex <= queuedTxInfos.length, "attempt to append unavailable queue");
-        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
-        uint64 _batchDataPos = 4 + 8 + 8 + 8;
-        //4byte function selector, 3 uint64
-        pendingQueueIndex = _nextPendingQueueIndex;
-        //check sequencer timestamp
-        uint64 _batchNum;
-        assembly {
-            _batchNum := shr(192, calldataload(_batchDataPos))
+
+        /// @notice check whether is force flush queue, if not, only sequencer permitted
+        bool _isForceQueue;
+        if (_queueNum > 0 && _batchNum == 0) {
+            /// force queue should at least flush one queue
+            if (queuedTxInfos[_nextPendingQueueIndex - 1].timestamp + forceDelayedSeconds < block.timestamp) {
+                _isForceQueue = true;
+            }
         }
-        _batchDataPos += 8;
-        bytes32 _inputHash;
+        if (!_isForceQueue) {
+            //no force queue, check permission
+            require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
+            require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        }
+
         uint64 _timestamp;
         if (_batchNum == 0) {
-            /// @dev if there is no batch, no need to
+            /// @dev if there is no batch, just check data is right.
             require(_queueNum > 0, "nothing to append");
             require(msg.data.length == _batchDataPos, "wrong calldata");
             _timestamp = queuedTxInfos[_nextPendingQueueIndex - 1].timestamp;
-            _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
         } else {
             assembly {
                 _timestamp := shr(192, calldataload(_batchDataPos))
@@ -232,10 +247,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                 _version := shr(248, calldataload(_batchDataPos))
             }
             _batchDataPos += 1;
-            if (_version & BLOB_MASK == 0) {
-                /// @dev blob not enabled
-                _inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
-            } else {
+            if (_version & BLOB_MASK != 0) {
                 /// @dev blob enabled
                 uint8 _blobNum;
                 assembly {
@@ -252,13 +264,22 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                     }
                     require(_tempVersionHash == _versionHash, "insonsistent version hash");
                 }
-                bytes32 inputHash = keccak256(abi.encodePacked(keccak256(msg.data[12:]), _queueHashes));
             }
         }
 
-        _chain.append(_inputHash);
+        bytes32 _queueHashes = calculateQueueTxHash(_queueStartIndex, _queueNum);
+        bytes32 _inputHash = _calcInputHash(keccak256(msg.data[12:]), _queueHashes);
+
+        /// @dev change storage state
+        pendingQueueIndex = _nextPendingQueueIndex;
         lastTimestamp = _timestamp;
+        addressResolver.rollupInputChainContainer().append(_inputHash);
+
         emit InputBatchAppended(msg.sender, _batchIndex, _queueStartIndex, _queueNum, _inputHash);
+    }
+
+    function _calcInputHash(bytes32 _dataHash, bytes32 _queueHash) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_dataHash, _queueHash));
     }
 
     function chainHeight() public view returns (uint64) {

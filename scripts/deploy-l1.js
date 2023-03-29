@@ -1,5 +1,6 @@
 const config = require("./config/config.json");
 
+
 async function main() {
     const decimals = 18;
     const AddressManager = await ethers.getContractFactory("AddressManager");
@@ -7,7 +8,9 @@ async function main() {
     console.log("sent AddressManager deploy tx, %s", addressManager.deployTransaction.hash);
 
     const L1CrossLayerWitness = await ethers.getContractFactory("L1CrossLayerWitness");
-    const l1CrossLayerWitness = await upgrades.deployProxy(L1CrossLayerWitness, [], {initializer: false});
+    const l1CrossLayerWitness = await upgrades.deployProxy(L1CrossLayerWitness, [], {
+        initializer: false
+    });
     console.log("sent L1CrossLayerWitness deploy tx, %s", l1CrossLayerWitness.deployTransaction.hash);
 
     const TestERC20 = await ethers.getContractFactory("TestERC20");
@@ -20,7 +23,9 @@ async function main() {
     }
 
     const RollupStateChain = await ethers.getContractFactory("RollupStateChain");
-    const rollupStateChain = await upgrades.deployProxy(RollupStateChain, [], {initializer: false});
+    const rollupStateChain = await upgrades.deployProxy(RollupStateChain, [], {
+        initializer: false
+    });
     console.log("sent RollupStateChain deploy tx, %s", rollupStateChain.deployTransaction.hash);
 
     /* deploy challenge contracts */
@@ -34,39 +39,55 @@ async function main() {
     const challengeBeacon = await UpgradeableBeacon.deploy(challenge.address);
     console.log("sent UpgradeableBeacon deploy tx, %s", challengeBeacon.deployTransaction.hash);
     const ChallengeFactory = await ethers.getContractFactory("ChallengeFactory");
-    const challengeFactory = await upgrades.deployProxy(ChallengeFactory, [], {initializer: false});
+    const challengeFactory = await upgrades.deployProxy(ChallengeFactory, [], {
+        initializer: false
+    });
     console.log("sent ChallengeFactory deploy tx, %s", challengeFactory.deployTransaction.hash);
     const signers = await ethers.getSigners();
     const dao = await signers[0].getAddress();
     console.log("set dao address, %s", dao);
     const Whitelist = await ethers.getContractFactory("Whitelist");
-    const whitelist = await upgrades.deployProxy(Whitelist, [], {initializer: false});
+    const whitelist = await upgrades.deployProxy(Whitelist, [], {
+        initializer: false
+    });
     console.log("sent Whitelist deploy tx, %s", whitelist.deployTransaction.hash);
 
     const StakingManager = await ethers.getContractFactory("StakingManager");
-    const stakingManager = await upgrades.deployProxy(StakingManager, [], {initializer: false});
+    const stakingManager = await upgrades.deployProxy(StakingManager, [], {
+        initializer: false
+    });
     console.log("sent StakingManager deploy tx, %s", stakingManager.deployTransaction.hash);
 
     const RollupInputChain = await ethers.getContractFactory("RollupInputChain");
-    const rollupInputChain = await upgrades.deployProxy(RollupInputChain, [], {initializer: false});
+    const rollupInputChain = await upgrades.deployProxy(RollupInputChain, [], {
+        initializer: false
+    });
     console.log("sent RollupInputChain deploy tx, %s", rollupInputChain.deployTransaction.hash);
 
     const ChainStorageContainer = await ethers.getContractFactory("ChainStorageContainer");
-    const stateStorageContainer = await upgrades.deployProxy(ChainStorageContainer, [], {initializer: false});
+    const stateStorageContainer = await upgrades.deployProxy(ChainStorageContainer, [], {
+        initializer: false
+    });
     console.log("sent stateStorageContainer deploy tx, %s", stateStorageContainer.deployTransaction.hash);
-    const inputStorageContainer = await upgrades.deployProxy(ChainStorageContainer, [], {initializer: false});
+    const inputStorageContainer = await upgrades.deployProxy(ChainStorageContainer, [], {
+        initializer: false
+    });
     console.log("sent inputStorageContainer deploy tx, %s", inputStorageContainer.deployTransaction.hash);
 
     /* deploy state transition */
     const MachineState = await ethers.getContractFactory("MachineState");
     const machineState = await MachineState.deploy();
     const StateTransition = await ethers.getContractFactory("StateTransition");
-    const stateTransition = await upgrades.deployProxy(StateTransition, [], {initializer: false});
+    const stateTransition = await upgrades.deployProxy(StateTransition, [], {
+        initializer: false
+    });
     console.log("sent StateTransition deploy tx, %s", stateTransition.deployTransaction.hash);
 
     /* deploy bridge */
     const L1StandardBridge = await ethers.getContractFactory("L1StandardBridge");
-    const l1StandardBridge = await upgrades.deployProxy(L1StandardBridge, [], {initializer: false});
+    const l1StandardBridge = await upgrades.deployProxy(L1StandardBridge, [], {
+        initializer: false
+    });
     console.log("sent L1StandardBridge deploy tx, %s", l1StandardBridge.deployTransaction.hash);
 
     await addressManager.deployed();
@@ -149,7 +170,7 @@ async function main() {
     tx = await stakingManager.initialize(addressManager.address, ethers.utils.parseEther(config.stakingPrice));
     console.log("stakingManager initialized, tx: %s", tx.hash);
     tx = await rollupInputChain.initialize(addressManager.address, config.maxTxGasLimit, config.maxCrossLayerTxGasLimit,
-        config.l2ChainId);
+        config.l2ChainId, config.forceDelayedSeconds);
     console.log("rollupInputChain initialized, tx: %s", tx.hash);
     tx = await stateStorageContainer.initialize(config.addressName.ROLLUP_STATE_CHAIN, addressManager.address);
     console.log("stateStorageContainer initialized, tx: %s", tx.hash);
