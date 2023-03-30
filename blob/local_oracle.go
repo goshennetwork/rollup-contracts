@@ -11,6 +11,10 @@ type LocalOracle struct {
 	Diskdb PersistStore
 }
 
+func NewLocalOracle(db PersistStore) *LocalOracle {
+	return &LocalOracle{db}
+}
+
 func (self *LocalOracle) GetBlobWithCommitment(versionHash [32]byte) (Blob, KZGCommitment, error) {
 	v, err := self.Diskdb.Get(versionHash[:])
 	if err != nil {

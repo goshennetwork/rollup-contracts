@@ -28,10 +28,12 @@ var (
 	ErrNoBlock = errors.New("no block")
 )
 
+//todo: remove mockOracle
 func main() {
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
 	submit := flag.Bool("submit", false, "whether submit tx to node")
 	blobEnabled := flag.Bool("blob", false, "whether enable blob tx")
+
 	flag.Parse()
 	var cfg config.RollupCliConfig
 	utils.Ensure(utils.LoadJsonFile(*cfgName, &cfg))
@@ -67,21 +69,19 @@ func main() {
 		commitOracle := blob.NewMockOracle()
 		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled, commitOracle)
 		http.HandleFunc("/blobOracle", func(w http.ResponseWriter, r *http.Request) {
-			// 在这里编写处理请求的代码
-			// 从请求中获取名为"name"的参数的值
+
 			versionHashHex := r.FormValue("versionHash")
 			if versionHashHex == "" {
 				return
 			}
 			versionHash := web3.HexToHash(versionHashHex)
-			blob_, _, err := commitOracle.GetBlobsWithCommitmentVersions(versionHash)
+			blob_, commitment, err := commitOracle.GetBlobsWithCommitmentVersions(versionHash)
 			if err != nil {
 				return
 			}
 			fmt.Println(blob_[0])
-			// 将响应转换为JSON格式并发送回客户端
 			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(blob_[0]); err != nil {
+			if err := json.NewEncoder(w).Encode(blob.BlobWithCommitment{blob_[0], commitment[0]}); err != nil {
 				return
 			}
 		})
