@@ -9,7 +9,7 @@ import (
 )
 
 type LocalOracle struct {
-	Diskdb schema.PersistStore
+	Diskdb PersistStore
 }
 
 func (self *LocalOracle) GetBlobWithCommitment(versionHash [32]byte) (Blob, KZGCommitment, error) {
