@@ -193,7 +193,6 @@ func (self *RollupInputBatches) Blobs() ([]blob.Blob, error) {
 		utils.Ensure(writer.Close())
 		code = buffer.Bytes() //now write encoded
 	}
-
 	//just need to append blob num and version hash
 	blobs := blob.Encode(code)
 	//write blob num
