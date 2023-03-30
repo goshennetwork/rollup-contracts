@@ -269,7 +269,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
                     console.logBytes32(_tempVersionHash);
                     console.logBytes32(_versionHash);
                     require(_tempVersionHash == _versionHash, "inconsistent version hash");
-                    _batchDataPos+=32;
+                    _batchDataPos += 32;
                 }
             }
         }
