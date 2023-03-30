@@ -5,7 +5,6 @@ import (
 
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type LocalOracle struct {
@@ -43,11 +42,11 @@ func (self *LocalOracle) GetBlobsWithCommitmentVersions(versionHashes ...[32]byt
 }
 
 type LocalCachedOracle struct {
-	diskdb schema.PersistStore
+	diskdb PersistStore
 	remote BlobOracle
 }
 
-func NewLocalCachedOracle(diskdb schema.PersistStore, remote BlobOracle) *LocalCachedOracle {
+func NewLocalCachedOracle(diskdb PersistStore, remote BlobOracle) *LocalCachedOracle {
 	return &LocalCachedOracle{diskdb: diskdb, remote: remote}
 }
 
