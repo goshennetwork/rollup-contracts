@@ -120,7 +120,7 @@ func TestBlobCodec(t *testing.T) {
 				///save commitment to oracle
 				c, ok := v.ComputeCommitment()
 				assert.True(t, ok)
-				if err := mockOracle.VerifyAndRecordBlob(c.ComputeVersionedHash(), c, v); err != nil {
+				if err := mockOracle.VerifyAndRecordBlob(c.ComputeVersionedHash(), c, &v); err != nil {
 					t.Fatal(err)
 				}
 			}

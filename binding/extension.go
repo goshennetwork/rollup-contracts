@@ -170,7 +170,7 @@ func (self *RollupInputBatches) EncodeWithoutIndex(version byte) []byte {
 	return sink.Bytes()
 }
 
-func (self *RollupInputBatches) Blobs() ([]*blob.Blob, error) {
+func (self *RollupInputBatches) Blobs() ([]blob.Blob, error) {
 	if !self.BlobEnabled() {
 		return nil, errors.New("do not support blob")
 	}

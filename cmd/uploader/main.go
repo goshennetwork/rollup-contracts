@@ -74,11 +74,11 @@ func main() {
 				return
 			}
 			versionHash := web3.HexToHash(versionHashHex)
-			blob_, err := commitOracle.GetBlobsWithCommitmentVersions(versionHash)
+			blob_, _, err := commitOracle.GetBlobsWithCommitmentVersions(versionHash)
 			if err != nil {
 				return
 			}
-			fmt.Println(*blob_[0])
+			fmt.Println(blob_[0])
 			// 将响应转换为JSON格式并发送回客户端
 			w.Header().Set("Content-Type", "application/json")
 			if err := json.NewEncoder(w).Encode(blob_[0]); err != nil {
@@ -277,7 +277,7 @@ func (self *UploadBackend) feedBlobOracle(batch *binding.RollupInputBatches) {
 			if !ok {
 				panic(1)
 			}
-			if err := self.blobOracle.(*blob.MockOracle).VerifyAndRecordBlob(commitment.ComputeVersionedHash(), commitment, b); err != nil {
+			if err := self.blobOracle.(*blob.MockOracle).VerifyAndRecordBlob(commitment.ComputeVersionedHash(), commitment, &b); err != nil {
 				//should never happen
 				panic(err)
 			}
