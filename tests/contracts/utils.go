@@ -1,13 +1,13 @@
 package contracts
 
 import (
+	"github.com/goshennetwork/rollup-contracts/config"
+	"github.com/goshennetwork/rollup-contracts/deploy"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/jsonrpc/transport"
-	"github.com/ontology-layer-2/rollup-contracts/config"
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
 )
 
 const INIT_ENQUEUE_NONCE = 1 << 63

@@ -1,8 +1,8 @@
 package rollup
 
 import (
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 func genL1DepositKey(l1TxHash web3.Hash) []byte {

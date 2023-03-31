@@ -2,7 +2,7 @@ package leveldbstore
 
 import (
 	"github.com/ethereum/go-ethereum/common/fdlimit"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"

@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ontology-layer-2/rollup-contracts/blob/params"
+	"github.com/goshennetwork/rollup-contracts/blob/params"
 	"github.com/protolambda/go-kzg/bls"
 )
 

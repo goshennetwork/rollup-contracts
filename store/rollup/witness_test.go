@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/merkle"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/merkle"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 func newL2WitnessStore(db schema.KeyValueDB) *L2WitnessStore {

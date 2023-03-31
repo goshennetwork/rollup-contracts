@@ -1,14 +1,14 @@
 package store
 
 import (
+	"github.com/goshennetwork/rollup-contracts/store/l2client"
+	"github.com/goshennetwork/rollup-contracts/store/overlaydb"
+	"github.com/goshennetwork/rollup-contracts/store/resolver"
+	"github.com/goshennetwork/rollup-contracts/store/rollup"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/store/l2client"
-	"github.com/ontology-layer-2/rollup-contracts/store/overlaydb"
-	"github.com/ontology-layer-2/rollup-contracts/store/resolver"
-	"github.com/ontology-layer-2/rollup-contracts/store/rollup"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type Storage struct {

@@ -1,4 +1,4 @@
-module github.com/ontology-layer-2/rollup-contracts
+module github.com/goshennetwork/rollup-contracts
 
 go 1.16
 

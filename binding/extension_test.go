@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ontology-layer-2/rollup-contracts/blob"
+	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/stretchr/testify/assert"
 )
 

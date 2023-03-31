@@ -1,14 +1,14 @@
 package deploy
 
 import (
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/common"
+	"github.com/goshennetwork/rollup-contracts/deploy"
+	utils2 "github.com/goshennetwork/rollup-contracts/utils"
 	"github.com/laizy/log"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
-	utils2 "github.com/ontology-layer-2/rollup-contracts/utils"
 )
 
 func deployL2Cmd(cfgFile string, verbose, submit bool) error {

@@ -3,9 +3,9 @@ package rollup
 import (
 	"testing"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 	"github.com/stretchr/testify/assert"
 )
 

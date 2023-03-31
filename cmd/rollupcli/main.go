@@ -3,15 +3,15 @@ package main
 import (
 	"os"
 
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/deploy"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/erc20"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/gateway"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/genesis"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/messaging"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/staking"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/whitelist"
+	"github.com/goshennetwork/rollup-contracts/utils"
 	"github.com/laizy/log"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/deploy"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/erc20"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/gateway"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/genesis"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/messaging"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/staking"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/whitelist"
-	"github.com/ontology-layer-2/rollup-contracts/utils"
 	cli "github.com/urfave/cli/v2"
 )
 

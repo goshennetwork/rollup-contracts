@@ -6,8 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/goshennetwork/rollup-contracts/tests/contracts"
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 )
 
 const (

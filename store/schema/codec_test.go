@@ -3,8 +3,8 @@ package schema
 import (
 	"testing"
 
+	"github.com/goshennetwork/rollup-contracts/merkle"
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/merkle"
 	"github.com/stretchr/testify/assert"
 )
 

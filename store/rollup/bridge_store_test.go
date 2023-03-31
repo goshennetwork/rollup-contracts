@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
 	"github.com/laizy/web3"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,13 +5,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/goshennetwork/rollup-contracts/config"
+	"github.com/goshennetwork/rollup-contracts/store/leveldbstore"
+	sync_service "github.com/goshennetwork/rollup-contracts/sync-service"
+	utils2 "github.com/goshennetwork/rollup-contracts/utils"
 	"github.com/laizy/log"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/config"
-	"github.com/ontology-layer-2/rollup-contracts/store/leveldbstore"
-	sync_service "github.com/ontology-layer-2/rollup-contracts/sync-service"
-	utils2 "github.com/ontology-layer-2/rollup-contracts/utils"
 )
 
 func main() {

@@ -1,10 +1,10 @@
 package resolver
 
 import (
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type AddressManager struct {
