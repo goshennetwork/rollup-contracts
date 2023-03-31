@@ -1,10 +1,10 @@
 package contracts
 
 import (
+	"github.com/goshennetwork/rollup-contracts/binding"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
 )
 
 func CrossLayerMessageHash(target, sender web3.Address, msgIndex uint64, msg []byte) web3.Hash {

@@ -3,6 +3,8 @@ package deploy
 import (
 	"math/big"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/config"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/evm/storage"
@@ -11,8 +13,6 @@ import (
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common/hexutil"
 	"github.com/laizy/web3/utils/u256"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/config"
 )
 
 type GenesisAccount struct {

@@ -19,8 +19,8 @@
 package overlaydb
 
 import (
-	"github.com/ontology-layer-2/rollup-contracts/store/leveldbstore"
-	common "github.com/ontology-layer-2/rollup-contracts/store/schema"
+	"github.com/goshennetwork/rollup-contracts/store/leveldbstore"
+	common "github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/syndtr/goleveldb/leveldb/util"
 )
 

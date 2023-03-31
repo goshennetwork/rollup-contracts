@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
+	"github.com/goshennetwork/rollup-contracts/deploy"
+	"github.com/goshennetwork/rollup-contracts/tests/contracts"
 )
 
 func TestDepositEth(t *testing.T) {

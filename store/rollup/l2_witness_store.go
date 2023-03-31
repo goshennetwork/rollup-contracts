@@ -3,11 +3,11 @@ package rollup
 import (
 	"encoding/binary"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type L2WitnessStore struct {

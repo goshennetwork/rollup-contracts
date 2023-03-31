@@ -3,11 +3,11 @@ package l2client
 import (
 	"encoding/binary"
 
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/web3/evm/storage"
 	"github.com/laizy/web3/evm/storage/overlaydb"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type Store struct {

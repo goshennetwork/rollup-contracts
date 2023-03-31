@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"errors"
 
+	"github.com/goshennetwork/rollup-contracts/blob/kzg"
+	"github.com/goshennetwork/rollup-contracts/blob/params"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/ontology-layer-2/rollup-contracts/blob/kzg"
-	"github.com/ontology-layer-2/rollup-contracts/blob/params"
 	"github.com/protolambda/go-kzg/bls"
 	codec2 "github.com/protolambda/ztyp/codec"
 )

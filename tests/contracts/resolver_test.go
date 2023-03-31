@@ -3,9 +3,9 @@ package contracts
 import (
 	"testing"
 
+	"github.com/goshennetwork/rollup-contracts/deploy"
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
 	"github.com/stretchr/testify/assert"
 )
 

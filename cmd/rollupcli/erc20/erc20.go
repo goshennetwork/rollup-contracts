@@ -1,12 +1,12 @@
 package erc20
 
 import (
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/common"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract/builtin/erc20"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/urfave/cli/v2"
 )
 

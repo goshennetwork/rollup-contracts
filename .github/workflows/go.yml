@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      GOPRIVATE: github.com/ontology-layer-2
+      GOPRIVATE: github.com/goshennetwork
       GH_ACCESS_TOKEN: ${{ secrets.ROLLUP_ACCESS_TOKEN }}
       GOBIN: '/home/runner/go/bin'
     steps:
@@ -22,7 +22,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Inject insteadOf configuration for l2 private repo
         run: |
-          git config --global url."https://${{ secrets.ROLLUP_ACCESS_TOKEN }}:x-oauth-basic@github.com/ontology-layer-2".insteadOf "https://github.com/ontology-layer-2"
+          git config --global url."https://${{ secrets.ROLLUP_ACCESS_TOKEN }}:x-oauth-basic@github.com/goshennetwork".insteadOf "https://github.com/goshennetwork"
       - name: Set up Go
         uses: actions/setup-go@v2
         with:

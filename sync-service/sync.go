@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/config"
+	"github.com/goshennetwork/rollup-contracts/store"
+	"github.com/goshennetwork/rollup-contracts/store/schema"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/config"
-	"github.com/ontology-layer-2/rollup-contracts/store"
-	"github.com/ontology-layer-2/rollup-contracts/store/schema"
 )
 
 type SyncService struct {

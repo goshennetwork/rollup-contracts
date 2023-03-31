@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/deploy"
+	"github.com/goshennetwork/rollup-contracts/tests/contracts"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 )
 
 func EnqueueTransactionHash(sender, target web3.Address, gasLimit uint64, data []byte, nonce uint64) web3.Hash {

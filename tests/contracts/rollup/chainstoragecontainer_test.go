@@ -3,10 +3,10 @@ package rollup
 import (
 	"testing"
 
+	"github.com/goshennetwork/rollup-contracts/deploy"
+	"github.com/goshennetwork/rollup-contracts/tests/contracts"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common"
-	"github.com/ontology-layer-2/rollup-contracts/deploy"
-	"github.com/ontology-layer-2/rollup-contracts/tests/contracts"
 	"github.com/stretchr/testify/assert"
 )
 

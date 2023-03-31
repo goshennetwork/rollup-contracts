@@ -1,13 +1,13 @@
 package messaging
 
 import (
+	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/common"
+	"github.com/goshennetwork/rollup-contracts/cmd/rollupcli/flags"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/common/hexutil"
-	"github.com/ontology-layer-2/rollup-contracts/binding"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/common"
-	"github.com/ontology-layer-2/rollup-contracts/cmd/rollupcli/flags"
 	cli "github.com/urfave/cli/v2"
 )
 
