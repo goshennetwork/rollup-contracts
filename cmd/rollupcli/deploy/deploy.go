@@ -8,6 +8,7 @@ import (
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
+	"github.com/urfave/cli/v2"
 )
 
 type DeployConfig struct {

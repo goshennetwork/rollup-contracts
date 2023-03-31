@@ -7,6 +7,7 @@ import (
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract/builtin/erc20"
 	"github.com/laizy/web3/utils"
+	"github.com/urfave/cli/v2"
 )
 
 func ERC20Cmd() *cli.Command {
