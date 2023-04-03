@@ -51,6 +51,12 @@ func DeployProxyAdmin(signer *contract.Signer) *binding.ProxyAdmin {
 	return proxyAdmin
 }
 
+func DeployL2StandardTokenFactory(signer *contract.Signer, l2Bridge web3.Address) web3.Address {
+	receipt := binding.DeployL2StandardTokenFactory(signer.Client, signer.Address(), l2Bridge).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+
+	return receipt.ContractAddress
+}
+
 func DeployL2TokenBridge(signer *contract.Signer, proxyAdmin web3.Address, bridgeLogicAddress *web3.Address) (
 	bridge *binding.L2StandardBridge, logic *binding.L2StandardBridge) {
 	bridgeReceipt := binding.DeployL2StandardBridge(signer.Client, signer.Address()).Sign(signer).SendTransaction(signer).EnsureNoRevert()

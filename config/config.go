@@ -70,10 +70,11 @@ type L2GenesisConfig struct {
 }
 
 type L2ContractAddressConfig struct {
-	ProxyAdmin          web3.Address
-	L2CrossLayerWitness web3.Address
-	L2StandardBridge    web3.Address
-	L2FeeCollector      web3.Address
+	ProxyAdmin             web3.Address
+	L2CrossLayerWitness    web3.Address
+	L2StandardBridge       web3.Address
+	L2FeeCollector         web3.Address
+	L2StandardTokenFactory web3.Address
 
 	L2CrossLayerWitnessLogic web3.Address
 	L2StandardBridgeLogic    web3.Address

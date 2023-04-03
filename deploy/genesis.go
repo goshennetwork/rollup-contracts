@@ -39,6 +39,7 @@ func BuildL2GenesisData(cfg *config.L2GenesisConfig, l1TokenBridge web3.Address)
 	genesisAccts[cfg.L2CrossLayerWitnessLogic] = getContractData(statedb, witnessLogic.Contract().Addr())
 	genesisAccts[cfg.L2StandardBridge] = getContractData(statedb, bridge.Contract().Addr())
 	genesisAccts[cfg.L2StandardBridgeLogic] = getContractData(statedb, bridgeLogic.Contract().Addr())
+	genesisAccts[cfg.L2StandardTokenFactory] = getContractData(statedb, DeployL2StandardTokenFactory(signer, cfg.L2StandardBridge))
 	if cfg.BridgeBalance != 0 {
 		genesisAccts[cfg.L2StandardBridge].Balance =
 			(*hexutil.Big)(u256.New(cfg.BridgeBalance).Mul(web3.Ether(1)).ToBigInt())
