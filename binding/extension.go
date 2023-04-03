@@ -17,7 +17,6 @@ import (
 	"github.com/laizy/web3/crypto"
 	"github.com/laizy/web3/utils"
 	"github.com/laizy/web3/utils/codec"
-	"github.com/laizy/web3/utils/common/hexutil"
 )
 
 const (

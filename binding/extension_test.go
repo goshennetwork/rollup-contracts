@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/goshennetwork/rollup-contracts/blob"
-	"github.com/laizy/web3/utils/common/hexutil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/goshennetwork/rollup-contracts/config"
 	"github.com/goshennetwork/rollup-contracts/store"
 	"github.com/goshennetwork/rollup-contracts/store/schema"
