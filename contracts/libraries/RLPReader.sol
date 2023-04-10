@@ -196,7 +196,7 @@ library RLPReader {
             require(rawRlp.len > lenOfStrLen, "Invalid RLP long string length.");
             uint256 strLen;
             assembly {
-                // Pick out the string length. note: rlp的标准要求整数采用大端编码，且必须移除前缀0,因此这里没有做这个检查.
+                // Pick out the string length. note: the standard rlp demand the integer coded in big endian, and must remove the prefix zero,so not checked here
                 strLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfStrLen)))
             }
             require(rawRlp.len > lenOfStrLen + strLen, "Invalid RLP long string.");
@@ -215,7 +215,7 @@ library RLPReader {
 
             uint256 listLen;
             assembly {
-                // Pick out the list length. note: 同上.
+                // Pick out the list length
                 listLen := div(mload(add(ptr, 1)), exp(256, sub(32, lenOfListLen)))
             }
 

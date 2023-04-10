@@ -83,39 +83,39 @@ contract Interpretor is IInterpretor, Initializable {
             } else if (fn == 7 << 8) {
                 vrs1 = vrs1 & vrs2;
             } else if (fn == (0 << 8) + 1) {
-                //mul 把寄存器x[rs2]乘到寄存器x[rs1]上，乘积写入 x[rd]。忽略算术溢出
+                //mul mul register x[rs2] and register x[rs1], write the result to register rd. the overflow is ignored
                 unchecked {
                     vrs1 = vrs1 * vrs2;
                 }
             } else if (fn == (1 << 8) + 1) {
-                //mulh 把寄存器 x[rs2]乘到寄存器x[rs1]上，都视为2的补码，将乘积的高位写入x[rd]
+                //mulh mul the register x[rs2] with register x[rs1], all value are treated as complement code, and write the high level to register rd
                 unchecked {
                     vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(int32(vrs2)))) >> 32);
                 }
             } else if (fn == (2 << 8) + 1) {
-                //mulhsu 把寄存器 x[rs2]乘到寄存器 x[rs1]上，x[rs1]为2的补码，x[rs2]为无符号数，将乘积的高位写入x[rd]。
+                //mulhsu mul register x[rs2] with register x[rs1], x[rs1] is treated as complement code,but x[rs2] is unsighed, write the high level to rd
                 unchecked {
                     vrs1 = uint32(uint64((int64(int32(vrs1)) * int64(uint64(vrs2)))) >> 32);
                 }
             } else if (fn == (3 << 8) + 1) {
-                //mulhu 把寄存器x[rs2]乘到寄存器x[rs1]上，x[rs1]、x[rs2]均为无符号数，将乘积的高位写入x[rd]
+                //mulhu mul register x[rs2] with register x[rs1],x[rs1]、x[rs2] are both unsigned, write the value to rd
                 unchecked {
                     vrs1 = uint32((uint64(vrs1) * uint64(vrs2)) >> 32);
                 }
             } else if (fn == (4 << 8) + 1) {
-                //div 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为二进制补码，把商写入x[rd],软件层面检查除数为0的情况
+                //div x[rd]=x[rs1]/x[rs2], ignore overflow, they are all signed
                 unchecked {
                     //ignore overflow
                     vrs1 = vrs2 == 0 ? uint32((1 << 32) - 1) : uint32(int32(vrs1) / int32(vrs2));
                 }
             } else if (fn == (5 << 8) + 1) {
-                //divu 用寄存器x[rs1]的值除以寄存器x[rs2]的值，向零舍入，将这些数视为无符号数，把商写入x[rd]
+                //divu x[rd]=x[rs1]/x[rs2], they are all unsigned, surly will not overflow
                 vrs1 = vrs2 == 0 ? uint32((1 << 32) - 1) : vrs1 / vrs2;
             } else if (fn == (6 << 8) + 1) {
-                //rem x[rs1]除以 x[rs2]，向0舍入，都视为2的补码，余数写入x[rd]
+                //rem x[rd]=x[rs1]%x[rs2], all signed
                 vrs1 = vrs2 == 0 ? vrs1 : uint32(int32(vrs1) % int32(vrs2));
             } else if (fn == (7 << 8) + 1) {
-                //remu x[rs1]除以x[rs2]，向0舍入，都视为无符号数，余数写入x[rd]
+                //remu x[rd]=x[rs1]%x[rs2], all unsigned
                 vrs1 = vrs2 == 0 ? vrs1 : vrs1 % vrs2;
             } else {
                 nextPC = MemoryLayout.HaltMagic;
@@ -370,10 +370,10 @@ contract Interpretor is IInterpretor, Initializable {
         fn7 = fn7 >> 2;
         uint32 result = t;
         if (fn7 == 2 && rs2 == 0) {
-            //lr.w 从内存中地址为 x[rs1]中加载四个字节，符号位扩展后写入 x[rd]，并对这个内存字注册保留。
+            //lr.w load 4 byte of memory address x[rs1],signed extend it and write to register rd, reserve the address x[rs1]
             root = mstate.reserve(root, vrs1);
         } else if (fn7 == 3) {
-            //sc.w 内存地址 x[rs1]上存在加载保留，将 x[rs2]寄存器中的 4 字节数存入该地址。如果存入成功， 向寄存器 x[rd]中存入 0，否则存入一个非 0 的错误码
+            //sc.w if the memory address x[rs1] is reserved, set t to x[rs2], and set x[rd] to zero
             result = mstate.isReserved(root, vrs1) ? 0 : 1;
             if (result == 0) {
                 t = vrs2;
@@ -383,30 +383,30 @@ contract Interpretor is IInterpretor, Initializable {
             //amoswap.w : rd = M[rs1]; swap(rd, rs2); M[rs1] = rd
             t = vrs2;
         } else if (fn7 == 0) {
-            //amoadd.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t+x[rs2]，把 x[rd] 设为符号位扩展的 t
+            //amoadd.w set x[rs1] to t, and x[rd]=t+vrs2
             unchecked {
                 t = t + vrs2;
             }
         } else if (fn7 == 4) {
-            //amoxor.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]按位异 或的结果，把 x[rd]设为符号位扩展的 t。
+            //amoxor.w name the value of mem address x[rs1] as t, t=t^x[rs2], and x[rd]=t
             t = t ^ vrs2;
         } else if (fn7 == 12) {
-            //amoand.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]位与的 结果，把 x[rd]设为符号位扩展的 t
+            //amoand.w name the value of mem address x[rs1] as t,x[rd]=t&x[rs2]
             t = t & vrs2;
         } else if (fn7 == 8) {
-            //amoor.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]位或的 结果，把 x[rd]设为符号位扩展的 t
+            //amoor.w name the value of mem address x[rs1] as t,x[rd]=t|vrs2
             t = t | vrs2;
         } else if (fn7 == 16) {
-            //amomin.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较小 的一个（用二进制补码比较），把 x[rd]设为符号位扩展的 t
+            //amomin.w name the value of mem address x[rs1] as t,x[rd]=the least between t and x[rs2], signed
             t = int32(t) <= int32(vrs2) ? t : vrs2;
         } else if (fn7 == 20) {
-            //amomax.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较大的一个（用二进制补码比较），把 x[rd]设为符号位扩展的 t
+            //amomax.w name the value of mem address x[rs1] as t,x[rd]=the biggest between t and x[rs2], signed
             t = int32(t) >= int32(vrs2) ? t : vrs2;
         } else if (fn7 == 24) {
-            //amominu.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中较小 的一个（用无符号比较），把 x[rd]设为符号位扩展的 t
+            //amominu.w name the value of mem address x[rs1] as t,x[rd]=the least between t and x[rs2], unsigned
             t = t <= vrs2 ? t : vrs2;
         } else if (fn7 == 28) {
-            //amomaxu.w 将内存中地址为 x[rs1]中的字记为 t，把这个字变为 t 和 x[rs2]中 较大的一个（用无符号比较），把 x[rd]设为 t
+            //amomaxu.w name the value of mem address x[rs1] as t,x[rd]=the biggest between t and x[rs2], unsigned
             t = t >= vrs2 ? t : vrs2;
         } else {
             nextPC = MemoryLayout.HaltMagic;

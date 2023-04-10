@@ -127,7 +127,7 @@ contract InterpretorTest {
         checkInstruction("sra     a0,a0,a1", 0x40b55533, ExpectReg(Register.REG_A0, 0)); //(1<<7)>>0xff
         checkInstruction("li      a0,-32", 0xfe000513, ExpectReg(Register.REG_A0, -32));
         checkInstruction("li      a1,3", 0x00300593, ExpectReg(Register.REG_A1, 3));
-        checkInstruction("sra     a0,a0,a1", 0x40b55533, ExpectReg(Register.REG_A0, -4)); //正常除法 -32/8
+        checkInstruction("sra     a0,a0,a1", 0x40b55533, ExpectReg(Register.REG_A0, -4)); //-32/8
         checkInstruction("sra     a0,a0,a1", 0x40b55533, ExpectReg(Register.REG_A0, -1)); //-1
 
         //or
@@ -215,19 +215,19 @@ contract InterpretorTest {
         checkInstruction("slli    a0,a1,0x2", 0x00259513, ExpectReg(Register.REG_A0, -4)); //0xff_ff_ff_ff <<2 = 0xff_ff_ff_fc
         checkInstruction("slli    a0,a1,0x1f", 0x01f59513, ExpectReg(Register.REG_A0, v)); //0xff_ff_ff_ff <<31=0x10_00_00_00
 
-        //srli 位移超过32位非法，在编译时检查.
+        //srli the offset(<=32) is checked at compiled time
         checkInstruction("li      a1,8", 0x00800593, ExpectReg(Register.REG_A1, 8));
         checkInstruction("srli    a0,a1,0x1", 0x0015d513, ExpectReg(Register.REG_A0, 4)); //8>>1 =4
         checkInstruction("srli    a0,a1,0x4", 0x0045d513, ExpectReg(Register.REG_A0, 0)); //8>>4=0
         checkInstruction("li      a1,-1", 0xfff00593, ExpectReg(Register.REG_A1, -1));
         checkInstruction("srli    a0,a1,0x1f", 0x01f5d513, ExpectReg(Register.REG_A0, 1)); //0xff_ff_ff_ff>>31=0x01
 
-        //srai 位移超过32位非法，在编译时检查.
+        //srai the offset(<=32) is checked at compiled time
         checkInstruction("li      a1,8", 0x00800593, ExpectReg(Register.REG_A1, 8));
         checkInstruction("srai    a0,a1,0x1", 0x4015d513, ExpectReg(Register.REG_A0, 4)); //8>>1=4
         checkInstruction("srai    a0,a1,0x4", 0x4045d513, ExpectReg(Register.REG_A0, 0)); //8>>4=0
         checkInstruction("li      a1,-8", 0xff800593, ExpectReg(Register.REG_A1, -8));
-        checkInstruction("srai    a0,a1,0x1", 0x4015d513, ExpectReg(Register.REG_A0, -4)); //正常除法0xff_ff_ff_f8 SE>>1=0xff_ff_ff_fc
+        checkInstruction("srai    a0,a1,0x1", 0x4015d513, ExpectReg(Register.REG_A0, -4)); //0xff_ff_ff_f8 SE>>1=0xff_ff_ff_fc
         checkInstruction("srai    a0,a1,0x1f", 0x41f5d513, ExpectReg(Register.REG_A0, -1)); //0xff_ff_ff_f8 SE>>31 = 0x_ff_ff_ff_ff
 
         //beq
@@ -328,9 +328,9 @@ contract InterpretorTest {
         checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
         checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
         checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, -1)); //a4=-1 all num/0=-1
-        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31
         checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
-        checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, int32(uint32(0x80_000_000)))); //a4=0x80_000_000 最小负数/-1 等于最小负数
+        checkInstruction("div     a4,ra,sp", 0x0220c733, ExpectReg(Register.REG_A4, int32(uint32(0x80_000_000)))); //a4=0x80_000_000
 
         //divu
         initRegister();
@@ -349,7 +349,7 @@ contract InterpretorTest {
         checkInstruction("li      ra,20", 0x01400093, ExpectReg(Register.REG_RA, 20)); //ra=20
         checkInstruction("li      sp,-6", 0xffa00113, ExpectReg(Register.REG_SP, -6)); //sp=-6
         checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, 2)); //a4=2
-        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31
         checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=-1
         checkInstruction("rem     a4,ra,sp", 0x0220e733, ExpectReg(Register.REG_A4, 0)); //a4=0
         checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
@@ -361,7 +361,7 @@ contract InterpretorTest {
         checkInstruction("li      ra,-20", 0xfec00093, ExpectReg(Register.REG_RA, -20)); //ra=(2^32)-20
         checkInstruction("li      sp,6", 0x00600113, ExpectReg(Register.REG_SP, 6)); //sp=6
         checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, 2)); //a4=2
-        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
+        checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31
         checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=(2^32)-1
         checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, minInt)); //
         checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0

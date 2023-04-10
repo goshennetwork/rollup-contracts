@@ -1,10 +1,10 @@
 # Sequenceer
 
-一个可以对RollupInputChain合约进行appendBatch操作的账户即为`sequencer`,其需要两个权限:
-- 需要在`DAO`的白名单内，以便在现阶段保证足够的安全性
-- 需要在`StakingManager`中进行抵押，以防女巫攻击
+`sequencer` is an ethereum account that have the right to push input of l2 system at `RollupInputChain` contract by `appendBatch`
+- is included at `DAO`'s proposerWhiteList, to guarantee the system safety at this period
+- deposited first at `StakingManager`, make sure the malicious sequencer will get punished
 
-设置权限的步骤:
-1: 账户A需要保证在`FeeToken`ERC20合约中有足够的可用于后续操作的token（数额可查询`StakingManager`的`price()`方法）。
-2: 账户A需要调用`StakingManager`的`deposit()`进行质押。
-3: 账户A需要联系控制`DAO`合约的管理员调用其`setSequencerWhitelist`方法将账户A加入白名单。
+the step to be a sequencer:
+1: the account should have the enough balance at `FeeToken`(the recommended amount can be queryed by `price()` method at `StakingManager` contract)
+2: the account should invoke the `deposit()` method at `StakingManager` contract
+3: the account should contract with the manager of `DAO` to make it involved in sequencer white list

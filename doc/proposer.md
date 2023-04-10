@@ -1,9 +1,9 @@
 # proposer
-`proposer`为可以向`RollupStateChain`进行`appendStateBatch`操作的以太坊账户
-其需要两个前提:
-- 需要在`StakingManager`中进行质押，保证对作恶的proposer进行经济惩罚
-- 需要在`DAO`中的proposerWhiteList内，保证现阶段的安全性
+`proposer` is the ethereum account that can push state to `RollupStateChain` by `appendStateBatch`
+required:
+- deposited first at `StakingManager`, make sure the malicious proposer will get punished
+- is included at `DAO`'s proposerWhiteList, to guarantee the system safety at this period
 
-进行操作:
-- 确保账户在`FeeToken`的erc20代币足够并对`StakingManager`合约进行`deposite()`质押。
-- 联系`DAO`管理员将对应账户加入白名单。
+the step to be a proposer:
+- make sure the account have enough token at `FeeToken`, and deposit at `StakingManager`
+- contact with the manager of `DAO` to make the previus account to be involved in proposer white list.
