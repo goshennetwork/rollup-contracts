@@ -6,10 +6,15 @@
 which gosimports || cd /tmp/; go install github.com/rinchsan/gosimports/cmd/gosimports@latest; cd -
 
 unset dirs files
+
 dirs=$(go list -f {{.Dir}} ./... )
 
 for d in $dirs
 do
+  # ignore node_modules and sub dir
+      if [[ $d == *"node_modules"* ]]; then
+        continue
+        fi
     for f in $d/*.go
     do
     files="${files} $f"

@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/goshennetwork/rollup-contracts/blob/kzg"
 	"github.com/goshennetwork/rollup-contracts/blob/params"
+	"github.com/laizy/web3/utils/common/hexutil"
 	"github.com/protolambda/go-kzg/bls"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,6 +23,14 @@ func genRandomData(length int) []byte {
 	r := make([]byte, length)
 	rand.New(s).Read(r)
 	return r
+}
+
+func TestView(t *testing.T) {
+	data := "0x8b72000064625c3ee545324179f76d648314a5be04b23dda22c7c8a80abf84fde1a29a0668e011508fdb2becba3a6b7cace0a520fe27771a3582695071dca1a505fbb0ba345b0800d4d42db8c7d646670e3891ad478bc2f2819a203003621d3afc5348df8d997f279febc771634086cfdaebbe0ebbee23f1e09c627862c45c167577eb3d24dc9650124e5ec3fe6a0003"
+	b := Encode(hexutil.MustDecode(data))
+	t.Log(len(b))
+	c, _ := b[0].ComputeCommitment()
+	t.Log(c.ComputeVersionedHash())
 }
 
 func TestEncode(t *testing.T) {

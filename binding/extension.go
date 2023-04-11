@@ -24,8 +24,8 @@ const (
 	BrotliEncodeType
 )
 
-const BrotliEnabledMask = 1
-const BlobEnabledMask = 1 << 7
+const BrotliEnabledMask uint8 = 1
+const BlobEnabledMask uint8 = 1 << 7
 
 func BrotliEnabled(version uint8) bool {
 	return version&BrotliEnabledMask > 0
@@ -33,6 +33,14 @@ func BrotliEnabled(version uint8) bool {
 
 func BlobEnabled(version uint8) bool {
 	return version&BlobEnabledMask > 0
+}
+
+func (self *RollupInputBatches) SetBlob(enabled bool) {
+	if enabled {
+		self.Version = self.Version | BlobEnabledMask
+	} else {
+		self.Version = self.Version & (^BlobEnabledMask)
+	}
 }
 
 func (self *RollupInputBatches) BlobEnabled() bool {
@@ -65,6 +73,10 @@ func (self *CounterRead) Read(b []byte) (n int, e error) {
 // format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
 // subBatchLeftTimeDiff([]uint32) + batchesData
 // batchesData: version(0) + rlp([][]transaction)
+// batchesData: version(1) + brotli(rlp([][]transaction))
+// batchesData: version(1<<7) | {0,1} if the blob is enabled, there is no tx data need to upload.
+// if blob_version: batchesData: uint8(blob_num) + bytes32[](versionHash)
+/// @dev if there is no sub batch, the version is ignored
 type RollupInputBatches struct {
 	//BatchIndex ignored when calc hash, because its useless in l2 system
 	BatchIndex uint64
@@ -157,7 +169,7 @@ func (self *RollupInputBatches) EncodeWithoutIndex(version byte) []byte {
 	return sink.Bytes()
 }
 
-func (self *RollupInputBatches) Blobs() ([]*blob.Blob, error) {
+func (self *RollupInputBatches) Blobs() ([]blob.Blob, error) {
 	if !self.BlobEnabled() {
 		return nil, errors.New("do not support blob")
 	}
@@ -180,7 +192,6 @@ func (self *RollupInputBatches) Blobs() ([]*blob.Blob, error) {
 		utils.Ensure(writer.Close())
 		code = buffer.Bytes() //now write encoded
 	}
-
 	//just need to append blob num and version hash
 	blobs := blob.Encode(code)
 	//write blob num
@@ -242,7 +253,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 
 	self.Version = version
 	if self.BlobEnabled() { //blob append blob num and versionHash
-		if len(oracle) == 0 {
+		if len(oracle) == 0 || oracle[0] == nil {
 			return errors.New("no blob oracle")
 		}
 		blobNum := reader.ReadUint8()
@@ -253,7 +264,7 @@ func (self *RollupInputBatches) DecodeWithoutIndex(b []byte, oracle ...blob.Blob
 				return reader.Error()
 			}
 		}
-		blobs, err := oracle[0].GetBlobsWithCommitmentVersions(versionHashes...)
+		blobs, _, err := oracle[0].GetBlobsWithCommitmentVersions(versionHashes...)
 		if err != nil {
 			return fmt.Errorf("get blobs with commitment version: %w", err)
 		}

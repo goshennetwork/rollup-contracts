@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/goshennetwork/rollup-contracts/binding"
+	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/goshennetwork/rollup-contracts/config"
 	"github.com/goshennetwork/rollup-contracts/store"
 	"github.com/goshennetwork/rollup-contracts/store/schema"
@@ -16,22 +17,24 @@ import (
 )
 
 type SyncService struct {
-	conf     *config.RollupCliConfig
-	l1client *jsonrpc.Client
-	l2client *jsonrpc.Client
-	db       *store.Storage
-	quit     chan struct{}
-	wg       sync.WaitGroup
+	conf       *config.RollupCliConfig
+	l1client   *jsonrpc.Client
+	l2client   *jsonrpc.Client
+	db         *store.Storage
+	blobOracle blob.BlobOracle
+	quit       chan struct{}
+	wg         sync.WaitGroup
 }
 
 func NewSyncService(diskdb schema.PersistStore,
-	l1client *jsonrpc.Client, l2client *jsonrpc.Client, cfg *config.RollupCliConfig) *SyncService {
+	l1client *jsonrpc.Client, l2client *jsonrpc.Client, blobOracle blob.BlobOracle, cfg *config.RollupCliConfig) *SyncService {
 	return &SyncService{
-		db:       store.NewStorage(diskdb),
-		conf:     cfg,
-		l1client: l1client,
-		l2client: l2client,
-		quit:     make(chan struct{}),
+		db:         store.NewStorage(diskdb),
+		conf:       cfg,
+		l1client:   l1client,
+		l2client:   l2client,
+		blobOracle: blobOracle,
+		quit:       make(chan struct{}),
 	}
 }
 
@@ -189,7 +192,7 @@ func (self *SyncService) syncRollupInputChain(kvdb *store.StorageWriter, startHe
 		batchData, err := inputStore.GetSequencerBatchData(batch.Index)
 		utils.Ensure(err)
 		b := &binding.RollupInputBatches{}
-		if err := b.Decode(batchData); err != nil {
+		if err := b.Decode(batchData, self.blobOracle); err != nil {
 			log.Errorf("decode input batches failed, err: %s", err)
 			return err
 		}

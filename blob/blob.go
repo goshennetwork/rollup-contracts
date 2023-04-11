@@ -32,10 +32,10 @@ func decodeLen(data []byte) ([]byte, error) {
 	return data[4 : 4+lenData], nil
 }
 
-func Encode(data []byte) (ret []*Blob) {
+func Encode(data []byte) (ret []Blob) {
 	reader := codec.NewZeroCopyReader(encodeLenAndAlign(data))
 	for reader.Len() > 0 {
-		blob := &Blob{}
+		blob := Blob{}
 		for i := 0; i < params.FieldElementsPerBlob; i++ {
 			val := reader.ReadBytes(31)
 			copy(blob[i][:], val)
@@ -46,7 +46,7 @@ func Encode(data []byte) (ret []*Blob) {
 	return ret
 }
 
-func Decode(blobs []*Blob) ([]byte, error) {
+func Decode(blobs []Blob) ([]byte, error) {
 	sink := codec.NewZeroCopySink(nil)
 	for _, blob := range blobs {
 		for _, v := range blob {
@@ -107,4 +107,26 @@ func (kzg KZGCommitment) ComputeVersionedHash() web3.Hash {
 	h := crypto.Keccak256Hash(kzg[:])
 	h[0] = params.BlobCommitmentVersionKZG
 	return web3.Hash(h)
+}
+
+func (self *BlobWithCommitment) Serialization(sink *codec.ZeroCopySink) {
+	for _, v := range self.Blob {
+		sink.WriteBytes(v[:])
+	}
+	sink.WriteBytes(self.Commitment[:])
+}
+
+func (self *BlobWithCommitment) DeSerialization(source *codec.ZeroCopySource) error {
+	reader := source.Reader()
+	for i := 0; i < params.FieldElementsPerBlob; i++ {
+		self.Blob[i] = [32]byte(reader.ReadHash())
+	}
+	copy(self.Commitment[:], reader.ReadBytes(48))
+	return reader.Error()
+}
+
+// BlobWithCommitment store every blob with commitment to reduce the cost of computing commitment
+type BlobWithCommitment struct {
+	Blob       Blob
+	Commitment KZGCommitment
 }

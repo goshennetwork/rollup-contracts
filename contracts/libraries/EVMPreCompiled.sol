@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 library EVMPreCompiled {
-    /// @dev "hello, world"
+    /// @dev rawtx: 0xf86e808405f5e100830ece6494dad685e17c1e5208ffa3bd852c20a502774cd134880de0b6b3a76400008082aa3ba0b79fa6d01c478fd2b2217b9a80f6015604359cd1ee2825e73157eed4e9b8d34ca001183e35973bdbf83adf470f035f77074f3fa85d15c8bbe7f721bc24144ed4e5
+    /// @dev encoded: "0x8b3980f872f870f86e808405f5e100830ece6494dad685e17c1e5208ffa3bd852c20a502774cd134880de0b6b3a76400008082aa3ba0b79fa6d01c478fd2b2217b9a80f6015604359cd1ee2825e73157eed4e9b8d34ca001183e35973bdbf83adf470f035f77074f3fa85d15c8bbe7f721bc24144ed4e503"
     bytes32 constant FAKE_VERSION_HASH_LIST_0 =
-        bytes32(uint256(0x0194afc31faadfe83ee2a8a35cd92ec08b864e3be052ddfa82c44cf12cca9738));
+        bytes32(uint256(0x0199976106a5466c745aa976a2d02e257eba22e1f0a56da55151769d9f22b99f));
 
     //    bytes32 constant FAKE_VERSION_HASH_LIST_1 = bytes32(uint256(0xffff));
 
