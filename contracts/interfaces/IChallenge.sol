@@ -173,7 +173,6 @@ interface IChallenge {
      * @return parent the node key of parent node,if this node is not exist, parent is zero
      * @return challenger the challenger who open this node
      * @return expireAfterBlock if l1 block number larger than this, then this node is expired
-     * @return midStateRoot the mid state root of this node
      */
     function disputeTree(uint256 _nodeKey)
         external
@@ -181,8 +180,7 @@ interface IChallenge {
         returns (
             uint256 parent,
             address challenger,
-            uint256 expireAfterBlock,
-            bytes32 midStateRoot
+            uint256 expireAfterBlock
         );
 
     /// @return stage of this challenge

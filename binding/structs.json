@@ -76,12 +76,12 @@
           "Type": "*big.Int"
         },
         {
-          "Name": "_midSystemState",
-          "Type": "[32]byte"
+          "Name": "_subStates",
+          "Type": "[][32]byte"
         }
       ],
       "IsEvent": true,
-      "EventID": "ChallengeInitialized(uint128,bytes32)",
+      "EventID": "ChallengeInitialized(uint128,bytes32[])",
       "EventName": "ChallengeInitializedEventID"
     },
     "ChallengeStartedEvent": {

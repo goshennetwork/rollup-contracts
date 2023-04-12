@@ -52,11 +52,11 @@ type BeaconUpgradedEvent struct {
 	Raw *web3.Log
 }
 
-var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32)"))
+var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32[])"))
 
 type ChallengeInitializedEvent struct {
-	SystemEndStep  *big.Int
-	MidSystemState [32]byte
+	SystemEndStep *big.Int
+	SubStates     [][32]byte
 
 	Raw *web3.Log
 }
