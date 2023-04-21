@@ -11,7 +11,7 @@ library EVMPreCompiled {
 
     address constant POINT_EVALUATION_PRECOMPILE_ADDRESS = address(0x14);
 
-    function datahash(uint256 _index) internal returns (bytes32) {
+    function datahash(uint256 _index) internal pure returns (bytes32) {
         if (_index == 0) {
             return FAKE_VERSION_HASH_LIST_0;
         }

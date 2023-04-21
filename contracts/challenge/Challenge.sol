@@ -163,8 +163,6 @@ contract Challenge is IChallenge {
             );
             uint128 _tempNSection = N_SECTION;
             (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
-            uint128 _tempLower;
-            uint128 _tempUpper;
             for (uint256 ii = 0; ii < _tempNSection - 1; ii = UnsafeMath.unsafeIncrement(ii)) {
                 bytes32 _stateRoot = _stateRoots[j];
                 j = UnsafeMath.unsafeIncrement(j);

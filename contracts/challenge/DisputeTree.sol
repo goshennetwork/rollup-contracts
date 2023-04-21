@@ -116,7 +116,6 @@ library DisputeTree {
         (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
         while (_stepUpper - _stepLower > 1) {
             _depth++;
-            uint256 _nodeKey;
             uint256 _tempNextNodeKey;
             /// @dev maybe remained step num less than n section.
             uint128 _tempNSection = _nSection;
