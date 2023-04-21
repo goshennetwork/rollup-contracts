@@ -145,9 +145,10 @@ contract Challenge is IChallenge {
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
         for (uint256 i = 0; i < _nodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _nodeKey = _nodeKeys[i];
+            uint256 expireBlock =  disputeTree[_nodeKey].expireAfterBlock;
             require(
-                disputeTree[_nodeKey].parent != 0 && disputeTree[_nodeKey].expireAfterBlock > block.number,
-                "empty parent or expired"
+                disputeTree[_nodeKey].parent != 0 && expireBlock > block.number && expireBlock < type(uint128).max,
+                "empty parent or expired or already revealed"
             );
             (uint128 _stepStart, uint128 _stepEnd) = DisputeTree.decodeNodeKey(_nodeKey);
             uint128 _stepLower = _stepStart;
@@ -156,12 +157,10 @@ contract Challenge is IChallenge {
                 uint128 _stepUpper = DisputeTree.midStep(MidSteps, j, _stepStart, _stepEnd);
                 if (_stepUpper != _stepLower) {
                     uint256 _tempNodeKey = DisputeTree.encodeNodeKey(_stepLower, _stepUpper);
-                    // assert(disputeTree[_tempNodeKey].parent == 0, "already exist");
                     disputeTree[_tempNodeKey].parent = _nodeKey;
 
                     bytes32 _stateRoot = _stateRoots[i][j];
                     require(_stateRoot != 0, "wrong state root");
-                    // assert(stepState[_stepUpper] == 0, "already revealed");
                     stepState[_stepUpper] = _stateRoot;
                     _stepLower = _stepUpper;
                 }
