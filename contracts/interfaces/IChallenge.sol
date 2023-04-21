@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "../libraries/Types.sol";
 
+uint128 constant MidSteps = 6;
+
 interface IChallenge {
     //the info of rv32 system info.
     struct SystemInfo {
@@ -52,7 +54,7 @@ interface IChallenge {
         uint256 _minChallengerDeposit
     ) external;
 
-    event ChallengeInitialized(uint128 _systemEndStep, bytes32[] _subStates);
+    event ChallengeInitialized(uint128 _systemEndStep, bytes32[MidSteps] _subStates);
 
     /**
      * @dev Initialize challenge info, provide endStep and sub states of root node
@@ -69,10 +71,10 @@ interface IChallenge {
     function initialize(
         uint64 endStep,
         bytes32 _systemEndState,
-        bytes32[] calldata _subStates
+        bytes32[MidSteps] calldata _subStates
     ) external;
 
-    event MidStateRevealed(uint256[] nodeKeys, bytes32[] stateRoots);
+    event MidStateRevealed(uint256[] nodeKeys, bytes32[MidSteps][] stateRoots);
 
     /**
      * @dev Proposer reveal the node's branch step state.
@@ -87,7 +89,7 @@ interface IChallenge {
      * - 5.Can not reveal a parent node's branch state twice
      * - 6.State revealed can't be zero
      */
-    function revealSubStates(uint256[] calldata _parentNodeKeys, bytes32[] calldata _stateRoots) external;
+    function revealSubStates(uint256[] calldata _parentNodeKeys, bytes32[MidSteps][] calldata _stateRoots) external;
 
     event ProposerTimeout(uint256 nodeKey);
 

@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 contract Challenge is IChallenge {
     using DisputeTree for mapping(uint256 => DisputeTree.DisputeNode);
 
-    uint128 constant N_SECTION = 7;
     mapping(uint128 => bytes32) public stepState; /// @dev step number => state
     IChallengeFactory public factory;
     uint256 public override minChallengerDeposit;
@@ -98,19 +97,13 @@ contract Challenge is IChallenge {
     function initialize(
         uint64 endStep,
         bytes32 _systemEndState,
-        bytes32[] calldata _subStates
+        bytes32[MidSteps] calldata _subStates
     ) external override stage1 onlyProposer {
         uint128 _endStep = endStep;
         //in start period.
         /// @notice if system's step is less than N_SECTION, the proposer will always lose in challenge, but that's ok because
         /// when it happens, the system must exist a huge bug
-        require(
-            block.number <= expireAfterBlock &&
-                _endStep > N_SECTION &&
-                _systemEndState != 0 &&
-                _subStates.length == N_SECTION - 1,
-            "wrong context"
-        );
+        require(block.number <= expireAfterBlock && _endStep > MidSteps + 1 && _systemEndState != 0, "wrong context" );
         systemInfo.systemEndState = _systemEndState;
         systemInfo.endStep = _endStep;
         stepState[_endStep] = _systemEndState;
@@ -123,61 +116,61 @@ contract Challenge is IChallenge {
             expireAfterBlock: block.number + proposerTimeLimit
         });
         /// @dev the last step is equal to end system state
-        for (uint256 i = 0; i < N_SECTION - 1; i = UnsafeMath.unsafeIncrement(i)) {
+        uint128 _stepLower = 0;
+        for (uint128 i = 0; i < MidSteps; i += 1) {
             bytes32 _stateRoot = _subStates[i];
             require(_stateRoot != 0, "wrong state root");
 
-            uint256 _tempNodeKey;
-            (, _tempNodeKey) = DisputeTree.nSection(N_SECTION, uint128(i), 0, endStep);
-            /// @dev should never happen
-            require(disputeTree[_tempNodeKey].parent == 0, "already exist");
-            disputeTree[_tempNodeKey].parent = rootKey;
-
-            (, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_tempNodeKey);
-            /// @dev should never happen
-            require(stepState[_stepUpper] == 0, "state already exist");
-            /// @notice duplicated step do not override
+            uint128 _stepUpper = DisputeTree.midStep(MidSteps, i, 0, endStep);
             stepState[_stepUpper] = _stateRoot;
+            uint256 _tempNodeKey = DisputeTree.encodeNodeKey(_stepLower, _stepUpper);
+            disputeTree[_tempNodeKey].parent = rootKey;
+            _stepLower = _stepUpper;
         }
+        disputeTree[DisputeTree.encodeNodeKey(_stepLower, _endStep)].parent = rootKey;
+
         lastSelectedNodeKey[creator] = rootKey;
         stage = ChallengeStage.Running;
         //notify challengers in this game.
         emit ChallengeInitialized(_endStep, _subStates);
     }
 
-    function revealSubStates(uint256[] calldata _nodeKeys, bytes32[] calldata _stateRoots)
+    function revealSubStates(uint256[] calldata _nodeKeys, bytes32[MidSteps][] calldata _stateRoots)
         external
         override
         beforeBlockConfirmed
         stage2
         onlyProposer
     {
-        require(_nodeKeys.length <= _stateRoots.length && _nodeKeys.length > 0, "illegal length");
-        uint256 j = 0;
-        uint256 _blockNumber = block.number;
+        require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
         for (uint256 i = 0; i < _nodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _nodeKey = _nodeKeys[i];
             require(
-                disputeTree[_nodeKey].parent != 0 && disputeTree[_nodeKey].expireAfterBlock > _blockNumber,
-                "wrong parent node"
+                disputeTree[_nodeKey].parent != 0 && disputeTree[_nodeKey].expireAfterBlock > block.number,
+                "empty parent or expired"
             );
-            uint128 _tempNSection = N_SECTION;
-            (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
-            for (uint256 ii = 0; ii < _tempNSection - 1; ii = UnsafeMath.unsafeIncrement(ii)) {
-                bytes32 _stateRoot = _stateRoots[j];
-                j = UnsafeMath.unsafeIncrement(j);
+            (uint128 _stepStart, uint128 _stepEnd) = DisputeTree.decodeNodeKey(_nodeKey);
+            uint128 _stepLower = _stepStart;
+            for (uint128 j = 0; j < MidSteps; j += 1) {
                 /// @dev change tempNSection if remained step num less than N_SECTION
-                uint256 _tempNodeKey;
-                (_tempNSection, _tempNodeKey) = DisputeTree.nSection(N_SECTION, uint128(ii), _stepLower, _stepUpper);
-                require(disputeTree[_tempNodeKey].parent == 0, "already exist");
-                disputeTree[_tempNodeKey].parent = _nodeKey;
+                uint128 _stepUpper = DisputeTree.midStep(MidSteps, j, _stepStart, _stepEnd);
+                if (_stepUpper != _stepLower) {
+                    uint256 _tempNodeKey = DisputeTree.encodeNodeKey(_stepLower, _stepUpper);
+                    // assert(disputeTree[_tempNodeKey].parent == 0, "already exist");
+                    disputeTree[_tempNodeKey].parent = _nodeKey;
 
-                require(_stateRoot != 0, "wrong state root");
-                (, uint128 _tempUpper) = DisputeTree.decodeNodeKey(_tempNodeKey);
-                require(stepState[_tempUpper] == 0, "already revealed");
-                stepState[_tempUpper] = _stateRoot;
+                    bytes32 _stateRoot = _stateRoots[i][j];
+                    require(_stateRoot != 0, "wrong state root");
+                    // assert(stepState[_stepUpper] == 0, "already revealed");
+                    stepState[_stepUpper] = _stateRoot;
+                    _stepLower = _stepUpper;
+                }
             }
+            disputeTree[DisputeTree.encodeNodeKey(_stepLower, _stepEnd)].parent = _nodeKey;
+            // mark this node will not expire any more
+            disputeTree[_nodeKey].expireAfterBlock += type(uint128).max;
         }
+
         emit MidStateRevealed(_nodeKeys, _stateRoots);
     }
 
@@ -194,20 +187,6 @@ contract Challenge is IChallenge {
             DisputeTree.DisputeNode memory _node = disputeTree[_nodeKey];
             require(_node.parent != 0 && _node.expireAfterBlock > 0, "no such node");
             require(block.number > _node.expireAfterBlock, "not timeout yet");
-            (uint128 _stepLower, uint128 _stepUpper) = DisputeTree.decodeNodeKey(_nodeKey);
-
-            uint128 _tempNSection = N_SECTION;
-            bool _loss;
-            for (uint256 i = 0; i < _tempNSection; i = UnsafeMath.unsafeIncrement(i)) {
-                /// @dev change tempNSection if remained step num less than N_SECTION
-                uint256 _tempNodeKey;
-                (_tempNSection, _tempNodeKey) = DisputeTree.nSection(N_SECTION, uint128(i), _stepLower, _stepUpper);
-                /// @notice make sure the sub node is surly not exist
-                if (disputeTree[_tempNodeKey].parent == 0) {
-                    _loss = true;
-                }
-            }
-            require(_loss, "all exist");
         }
         _challengeSuccess();
         emit ProposerTimeout(_nodeKey);
@@ -225,7 +204,7 @@ contract Challenge is IChallenge {
         for (uint256 i = 0; i < _parentNodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _parentNodeKey = _parentNodeKeys[i];
             uint128 _n = _Nth[i];
-            uint256 _childKey = disputeTree.addNewChild(N_SECTION, _n, _parentNodeKey, _expireAfterBlock, msg.sender);
+            uint256 _childKey = disputeTree.addNewChild(MidSteps+1, _n, _parentNodeKey, _expireAfterBlock, msg.sender);
             uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
             if (_lastSelect == 0) {
                 // first select, need deposit.
@@ -283,7 +262,7 @@ contract Challenge is IChallenge {
         }
 
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
-        (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(N_SECTION, _rootKey);
+        (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(MidSteps+1, _rootKey);
         if (oneBranch) {
             _divideTheCake(_nodeKey, _depth, _challenger, token);
         } else {

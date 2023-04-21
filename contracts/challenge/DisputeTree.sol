@@ -12,6 +12,10 @@ library DisputeTree {
         return _lower + (_upper - _lower) / 2;
     }
 
+    function midStep(uint128 midSteps, uint128 _i, uint128 _lower, uint128 _upper ) internal pure returns (uint128) {
+        return (_upper - _lower)*(_i+1)/(midSteps+1) + _lower;
+    }
+
     /// @dev split steps to pieces section.(the max piece is _nSection, but may be lower than this
     /// if left step num less than n section)
     /// @notice can't divide one step
