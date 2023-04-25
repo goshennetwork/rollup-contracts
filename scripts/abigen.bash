@@ -17,7 +17,7 @@ ChallengeFactory.sol/ChallengeFactory.json
 UpgradeableBeacon.sol/UpgradeableBeacon.json
 ProxyAdmin.sol/ProxyAdmin.json
 TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json
-Whitelist.sol/.json
+Whitelist.sol/Whitelist.json
 L2FeeCollector.sol/L2FeeCollector.json
 TestL2ERC20.sol/TestL2ERC20.json
 L2StandardERC20.sol/L2StandardERC20.json
