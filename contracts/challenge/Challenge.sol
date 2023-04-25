@@ -103,7 +103,7 @@ contract Challenge is IChallenge {
         //in start period.
         /// @notice if system's step is less than N_SECTION, the proposer will always lose in challenge, but that's ok because
         /// when it happens, the system must exist a huge bug
-        require(block.number <= expireAfterBlock && _endStep > MidSteps + 1 && _systemEndState != 0, "wrong context" );
+        require(block.number <= expireAfterBlock && _endStep > MidSteps + 1 && _systemEndState != 0, "wrong context");
         systemInfo.systemEndState = _systemEndState;
         systemInfo.endStep = _endStep;
         stepState[_endStep] = _systemEndState;
@@ -145,7 +145,7 @@ contract Challenge is IChallenge {
         require(_nodeKeys.length == _stateRoots.length && _nodeKeys.length > 0, "illegal length");
         for (uint256 i = 0; i < _nodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _nodeKey = _nodeKeys[i];
-            uint256 expireBlock =  disputeTree[_nodeKey].expireAfterBlock;
+            uint256 expireBlock = disputeTree[_nodeKey].expireAfterBlock;
             require(
                 disputeTree[_nodeKey].parent != 0 && expireBlock > block.number && expireBlock < type(uint128).max,
                 "empty parent or expired or already revealed"
@@ -203,7 +203,13 @@ contract Challenge is IChallenge {
         for (uint256 i = 0; i < _parentNodeKeys.length; i = UnsafeMath.unsafeIncrement(i)) {
             uint256 _parentNodeKey = _parentNodeKeys[i];
             uint128 _n = _Nth[i];
-            uint256 _childKey = disputeTree.addNewChild(MidSteps+1, _n, _parentNodeKey, _expireAfterBlock, msg.sender);
+            uint256 _childKey = disputeTree.addNewChild(
+                MidSteps + 1,
+                _n,
+                _parentNodeKey,
+                _expireAfterBlock,
+                msg.sender
+            );
             uint256 _lastSelect = lastSelectedNodeKey[msg.sender];
             if (_lastSelect == 0) {
                 // first select, need deposit.
@@ -261,7 +267,7 @@ contract Challenge is IChallenge {
         }
 
         uint256 _rootKey = DisputeTree.encodeNodeKey(0, systemInfo.endStep);
-        (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(MidSteps+1, _rootKey);
+        (uint256 _nodeKey, uint64 _depth, bool oneBranch) = disputeTree.getFirstLeafNode(MidSteps + 1, _rootKey);
         if (oneBranch) {
             _divideTheCake(_nodeKey, _depth, _challenger, token);
         } else {

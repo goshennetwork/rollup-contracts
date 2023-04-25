@@ -289,7 +289,7 @@ func (_a *Challenge) ExecOneStepTransition(leafNodeKey *big.Int) *contract.Txn {
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, subStates [][32]byte) *contract.Txn {
+func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, subStates [6][32]byte) *contract.Txn {
 	return _a.c.Txn("initialize", endStep, systemEndState, subStates)
 }
 
@@ -299,7 +299,7 @@ func (_a *Challenge) ProposerTimeout(nodeKey *big.Int) *contract.Txn {
 }
 
 // RevealSubStates sends a revealSubStates transaction in the solidity contract
-func (_a *Challenge) RevealSubStates(nodeKeys []*big.Int, stateRoots [][32]byte) *contract.Txn {
+func (_a *Challenge) RevealSubStates(nodeKeys []*big.Int, stateRoots [][6][32]byte) *contract.Txn {
 	return _a.c.Txn("revealSubStates", nodeKeys, stateRoots)
 }
 

@@ -6,7 +6,7 @@ import "./DisputeTree.sol";
 
 contract TestDisputeTree is TestBase {
     mapping(uint256 => DisputeTree.DisputeNode) testTree;
-    uint128 N_SECTION = 2;
+    uint128 N_SECTION = 7;
 
     //test middle special case
     function testMiddle() public pure {
@@ -23,39 +23,17 @@ contract TestDisputeTree is TestBase {
         require(return3 == 2, "middle compute error");
     }
 
-    function test3Section() public {
-        uint128 _start = 0;
-        uint128 _end = 10;
-        N_SECTION = 3;
-        uint256 _key2;
-        uint256 _key1;
-        uint256 _key0;
-        uint128 _sections;
-        /// @dev split 0,10 to 3 piece, 0,3 3,6 6,10
-        (_sections, _key0) = DisputeTree.nSection(N_SECTION, 0, _start, _end);
-        require(_key0 == DisputeTree.encodeNodeKey(0, 3) && _sections == 3, "wrong section0");
-        (_sections, _key1) = DisputeTree.nSection(N_SECTION, 1, _start, _end);
-        require(_key1 == DisputeTree.encodeNodeKey(3, 6) && _sections == 3, "wrong section1");
-        (_sections, _key2) = DisputeTree.nSection(N_SECTION, 2, _start, _end);
-        require(_key2 == DisputeTree.encodeNodeKey(6, 10) && _sections == 3, "wrong section2");
-    }
-
     function testSectionFewSteps() public {
-        N_SECTION = 10;
         uint256 _key0;
         uint256 _key1;
         uint256 _key2;
         uint128 _sections;
         uint128 _start = 0;
         uint128 _end = 2;
-        (_sections, _key0) = DisputeTree.nSection(N_SECTION, 0, _start, _end);
-        require(_key0 == DisputeTree.encodeNodeKey(0, 1) && _sections == 2, "wrong section0");
-        (_sections, _key1) = DisputeTree.nSection(N_SECTION, 1, _start, _end);
-        require(_key1 == DisputeTree.encodeNodeKey(1, 2) && _sections == 2, "wrong section1");
-
-        /// should revert
-        vm.expectRevert("Out of N Section");
-        (_sections, _key2) = DisputeTree.nSection(N_SECTION, 2, _start, _end);
+        uint128 _stepUpper = DisputeTree.midStep(N_SECTION - 1, 0, _start, _end);
+        require(_stepUpper == 0, "wrong section0");
+        _stepUpper = DisputeTree.midStep(N_SECTION - 1, 6, _start, _end);
+        require(_stepUpper == 2, "wrong section1");
     }
 
     //test middle special case
@@ -118,16 +96,16 @@ contract TestDisputeTree is TestBase {
         uint256 return1 = DisputeTree.encodeNodeKey(1, 10);
         //compute return _childkey
         (uint128 stepLower, uint128 stepUpper) = DisputeTree.decodeNodeKey(return1);
-        stepLower = DisputeTree.middle(stepLower, stepUpper);
+        stepUpper = DisputeTree.midStep(N_SECTION - 1, 0, stepLower, stepUpper);
         uint256 _childKey = DisputeTree.encodeNodeKey(stepLower, stepUpper);
 
-        DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(1, address(1), 100);
-        testTree[return1] = node;
+        testTree[return1] = DisputeTree.DisputeNode(1, address(1), 100);
         for (uint128 i = 0; i < N_SECTION; i++) {
-            (, uint256 _sonNodeKey) = DisputeTree.nSection(N_SECTION, i, 1, 10);
-            testTree[_sonNodeKey] = DisputeTree.DisputeNode(return1, address(0), 0);
+            stepUpper = DisputeTree.midStep(N_SECTION - 1, i, 1, 10);
+            testTree[DisputeTree.encodeNodeKey(stepLower, stepUpper)] = DisputeTree.DisputeNode(return1, address(0), 0);
+            stepLower = stepUpper;
         }
-        uint256 returnChildkey = DisputeTree.addNewChild(testTree, 2, 1, return1, 100, address(1));
+        uint256 returnChildkey = DisputeTree.addNewChild(testTree, N_SECTION, 0, return1, 100, address(1));
         //test returnChildkey same as _childkey
         require(returnChildkey == _childKey, "return childkey invalid");
     }
@@ -137,9 +115,15 @@ contract TestDisputeTree is TestBase {
         uint256 return1 = DisputeTree.encodeNodeKey(1, 10);
         DisputeTree.DisputeNode memory node = DisputeTree.DisputeNode(return1, address(1), 100);
         testTree[return1] = node;
+        uint128 _stepLower = 1;
         for (uint128 i = 0; i < N_SECTION; i++) {
-            (, uint256 _sonNodeKey) = DisputeTree.nSection(N_SECTION, i, 1, 10);
-            testTree[_sonNodeKey] = DisputeTree.DisputeNode(return1, address(0), 0);
+            uint128 _stepUpper = DisputeTree.midStep(N_SECTION - 1, i, 1, 10);
+            testTree[DisputeTree.encodeNodeKey(_stepLower, _stepUpper)] = DisputeTree.DisputeNode(
+                return1,
+                address(0),
+                0
+            );
+            _stepLower = _stepUpper;
         }
         //root ==> [1,10]
         //1.no child getFirstLeafNode
@@ -152,7 +136,7 @@ contract TestDisputeTree is TestBase {
         DisputeTree.addNewChild(testTree, N_SECTION, 1, return1, 100, address(1));
         (uint256 key2, uint256 depth2, bool oneBranch2) = DisputeTree.getFirstLeafNode(testTree, N_SECTION, return1);
         (uint128 stepLower2, uint128 stepUpper2) = DisputeTree.decodeNodeKey(key2);
-        require(stepLower2 == 5 && stepUpper2 == 10, "add child case error");
+        require(stepLower2 == 2 && stepUpper2 == 3, "add child case error");
         require(depth2 == 2 && oneBranch2 == true, "add child case depth&branch error");
 
         //3.one step return

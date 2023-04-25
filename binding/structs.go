@@ -52,11 +52,11 @@ type BeaconUpgradedEvent struct {
 	Raw *web3.Log
 }
 
-var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32[])"))
+var ChallengeInitializedEventID = crypto.Keccak256Hash([]byte("ChallengeInitialized(uint128,bytes32[6])"))
 
 type ChallengeInitializedEvent struct {
 	SystemEndStep *big.Int
-	SubStates     [][32]byte
+	SubStates     [6][32]byte
 
 	Raw *web3.Log
 }
@@ -69,15 +69,6 @@ type ChallengeStartedEvent struct {
 	StartSystemState [32]byte
 	ExpireAfterBlock *big.Int
 	Contract         web3.Address
-
-	Raw *web3.Log
-}
-
-var ChallengerUpdatedEventID = crypto.Keccak256Hash([]byte("ChallengerUpdated(address,bool)"))
-
-type ChallengerUpdatedEvent struct {
-	Challenger web3.Address
-	Enabled    bool
 
 	Raw *web3.Log
 }
@@ -229,11 +220,11 @@ type MessageSentEvent struct {
 	Raw *web3.Log
 }
 
-var MidStateRevealedEventID = crypto.Keccak256Hash([]byte("MidStateRevealed(uint256[],bytes32[])"))
+var MidStateRevealedEventID = crypto.Keccak256Hash([]byte("MidStateRevealed(uint256[],bytes32[6][])"))
 
 type MidStateRevealedEvent struct {
 	NodeKeys   []*big.Int
-	StateRoots [][32]byte
+	StateRoots [][6][32]byte
 
 	Raw *web3.Log
 }
@@ -273,29 +264,11 @@ type ProposerTimeoutEvent struct {
 	Raw *web3.Log
 }
 
-var ProposerUpdatedEventID = crypto.Keccak256Hash([]byte("ProposerUpdated(address,bool)"))
-
-type ProposerUpdatedEvent struct {
-	Proposer web3.Address
-	Enabled  bool
-
-	Raw *web3.Log
-}
-
 var ProposerWinEventID = crypto.Keccak256Hash([]byte("ProposerWin(address,uint256)"))
 
 type ProposerWinEvent struct {
 	Winner web3.Address
 	Amount *big.Int
-
-	Raw *web3.Log
-}
-
-var SequencerUpdatedEventID = crypto.Keccak256Hash([]byte("SequencerUpdated(address,bool)"))
-
-type SequencerUpdatedEvent struct {
-	Submitter web3.Address
-	Enabled   bool
 
 	Raw *web3.Log
 }

@@ -12,35 +12,18 @@ library DisputeTree {
         return _lower + (_upper - _lower) / 2;
     }
 
-    function midStep(uint128 midSteps, uint128 _i, uint128 _lower, uint128 _upper ) internal pure returns (uint128) {
-        return (_upper - _lower)*(_i+1)/(midSteps+1) + _lower;
-    }
-
-    /// @dev split steps to pieces section.(the max piece is _nSection, but may be lower than this
-    /// if left step num less than n section)
-    /// @notice can't divide one step
-    function nSection(
-        uint128 _nSection,
-        uint128 _n,
+    /// @dev mid step return the upper step of a provided steps in an interval
+    /// @param midSteps the num of mid step of an interval, bisection only have one mid step
+    /// @param _i the i'th piece of the interval, should <= midSteps
+    /// @param _lower the start num of interval
+    /// @param _upper the end num of interval
+    function midStep(
+        uint128 midSteps,
+        uint128 _i,
         uint128 _lower,
         uint128 _upper
-    ) internal pure returns (uint128, uint256) {
-        uint128 _stepNum = _upper - _lower;
-        require(_stepNum > 1, "can't divide oneStep");
-        if (_stepNum < _nSection) {
-            // @dev if step number smaller than n section, then n section is equal to step number
-            _nSection = _stepNum;
-        }
-        require(_n < _nSection, "Out of N Section");
-        uint128 _newLower = _lower;
-        uint128 _newUpper = _upper;
-        uint128 _piece = (_stepNum) / _nSection;
-        _newLower = _lower + _piece * _n;
-        if (_n + 1 != _nSection) {
-            /// @dev not last
-            _newUpper = _lower + _piece * (_n + 1);
-        }
-        return (_nSection, encodeNodeKey(_newLower, _newUpper));
+    ) internal pure returns (uint128) {
+        return ((_upper - _lower) * (_i + 1)) / (midSteps + 1) + _lower;
     }
 
     function encodeNodeKey(uint128 _stepLower, uint128 _stepUpper) internal pure returns (uint256) {
@@ -83,9 +66,15 @@ library DisputeTree {
     ) internal returns (uint256) {
         DisputeNode storage parent = tree[_parentKey];
         require(parent.parent != 0, "parent not exist");
+        require(_Nth < _NSection, "Err Nth");
         (uint128 stepLower, uint128 stepUpper) = decodeNodeKey(_parentKey);
         require(stepUpper > stepLower + 1, "one step have no child");
-        (, uint256 _childKey) = nSection(_NSection, _Nth, stepLower, stepUpper);
+        uint128 _childStepUpper = midStep(_NSection - 1, _Nth, stepLower, stepUpper);
+        uint128 _childStepLower = stepLower;
+        if (_Nth > 0) {
+            _childStepLower = midStep(_NSection - 1, _Nth - 1, stepLower, stepUpper);
+        }
+        uint256 _childKey = encodeNodeKey(_childStepLower, _childStepUpper);
         DisputeNode storage node = tree[_childKey];
         require(node.parent != 0 && node.expireAfterBlock == 0, "Err Node");
         node.challenger = _challenger;
@@ -117,34 +106,35 @@ library DisputeTree {
     {
         uint64 _depth;
         bool _oneBranch = true;
-        (uint128 _stepLower, uint128 _stepUpper) = decodeNodeKey(_rootKey);
-        while (_stepUpper - _stepLower > 1) {
+        (uint128 _stepStart, uint128 _stepEnd) = decodeNodeKey(_rootKey);
+        while (_stepEnd - _stepStart > 1) {
+            uint128 _stepLower = _stepStart;
             _depth++;
             uint256 _tempNextNodeKey;
             /// @dev maybe remained step num less than n section.
-            uint128 _tempNSection = _nSection;
-            for (uint128 i = 0; i < _tempNSection; i++) {
-                uint256 _nodeKey;
-                (_tempNSection, _nodeKey) = nSection(_nSection, i, _stepLower, _stepUpper);
+            for (uint128 i = 0; i < _nSection; i++) {
+                uint128 _stepUpper = midStep(_nSection - 1, i, _stepStart, _stepEnd);
+                uint256 _nodeKey = encodeNodeKey(_stepLower, _stepUpper);
                 if (tree[_nodeKey].parent != 0 && tree[_nodeKey].expireAfterBlock != 0) {
                     if (_tempNextNodeKey != 0) {
-                        /// @notice deplicated, so there is more than one branch todo: maybe just return, no need to go on?
+                        /// @notice duplicated, so there is more than one branch todo: maybe just return, no need to go on?
                         _oneBranch = false;
-                        break;
+                        return (encodeNodeKey(_stepStart, _stepEnd), _depth, _oneBranch);
                     }
                     _tempNextNodeKey = _nodeKey;
                 }
+                _stepLower = _stepUpper;
             }
             if (_tempNextNodeKey == 0) {
                 /// @dev no child
-                return (encodeNodeKey(_stepLower, _stepUpper), _depth, _oneBranch);
+                return (encodeNodeKey(_stepStart, _stepEnd), _depth, _oneBranch);
             }
             /// exist next node
-            (_stepLower, _stepUpper) = decodeNodeKey(_tempNextNodeKey);
+            (_stepStart, _stepEnd) = decodeNodeKey(_tempNextNodeKey);
         }
         _depth++;
         //find one step, one step is surely leaf.
-        return (encodeNodeKey(_stepLower, _stepUpper), _depth, _oneBranch);
+        return (encodeNodeKey(_stepStart, _stepEnd), _depth, _oneBranch);
     }
 
     //    function removeSelfBranch(mapping(uint256 => DisputeNode) storage tree, uint256 _leafKey) internal {

@@ -76,7 +76,7 @@ contract TestChallenge {
 
         /// @dev initialize
         vm.startPrank(proposer);
-        challenge.initialize(uint64(stepNum), fakeBytes32, genStates(N_SECTION - 1));
+        challenge.initialize(uint64(stepNum), fakeBytes32, genBytes32List(fakeBytes32, N_SECTION - 1)[0]);
         vm.stopPrank();
     }
 
@@ -89,10 +89,10 @@ contract TestChallenge {
         vm.stopPrank();
 
         vm.startPrank(proposer);
-        uint256 key;
-        (, key) = DisputeTree.nSection(N_SECTION, 0, 0, uint128(stepNum));
+        uint128 _stepUpper = DisputeTree.midStep(N_SECTION - 1, 0, 0, uint128(stepNum));
+        uint256 key = DisputeTree.encodeNodeKey(0, _stepUpper);
         uint256[] memory _ks = gen256List(key);
-        bytes32[] memory _ss = genBytes32List(fakeBytes32, N_SECTION - 1);
+        bytes32[6][] memory _ss = genBytes32List(fakeBytes32, N_SECTION - 1);
         uint256 _before = gasleft();
         challenge.revealSubStates(_ks, _ss);
         console.log(_before - gasleft());
@@ -117,10 +117,10 @@ contract TestChallenge {
         return _info;
     }
 
-    function genBytes32List(bytes32 _i, uint256 num) internal returns (bytes32[] memory) {
-        bytes32[] memory _info = new bytes32[](num);
+    function genBytes32List(bytes32 _i, uint256 num) internal returns (bytes32[6][] memory) {
+        bytes32[6][] memory _info = new bytes32[6][](1);
         for (uint256 i = 0; i < num; i++) {
-            _info[i] = _i;
+            _info[0][i] = _i;
         }
         return _info;
     }

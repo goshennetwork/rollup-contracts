@@ -66,7 +66,6 @@ interface IChallenge {
      * - 2.Only proposer
      * - 3.Proposer must initialize in time; the step nums should larger than N Section of challenge game; end system state can not be zero; sub states num is N_Section-1
      * - 4.The final state is proven properly(proposer should provide needed preimage to StateMachine)
-     * - 5.The sub branch node if root node is not exist(should never happen), and the state is not provided yet(should never happen), the sub state should not be zero
      */
     function initialize(
         uint64 endStep,
@@ -79,15 +78,17 @@ interface IChallenge {
     /**
      * @dev Proposer reveal the node's branch step state.
      * @param _parentNodeKeys The parent node which need to reveal its branch step state
-     * @param _stateRoots The branch step state of  parent node,0 state root is illegal.Duplicated step state is ignored, so when parent
-     * is 0-5, and branch num is 3, only need to provide state of step 1 and step 2. step 5 is surely revealed in advance
+     * @param _stateRoots The branch step state of  parent node,if the branch node is not exist, ignore this state(simply set to zero, but the protocol do not
+     * guarantee the ignored state is zero, we just ignore it).
+     * e.g. there exist a node [5,10], and the NSection is 7, so the first node is not exist, because the DisputeTree.midStep(7-1,0,5,10) calc
+     * the stepUpper to 5, and node[5,5] is illegal.so the _stateRoots[0][0] is ignored, and so on.
      * @notice required:
      * - 1.The challenged state is in fraud proof window
      * - 2.There is at least one parent node key, and the parent node num should less than state num
      * - 3.Parent must exist and reveal time not beyond the expire time
      * - 4.The parent node must not node be one step node
      * - 5.Can not reveal a parent node's branch state twice
-     * - 6.State revealed can't be zero
+     * - 6.State need to be revealed can't be zero
      */
     function revealSubStates(uint256[] calldata _parentNodeKeys, bytes32[MidSteps][] calldata _stateRoots) external;
 
