@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
 
 	"github.com/laizy/log"
@@ -14,81 +14,78 @@ import (
 
 var ERR_NONCE = errors.New("nonce error")
 
+type TxWithPriceLimit struct {
+	Tx         *web3.Transaction
+	PriceLimit uint64
+}
+
+const ETHPriceBump = 10
+const GoshenPriceBump = 1
+
 //TxManager concurrent use
 type TxManager struct {
 	*contract.Signer
 	confirmHeight uint64
-	/// if set, only lower price will send tx
-	priceLimit *big.Int
+	priceBump     *big.Int
+
+	nonce *uint64
 }
 
-func NewTxManager(signer *contract.Signer, confirmHeight uint64, priceLimit ...*big.Int) *TxManager {
-	r := &TxManager{signer, confirmHeight, nil}
-	if len(priceLimit) > 0 {
-		r.priceLimit = new(big.Int).Set(priceLimit[0])
-	}
+func NewTxManager(signer *contract.Signer, confirmHeight uint64, priceBump *big.Int) *TxManager {
+	r := &TxManager{signer, confirmHeight, priceBump, nil}
 	return r
 }
 
-func (t *TxManager) BlockNumber() uint64 {
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for range timer.C {
-		timer.Reset(5 * time.Second)
-
-		n, err := t.Client.Eth().BlockNumber()
+func (t *TxManager) nextNonce() (uint64, error) {
+	if t.nonce == nil {
+		nonce, err := t.Eth().GetNonce(t.Signer.Address(), web3.Latest)
 		if err != nil {
-			log.Error("get blockNumber", "err", err)
-			continue
+			log.Errorf("get nonce: %w", err)
 		}
-
-		return n
+		t.nonce = &nonce
+		return *t.nonce, nil
 	}
-	panic(1)
+	*t.nonce++
+	return *t.nonce, nil
 }
 
-func (t *TxManager) GetNonce() uint64 {
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for range timer.C {
-		timer.Reset(5 * time.Second)
-
-		n, err := t.Client.Eth().GetNonce(t.Address(), web3.Latest)
-		if err != nil {
-			log.Error("get nonce", "err", err)
-			continue
-		}
-
-		return n
+// ReConstruct only change price and gaslimit
+func (t *TxManager) ReConstruct(txp *TxWithPriceLimit) error {
+	tx := CopyTx(txp.Tx)
+	gas, err := t.EstimateGas(tx)
+	if err != nil { /// inner execute error or maybe just network error.todo: split 2 kind of error
+		return err
 	}
-	panic(1)
+
+	price, err := t.Eth().GasPrice()
+	if err != nil {
+		return fmt.Errorf("get gasPrice: %w", err)
+	}
+	if price < tx.GasPrice { //new gas price is lower than old, just ignore
+		return nil
+	}
+
+	factor := new(big.Int).Add(big.NewInt(100), t.priceBump)
+	bumpPrice100 := factor.Mul(factor, new(big.Int).SetUint64(tx.GasPrice))
+	bumpPrice := bumpPrice100.Div(bumpPrice100, big.NewInt(100))
+
+	if bumpPrice.Uint64() >= price { // only use bump price if it is higher current price, otherwise it is useless
+		price = bumpPrice.Uint64()
+	}
+
+	// if the price is larger than price limit, do not change price
+	if txp.PriceLimit != 0 && price > txp.PriceLimit {
+		return fmt.Errorf("over priceLimit: priceLimit: %d, got: %d", txp.PriceLimit, price)
+	}
+
+	tx.Gas = gas
+	tx.GasPrice = price
+	txp.Tx = t.SignTx(tx)
+	return nil
 }
 
 func (t *TxManager) EstimateGas(tx *web3.Transaction) (uint64, error) {
 	return t.Client.Eth().EstimateGas(tx.ToCallMsg())
-}
-
-func (t *TxManager) GetPrice() uint64 {
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for range timer.C {
-		timer.Reset(10 * time.Second)
-
-		p, err := t.Client.Eth().GasPrice()
-		if err != nil {
-			log.Error("get gasPrice", "err", err)
-			continue
-		}
-
-		if t.priceLimit != nil && p > t.priceLimit.Uint64() {
-			//if price above wanted price just wait
-			log.Infof("current price too high, price limit: %f gwei, current price: %f gwei", ToGwei(t.priceLimit), ToGwei(new(big.Int).SetUint64(p)))
-			continue
-		}
-
-		return p
-	}
-	panic(1)
 }
 
 func (t *TxManager) WaitAndChangeTxn(txn *contract.Txn, flexNonce bool, reGas ...bool) (web3.Hash, error) {
@@ -112,64 +109,53 @@ func CopyTx(tx *web3.Transaction) *web3.Transaction {
 	}
 }
 
-// ReContruct will reContruct tx with new gasPrice, if flexNonce set to true, will update tx nonce, if want to regas the tx, it will update tx gaslimit
-// this function will validate tx locally, if failed, just return error
-func (t *TxManager) ReConstruct(tx *web3.Transaction, flexNonce bool, reGas ...bool) (*web3.Transaction, error) {
-	tx = CopyTx(tx)
+func (t *TxManager) SendTx(tx *web3.Transaction) error {
+	ticker := time.NewTicker(20 * time.Second)
+	defer ticker.Stop()
 
-	nonce := t.GetNonce()
-	if !flexNonce && nonce != tx.Nonce { // nonce not equal, maybe tx is confirmed or user send another tx.
-		return tx, ERR_NONCE
-	}
-	//flex nonce just reset tx nonce to new nonce
-	tx.Nonce = nonce
+	ctx, cancel := context.WithTimeout(context.Background(), 24*time.Hour)
+	defer cancel()
 
-	tx.GasPrice = t.GetPrice()
-	if len(reGas) > 0 && reGas[0] { //re calc the gas
-		gas, err := t.EstimateGas(tx)
-		if err != nil { /// inner execute error or maybe just network error.todo: split 2 kind of error
-			return tx, err
-		}
-		tx.Gas = gas
-	} else { //just execute locally to check whether success
-		//now try to execute locally, if tx is failed, just return error, indicating this tx will fail
-		result, _ := t.ExecuteTxn(tx)
-		if result.Err != nil {
-			b, _ := tx.MarshalJSON()
-			log.Errorf("tx execute failed, tx: %s", string(b))
-			return tx, fmt.Errorf("execution reverted: %s", result.RevertReason)
-		}
-	}
-	return t.SignTx(tx), nil
-}
-
-func (t *TxManager) SendTx(tx *web3.Transaction, flexNonce bool, reGas ...bool) (*web3.Transaction, error) {
-
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for range timer.C {
-		timer.Reset(3 * time.Second)
-		if hash, err := t.Client.Eth().SendRawTransaction(tx.MarshalRLP()); err != nil {
-			if strings.Contains(err.Error(), "transaction underpriced") || strings.Contains(err.Error(), "already known") {
-				log.Warn("send raw transaction", "hash", hash, "err", err)
-				//under price or same tx, just restruct
-				newTx, err := t.ReConstruct(tx, flexNonce, reGas...)
+	quitCh, confirmCh := make(chan struct{}, 1), make(chan struct{}, 1)
+	listener := func(ctx context.Context, quit <-chan struct{}, confirm chan struct{}, hash web3.Hash) {
+		ticker := time.NewTicker(20 * time.Second)
+		for {
+			select {
+			case <-ctx.Done():
+				// time out
+				log.Errorf("tx: %s timeout", hash)
+				return
+			case <-quit:
+				return
+			case <-ticker.C:
+				receipt, err := t.Eth().GetTransactionReceipt(hash)
 				if err != nil {
-					return tx, err
+					log.Errorf("get tx receipt: %w", err)
+					continue
 				}
-				tx = newTx
-				continue //recontruct success, retry
+				headBlock, err := t.Eth().BlockNumber()
+				if err != nil {
+					log.Errorf("get blockNumber: %w", err)
+					continue
+				}
+				if receipt.Status == 1 && receipt.BlockNumber+t.confirmHeight <= headBlock { // confirmed
+					confirm <- struct{}{}
+					return
+				}
+
 			}
-
-			//tx err
-			return tx, fmt.Errorf("sendRawTransaction: %w", err)
 		}
-
-		b, _ := tx.MarshalJSON()
-		log.Info("send tx", "hash", tx.Hash(), "tx", string(b))
-		return tx, nil
 	}
-	panic(1)
+
+	hash, err := t.Eth().SendRawTransaction(tx.MarshalRLP())
+	if err != nil {
+		return fmt.Errorf("sendRawTransaction: %w", err)
+	}
+
+	for range ticker.C {
+
+	}
+
 }
 
 func (t *TxManager) WaitAndChange(tx *web3.Transaction, flexNonce bool, reGas ...bool) (web3.Hash, error) {
