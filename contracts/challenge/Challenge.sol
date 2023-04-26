@@ -135,7 +135,7 @@ contract Challenge is IChallenge {
         emit ChallengeInitialized(_endStep, _subStates);
     }
 
-    function revealSubStates(uint256[] calldata _nodeKeys, bytes32[MidSteps][] calldata _stateRoots)
+    function revealMidStates(uint256[] calldata _nodeKeys, bytes32[MidSteps][] calldata _stateRoots)
         external
         override
         beforeBlockConfirmed

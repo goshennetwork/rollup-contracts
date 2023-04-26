@@ -298,9 +298,9 @@ func (_a *Challenge) ProposerTimeout(nodeKey *big.Int) *contract.Txn {
 	return _a.c.Txn("proposerTimeout", nodeKey)
 }
 
-// RevealSubStates sends a revealSubStates transaction in the solidity contract
-func (_a *Challenge) RevealSubStates(nodeKeys []*big.Int, stateRoots [][6][32]byte) *contract.Txn {
-	return _a.c.Txn("revealSubStates", nodeKeys, stateRoots)
+// RevealMidStates sends a revealMidStates transaction in the solidity contract
+func (_a *Challenge) RevealMidStates(nodeKeys []*big.Int, stateRoots [][6][32]byte) *contract.Txn {
+	return _a.c.Txn("revealMidStates", nodeKeys, stateRoots)
 }
 
 // SelectDisputeBranch sends a selectDisputeBranch transaction in the solidity contract

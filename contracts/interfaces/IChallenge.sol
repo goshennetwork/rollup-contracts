@@ -90,7 +90,7 @@ interface IChallenge {
      * - 5.Can not reveal a parent node's branch state twice
      * - 6.State need to be revealed can't be zero
      */
-    function revealSubStates(uint256[] calldata _parentNodeKeys, bytes32[MidSteps][] calldata _stateRoots) external;
+    function revealMidStates(uint256[] calldata _parentNodeKeys, bytes32[MidSteps][] calldata _stateRoots) external;
 
     event ProposerTimeout(uint256 nodeKey);
 

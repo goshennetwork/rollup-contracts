@@ -94,7 +94,7 @@ contract TestChallenge {
         uint256[] memory _ks = gen256List(key);
         bytes32[6][] memory _ss = genBytes32List(fakeBytes32, N_SECTION - 1);
         uint256 _before = gasleft();
-        challenge.revealSubStates(_ks, _ss);
+        challenge.revealMidStates(_ks, _ss);
         console.log(_before - gasleft());
         vm.stopPrank();
     }
