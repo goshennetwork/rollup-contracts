@@ -391,9 +391,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             case 0 {
                 revert(0, returndatasize())
             }
-            default {
-                return(0, returndatasize())
-            }
+            //            default {
+            //                return(0, returndatasize())
+            //            }
         }
     }
 

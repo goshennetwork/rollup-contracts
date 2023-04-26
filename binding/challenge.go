@@ -81,7 +81,7 @@ func (_a *Challenge) ClaimStatus(block ...web3.BlockNumber) (retval0 uint8, err 
 }
 
 // DisputeTree calls the disputeTree method in the solidity contract
-func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, retval3 [32]byte, err error) {
+func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
@@ -100,9 +100,6 @@ func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retv
 	}
 	if err = mapstructure.Decode(out["expireAfterBlock"], &retval2); err != nil {
 		err = fmt.Errorf("failed to encode output at index 2")
-	}
-	if err = mapstructure.Decode(out["midStateRoot"], &retval3); err != nil {
-		err = fmt.Errorf("failed to encode output at index 3")
 	}
 
 	return
@@ -222,6 +219,25 @@ func (_a *Challenge) StateConfirmed(block ...web3.BlockNumber) (retval0 bool, er
 	return
 }
 
+// StepState calls the stepState method in the solidity contract
+func (_a *Challenge) StepState(val0 *big.Int, block ...web3.BlockNumber) (retval0 [32]byte, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("stepState", web3.EncodeBlock(block...), val0)
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // SystemInfo calls the systemInfo method in the solidity contract
 func (_a *Challenge) SystemInfo(block ...web3.BlockNumber) (retval0 StateInfo, retval1 *big.Int, retval2 [32]byte, retval3 [32]byte, err error) {
 	var out map[string]interface{}
@@ -273,8 +289,8 @@ func (_a *Challenge) ExecOneStepTransition(leafNodeKey *big.Int) *contract.Txn {
 }
 
 // Initialize sends a initialize transaction in the solidity contract
-func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, midSystemState [32]byte) *contract.Txn {
-	return _a.c.Txn("initialize", endStep, systemEndState, midSystemState)
+func (_a *Challenge) Initialize(endStep uint64, systemEndState [32]byte, subStates [6][32]byte) *contract.Txn {
+	return _a.c.Txn("initialize", endStep, systemEndState, subStates)
 }
 
 // ProposerTimeout sends a proposerTimeout transaction in the solidity contract
@@ -283,13 +299,13 @@ func (_a *Challenge) ProposerTimeout(nodeKey *big.Int) *contract.Txn {
 }
 
 // RevealMidStates sends a revealMidStates transaction in the solidity contract
-func (_a *Challenge) RevealMidStates(nodeKeys []*big.Int, stateRoots [][32]byte) *contract.Txn {
+func (_a *Challenge) RevealMidStates(nodeKeys []*big.Int, stateRoots [][6][32]byte) *contract.Txn {
 	return _a.c.Txn("revealMidStates", nodeKeys, stateRoots)
 }
 
 // SelectDisputeBranch sends a selectDisputeBranch transaction in the solidity contract
-func (_a *Challenge) SelectDisputeBranch(parentNodeKeys []*big.Int, isLefts []bool) *contract.Txn {
-	return _a.c.Txn("selectDisputeBranch", parentNodeKeys, isLefts)
+func (_a *Challenge) SelectDisputeBranch(parentNodeKeys []*big.Int, Nth []*big.Int) *contract.Txn {
+	return _a.c.Txn("selectDisputeBranch", parentNodeKeys, Nth)
 }
 
 // events

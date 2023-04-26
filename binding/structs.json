@@ -76,12 +76,12 @@
           "Type": "*big.Int"
         },
         {
-          "Name": "_midSystemState",
-          "Type": "[32]byte"
+          "Name": "_subStates",
+          "Type": "[6][32]byte"
         }
       ],
       "IsEvent": true,
-      "EventID": "ChallengeInitialized(uint128,bytes32)",
+      "EventID": "ChallengeInitialized(uint128,bytes32[6])",
       "EventName": "ChallengeInitializedEventID"
     },
     "ChallengeStartedEvent": {
@@ -445,11 +445,11 @@
         },
         {
           "Name": "stateRoots",
-          "Type": "[][32]byte"
+          "Type": "[][6][32]byte"
         }
       ],
       "IsEvent": true,
-      "EventID": "MidStateRevealed(uint256[],bytes32[])",
+      "EventID": "MidStateRevealed(uint256[],bytes32[6][])",
       "EventName": "MidStateRevealedEventID"
     },
     "OneStepTransitionEvent": {
