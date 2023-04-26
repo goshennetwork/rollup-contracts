@@ -104,7 +104,7 @@ func (t *TxManager) sendTx(ctx context.Context, txp *TxWithPriceLimit) {
 	timer := time.NewTimer(0)
 	defer timer.Stop()
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 24*time.Hour)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 6*time.Hour)
 	defer cancel()
 
 	confirmCh, hashCh := make(chan web3.Hash, 1), make(chan web3.Hash, 1)
@@ -153,7 +153,7 @@ func (t *TxManager) sendTx(ctx context.Context, txp *TxWithPriceLimit) {
 	for {
 		select {
 		case <-timer.C:
-			timer.Reset(1 * time.Minute)
+			timer.Reset(5 * time.Minute)
 			if !first {
 				// time to reconstruct
 				if err := t.ReConstruct(txp); err != nil {
