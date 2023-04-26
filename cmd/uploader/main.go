@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -118,7 +119,7 @@ func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer
 	if len(blobOracle) > 0 {
 		oracle = blobOracle[0]
 	}
-	return &UploadBackend{l2client, l1client, utils2.NewTxManager(signer, 1), stateChain, inputChain, blobEnabled, make(chan struct{}), oracle}
+	return &UploadBackend{l2client, l1client, utils2.NewTxManager(signer, 1, big.NewInt(10)), stateChain, inputChain, blobEnabled, make(chan struct{}), oracle}
 }
 
 func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
@@ -126,14 +127,21 @@ func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches)
 	txn := self.inputChain.AppendInputBatches(batches)
 	log.Info("sending append inputBatch tx", "batchIndex", batches.BatchIndex)
 	///because of the concurrent use of txManager, so flex nonce set to true
-	_, err = self.txManager.WaitAndChangeTxn(txn, true, false)
-	return err
+	tx, err := txn.ToTransaction()
+	if err != nil {
+		return err
+	}
+	return self.txManager.AsyncSendTx(tx)
 }
 
 func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) error {
 	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
 	///because of the concurrent use of txManager, so flex nonce set to true
-	_, err = self.txManager.WaitAndChangeTxn(txn, true, false)
+	tx, err := txn.ToTransaction()
+	if err != nil {
+		return err
+	}
+	err = self.txManager.AsyncSendTx(tx)
 	log.Info("sending append stateBatch tx", "batchIndex", startAt)
 	return err
 }
