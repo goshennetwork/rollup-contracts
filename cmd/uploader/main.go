@@ -18,20 +18,19 @@ import (
 	"github.com/goshennetwork/rollup-contracts/binding"
 	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/goshennetwork/rollup-contracts/config"
+	"github.com/goshennetwork/rollup-contracts/txmanager"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
 	"github.com/laizy/web3/jsonrpc"
 	"github.com/laizy/web3/utils"
-
-	utils2 "github.com/goshennetwork/rollup-contracts/utils"
 )
 
 var (
 	ErrNoBlock = errors.New("no block")
 )
 
-//todo: remove mockOracle
+// todo: remove mockOracle
 func main() {
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
 	submit := flag.Bool("submit", false, "whether submit tx to node")
@@ -86,11 +85,10 @@ func main() {
 	queueManager.Start()
 	defer queueManager.Close()
 
-
-	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain,queueManager,*blobEnabled)
+	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain, queueManager, *blobEnabled)
 	if *blobEnabled {
 		commitOracle := blob.NewMockOracle()
-		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled, commitOracle)
+		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, queueManager, *blobEnabled, commitOracle)
 		http.HandleFunc("/blobOracle", func(w http.ResponseWriter, r *http.Request) {
 
 			versionHashHex := r.FormValue("versionHash")
@@ -128,11 +126,12 @@ type UploadBackend struct {
 	queueManager *txmanager.QueueManager[[9]byte]
 	stateChain   *binding.RollupStateChain
 	inputChain   *binding.RollupInputChain
-	blobEnabled boolquit         chan struct{}///blobOracle used for store oracle locally, only for test phase
-	blobOracle blob.BlobOracle
+	blobEnabled  bool
+	quit         chan struct{} ///blobOracle used for store oracle locally, only for test phase
+	blobOracle   blob.BlobOracle
 }
 
-func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, queueManager *txmanager.QueueManager[[9]byte],blobEnabled bool, blobOracle ...blob.BlobOracle) *UploadBackend {
+func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, queueManager *txmanager.QueueManager[[9]byte], blobEnabled bool, blobOracle ...blob.BlobOracle) *UploadBackend {
 
 	var oracle blob.BlobOracle
 	if len(blobOracle) > 0 {
