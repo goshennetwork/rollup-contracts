@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/laizy/log v0.1.0
-	github.com/laizy/web3 v0.1.14-0.20230221094440-1b8419578f57
+	github.com/laizy/web3 v0.1.14-0.20230427102355-461b3743376e
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/pkg/errors v0.9.1
 	github.com/protolambda/go-kzg v0.0.0-20221224134646-c91cee5e954e
@@ -16,7 +16,7 @@ require (
 	github.com/umbracle/fastrlp v0.1.0 // indirect
 	github.com/urfave/cli/v2 v2.10.2
 	github.com/valyala/fastjson v1.6.4 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/crypto v0.8.0 // indirect
 )
 
 require (
@@ -54,7 +54,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.4.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
