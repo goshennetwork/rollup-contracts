@@ -300,6 +300,15 @@ type SequencerUpdatedEvent struct {
 	Raw *web3.Log
 }
 
+var StandardL2TokenCreatedEventID = crypto.Keccak256Hash([]byte("StandardL2TokenCreated(address,address)"))
+
+type StandardL2TokenCreatedEvent struct {
+	L1Token web3.Address
+	L2Token web3.Address
+
+	Raw *web3.Log
+}
+
 var StateBatchAppendedEventID = crypto.Keccak256Hash([]byte("StateBatchAppended(address,uint64,uint64,bytes32[])"))
 
 type StateBatchAppendedEvent struct {

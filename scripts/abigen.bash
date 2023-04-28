@@ -21,6 +21,7 @@ Whitelist.sol/*
 L2FeeCollector.sol/*
 TestL2ERC20.sol/*
 L2StandardERC20.sol/*
+L2StandardTokenFactory.sol/*
 "
 prefix="out/"
 for file in $files ; do
