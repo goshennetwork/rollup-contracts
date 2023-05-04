@@ -91,7 +91,7 @@ func (t *TxManager) nextNonce() (uint64, error) {
 	if t.nonce == nil {
 		nonce, err := t.Signer.Eth().GetNonce(t.Signer.Address(), web3.Latest)
 		if err != nil {
-			log.Errorf("get nonce: %w", err)
+			log.Errorf("get nonce: %s", err)
 		}
 		t.nonce = &nonce
 		return *t.nonce, nil
