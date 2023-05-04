@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ import (
 	"github.com/goshennetwork/rollup-contracts/binding"
 	"github.com/goshennetwork/rollup-contracts/blob"
 	"github.com/goshennetwork/rollup-contracts/config"
+	"github.com/goshennetwork/rollup-contracts/txmanager"
 	"github.com/laizy/log"
 	"github.com/laizy/web3"
 	"github.com/laizy/web3/contract"
@@ -28,7 +30,7 @@ var (
 	ErrNoBlock = errors.New("no block")
 )
 
-//todo: remove mockOracle
+// todo: remove mockOracle
 func main() {
 	cfgName := flag.String("conf", "./rollup-config.json", "rollup config file name")
 	submit := flag.Bool("submit", false, "whether submit tx to node")
@@ -64,10 +66,29 @@ func main() {
 	l2Client, err := jsonrpc.NewClient(cfg.L2Rpc)
 	utils.Ensure(err)
 
-	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled)
+	txManager := txmanager.NewTxManager(txmanager.DefaultCfg(), signer, 1, big.NewInt(10))
+	queueManager := txmanager.NewQueueManager[[9]byte](txManager, func(tx *web3.Transaction) (ret [9]byte) {
+		switch sig := tx.Input[:4]; {
+		case bytes.Equal(sig, binding.RollupInputChainAbi().Methods["appendInputBatch"].ID()): // function appendInputBatch() external;
+			// format: batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64) + subBatchNum(uint64) + subBatch0Time(uint64) +
+			// subBatchLeftTimeDiff([]uint32) + batchesData
+			// batchesData: version(0) + rlp([][]transaction)
+			copy(ret[1:], tx.Input[4:])
+		case bytes.Equal(sig, binding.RollupStateChainAbi().Methods["appendStateBatch"].ID()): //function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startIndex) external;
+			ret[0] = 1
+			copy(ret[1:], tx.Input[len(tx.Input)-8:])
+		default:
+			panic(1)
+		}
+		return ret
+	})
+	queueManager.Start()
+	defer queueManager.Close()
+
+	uploader := NewUploadService(l2Client, l1client, signer, stateChain, inputChain, queueManager, *blobEnabled)
 	if *blobEnabled {
 		commitOracle := blob.NewMockOracle()
-		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, *blobEnabled, commitOracle)
+		uploader = NewUploadService(l2Client, l1client, signer, stateChain, inputChain, queueManager, *blobEnabled, commitOracle)
 		http.HandleFunc("/blobOracle", func(w http.ResponseWriter, r *http.Request) {
 
 			versionHashHex := r.FormValue("versionHash")
@@ -100,70 +121,45 @@ func main() {
 }
 
 type UploadBackend struct {
-	l2client    *jsonrpc.Client
-	l1client    *jsonrpc.Client
-	signer      *contract.Signer
-	stateChain  *binding.RollupStateChain
-	inputChain  *binding.RollupInputChain
-	blobEnabled bool
-
-	quit chan struct{}
-	///blobOracle used for store oracle locally, only for test phase
-	blobOracle blob.BlobOracle
+	l2client     *jsonrpc.Client
+	l1client     *jsonrpc.Client
+	queueManager *txmanager.QueueManager[[9]byte]
+	stateChain   *binding.RollupStateChain
+	inputChain   *binding.RollupInputChain
+	blobEnabled  bool
+	quit         chan struct{} ///blobOracle used for store oracle locally, only for test phase
+	blobOracle   blob.BlobOracle
 }
 
-func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, blobEnabled bool, blobOracle ...blob.BlobOracle) *UploadBackend {
+func NewUploadService(l2client *jsonrpc.Client, l1client *jsonrpc.Client, signer *contract.Signer, stateChain *binding.RollupStateChain, inputChain *binding.RollupInputChain, queueManager *txmanager.QueueManager[[9]byte], blobEnabled bool, blobOracle ...blob.BlobOracle) *UploadBackend {
 
 	var oracle blob.BlobOracle
 	if len(blobOracle) > 0 {
 		oracle = blobOracle[0]
 	}
-	return &UploadBackend{l2client, l1client, signer, stateChain, inputChain, blobEnabled, make(chan struct{}), oracle}
+	return &UploadBackend{l2client, l1client, queueManager, stateChain, inputChain, blobEnabled, make(chan struct{}), oracle}
 }
 
 func (self *UploadBackend) AppendInputBatch(batches *binding.RollupInputBatches) (err error) {
-	defer func() {
-		e := recover()
-		if e != nil {
-			err = fmt.Errorf("recover err: %s", e)
-		}
-	}()
+	//panic may happen when l1 rollback
 	txn := self.inputChain.AppendInputBatches(batches)
-	//use confirmed nonce
-	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
-	if err != nil { //network tolerate
-		return err
-	}
-	tx := txn.SetNonce(nonce).Sign(self.signer)
-	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
-	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	log.Info("sending append inputBatch tx", "batchIndex", batches.BatchIndex)
+	tx, err := txn.ToTransaction()
 	if err != nil {
 		return err
 	}
-	log.Info("sending append inputBatch tx", "batchIndex", batches.BatchIndex)
-	return nil
+	return self.queueManager.Send(tx, false, fmt.Sprintf("append %d inputbatch success", batches.BatchIndex))
 }
 
-func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) (err error) {
-	defer func() {
-		e := recover()
-		if e != nil {
-			err = fmt.Errorf("recover err: %s", e)
-		}
-	}()
+func (self *UploadBackend) AppendStateBatch(blockHashes [][32]byte, startAt uint64) error {
 	txn := self.stateChain.AppendStateBatch(blockHashes, startAt)
-	nonce, err := self.l1client.Eth().GetNonce(self.signer.Address(), web3.Latest)
-	if err != nil { //network tolerate
-		return err
-	}
-	tx := txn.SetNonce(nonce).Sign(self.signer)
-	log.Infof("start sending transaction: %s, %s raw: %x\n", tx.Hash().String(), utils.JsonString(*tx.Transaction), tx.MarshalRLP())
-	_, err = self.l1client.Eth().SendRawTransaction(tx.MarshalRLP())
+	tx, err := txn.ToTransaction()
 	if err != nil {
 		return err
 	}
+	err = self.queueManager.Send(tx, false, fmt.Sprintf("append %d stateBatch success", startAt))
 	log.Info("sending append stateBatch tx", "batchIndex", startAt)
-	return nil
+	return err
 }
 
 func (self *UploadBackend) Start() error {
@@ -230,7 +226,7 @@ loop:
 
 }
 
-//fixme: now only support one sequencer.
+// fixme: now only support one sequencer.
 func (self *UploadBackend) runTxTask() {
 	ticker := time.NewTicker(1)
 	first := true
@@ -242,7 +238,7 @@ func (self *UploadBackend) runTxTask() {
 		case <-ticker.C:
 			if first {
 				first = false
-				ticker.Reset(time.Minute)
+				ticker.Reset(10 * time.Second)
 			}
 
 			//may happen in situation of async
@@ -344,6 +340,7 @@ func (self *UploadBackend) getPendingTxBatches() (*binding.RollupInputBatches, e
 			if err == nil {
 				err = ErrNoBlock
 			}
+			return nil, err
 		}
 		txs := FromWeb3Tx(block.Transactions)
 		l2txs := FilterOrigin(txs)
