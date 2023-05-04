@@ -77,8 +77,11 @@ func (self *QueueManager[T]) Send(tx *web3.Transaction, reCalcGas bool, info str
 		log.Warn("task failed, retry...")
 	}
 
+	if err := self.TxManager.AsyncSendTx(tx, reCalcGas, info, priceLimits...); err != nil {
+		return err
+	}
 	self.m[self.getKey(tx)] = Pending
-	return self.TxManager.AsyncSendTx(tx, reCalcGas, info, priceLimits...)
+	return nil
 }
 
 func (self *QueueManager[T]) Confirm(tx *web3.Transaction) {
