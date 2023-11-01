@@ -9,6 +9,7 @@ import "./RollupStateChain.sol";
 import "./RollupInputChain.sol";
 import "./ChainStorageContainer.sol";
 import "../test-helper/TestBase.sol";
+import "./RollupStateChainSpecialCase.sol";
 
 contract TestRollupStateChain is TestBase {
     address sender = address(0x7777); //admin
