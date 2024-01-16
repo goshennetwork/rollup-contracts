@@ -7,11 +7,7 @@ struct Slice {
 }
 
 library BytesSlice {
-    function memcpy(
-        uint256 dest,
-        uint256 src,
-        uint256 len
-    ) internal pure {
+    function memcpy(uint256 dest, uint256 src, uint256 len) internal pure {
         // Copy word-length chunks while possible
         for (; len >= 32; len -= 32) {
             assembly {
@@ -26,7 +22,7 @@ library BytesSlice {
             //have no remaining
             return;
         }
-        uint256 mask = 256**(32 - len) - 1;
+        uint256 mask = 256 ** (32 - len) - 1;
         assembly {
             let srcpart := and(mload(src), not(mask))
             let destpart := and(mload(dest), mask)
@@ -37,15 +33,11 @@ library BytesSlice {
     /**
      * Set memory at dest, the equivalent golang code is `copy(mem[dest:], src[:len])`
      */
-    function memset(
-        uint256 dest,
-        bytes32 src,
-        uint256 len
-    ) internal pure {
+    function memset(uint256 dest, bytes32 src, uint256 len) internal pure {
         if (len == 0) {
             return;
         }
-        uint256 mask = 256**(32 - len) - 1;
+        uint256 mask = 256 ** (32 - len) - 1;
         uint256 srcval = uint256(src);
         assembly {
             let srcpart := and(srcval, not(mask))
@@ -124,11 +116,11 @@ library BytesSlice {
         return concat(prefix, _list, len);
     }
 
-    function concat(
-        bytes memory prefix,
-        bytes[] memory _list,
-        uint256 _listBytes
-    ) internal pure returns (bytes memory) {
+    function concat(bytes memory prefix, bytes[] memory _list, uint256 _listBytes)
+        internal
+        pure
+        returns (bytes memory)
+    {
         uint256 prefixLen = prefix.length;
         uint256 len = prefixLen + _listBytes;
         bytes memory flattened = new bytes(len);
@@ -175,21 +167,13 @@ library BytesSlice {
         return equal(bytes(left), bytes(right));
     }
 
-    function slice(
-        bytes memory buff,
-        uint256 start,
-        uint256 length
-    ) internal pure returns (Slice memory) {
+    function slice(bytes memory buff, uint256 start, uint256 length) internal pure returns (Slice memory) {
         return slice(fromBytes(buff), start, length);
     }
 
-    function slice(
-        Slice memory buff,
-        uint256 start,
-        uint256 length
-    ) internal pure returns (Slice memory) {
+    function slice(Slice memory buff, uint256 start, uint256 length) internal pure returns (Slice memory) {
         require(buff.len >= start + length, "oob");
-        return Slice({ ptr: buff.ptr + start, len: length });
+        return Slice({ptr: buff.ptr + start, len: length});
     }
 
     function slice(bytes memory buff, uint256 start) internal pure returns (Slice memory) {
@@ -234,7 +218,7 @@ library BytesSlice {
         if (_bytes.length < 32) {
             uint256 mask;
             unchecked {
-                mask = 256**(32 - _bytes.length) - 1;
+                mask = 256 ** (32 - _bytes.length) - 1;
             }
             assembly {
                 ret := and(ret, not(mask))

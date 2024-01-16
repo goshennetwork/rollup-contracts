@@ -7,6 +7,7 @@ import "./console.sol";
 contract MockMerkleTrie {
     using HashDB for mapping(bytes32 => HashDB.Preimage);
     using MerkleTrie for mapping(bytes32 => HashDB.Preimage);
+
     mapping(bytes32 => HashDB.Preimage) _hashdb;
     mapping(bytes32 => bytes) _rawdb;
     bytes32 public root;
@@ -29,11 +30,7 @@ contract MockMerkleTrie {
         return _rawdb[keccak256(_key)];
     }
 
-    function rawUpdate(
-        bytes memory _key,
-        bytes memory _value,
-        bytes32 _root
-    ) external {
+    function rawUpdate(bytes memory _key, bytes memory _value, bytes32 _root) external {
         _hashdb.update(_key, _value, _root);
     }
 
@@ -43,12 +40,7 @@ contract MockMerkleTrie {
         return _data;
     }
 
-    function checkUpdate(
-        bytes memory _key,
-        bytes memory _value,
-        bytes32 _root,
-        bytes32 _expectRoot
-    ) external {
+    function checkUpdate(bytes memory _key, bytes memory _value, bytes32 _root, bytes32 _expectRoot) external {
         bytes32 _getRoot = _hashdb.update(_key, _value, _root);
         require(_getRoot == _expectRoot, "not equal");
     }
@@ -93,19 +85,19 @@ contract MerkleTrieTest {
 
     /**
      *  TODO: this fuzz use too much time to execute
-    function testGetFuzz(bytes[2][] memory kvs) public {
-        for (uint256 i = 0; i < kvs.length; i++) {
-            bytes32 root = trie.update(kvs[i][0], kvs[i][1]);
-            console.logBytes32(root);
-        }
-
-        for (uint256 i = 0; i < kvs.length; i++) {
-            (bool exist, bytes memory value) = trie.get(kvs[i][0]);
-            console.logBool(exist);
-            console.logBytes(value);
-            require(exist);
-            require(BytesSlice.equal(value, trie.getRaw(kvs[i][0])));
-        }
-    }
-    */
+     * function testGetFuzz(bytes[2][] memory kvs) public {
+     *     for (uint256 i = 0; i < kvs.length; i++) {
+     *         bytes32 root = trie.update(kvs[i][0], kvs[i][1]);
+     *         console.logBytes32(root);
+     *     }
+     *
+     *     for (uint256 i = 0; i < kvs.length; i++) {
+     *         (bool exist, bytes memory value) = trie.get(kvs[i][0]);
+     *         console.logBool(exist);
+     *         console.logBytes(value);
+     *         require(exist);
+     *         require(BytesSlice.equal(value, trie.getRaw(kvs[i][0])));
+     *     }
+     * }
+     */
 }

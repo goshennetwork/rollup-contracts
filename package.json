@@ -9,8 +9,8 @@
     "test": "forge test -vvv --root ./",
     "gasnap": "forge snapshot",
     "format": "prettier --write 'contracts/**/*.sol'",
-    "fmt": "prettier --write 'contracts/**/*.sol' && js-beautify --r scripts/*.js ",
-    "format-lint": "prettier --list-different 'contracts/**/*.sol'",
+    "fmt": "forge fmt && js-beautify --r scripts/*.js ",
+    "fmt-check": "forge fmt --check",
     "solhint": "solhint 'contracts/**/*.sol'",
     "abigen": "bash scripts/abigen.bash",
     "go": "bash scripts/build-go.bash"

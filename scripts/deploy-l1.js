@@ -11,12 +11,12 @@ async function main() {
     console.log("sent L1CrossLayerWitness deploy tx, %s", l1CrossLayerWitness.deployTransaction.hash);
 
     const TestERC20 = await ethers.getContractFactory("TestERC20");
-    let feeToken;
-    if (config.feeToken) {
-        feeToken = await TestERC20.attach(config.feeToken);
+    let stakeToken;
+    if (config.stakeToken) {
+        stakeToken = await TestERC20.attach(config.stakeToken);
     } else {
-        feeToken = await TestERC20.deploy("Test Fee Token", 'TFT', decimals);
-        console.log("sent FeeToken deploy tx, %s", feeToken.deployTransaction.hash);
+        stakeToken = await TestERC20.deploy("Test STAKE Token", 'TST', decimals);
+        console.log("sent StakeToken deploy tx, %s", stakeToken.deployTransaction.hash);
     }
 
     const RollupStateChain = await ethers.getContractFactory("RollupStateChain");
@@ -85,7 +85,7 @@ async function main() {
         config.addressName.STATE_TRANSITION,
         config.addressName.L1_STANDARD_BRIDGE,
         config.addressName.CHALLENGE_BEACON,
-        config.addressName.FEE_TOKEN,
+        config.addressName.STAKE_TOKEN,
         config.addressName.MACHINE_STATE,
         config.addressName.WHITELIST
     ];
@@ -102,7 +102,7 @@ async function main() {
         stateTransition.address,
         l1StandardBridge.address,
         challengeBeacon.address,
-        feeToken.address,
+        stakeToken.address,
         machineState.address,
         whitelist.address
     ];
@@ -113,8 +113,8 @@ async function main() {
     console.log("whitelist deployed: %s", whitelist.address);
     await l1CrossLayerWitness.deployed();
     console.log("L1CrossLayerWitness deployed: %s", l1CrossLayerWitness.address);
-    await feeToken.deployed();
-    console.log("FeeToken deployed: %s", feeToken.address);
+    await stakeToken.deployed();
+    console.log("StakeToken deployed: %s", stakeToken.address);
     await rollupStateChain.deployed();
     console.log("RollupStateChain deployed: %s", rollupStateChain.address);
     await challengeBeacon.deployed();
@@ -164,7 +164,7 @@ async function main() {
         DAO: dao.address,
         AddressManager: addressManager.address,
         L1CrossLayerWitness: l1CrossLayerWitness.address,
-        FeeToken: feeToken.address,
+        StakeToken: stakeToken.address,
         RollupStateChain: rollupStateChain.address,
         ChallengeLogic: challenge.address,
         ChallengeBeacon: challengeBeacon.address,

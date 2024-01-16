@@ -36,12 +36,11 @@ contract TestUnsafeSign {
 
     //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId
     //sender used to recognize tx from L1CrossLayerWitness
-    function getRlpList(
-        uint64 _nonce,
-        uint64 _gasLimit,
-        address _target,
-        bytes memory _data
-    ) internal pure returns (bytes[] memory) {
+    function getRlpList(uint64 _nonce, uint64 _gasLimit, address _target, bytes memory _data)
+        internal
+        pure
+        returns (bytes[] memory)
+    {
         bytes[] memory list = new bytes[](9);
         list[0] = RLPWriter.writeUint(uint256(_nonce));
         list[1] = RLPWriter.writeUint(1_000_000_000);

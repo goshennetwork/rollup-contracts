@@ -21,7 +21,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         _initialize(testAddress);
         whitelist.setSequencer(testAddress, true);
         whitelist.setProposer(testAddress, true);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
     }
@@ -195,11 +195,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //test eventEmit
         vm.expectEmit(true, true, true, true);
         emit TransactionEnqueued(
-            uint64(rollupInputChain.totalQueue()),
-            SENDER,
-            address(1),
-            rlpTx,
-            uint64(block.timestamp)
+            uint64(rollupInputChain.totalQueue()), SENDER, address(1), rlpTx, uint64(block.timestamp)
         );
         //enqueue rollupInputChian
         rollupInputChain.enqueue(address(1), gasLimit, _data, pendingNonce, r, s, v);
@@ -256,11 +252,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         //test eventEmit
         vm.expectEmit(true, true, true, true);
         emit TransactionEnqueued(
-            uint64(rollupInputChain.totalQueue()),
-            sender,
-            address(1),
-            rlpTx,
-            uint64(block.timestamp)
+            uint64(rollupInputChain.totalQueue()), sender, address(1), rlpTx, uint64(block.timestamp)
         );
         //enqueue rollupInputChian
         rollupInputChain.enqueue(address(1), GasLimit, _data, pendingNonce, r, s, v);
@@ -268,7 +260,9 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     }
 
     //Test appendInputBatch
-    /**1.Test Fail**/
+    /**
+     * 1.Test Fail*
+     */
 
     //test Fail msg.sender
     // when  sender != sequencerWhitelist
@@ -304,9 +298,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
     }
 
     function helpCall(address _rollupInputChain, bytes memory _data) public {
-        (bool success, ) = _rollupInputChain.call(
-            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _data)
-        );
+        (bool success,) = _rollupInputChain.call(abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _data));
         require(success, "call failed");
     }
 
@@ -355,9 +347,8 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
             timeDiff = new uint32[](batchNum - 1); //alwayes length = batchNum -1
             _info = abi.encodePacked(batchIndex, queueNum, pendingQueueIndex, subBatchNum, time0Start, timeDiff, data);
         }
-        (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
-        );
+        (bool success,) =
+            address(rollupInputChain).call(abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info));
         require(success, "failed");
     }
 
@@ -398,19 +389,11 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         uint64 subBatchNum = 0;
         uint64 time0Start = 0;
         uint32[] memory timeDiff = new uint32[](0);
-        bytes memory _info = abi.encodePacked(
-            batchIndex,
-            queueNum,
-            pendingQueueIndex,
-            subBatchNum,
-            time0Start,
-            timeDiff,
-            data
-        );
+        bytes memory _info =
+            abi.encodePacked(batchIndex, queueNum, pendingQueueIndex, subBatchNum, time0Start, timeDiff, data);
         vm.expectRevert("wrong calldata");
-        (bool success, ) = address(rollupInputChain).call(
-            abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info)
-        );
+        (bool success,) =
+            address(rollupInputChain).call(abi.encodePacked(abi.encodeWithSignature("appendInputBatch()"), _info));
         require(success, "failed");
         vm.stopPrank();
     }
@@ -497,13 +480,11 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
 
     //helper function: get Inputhash
     //Only in this case, the function name is not required
-    function getinfo(
-        uint64 _queueNum,
-        uint64 _queueStartIndex,
-        uint64 batchNum,
-        uint64 _time0Start,
-        bytes memory data
-    ) internal pure returns (bytes memory) {
+    function getinfo(uint64 _queueNum, uint64 _queueStartIndex, uint64 batchNum, uint64 _time0Start, bytes memory data)
+        internal
+        pure
+        returns (bytes memory)
+    {
         uint64 queueNum = _queueNum;
         uint64 pendingQueueIndex = _queueStartIndex;
         uint64 subBatchNum = batchNum;

@@ -33,7 +33,7 @@ contract TestStateTransition is TestBase, StateTransition {
 
         whitelist.setProposer(sender, true);
         whitelist.setSequencer(sender, true);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
         vm.startPrank(address(rollupInputChain));

@@ -6,24 +6,16 @@ import "../libraries/Types.sol";
 interface IRollupInputChain {
     ///EVENT
     event TransactionEnqueued(
-        uint64 indexed queueIndex,
-        address indexed from,
-        address indexed to,
-        bytes rlpTx,
-        uint64 timestamp
+        uint64 indexed queueIndex, address indexed from, address indexed to, bytes rlpTx, uint64 timestamp
     );
 
     event InputBatchAppended(
-        address indexed proposer,
-        uint64 indexed index,
-        uint64 startQueueIndex,
-        uint64 queueNum,
-        bytes32 inputHash
+        address indexed proposer, uint64 indexed index, uint64 startQueueIndex, uint64 queueNum, bytes32 inputHash
     );
 
     /**
      * @dev Adds a transaction to the queue.This function do not need to check tx or pay tx's gas fee,it's paid in L2.Normal EOA just need
-     to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function
+     *  to send a L2 tx.However, L1CrossLayerWitness do not need to sign L2 tx, it's signed by this function
      * @param _target Target contract to send the transaction to.
      * @param _gasLimit Gas limit for the given transaction.
      * @param _data Transaction data.
@@ -49,8 +41,8 @@ interface IRollupInputChain {
     /**
      * append a batches of sequenced tx to input chain.Only staking sender permitted
      * @dev The info is in calldata,format as: // format: batchIndex(uint64) + batchIndex(uint64)+ queueNum(uint64) + queueStartIndex(uint64)  + subBatchNum(uint64) + subBatch0Time(uint64) +
-    // subBatchLeftTimeDiff([]uint32) + batchesData
-    // batchesData: version(0) + rlp([][]transaction)
+     * // subBatchLeftTimeDiff([]uint32) + batchesData
+     * // batchesData: version(0) + rlp([][]transaction)
      *
      * @notice Revert if:
      * - sender isn't staking

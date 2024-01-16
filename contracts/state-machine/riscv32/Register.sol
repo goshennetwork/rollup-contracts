@@ -53,11 +53,11 @@ library Register {
     //RESERVE
     uint32 internal constant REG_RESV = 33; // x33
 
-    function readRegisterBytes4(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 regid
-    ) internal view returns (bytes4) {
+    function readRegisterBytes4(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 regid)
+        internal
+        view
+        returns (bytes4)
+    {
         if (regid == REG_X0) {
             return bytes4(0);
         }
@@ -65,11 +65,11 @@ library Register {
         return exists ? BytesSlice.bytesToBytes4(value) : bytes4(0);
     }
 
-    function readRegister(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 regid
-    ) internal view returns (uint32) {
+    function readRegister(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 regid)
+        internal
+        view
+        returns (uint32)
+    {
         bytes4 result = readRegisterBytes4(hashdb, root, regid);
         return BytesEndian.bytes4ToUint32(result);
     }
@@ -78,12 +78,10 @@ library Register {
         return bytes.concat(bytes1(uint8(regid)));
     }
 
-    function writeRegister(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 regid,
-        uint32 value
-    ) internal returns (bytes32) {
+    function writeRegister(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 regid, uint32 value)
+        internal
+        returns (bytes32)
+    {
         return writeRegisterBytes4(hashdb, root, regid, BytesEndian.uint32ToLEBytes(value));
     }
 

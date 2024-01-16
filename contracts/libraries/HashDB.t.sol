@@ -6,6 +6,7 @@ import "./console.sol";
 
 contract TestPartialHashDB {
     using HashDB for mapping(bytes32 => HashDB.Preimage);
+
     mapping(bytes32 => HashDB.Preimage) partialImage;
 
     function setUp() public {}

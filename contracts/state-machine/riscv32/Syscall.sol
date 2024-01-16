@@ -8,11 +8,10 @@ library Syscall {
     uint8 constant INPUT = 0xfe; // input key flag
     uint8 constant OUTPUT = 0xff; // output key flag
 
-    function writeOutput(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        bytes32 value
-    ) internal returns (bytes32) {
+    function writeOutput(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, bytes32 value)
+        internal
+        returns (bytes32)
+    {
         return MerkleTrie.update(hashdb, genKey(OUTPUT), bytes.concat(value), root);
     }
 
@@ -25,11 +24,10 @@ library Syscall {
         return exist ? bytes32(value) : bytes32(0);
     }
 
-    function writeInput(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        bytes32 value
-    ) internal returns (bytes32) {
+    function writeInput(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, bytes32 value)
+        internal
+        returns (bytes32)
+    {
         return MerkleTrie.update(hashdb, genKey(INPUT), bytes.concat(value), root);
     }
 

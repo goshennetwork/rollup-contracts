@@ -5,5 +5,5 @@
 - 需要在`DAO`中的proposerWhiteList内，保证现阶段的安全性
 
 进行操作:
-- 确保账户在`FeeToken`的erc20代币足够并对`StakingManager`合约进行`deposite()`质押。
+- 确保账户在`StakeToken`的erc20代币足够并对`StakingManager`合约进行`deposite()`质押。
 - 联系`DAO`管理员将对应账户加入白名单。

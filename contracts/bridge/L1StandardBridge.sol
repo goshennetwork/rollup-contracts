@@ -59,19 +59,10 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function _initiateETHDeposit(
-        address _from,
-        address _to,
-        bytes memory _data
-    ) internal {
+    function _initiateETHDeposit(address _from, address _to, bytes memory _data) internal {
         // Construct calldata for finalizeDeposit call
-        bytes memory message = abi.encodeWithSelector(
-            IL2ERC20Bridge.finalizeETHDeposit.selector,
-            _from,
-            _to,
-            msg.value,
-            _data
-        );
+        bytes memory message =
+            abi.encodeWithSelector(IL2ERC20Bridge.finalizeETHDeposit.selector, _from, _to, msg.value, _data);
 
         // Send calldata into L2
         // slither-disable-next-line reentrancy-events
@@ -81,22 +72,18 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         emit DepositInitiated(address(0), address(0), _from, _to, msg.value, _data);
     }
 
-    function depositERC20(
-        address _l1Token,
-        address _l2Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external virtual onlyEOA {
+    function depositERC20(address _l1Token, address _l2Token, uint256 _amount, bytes calldata _data)
+        external
+        virtual
+        onlyEOA
+    {
         _initiateERC20Deposit(_l1Token, _l2Token, msg.sender, msg.sender, _amount, _data);
     }
 
-    function depositERC20To(
-        address _l1Token,
-        address _l2Token,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external virtual {
+    function depositERC20To(address _l1Token, address _l2Token, address _to, uint256 _amount, bytes calldata _data)
+        external
+        virtual
+    {
         _initiateERC20Deposit(_l1Token, _l2Token, msg.sender, _to, _amount, _data);
     }
 
@@ -132,13 +119,7 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
 
         // Construct calldata for _l2Token.finalizeDeposit(_to, _amount)
         bytes memory message = abi.encodeWithSelector(
-            IL2ERC20Bridge.finalizeERC20Deposit.selector,
-            _l1Token,
-            _l2Token,
-            _from,
-            _to,
-            _amount,
-            _data
+            IL2ERC20Bridge.finalizeERC20Deposit.selector, _l1Token, _l2Token, _from, _to, _amount, _data
         );
 
         // Send calldata into L2
@@ -152,14 +133,12 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         emit DepositInitiated(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 
-    function finalizeETHWithdrawal(
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external ensureCrossLayerSender(l2TokenBridge) {
+    function finalizeETHWithdrawal(address _from, address _to, uint256 _amount, bytes calldata _data)
+        external
+        ensureCrossLayerSender(l2TokenBridge)
+    {
         // slither-disable-next-line reentrancy-events
-        (bool success, ) = _to.call{ value: _amount }(new bytes(0));
+        (bool success,) = _to.call{value: _amount}(new bytes(0));
         require(success, "ETH transfer failed");
 
         // slither-disable-next-line reentrancy-events
@@ -187,9 +166,11 @@ contract L1StandardBridge is IL1StandardBridge, CrossLayerContextUpgradeable {
         emit WithdrawalFinalized(_l1Token, _l2Token, _from, _to, _amount, _data);
     }
 
-    /*****************************
+    /**
+     *
      * Temporary - Migrating ETH *
-     *****************************/
+     *
+     */
 
     /**
      * @dev Adds ETH balance to the account. This is meant to allow for ETH

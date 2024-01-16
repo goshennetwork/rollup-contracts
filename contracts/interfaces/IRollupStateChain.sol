@@ -20,10 +20,7 @@ interface IRollupStateChain {
 
     ///emit when appendStates, anyone can check the block hash and open a challenge.
     event StateBatchAppended(
-        address indexed _proposer,
-        uint64 indexed _startIndex,
-        uint64 _timestamp,
-        bytes32[] _blockHash
+        address indexed _proposer, uint64 indexed _startIndex, uint64 _timestamp, bytes32[] _blockHash
     );
 
     /**

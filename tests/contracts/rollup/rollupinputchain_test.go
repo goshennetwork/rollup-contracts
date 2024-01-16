@@ -79,7 +79,7 @@ func TestAppendBatches(t *testing.T) {
 	signer := contracts.SetupLocalSigner(chainEnv.ChainId, chainEnv.PrivKey)
 	l1Chain := deploy.DeployL1Contracts(signer, chainEnv.ChainConfig)
 
-	l1Chain.FeeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
+	l1Chain.StakeToken.Approve(l1Chain.StakingManager.Contract().Addr(), chainEnv.ChainConfig.StakingAmount).Sign(signer).SendTransaction(signer)
 	l1Chain.StakingManager.Deposit().Sign(signer).SendTransaction(signer)
 	l1Chain.Whitelist.SetSequencer(signer.Address(), true).Sign(signer).SendTransaction(signer)
 

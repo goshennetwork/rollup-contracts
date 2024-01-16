@@ -2,10 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "./console.sol";
-import { CompactMerkleTree, MerkleMountainRange } from "./MerkleMountainRange.sol";
+import {CompactMerkleTree, MerkleMountainRange} from "./MerkleMountainRange.sol";
 
 contract MMRTest {
     using MerkleMountainRange for CompactMerkleTree;
+
     CompactMerkleTree _trees;
 
     function getTreeSize() public view returns (uint64) {
@@ -57,44 +58,34 @@ contract MMRTest {
     function testVerify() public {
         // m=5, n=10
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x656c98d56eadba8c4938fd4153bb51fd2c32f068c78594342e39fd8c1b632332)
+            _trees, bytes32(0x656c98d56eadba8c4938fd4153bb51fd2c32f068c78594342e39fd8c1b632332)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0xc5078ae0bc75a0052209ebf1e0638ff2b824e3892e12f7d2863e7c62a3fe502e)
+            _trees, bytes32(0xc5078ae0bc75a0052209ebf1e0638ff2b824e3892e12f7d2863e7c62a3fe502e)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0xc2d9dcb829a4a878e5a18c6f3a4f25926dd1f1e51c3ed08d4b15e6474f179955)
+            _trees, bytes32(0xc2d9dcb829a4a878e5a18c6f3a4f25926dd1f1e51c3ed08d4b15e6474f179955)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x99e57d9f68afe3e6fabf0f2b37b930a33d8631c23e653f03b62cd4745194eed4)
+            _trees, bytes32(0x99e57d9f68afe3e6fabf0f2b37b930a33d8631c23e653f03b62cd4745194eed4)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0xbfd88be2f23b6aa4d412e75ff774853b90ad8b4267ca99d2714dde4a706ecefa)
+            _trees, bytes32(0xbfd88be2f23b6aa4d412e75ff774853b90ad8b4267ca99d2714dde4a706ecefa)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0xa91fdaa6209a0ab99d30f19f1327c55e12a5ac41f559fe9a6220c7abc00584a2)
+            _trees, bytes32(0xa91fdaa6209a0ab99d30f19f1327c55e12a5ac41f559fe9a6220c7abc00584a2)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x9de0720cb4d747cad3702f50a6cdb35cf2f2738ab0843eacd6b4d158c0390bef)
+            _trees, bytes32(0x9de0720cb4d747cad3702f50a6cdb35cf2f2738ab0843eacd6b4d158c0390bef)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x867d11d93c3e54a3af819243a8813354286aeeb155835d7dda1754c95334a244)
+            _trees, bytes32(0x867d11d93c3e54a3af819243a8813354286aeeb155835d7dda1754c95334a244)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x4942f139a43e6502fbe3d6c72b1cd07c1c4daba4e0a77cd6cdc88ec1777045af)
+            _trees, bytes32(0x4942f139a43e6502fbe3d6c72b1cd07c1c4daba4e0a77cd6cdc88ec1777045af)
         );
         MerkleMountainRange.appendLeafHash(
-            _trees,
-            bytes32(0x33004dc58f858443ceacfab70224ac91f2aebca48ab56ff258aee157fc825806)
+            _trees, bytes32(0x33004dc58f858443ceacfab70224ac91f2aebca48ab56ff258aee157fc825806)
         );
         bytes32[] memory _proof = new bytes32[](4);
         _proof[0] = bytes32(0xbfd88be2f23b6aa4d412e75ff774853b90ad8b4267ca99d2714dde4a706ecefa);

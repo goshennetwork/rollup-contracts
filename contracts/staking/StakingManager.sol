@@ -26,13 +26,13 @@ contract StakingManager is IStakingManager, Initializable {
 
     /// The token address used for staking.
     function token() public view returns (IERC20) {
-        return resolver.feeToken();
+        return resolver.stakeToken();
     }
 
     function deposit() external override {
         StakingInfo storage senderStaking = getStakingInfo[msg.sender];
         require(senderStaking.state == StakingState.UNSTAKED, "only unStaked user can deposit");
-        require(resolver.feeToken().transferFrom(msg.sender, address(this), price), "transfer failed");
+        require(resolver.stakeToken().transferFrom(msg.sender, address(this), price), "transfer failed");
         senderStaking.state = StakingState.STAKING;
         emit Deposited(msg.sender, price);
     }
@@ -54,15 +54,11 @@ contract StakingManager is IStakingManager, Initializable {
         require(senderStake.state == StakingState.WITHDRAWING, "not in withdrawing");
         _assertStateIsConfirmed(resolver.rollupStateChain(), senderStake.needConfirmedHeight, _stateInfo);
         senderStake.state = StakingState.UNSTAKED;
-        resolver.feeToken().transfer(msg.sender, price);
+        resolver.stakeToken().transfer(msg.sender, price);
         emit WithdrawFinalized(msg.sender, price);
     }
 
-    function slash(
-        uint64 _chainHeight,
-        bytes32 _blockHash,
-        address _proposer
-    ) external override onlyChallenge {
+    function slash(uint64 _chainHeight, bytes32 _blockHash, address _proposer) external override onlyChallenge {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //unstaked is not allowed
         require(proposerStake.state != StakingState.UNSTAKED, "unStaked unexpected");
@@ -87,7 +83,7 @@ contract StakingManager is IStakingManager, Initializable {
         require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash != proposerStake.earliestChallengeBlockHash, "unused challenge");
-        resolver.feeToken().transfer(msg.sender, price);
+        resolver.stakeToken().transfer(msg.sender, price);
         proposerStake.state = StakingState.UNSTAKED;
         //// make info that will effect slash clean.
         proposerStake.earliestChallengeHeight = 0;
@@ -103,7 +99,7 @@ contract StakingManager is IStakingManager, Initializable {
         _assertStateIsConfirmed(_stateChain, proposerStake.earliestChallengeHeight, _stateInfo);
         require(_stateInfo.blockHash == proposerStake.earliestChallengeBlockHash, "useful challenge");
         address _dao = resolver.dao();
-        resolver.feeToken().transfer(_dao, price);
+        resolver.stakeToken().transfer(_dao, price);
         proposerStake.state = StakingState.UNSTAKED;
         //// make info that will effect slash clean.
         proposerStake.earliestChallengeHeight = 0;
@@ -111,11 +107,10 @@ contract StakingManager is IStakingManager, Initializable {
         emit DepositClaimed(_proposer, _dao, price);
     }
 
-    function _assertStateIsConfirmed(
-        IRollupStateChain _stateChain,
-        uint256 _index,
-        Types.StateInfo memory _stateInfo
-    ) internal view {
+    function _assertStateIsConfirmed(IRollupStateChain _stateChain, uint256 _index, Types.StateInfo memory _stateInfo)
+        internal
+        view
+    {
         require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         require(_stateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
         require(_stateInfo.index == _index, "should provide wanted state info");

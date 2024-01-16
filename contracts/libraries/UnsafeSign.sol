@@ -16,15 +16,7 @@ library UnsafeSign {
     address internal constant G2ADDR = address(0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF);
 
     ///@dev sign specific hash and chainId, return r,s,v
-    function Sign(bytes32 signedHash, uint64 chainId)
-        internal
-        pure
-        returns (
-            uint256,
-            uint256,
-            uint64
-        )
-    {
+    function Sign(bytes32 signedHash, uint64 chainId) internal pure returns (uint256, uint256, uint64) {
         uint256 order = ORDER; // cache here to reduce code size
         uint256 e = uint256(signedHash) % order;
         // make sure not overflow
@@ -52,15 +44,7 @@ library UnsafeSign {
     }
 
     /// sign specific hash and chainId with privkey == 2, return r,s,v
-    function Sign2(bytes32 signedHash, uint64 chainId)
-        internal
-        pure
-        returns (
-            uint256,
-            uint256,
-            uint64
-        )
-    {
+    function Sign2(bytes32 signedHash, uint64 chainId) internal pure returns (uint256, uint256, uint64) {
         uint256 order = ORDER; // cache here to reduce code size
         uint256 e = uint256(signedHash) % order;
         // make sure not overflow

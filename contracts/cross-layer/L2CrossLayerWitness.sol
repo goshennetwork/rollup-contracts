@@ -11,6 +11,7 @@ import "./CrossLayerCodec.sol";
 
 contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
     using MerkleMountainRange for CompactMerkleTree;
+
     CompactMerkleTree compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
     mapping(uint64 => bytes32) public mmrRoots;
@@ -36,7 +37,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
         require(successRelayedMessages[_hash] == false, "already relayed");
         crossLayerMsgSender = _sender;
-        (bool success, ) = _target.call(_message);
+        (bool success,) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;
@@ -63,7 +64,7 @@ contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
         MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _mmrSize);
         require(successRelayedMessages[_hash] == false, "message already relayed");
         crossLayerMsgSender = _sender;
-        (bool success, ) = _target.call(_message);
+        (bool success,) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;

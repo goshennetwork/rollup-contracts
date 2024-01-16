@@ -11,6 +11,7 @@ import "../interfaces/IAddressManager.sol";
 
 contract ChallengeFactory is IChallengeFactory, Initializable {
     using Types for Types.StateInfo;
+
     mapping(address => bool) public override isChallengeContract;
     mapping(bytes32 => address) public override getChallengedContract;
     IAddressResolver resolver;
@@ -44,29 +45,23 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
         require(_parentStateInfo.index + 1 == _challengedStateInfo.index, "wrong parent stateInfo");
         bytes32 _inputHash = resolver.rollupInputChain().getInputHash(_challengedStateInfo.index);
         bytes32 _systemStartState = resolver.stateTransition().generateStartState(
-            _inputHash,
-            _challengedStateInfo.index,
-            _parentStateInfo.blockHash
+            _inputHash, _challengedStateInfo.index, _parentStateInfo.blockHash
         );
         bytes memory _data;
-        address newChallenge = address(new BeaconProxy(challengeBeacon, _data));
-        isChallengeContract[newChallenge] = true;
-        getChallengedContract[_hash] = newChallenge;
+        address _newChallenge = address(new BeaconProxy(challengeBeacon, _data));
+        isChallengeContract[_newChallenge] = true;
+        getChallengedContract[_hash] = _newChallenge;
         //maybe do not need to deposit because of the cost create contract?
-        require(stakingManager().token().transferFrom(msg.sender, newChallenge, challengerDeposit), "transfer failed");
-        IChallenge(newChallenge).create(
-            _systemStartState,
-            msg.sender,
-            blockLimitPerRound,
-            _challengedStateInfo,
-            challengerDeposit
+        require(stakingManager().token().transferFrom(msg.sender, _newChallenge, challengerDeposit), "transfer failed");
+        IChallenge(_newChallenge).create(
+            _systemStartState, msg.sender, blockLimitPerRound, _challengedStateInfo, challengerDeposit
         );
         emit ChallengeStarted(
             _challengedStateInfo.index,
             _challengedStateInfo.proposer,
             _systemStartState,
             block.number + blockLimitPerRound,
-            newChallenge
+            _newChallenge
         );
     }
 

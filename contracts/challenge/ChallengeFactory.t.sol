@@ -18,11 +18,11 @@ import "../staking/StakingManager.sol";
 import "../dao/Whitelist.sol";
 
 contract MockStateTransition {
-    function generateStartState(
-        bytes32 rollupInputHash,
-        uint64 blockNumber,
-        bytes32 parentBlockHash
-    ) external pure returns (bytes32) {
+    function generateStartState(bytes32 rollupInputHash, uint64 blockNumber, bytes32 parentBlockHash)
+        external
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(rollupInputHash, blockNumber, parentBlockHash));
     }
 }
@@ -79,21 +79,21 @@ contract TestChallengeFactory is ChallengeFactory {
 
         // deploy token contract & (mint token & approve token) to testAddress2
         vm.startPrank(testAddress2);
-        TestERC20 feeToken = new TestERC20("test token", "test", 18);
-        feeToken.approve(address(challengeFactory), 100 ether);
+        TestERC20 stakeToken = new TestERC20("test token", "test", 18);
+        stakeToken.approve(address(challengeFactory), 100 ether);
         vm.stopPrank();
 
         vm.startPrank(testAddress);
         StakingManager stakingManager = new StakingManager();
         stakingManager.initialize(address(addressManager), 1 ether);
         addressManager.setAddress(AddressName.STAKING_MANAGER, address(stakingManager));
-        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
+        addressManager.setAddress(AddressName.STAKE_TOKEN, address(stakeToken));
 
         vm.stopPrank();
     }
 
     /* Test newChallenge
-   1.Test Fail */
+    1.Test Fail */
 
     // test caller not challenger
     function testNewChallengeNotChallenger() public {

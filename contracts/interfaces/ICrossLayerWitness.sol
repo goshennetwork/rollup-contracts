@@ -5,11 +5,7 @@ interface ICrossLayerWitness {
     event MessageRelayFailed(uint64 indexed _messageIndex, bytes32 indexed _msgHash, uint64 _mmrSize, bytes32 _mmrRoot);
     event MessageRelayed(uint64 indexed _messageIndex, bytes32 indexed _msgHash);
     event MessageSent(
-        uint64 indexed _messageIndex,
-        address indexed _target,
-        address indexed _sender,
-        bytes32 _mmrRoot,
-        bytes _message
+        uint64 indexed _messageIndex, address indexed _target, address indexed _sender, bytes32 _mmrRoot, bytes _message
     );
 
     /**

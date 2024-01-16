@@ -43,20 +43,11 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
         _initiateETHWithdrawal(msg.sender, _to, msg.value, _data);
     }
 
-    function withdraw(
-        address _l2Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external virtual {
+    function withdraw(address _l2Token, uint256 _amount, bytes calldata _data) external virtual {
         _initiateWithdrawal(_l2Token, msg.sender, msg.sender, _amount, _data);
     }
 
-    function withdrawTo(
-        address _l2Token,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external virtual {
+    function withdrawTo(address _l2Token, address _to, uint256 _amount, bytes calldata _data) external virtual {
         _initiateWithdrawal(_l2Token, msg.sender, _to, _amount, _data);
     }
 
@@ -70,19 +61,9 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function _initiateETHWithdrawal(
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes memory _data
-    ) internal {
-        bytes memory message = abi.encodeWithSelector(
-            IL1StandardBridge.finalizeETHWithdrawal.selector,
-            _from,
-            _to,
-            _amount,
-            _data
-        );
+    function _initiateETHWithdrawal(address _from, address _to, uint256 _amount, bytes memory _data) internal {
+        bytes memory message =
+            abi.encodeWithSelector(IL1StandardBridge.finalizeETHWithdrawal.selector, _from, _to, _amount, _data);
 
         // Send message up to L1 bridge
         sendCrossLayerMessage(l1TokenBridge, message);
@@ -102,26 +83,16 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function _initiateWithdrawal(
-        address _l2Token,
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) internal {
+    function _initiateWithdrawal(address _l2Token, address _from, address _to, uint256 _amount, bytes calldata _data)
+        internal
+    {
         // slither-disable-next-line reentrancy-events
         IL2StandardERC20(_l2Token).burn(msg.sender, _amount);
 
         // slither-disable-next-line reentrancy-events
         address l1Token = IL2StandardERC20(_l2Token).l1Token();
         bytes memory message = abi.encodeWithSelector(
-            IL1ERC20Bridge.finalizeERC20Withdrawal.selector,
-            l1Token,
-            _l2Token,
-            _from,
-            _to,
-            _amount,
-            _data
+            IL1ERC20Bridge.finalizeERC20Withdrawal.selector, l1Token, _l2Token, _from, _to, _amount, _data
         );
 
         // Send message up to L1 bridge
@@ -132,15 +103,14 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
         emit WithdrawalInitiated(l1Token, _l2Token, msg.sender, _to, _amount, _data);
     }
 
-    function finalizeETHDeposit(
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external virtual ensureCrossLayerSender(l1TokenBridge) {
+    function finalizeETHDeposit(address _from, address _to, uint256 _amount, bytes calldata _data)
+        external
+        virtual
+        ensureCrossLayerSender(l1TokenBridge)
+    {
         require(address(this).balance >= _amount, "ETH not enough");
         // slither-disable-next-line reentrancy-events
-        (bool success, ) = _to.call{ value: _amount }(new bytes(0));
+        (bool success,) = _to.call{value: _amount}(new bytes(0));
         require(success, "ETH transfer failed");
 
         emit DepositFinalized(address(0), address(0), _from, _to, _amount, _data);
@@ -157,8 +127,9 @@ contract L2StandardBridge is IL2ERC20Bridge, CrossLayerContextUpgradeable {
         // Check the target token is compliant and
         // verify the deposited token on L1 matches the L2 deposited token representation here
         if (
-            // slither-disable-next-line reentrancy-events
-            ERC165Checker.supportsInterface(_l2Token, 0x1d1d8b63) && _l1Token == IL2StandardERC20(_l2Token).l1Token()
+            ERC165Checker
+                // slither-disable-next-line reentrancy-events
+                .supportsInterface(_l2Token, 0x1d1d8b63) && _l1Token == IL2StandardERC20(_l2Token).l1Token()
         ) {
             // When a deposit is finalized, we credit the account on L2 with the same amount of
             // tokens.

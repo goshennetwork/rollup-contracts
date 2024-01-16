@@ -5,6 +5,6 @@
 - 需要在`StakingManager`中进行抵押，以防女巫攻击
 
 设置权限的步骤:
-1: 账户A需要保证在`FeeToken`ERC20合约中有足够的可用于后续操作的token（数额可查询`StakingManager`的`price()`方法）。
+1: 账户A需要保证在`StakeToken`ERC20合约中有足够的可用于后续操作的token（数额可查询`StakingManager`的`price()`方法）。
 2: 账户A需要调用`StakingManager`的`deposit()`进行质押。
 3: 账户A需要联系控制`DAO`合约的管理员调用其`setSequencerWhitelist`方法将账户A加入白名单。

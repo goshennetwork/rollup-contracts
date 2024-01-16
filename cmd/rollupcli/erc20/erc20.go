@@ -45,7 +45,7 @@ func transferErc20(ctx *cli.Context) error {
 	amount := ctx.Float64(flags.AmountFlag.Name)
 	submit := ctx.Bool(flags.SubmitFlag.Name)
 	signer.Submit = submit
-	erc20 := erc20.NewERC20(conf.L1Addresses.FeeToken, signer.Client)
+	erc20 := erc20.NewERC20(conf.L1Addresses.StakeToken, signer.Client)
 	erc20.Contract().SetFrom(signer.Address())
 	depositAmt := erc20.AmountFloatWithDecimals(amount)
 	receipt := erc20.Transfer(web3.HexToAddress(to), depositAmt).Sign(signer).SendTransaction(signer).EnsureNoRevert()

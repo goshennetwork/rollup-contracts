@@ -38,9 +38,9 @@ library AddressName {
     ///ChallengeBeacon
     string constant CHALLENGE_BEACON = "ChallengeBeacon";
     bytes32 constant CHALLENGE_BEACON_HASH = keccak256("ChallengeBeacon");
-    ///FeeToken
-    string constant FEE_TOKEN = "FeeToken";
-    bytes32 constant FEE_TOKEN_HASH = keccak256("FeeToken");
+    ///StakeToken
+    string constant STAKE_TOKEN = "StakeToken";
+    bytes32 constant STAKE_TOKEN_HASH = keccak256("StakeToken");
     ///MachineState
     string constant MACHINE_STATE = "MachineState";
     bytes32 constant MACHINE_STATE_HASH = keccak256("MachineState");

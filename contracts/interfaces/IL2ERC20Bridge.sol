@@ -6,10 +6,11 @@ pragma solidity ^0.8.0;
  * @title IL2ERC20Bridge
  */
 interface IL2ERC20Bridge {
-    /**********
+    /**
+     *
      * Events *
-     **********/
-
+     *
+     */
     event WithdrawalInitiated(
         address indexed _l1Token,
         address indexed _l2Token,
@@ -37,9 +38,11 @@ interface IL2ERC20Bridge {
         bytes _data
     );
 
-    /********************
+    /**
+     *
      * Public Functions *
-     ********************/
+     *
+     */
 
     /**
      * @dev get the address of the corresponding L1 bridge contract.
@@ -55,11 +58,7 @@ interface IL2ERC20Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function withdraw(
-        address _l2Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function withdraw(address _l2Token, uint256 _amount, bytes calldata _data) external;
 
     /**
      * @dev initiate a withdraw of some token to a recipient's account on L1.
@@ -70,16 +69,13 @@ interface IL2ERC20Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function withdrawTo(
-        address _l2Token,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function withdrawTo(address _l2Token, address _to, uint256 _amount, bytes calldata _data) external;
 
-    /*************************
+    /**
+     *
      * Cross-chain Functions *
-     *************************/
+     *
+     */
 
     /**
      * @dev Complete a deposit from L1 to L2, and credits funds to the recipient's balance of this
@@ -103,10 +99,5 @@ interface IL2ERC20Bridge {
         bytes calldata _data
     ) external;
 
-    function finalizeETHDeposit(
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function finalizeETHDeposit(address _from, address _to, uint256 _amount, bytes calldata _data) external;
 }

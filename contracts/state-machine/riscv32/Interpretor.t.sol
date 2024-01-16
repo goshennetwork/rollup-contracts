@@ -24,6 +24,7 @@ contract InterpretorTest {
         uint32 register;
         int32 value;
     }
+
     struct ExpectMem {
         uint32 ptr;
         int32 value;
@@ -43,12 +44,7 @@ contract InterpretorTest {
         return value == uint32(e.value);
     }
 
-    function checkInstruction(
-        string memory raw,
-        uint32 inst,
-        ExpectReg memory e1,
-        ExpectReg memory e2
-    ) internal {
+    function checkInstruction(string memory raw, uint32 inst, ExpectReg memory e1, ExpectReg memory e2) internal {
         execInstruction(raw, inst);
         require(checkRegState(e1), raw);
         require(checkRegState(e2), raw);
@@ -59,23 +55,15 @@ contract InterpretorTest {
         //console.log(string(bytes.concat("exec: ", bytes(raw))));
         uint32 pc = mstate.readRegister(root, Register.REG_PC);
         root = mstate.writeMemory(root, pc, inst);
-        (root, ) = exec.step(root);
+        (root,) = exec.step(root);
     }
 
-    function checkInstruction(
-        string memory raw,
-        uint32 inst,
-        ExpectReg memory e
-    ) internal {
+    function checkInstruction(string memory raw, uint32 inst, ExpectReg memory e) internal {
         execInstruction(raw, inst);
         require(checkRegState(e), raw);
     }
 
-    function checkInstruction(
-        string memory raw,
-        uint32 inst,
-        ExpectMem memory e
-    ) internal {
+    function checkInstruction(string memory raw, uint32 inst, ExpectMem memory e) internal {
         execInstruction(raw, inst);
         require(checkMemState(e), raw);
     }
@@ -147,12 +135,7 @@ contract InterpretorTest {
         //jalr
         checkInstruction("addi    a0,x0,5", 0x00500513, ExpectReg(Register.REG_A0, 5));
         resetPC();
-        checkInstruction(
-            "jalr    a1,8(a0);",
-            0x008505e7,
-            ExpectReg(Register.REG_A1, 4),
-            ExpectReg(Register.REG_PC, 12)
-        ); //omit 0b1
+        checkInstruction("jalr    a1,8(a0);", 0x008505e7, ExpectReg(Register.REG_A1, 4), ExpectReg(Register.REG_PC, 12)); //omit 0b1
 
         //sb, sh, sw, lb, lh, lw,lbu,lhu
         checkInstruction("li      a0,-2", 0xffe00513, ExpectReg(Register.REG_A0, -2)); //0xff_ff_ff_fe
@@ -364,7 +347,8 @@ contract InterpretorTest {
         checkInstruction("lui     ra,0x80000", 0x800000b7, ExpectReg(Register.REG_RA, minInt)); //ra=0x80_000_000 2^31 最小32位负数，只有符号位为1
         checkInstruction("li      sp,-1", 0xfff00113, ExpectReg(Register.REG_SP, -1)); //sp=(2^32)-1
         checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, minInt)); //
-        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0)); //ra=0
+        checkInstruction("li      ra,0", 0x00000093, ExpectReg(Register.REG_RA, 0));
+        //ra=0
         checkInstruction("li      sp,0", 0x00000113, ExpectReg(Register.REG_SP, 0)); //sp=0
         checkInstruction("remu    a4,ra,sp", 0x0220f733, ExpectReg(Register.REG_A4, 0)); // all num%0=0
     }

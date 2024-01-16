@@ -29,7 +29,8 @@ contract Challenge is IChallenge {
     //amount challenge get from dispute proposer.
     uint256 rewardAmount;
 
-    /** challenge game have 3 stage now:
+    /**
+     * challenge game have 3 stage now:
      * stage1: game started by challenger, proposer need to init game info.
      * stage2: proposer and challengers find out one step and challenger prove this one step is wrong.
      * stage3: challenge game over.Now challenger have to claim out the payback(proposer get reward immediately when game over, but challenger have to wait to claim).
@@ -91,11 +92,12 @@ contract Challenge is IChallenge {
         //emit ChallengeStarted(_blockN, _proposer, _systemStartState, _systemEndState, expireAfterBlock);
     }
 
-    function initialize(
-        uint64 endStep,
-        bytes32 _systemEndState,
-        bytes32 _midSystemState
-    ) external override stage1 onlyProposer {
+    function initialize(uint64 endStep, bytes32 _systemEndState, bytes32 _midSystemState)
+        external
+        override
+        stage1
+        onlyProposer
+    {
         uint128 _endStep = endStep;
         //in start period.
         require(block.number <= expireAfterBlock && _endStep > 1, "wrong context");
@@ -245,12 +247,7 @@ contract Challenge is IChallenge {
     }
 
     //divide the cake at specific branch provided lowest node address.
-    function _divideTheCake(
-        uint256 _lowestNodeKey,
-        uint64 _depth,
-        address _challenger,
-        IERC20 token
-    ) internal {
+    function _divideTheCake(uint256 _lowestNodeKey, uint64 _depth, address _challenger, IERC20 token) internal {
         require(lastSelectedNodeKey[_challenger] != 0, "you can't eat cake");
         require(rewardAmount > 0, "no cake");
         uint256 _canWithdraw = minChallengerDeposit;
@@ -288,9 +285,7 @@ contract Challenge is IChallenge {
         stage = ChallengeStage.Finished;
         factory.rollupStateChain().rollbackStateBefore(systemInfo.stateInfo);
         factory.stakingManager().slash(
-            systemInfo.stateInfo.index,
-            systemInfo.stateInfo.blockHash,
-            systemInfo.stateInfo.proposer
+            systemInfo.stateInfo.index, systemInfo.stateInfo.blockHash, systemInfo.stateInfo.proposer
         );
     }
 

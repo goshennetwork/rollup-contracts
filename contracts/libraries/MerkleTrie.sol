@@ -12,6 +12,7 @@ import "./HashDB.sol";
 library MerkleTrie {
     using HashDB for mapping(bytes32 => HashDB.Preimage);
     using BytesSlice for Slice;
+
     enum NodeType {
         BranchNode,
         ExtensionNode,
@@ -67,14 +68,14 @@ library MerkleTrie {
             return ret;
         }
 
-        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, ) = _walkNodePath(_hashdb, key, _root);
+        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder,) = _walkNodePath(_hashdb, key, _root);
         TrieNode[] memory newPath = _getNewPath(_hashdb, proof, pathLength, key, keyRemainder, _value);
 
         _updatedRoot = _getUpdatedTrieRoot(_hashdb, newPath, key);
     }
 
     function getRawNode(bytes memory encoded) private pure returns (TrieNode memory) {
-        return TrieNode({ encoded: encoded, decoded: RLPReader.readList(encoded) });
+        return TrieNode({encoded: encoded, decoded: RLPReader.readList(encoded)});
     }
 
     function loadTrieNode(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 nodeId)
@@ -102,20 +103,17 @@ library MerkleTrie {
      * @return _exists Whether or not the key exists.
      * @return _value Value of the key if it exists.
      */
-    function get(
-        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
-        bytes memory _key,
-        bytes32 _root
-    ) internal view returns (bool _exists, bytes memory _value) {
+    function get(mapping(bytes32 => HashDB.Preimage) storage _hashdb, bytes memory _key, bytes32 _root)
+        internal
+        view
+        returns (bool _exists, bytes memory _value)
+    {
         if (_root == KECCAK256_RLP_NULL_BYTES) {
             return (false, bytes(""));
         }
         bytes memory key = BytesSlice.toNibbles(_key);
-        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) = _walkNodePath(
-            _hashdb,
-            key,
-            _root
-        );
+        (TrieNode[] memory proof, uint256 pathLength, bytes memory keyRemainder, bool isFinalNode) =
+            _walkNodePath(_hashdb, key, _root);
 
         bool exists = keyRemainder.length == 0;
 
@@ -135,19 +133,10 @@ library MerkleTrie {
      * @return _keyRemainder Portion of the key remaining after the walk.
      * @return _isFinalNode Whether or not we've hit a dead end.
      */
-    function _walkNodePath(
-        mapping(bytes32 => HashDB.Preimage) storage _hashdb,
-        bytes memory key,
-        bytes32 _root
-    )
+    function _walkNodePath(mapping(bytes32 => HashDB.Preimage) storage _hashdb, bytes memory key, bytes32 _root)
         private
         view
-        returns (
-            TrieNode[] memory _proof,
-            uint256 _pathLength,
-            bytes memory _keyRemainder,
-            bool _isFinalNode
-        )
+        returns (TrieNode[] memory _proof, uint256 _pathLength, bytes memory _keyRemainder, bool _isFinalNode)
     {
         uint256 pathLength = 0;
         _proof = new TrieNode[](key.length + 1);
@@ -166,9 +155,8 @@ library MerkleTrie {
             if (currentNodeLength >= 32) {
                 currentNode = loadTrieNode(_hashdb, currentNodeID);
             } else {
-                currentNode = getRawNode(
-                    BytesSlice.slice(abi.encodePacked(currentNodeID), 0, currentNodeLength).toBytes()
-                );
+                currentNode =
+                    getRawNode(BytesSlice.slice(abi.encodePacked(currentNodeID), 0, currentNodeLength).toBytes());
             }
             _proof[pathLength] = currentNode;
             currentKeyIndex += currentKeyIncrement;
@@ -471,7 +459,7 @@ library MerkleTrie {
 
         for (uint256 i = 0; i < nodes.length; i++) {
             bytes memory encoded = RLPReader.readBytes(nodes[i]);
-            proof[i] = TrieNode({ encoded: encoded, decoded: RLPReader.readList(encoded) });
+            proof[i] = TrieNode({encoded: encoded, decoded: RLPReader.readList(encoded)});
         }
 
         return proof;
@@ -528,10 +516,10 @@ library MerkleTrie {
         (uint256 itemOffset, uint256 itemLength, RLPReader.RLPItemType itemType) = RLPReader.decodeKind(_in);
 
         if (itemType == RLPReader.RLPItemType.DATA_ITEM) {
-            return BytesSlice.toBytes(Slice({ ptr: _in.ptr + itemOffset, len: itemLength }));
+            return BytesSlice.toBytes(Slice({ptr: _in.ptr + itemOffset, len: itemLength}));
         } else if (itemType == RLPReader.RLPItemType.LIST_ITEM) {
             require(_in.len < 32, "bad _getNodeValue list");
-            return BytesSlice.toBytes(Slice({ ptr: _in.ptr, len: _in.len }));
+            return BytesSlice.toBytes(Slice({ptr: _in.ptr, len: _in.len}));
         }
         revert("bad _getNodeValue");
     }
@@ -599,7 +587,7 @@ library MerkleTrie {
     function _makeNode(bytes[] memory _raw) private pure returns (TrieNode memory _node) {
         bytes memory encoded = RLPWriter.writeList(_raw);
 
-        return TrieNode({ encoded: encoded, decoded: RLPReader.readList(encoded) });
+        return TrieNode({encoded: encoded, decoded: RLPReader.readList(encoded)});
     }
 
     /**
@@ -621,11 +609,11 @@ library MerkleTrie {
      * @param _value Value for the extension node.
      * @return _node New extension node with the given k/v pair.
      */
-    function _makeExtensionNode(
-        bytes memory _key,
-        bytes memory _value,
-        bool isBytes
-    ) private pure returns (TrieNode memory _node) {
+    function _makeExtensionNode(bytes memory _key, bytes memory _value, bool isBytes)
+        private
+        pure
+        returns (TrieNode memory _node)
+    {
         bytes[] memory raw = new bytes[](2);
         bytes memory key = _addHexPrefix(_key, false);
         raw[0] = RLPWriter.writeBytes(BytesSlice.fromNibbles(key));
@@ -711,11 +699,11 @@ library MerkleTrie {
      * @param _value Value to insert into the slot.
      * @return _updatedNode Modified branch node.
      */
-    function _editBranchIndex(
-        TrieNode memory _branch,
-        uint8 _index,
-        bytes memory _value
-    ) private pure returns (TrieNode memory _updatedNode) {
+    function _editBranchIndex(TrieNode memory _branch, uint8 _index, bytes memory _value)
+        private
+        pure
+        returns (TrieNode memory _updatedNode)
+    {
         bytes memory encoded = _value.length < 32 ? _value : RLPWriter.writeBytes(_value);
         _branch.decoded[_index] = BytesSlice.fromBytes(encoded);
         return _makeNode(_branch.decoded);
@@ -758,12 +746,11 @@ library MerkleTrie {
      * @param _bLength Length of the second array.
      * @return _joined Combined node array.
      */
-    function _joinNodeArrays(
-        TrieNode[] memory _a,
-        uint256 _aLength,
-        TrieNode[] memory _b,
-        uint256 _bLength
-    ) private pure returns (TrieNode[] memory _joined) {
+    function _joinNodeArrays(TrieNode[] memory _a, uint256 _aLength, TrieNode[] memory _b, uint256 _bLength)
+        private
+        pure
+        returns (TrieNode[] memory _joined)
+    {
         TrieNode[] memory ret = new TrieNode[](_aLength + _bLength);
 
         // Copy elements from the first array.

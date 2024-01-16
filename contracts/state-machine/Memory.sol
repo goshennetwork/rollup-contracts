@@ -6,12 +6,10 @@ import "../libraries/BytesSlice.sol";
 import "../libraries/BytesEndian.sol";
 
 library Memory {
-    function writeMemory(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr,
-        uint32 value
-    ) internal returns (bytes32) {
+    function writeMemory(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr, uint32 value)
+        internal
+        returns (bytes32)
+    {
         return writeMemoryBytes4(hashdb, root, ptr, BytesEndian.uint32ToLEBytes(value));
     }
 
@@ -25,12 +23,10 @@ library Memory {
         return MerkleTrie.update(hashdb, uint32ToBytes(ptr), BytesSlice.bytes4ToBytes(value), root);
     }
 
-    function writeMemoryByte(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr,
-        bytes1 value
-    ) internal returns (bytes32) {
+    function writeMemoryByte(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr, bytes1 value)
+        internal
+        returns (bytes32)
+    {
         uint32 offset = (ptr & 3);
         ptr = ptr - offset;
         bytes4 data = readMemoryBytes4(hashdb, root, ptr);
@@ -71,51 +67,51 @@ library Memory {
         return root;
     }
 
-    function readMemoryBytes2(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr
-    ) internal view returns (bytes2) {
+    function readMemoryBytes2(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr)
+        internal
+        view
+        returns (bytes2)
+    {
         uint32 offset = (ptr & 3);
         require(offset != 3, "read data cross 4byte boundry");
         bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
         return bytes2(data << (offset * 8));
     }
 
-    function readMemoryByte(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr
-    ) internal view returns (bytes1) {
+    function readMemoryByte(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr)
+        internal
+        view
+        returns (bytes1)
+    {
         uint32 offset = (ptr & 3);
         bytes4 data = readMemoryBytes4(hashdb, root, ptr - offset);
         return bytes1(data << (offset * 8));
     }
 
-    function readMemoryBytes4(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr
-    ) internal view returns (bytes4) {
+    function readMemoryBytes4(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr)
+        internal
+        view
+        returns (bytes4)
+    {
         require(ptr & 3 == 0, "non-aligned mem ptr");
         (bool exists, bytes memory value) = MerkleTrie.get(hashdb, uint32ToBytes(ptr), root);
         return exists ? BytesSlice.bytesToBytes4(value) : bytes4(0);
     }
 
-    function readMemory(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr
-    ) internal view returns (uint32) {
+    function readMemory(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr)
+        internal
+        view
+        returns (uint32)
+    {
         bytes4 result = readMemoryBytes4(hashdb, root, ptr);
         return BytesEndian.bytes4ToUint32(result);
     }
 
-    function readMemoryBytes32(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 ptr
-    ) internal view returns (bytes32) {
+    function readMemoryBytes32(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 ptr)
+        internal
+        view
+        returns (bytes32)
+    {
         bytes32 ret = 0;
         ptr += 32;
         for (uint32 i = 0; i < 8; i += 1) {
@@ -126,12 +122,11 @@ library Memory {
         return ret;
     }
 
-    function readMemoryString(
-        mapping(bytes32 => HashDB.Preimage) storage hashdb,
-        bytes32 root,
-        uint32 addr,
-        uint32 len
-    ) internal view returns (string memory) {
+    function readMemoryString(mapping(bytes32 => HashDB.Preimage) storage hashdb, bytes32 root, uint32 addr, uint32 len)
+        internal
+        view
+        returns (string memory)
+    {
         if (len == 0) {
             return "";
         }

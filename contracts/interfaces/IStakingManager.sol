@@ -57,11 +57,7 @@ interface IStakingManager {
     function finalizeWithdrawal(Types.StateInfo memory _stateInfo) external;
 
     /// Slash the proposer's collateral. can only be called by Challenge contract.
-    function slash(
-        uint64 _chainHeight,
-        bytes32 _stateRoot,
-        address _proposer
-    ) external;
+    function slash(uint64 _chainHeight, bytes32 _stateRoot, address _proposer) external;
 
     /// claim slashed collateral. Can only be called by Challenge contract.
     /// @notice revert if 1. new block hash not confirmed; 2. the new confirmed block hash

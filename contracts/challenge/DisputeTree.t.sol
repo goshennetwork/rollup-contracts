@@ -52,7 +52,7 @@ contract TestDisputeTree is TestBase {
     }
 
     /* test addNewChild
-   1.test Fail */
+    1.test Fail */
 
     //test Fail no parent node
     //when tree[_parentKey].parent == 0 , revert (parent not exist)
@@ -90,7 +90,7 @@ contract TestDisputeTree is TestBase {
     }
 
     /* test addNewChild
-2.test Pass */
+    2.test Pass */
     //test return childkey
     function testAddNewChildPass() public {
         uint256 return1 = DisputeTree.encodeNodeKey(1, 10);
@@ -163,7 +163,7 @@ contract TestDisputeTree is TestBase {
         DisputeTree.addNewChild(testTree, leafkey2, true, 100, address(1));
 
         //before remove , testTree[1,10] first LeafNode is [1,5]
-        (uint256 key1, , ) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
+        (uint256 key1,,) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
         (uint128 stepLower1, uint128 stepUpper1) = DisputeTree.decodeNodeKey(key1);
         require(stepLower1 == 1 && stepUpper1 == 5, "before remove error");
 
@@ -172,7 +172,7 @@ contract TestDisputeTree is TestBase {
         DisputeTree.removeSelfBranch(testTree, leafkey3);
 
         //after remove , testTree[1,10] first LeafNode is [5,10]
-        (uint256 key2, , ) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
+        (uint256 key2,,) = DisputeTree.getFirstLeafNode(testTree, leafkey2);
         (uint128 stepLower2, uint128 stepUpper2) = DisputeTree.decodeNodeKey(key2);
         require(stepLower2 == 5 && stepUpper2 == 10, "remove one branch error");
     }
