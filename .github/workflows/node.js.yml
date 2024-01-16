@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x ]
+        node-version: [16.x ]
 
     steps:
       - uses: actions/checkout@v2
@@ -25,6 +25,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: sudo curl -N -L "https://github.com/gakonst/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz" | sudo tar xvz -C /bin
       - run: npm install --global yarn && yarn
-      - run: yarn format-lint
+      - run: yarn fmt-check
       - run: yarn build
       - run: yarn test
