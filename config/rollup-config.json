@@ -16,7 +16,7 @@
     "ChallengeBeacon": "0x959922be3caee4b8cd9a407cc3ac1c251c2007b1",
     "ChallengeLogic": "0x0b306bf915c4d645ff596e518faf3f9669b97016",
     "ChallengeFactory": "0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae",
-    "FeeToken": "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
+    "StakeToken": "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
     "DAO": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82"
   },
   "L2Genesis": {

@@ -21,7 +21,7 @@ contract TestRollupInputChain is TestBase, RollupInputChain {
         _initialize(testAddress);
         whitelist.setSequencer(testAddress, true);
         whitelist.setProposer(testAddress, true);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
     }

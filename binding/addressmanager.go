@@ -99,12 +99,12 @@ func (_a *AddressManager) Dao(block ...web3.BlockNumber) (retval0 web3.Address, 
 	return
 }
 
-// FeeToken calls the feeToken method in the solidity contract
-func (_a *AddressManager) FeeToken(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+// StakeToken calls the stakeToken method in the solidity contract
+func (_a *AddressManager) StakeToken(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
 	_ = out // avoid not used compiler error
 
-	out, err = _a.c.Call("feeToken", web3.EncodeBlock(block...))
+	out, err = _a.c.Call("stakeToken", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}

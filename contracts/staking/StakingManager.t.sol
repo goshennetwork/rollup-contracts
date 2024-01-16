@@ -21,14 +21,14 @@ contract TestStakingManager is TestBase {
 
     function testDeposit() public {
         vm.startPrank(sender);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         require(stakingManager.isStaking(sender), "not staking");
     }
 
     function testWithdraw() public {
         vm.startPrank(sender);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         stakingManager.startWithdrawal();
         vm.stopPrank();
@@ -44,7 +44,7 @@ contract TestStakingManager is TestBase {
 
     function testSlash() public {
         vm.startPrank(sender);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
         vm.startPrank(address(rollupStateChain));

@@ -101,8 +101,8 @@ contract AddressManager is IAddressManager, IAddressResolver, OwnableUpgradeable
         return UpgradeableBeacon(getAddrByHash[AddressName.CHALLENGE_BEACON_HASH]);
     }
 
-    function feeToken() public view returns (IERC20) {
-        return IERC20(getAddrByHash[AddressName.FEE_TOKEN_HASH]);
+    function stakeToken() public view returns (IERC20) {
+        return IERC20(getAddrByHash[AddressName.STAKE_TOKEN_HASH]);
     }
 
     function machineState() public view returns (IMachineState) {

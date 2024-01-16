@@ -26,7 +26,7 @@ contract TestRollupStateChain is TestBase {
         super._initialize(sender);
         whitelist.setProposer(sender, true);
         whitelist.setProposer(sender, true);
-        feeToken.approve(address(stakingManager), stakingManager.price());
+        stakeToken.approve(address(stakingManager), stakingManager.price());
         stakingManager.deposit();
         vm.stopPrank();
     }

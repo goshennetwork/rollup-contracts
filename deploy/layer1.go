@@ -29,7 +29,7 @@ type L1Contracts struct {
 	ChallengeBeacon     *binding.UpgradeableBeacon
 	ChallengeLogic      *binding.Challenge
 	ChallengeFactory    *binding.ChallengeFactory
-	FeeToken            *binding.ERC20
+	StakeToken          *binding.ERC20
 	DAO                 web3.Address
 	Whitelist           *binding.Whitelist
 }
@@ -47,7 +47,7 @@ func (self *L1Contracts) Addresses() *config.L1ContractAddressConfig {
 		ChallengeBeacon:     self.ChallengeBeacon.Contract().Addr(),
 		ChallengeLogic:      self.ChallengeLogic.Contract().Addr(),
 		ChallengeFactory:    self.ChallengeFactory.Contract().Addr(),
-		FeeToken:            self.FeeToken.Contract().Addr(),
+		StakeToken:          self.StakeToken.Contract().Addr(),
 		DAO:                 self.DAO,
 		Whitelist:           self.Whitelist.Contract().Addr(),
 	}
@@ -72,13 +72,13 @@ func DeployBeacon(signer *contract.Signer, impl web3.Address) *binding.Upgradeab
 	return beacon
 }
 
-func DeployTestFeeToken(signer *contract.Signer) *binding.ERC20 {
-	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestFeeToken", "TFT", 18).Sign(signer).SendTransaction(signer).EnsureNoRevert()
+func DeployTestStakeToken(signer *contract.Signer) *binding.ERC20 {
+	receipt := binding.DeployTestERC20(signer.Client, signer.Address(), "TestStakeToken", "TFT", 18).Sign(signer).SendTransaction(signer).EnsureNoRevert()
 
-	feeToken := binding.NewERC20(receipt.ContractAddress, signer.Client)
-	feeToken.Contract().SetFrom(signer.Address())
+	stakeToken := binding.NewERC20(receipt.ContractAddress, signer.Client)
+	stakeToken.Contract().SetFrom(signer.Address())
 
-	return feeToken
+	return stakeToken
 }
 
 func DeployWhitelist(signer *contract.Signer, resolver web3.Address) *binding.Whitelist {
@@ -187,12 +187,12 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 	rollupInputChain := DeployRollupInputChain(signer, addrMan.Contract().Addr(), cfg.MaxEnqueueTxGasLimit, cfg.MaxWitnessTxExecGasLimit, cfg.L2ChainId)
 	rollupStateChain := DeployRollupStateChain(signer, addrMan.Contract().Addr(), cfg.FraudProofWindow)
 
-	var feeToken *binding.ERC20
-	if cfg.FeeToken.IsZero() {
-		feeToken = DeployTestFeeToken(signer)
+	var stakeToken *binding.ERC20
+	if cfg.StakeToken.IsZero() {
+		stakeToken = DeployTestStakeToken(signer)
 	} else {
-		feeToken = binding.NewERC20(cfg.FeeToken, signer.Client)
-		feeToken.Contract().SetFrom(signer.Address())
+		stakeToken = binding.NewERC20(cfg.StakeToken, signer.Client)
+		stakeToken.Contract().SetFrom(signer.Address())
 	}
 
 	whitelist := DeployWhitelist(signer, addrMan.Contract().Addr())
@@ -216,7 +216,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		"ChallengeFactory",
 		"L2CrossLayerWitness",
 		"Whitelist",
-		"FeeToken",
+		"StakeToken",
 	}
 	addrs := []web3.Address{
 		l1CrossLayerWitness.Contract().Addr(),
@@ -230,7 +230,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		factory.Contract().Addr(),
 		cfg.L2CrossLayerWitness,
 		whitelist.Contract().Addr(),
-		feeToken.Contract().Addr(),
+		stakeToken.Contract().Addr(),
 	}
 	addrMan.SetAddressBatch(names, addrs).Sign(signer).SendTransaction(signer)
 
@@ -242,7 +242,7 @@ func DeployL1Contracts(signer *contract.Signer, cfg *config.L1ChainDeployConfig)
 		RollupStateChain:    rollupStateChain,
 		L1CrossLayerWitness: l1CrossLayerWitness,
 		L1StandardBridge:    bridge,
-		FeeToken:            feeToken,
+		StakeToken:          stakeToken,
 		ChallengeLogic:      challenge,
 		ChallengeBeacon:     beacon,
 		ChallengeFactory:    factory,

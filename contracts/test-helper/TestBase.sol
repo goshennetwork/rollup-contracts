@@ -28,7 +28,7 @@ contract TestBase {
     RollupInputChain rollupInputChain;
     TestMockL1CrossLayerWitness l1CrossLayerWitness;
     TestMockL2CrossLayerWitness l2CrossLayerWitness;
-    TestERC20 feeToken;
+    TestERC20 stakeToken;
     StakingManager stakingManager;
     ProxyAdmin proxyAdmin;
     uint256 constant fraudProofWindow = 3;
@@ -68,7 +68,7 @@ contract TestBase {
         );
         l2CrossLayerWitness = TestMockL2CrossLayerWitness(address(proxy));
 
-        feeToken = new TestERC20("test token", "test", 18);
+        stakeToken = new TestERC20("test token", "test", 18);
 
         RollupStateChain rollupStateChainLogic = new RollupStateChain();
         proxy = new TransparentUpgradeableProxy(
@@ -150,7 +150,7 @@ contract TestBase {
         addressManager.setAddress(AddressName.DAO, dao);
         addressManager.setAddress(AddressName.CHALLENGE_FACTORY, challengerFactory);
         addressManager.setAddress(AddressName.WHITELIST, address(whitelist));
-        addressManager.setAddress(AddressName.FEE_TOKEN, address(feeToken));
+        addressManager.setAddress(AddressName.STAKE_TOKEN, address(stakeToken));
     }
 
     function callRelayMessage(

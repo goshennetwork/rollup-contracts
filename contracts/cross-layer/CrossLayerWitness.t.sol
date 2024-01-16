@@ -65,7 +65,7 @@ contract TestCrossLayerWitness {
         addressManager.setAddress(AddressName.L1_CROSS_LAYER_WITNESS, address(l1CrossLayerWitness));
         addressManager.setAddress(AddressName.L2_CROSS_LAYER_WITNESS, address(l2CrossLayerWitness));
         addressManager.setAddress(AddressName.DAO, sender);
-        addressManager.setAddress(AddressName.FEE_TOKEN, address(erc20));
+        addressManager.setAddress(AddressName.STAKE_TOKEN, address(erc20));
         stakingManager.deposit();
         vm.stopPrank();
     }
