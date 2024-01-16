@@ -99,25 +99,6 @@ func (_a *AddressManager) Dao(block ...web3.BlockNumber) (retval0 web3.Address, 
 	return
 }
 
-// StakeToken calls the stakeToken method in the solidity contract
-func (_a *AddressManager) StakeToken(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("stakeToken", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // GetAddr calls the getAddr method in the solidity contract
 func (_a *AddressManager) GetAddr(name string, block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
@@ -333,6 +314,25 @@ func (_a *AddressManager) RollupStateChainContainer(block ...web3.BlockNumber) (
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("rollupStateChainContainer", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// StakeToken calls the stakeToken method in the solidity contract
+func (_a *AddressManager) StakeToken(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("stakeToken", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}
