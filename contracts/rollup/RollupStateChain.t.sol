@@ -13,11 +13,9 @@ import "../test-helper/TestBase.sol";
 contract TestRollupStateChain is TestBase {
     address sender = address(0x7777); //admin
     address testAddress = address(0x8888);
+
     event StateBatchAppended(
-        address indexed _proposer,
-        uint64 indexed _startIndex,
-        uint64 _timestamp,
-        bytes32[] _blockHash
+        address indexed _proposer, uint64 indexed _startIndex, uint64 _timestamp, bytes32[] _blockHash
     );
     event StateRollbacked(uint64 indexed _stateIndex, bytes32 indexed _blockHash);
 
@@ -32,8 +30,8 @@ contract TestRollupStateChain is TestBase {
     }
 
     /* test appendStateBatch
-   1.test Fail
-*/
+    1.test Fail
+    */
     // test address not proposer
     function testAppendNotSequencer() public {
         bytes32[] memory states = new bytes32[](1);
@@ -90,8 +88,8 @@ contract TestRollupStateChain is TestBase {
     }
 
     /* test appendStateBatch
-   2.test pass
-*/
+    2.test pass
+    */
 
     // test Append 2*batch (1+3 == 4) + test event
     function testAppendStateBatch() public {
@@ -116,8 +114,8 @@ contract TestRollupStateChain is TestBase {
     }
 
     /* test rollbackStateBefore
-   1.test Fail
-*/
+    1.test Fail
+    */
     // test address not challenge contract
     function testRollbackNotchallenge() public {
         vm.startPrank(testAddress, testAddress);
@@ -168,8 +166,8 @@ contract TestRollupStateChain is TestBase {
     }
 
     /* test rollbackStateBefore
-   2.test Pass
-*/
+    2.test Pass
+    */
     // test rollback*3 & test event
     function testRollbackBefore() public {
         vm.startPrank(address(rollupInputChain));

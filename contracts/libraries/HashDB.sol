@@ -8,16 +8,18 @@ library HashDB {
         uint32 length;
         mapping(uint32 => bytes) partials;
     }
+
     using HashDB for mapping(bytes32 => Preimage);
     using BytesSlice for Slice;
+
     uint256 constant PartialSize = 1024;
     bytes32 constant EMPTY_HASH = keccak256("");
 
-    function preimageAtIndex(
-        mapping(bytes32 => Preimage) storage partialImage,
-        bytes32 _hash,
-        uint32 _index
-    ) internal view returns (bytes memory) {
+    function preimageAtIndex(mapping(bytes32 => Preimage) storage partialImage, bytes32 _hash, uint32 _index)
+        internal
+        view
+        returns (bytes memory)
+    {
         if (_hash == EMPTY_HASH) {
             return "";
         }
@@ -27,11 +29,9 @@ library HashDB {
         return _ret;
     }
 
-    function insertPartialImage(
-        mapping(bytes32 => Preimage) storage partialImage,
-        bytes memory _data,
-        uint32 _index
-    ) internal {
+    function insertPartialImage(mapping(bytes32 => Preimage) storage partialImage, bytes memory _data, uint32 _index)
+        internal
+    {
         uint256 _length = _data.length;
         require(_index * PartialSize < _length, "wrong index");
         bytes32 _hash = keccak256(_data);

@@ -36,7 +36,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         uint256 amount = 10;
         vm.expectEmit(true, true, true, true, address(l1StandardBridge));
         emit DepositInitiated(address(0), address(0), sender, sender, amount, "0x01");
-        l1StandardBridge.depositETH{ value: amount }("0x01");
+        l1StandardBridge.depositETH{value: amount}("0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == amount, "testDepositETH failed");
@@ -61,7 +61,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         // test amount > sender.balance
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
-        l1StandardBridge.depositETH{ value: 20 }("0x01");
+        l1StandardBridge.depositETH{value: 20}("0x01");
     }
 
     function testDepositETHTo() public {
@@ -70,7 +70,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         uint256 senderBal = sender.balance;
         vm.expectEmit(true, true, true, true, address(l1StandardBridge));
         emit DepositInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
-        l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
+        l1StandardBridge.depositETHTo{value: 10}(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testDepositETH failed");
@@ -85,7 +85,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         uint256 senderBal = sender.balance;
         vm.expectEmit(true, true, true, true, address(l1StandardBridge));
         emit DepositInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
-        l1StandardBridge.depositETHTo{ value: 10 }(toAddr, "0x01");
+        l1StandardBridge.depositETHTo{value: 10}(toAddr, "0x01");
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testDepositETH failed");
@@ -167,11 +167,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         uint256 toAddrBal = toAddr.balance;
         bytes memory signatureWithData = abi.encodeWithSignature(
-            "finalizeETHWithdrawal(address,address,uint256,bytes)",
-            sender,
-            toAddr,
-            1 ether,
-            "0x01"
+            "finalizeETHWithdrawal(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01"
         );
         vm.expectEmit(true, true, true, true, address(l1StandardBridge));
         emit WithdrawalFinalized(address(0), address(0), sender, toAddr, 1 ether, "0x01");
@@ -187,11 +183,7 @@ contract TestL1StandardBridge is TestBase, L1StandardBridge {
         uint256 l1StandardBridgeBal = address(l1StandardBridge).balance;
         require(l1StandardBridgeBal < 1 ether, "l1StandardBridgeBal failed");
         bytes memory signatureWithData = abi.encodeWithSignature(
-            "finalizeETHWithdrawal(address,address,uint256,bytes)",
-            sender,
-            toAddr,
-            1 ether,
-            "0x01"
+            "finalizeETHWithdrawal(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01"
         );
         callRelayMessage(1, address(l1StandardBridge), l2MockBridgeAddr, signatureWithData);
     }

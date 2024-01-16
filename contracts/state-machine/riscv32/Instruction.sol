@@ -33,14 +33,7 @@ library Instruction {
     function decodeRType(uint32 inst)
         internal
         pure
-        returns (
-            uint8 op,
-            uint8 rd,
-            uint8 f3,
-            uint8 rs1,
-            uint8 rs2,
-            uint8 f7
-        )
+        returns (uint8 op, uint8 rd, uint8 f3, uint8 rs1, uint8 rs2, uint8 f7)
     {
         op = uint8(inst) & 0x7f;
         rd = uint8(inst >> 7) & 0x1f;
@@ -52,17 +45,7 @@ library Instruction {
     }
 
     // I-type: [12]immediate[11:0] + [5]rs1 + [3]funct3 + [5]rd + [7]opcode
-    function decodeIType(uint32 inst)
-        internal
-        pure
-        returns (
-            uint8 op,
-            uint8 rd,
-            uint8 f3,
-            uint8 rs1,
-            uint32 imm
-        )
-    {
+    function decodeIType(uint32 inst) internal pure returns (uint8 op, uint8 rd, uint8 f3, uint8 rs1, uint32 imm) {
         op = uint8(inst) & 0x7f;
         rd = uint8(inst >> 7) & 0x1f;
         f3 = uint8(inst >> (7 + 5)) & 0x07;
@@ -73,17 +56,7 @@ library Instruction {
     }
 
     // S-type: [7]imm[11:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[0:4] + [7]opcode
-    function decodeSType(uint32 inst)
-        internal
-        pure
-        returns (
-            uint8 op,
-            uint8 f3,
-            uint8 rs1,
-            uint8 rs2,
-            uint32 imm
-        )
-    {
+    function decodeSType(uint32 inst) internal pure returns (uint8 op, uint8 f3, uint8 rs1, uint8 rs2, uint32 imm) {
         uint8 imm1;
         uint8 imm2;
         (op, imm1, f3, rs1, rs2, imm2) = decodeRType(inst);
@@ -92,17 +65,7 @@ library Instruction {
     }
 
     // B-type: imm[12]imm[10:5] + [5]rs2 + [5]rs1 + [3]funct3 + [5]imm[4:1]imm[11] + [7]opcode
-    function decodeBType(uint32 inst)
-        internal
-        pure
-        returns (
-            uint8 op,
-            uint8 f3,
-            uint8 rs1,
-            uint8 rs2,
-            uint32 imm
-        )
-    {
+    function decodeBType(uint32 inst) internal pure returns (uint8 op, uint8 f3, uint8 rs1, uint8 rs2, uint32 imm) {
         uint8 imm1;
         uint8 imm2;
         (op, imm1, f3, rs1, rs2, imm2) = decodeRType(inst);
@@ -115,30 +78,14 @@ library Instruction {
     }
 
     // U-type: [20]imm[31:12] + [5]rd + [7]opcpde
-    function decodeUType(uint32 inst)
-        internal
-        pure
-        returns (
-            uint8 op,
-            uint8 rd,
-            uint32 imm
-        )
-    {
+    function decodeUType(uint32 inst) internal pure returns (uint8 op, uint8 rd, uint32 imm) {
         op = uint8(inst) & 0x7f;
         rd = uint8(inst >> 7) & 0x1f;
         imm = (inst >> 12) << 12;
     }
 
     // J-type: [1]imm[20] + [10]imm[10:1] + [1]imm[11] + [8]imm[19:12] + [5]rd + [7]opcode
-    function decodeJType(uint32 inst)
-        internal
-        pure
-        returns (
-            uint8 op,
-            uint8 rd,
-            uint32 imm
-        )
-    {
+    function decodeJType(uint32 inst) internal pure returns (uint8 op, uint8 rd, uint32 imm) {
         op = uint8(inst) & 0x7f;
         rd = uint8(inst >> 7) & 0x1f;
         uint32 imm12_19 = (inst >> 12) & 0xff;

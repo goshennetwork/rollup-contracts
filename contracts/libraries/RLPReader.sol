@@ -9,6 +9,7 @@ import "./BytesSlice.sol";
  */
 library RLPReader {
     uint256 internal constant MAX_LIST_LENGTH = 32;
+
     enum RLPItemType {
         DATA_ITEM,
         LIST_ITEM
@@ -35,11 +36,10 @@ library RLPReader {
         require(listOffset + listLength == rawRlp.len, "Provided RLP List not consistent");
         while (offset < rawRlp.len) {
             require(itemCount < MAX_LIST_LENGTH, "Provided RLP list exceeds max list length");
-            (uint256 itemOffset, uint256 itemLength, ) = decodeKind(
-                Slice({ len: rawRlp.len - offset, ptr: rawRlp.ptr + offset })
-            );
+            (uint256 itemOffset, uint256 itemLength,) =
+                decodeKind(Slice({len: rawRlp.len - offset, ptr: rawRlp.ptr + offset}));
 
-            out[itemCount] = Slice({ len: itemLength + itemOffset, ptr: rawRlp.ptr + offset });
+            out[itemCount] = Slice({len: itemLength + itemOffset, ptr: rawRlp.ptr + offset});
 
             itemCount += 1;
             offset += itemOffset + itemLength;
@@ -67,7 +67,7 @@ library RLPReader {
 
         require(itemType == RLPItemType.DATA_ITEM, "Invalid RLP bytes value.");
 
-        return BytesSlice.toBytes(Slice({ ptr: rawRlp.ptr + itemOffset, len: itemLength }));
+        return BytesSlice.toBytes(Slice({ptr: rawRlp.ptr + itemOffset, len: itemLength}));
     }
 
     function readBytes(bytes memory rawRlp) internal pure returns (bytes memory) {
@@ -95,9 +95,7 @@ library RLPReader {
             out := mload(ptr)
 
             // Shift the bytes over to match the item size.
-            if lt(itemLength, 32) {
-                out := div(out, exp(256, sub(32, itemLength)))
-            }
+            if lt(itemLength, 32) { out := div(out, exp(256, sub(32, itemLength))) }
         }
 
         return out;
@@ -165,15 +163,7 @@ library RLPReader {
      * @return Length of the encoded data.
      * @return RLP item type (LIST_ITEM or DATA_ITEM).
      */
-    function decodeKind(Slice memory rawRlp)
-        internal
-        pure
-        returns (
-            uint256,
-            uint256,
-            RLPItemType
-        )
-    {
+    function decodeKind(Slice memory rawRlp) internal pure returns (uint256, uint256, RLPItemType) {
         require(rawRlp.len > 0, "RLP item cannot be null.");
 
         uint256 ptr = rawRlp.ptr;

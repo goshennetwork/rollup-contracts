@@ -36,7 +36,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         uint256 senderBal = sender.balance;
         vm.expectEmit(true, true, true, true, address(l2StandardBridge));
         emit WithdrawalInitiated(address(0), address(0), sender, sender, 1 ether, "0x01");
-        l2StandardBridge.withdrawETH{ value: 1 ether }("0x01");
+        l2StandardBridge.withdrawETH{value: 1 ether}("0x01");
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 1 ether, "testWithdrawETH failed");
@@ -61,7 +61,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         // test amount > sender.balance
         vm.deal(sender, 10);
         vm.startPrank(sender, sender);
-        l2StandardBridge.withdrawETH{ value: 20 }("0x01");
+        l2StandardBridge.withdrawETH{value: 20}("0x01");
     }
 
     function testWithdrawETHTo() public {
@@ -71,7 +71,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         uint256 senderBal = sender.balance;
         vm.expectEmit(true, true, true, true, address(l2StandardBridge));
         emit WithdrawalInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
-        l2StandardBridge.withdrawETHTo{ value: 10 }(toAddr, "0x01");
+        l2StandardBridge.withdrawETHTo{value: 10}(toAddr, "0x01");
         uint256 l2StandardBridgeAfterBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testWithdrawETHTo failed");
@@ -86,7 +86,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         uint256 senderBal = sender.balance;
         vm.expectEmit(true, true, true, true, address(l2StandardBridge));
         emit WithdrawalInitiated(address(0), address(0), sender, toAddr, 10, "0x01");
-        l2StandardBridge.withdrawETHTo{ value: 10 }(toAddr, "0x01");
+        l2StandardBridge.withdrawETHTo{value: 10}(toAddr, "0x01");
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 senderAfterBal = sender.balance;
         require(senderBal - senderAfterBal == 10, "testWithdrawETHTo failed");
@@ -159,11 +159,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         uint256 toAddrBal = toAddr.balance;
         bytes memory signatureWithData = abi.encodeWithSignature(
-            "finalizeETHDeposit(address,address,uint256,bytes)",
-            sender,
-            toAddr,
-            1 ether,
-            "0x01"
+            "finalizeETHDeposit(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01"
         );
         vm.expectEmit(true, true, true, true, address(l2StandardBridge));
         emit DepositFinalized(address(0), address(0), sender, toAddr, 1 ether, "0x01");
@@ -177,11 +173,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
     function testFailFinalizeETHDeposit() public {
         // l1StandardBridge ETH not enough   tx revert
         bytes memory signatureWithData = abi.encodeWithSignature(
-            "finalizeETHDeposit(address,address,uint256,bytes)",
-            sender,
-            toAddr,
-            1 ether,
-            "0x01"
+            "finalizeETHDeposit(address,address,uint256,bytes)", sender, toAddr, 1 ether, "0x01"
         );
         callRelayMessage(2, address(l2StandardBridge), l1MockBridgeAddr, signatureWithData);
     }
@@ -191,11 +183,7 @@ contract TestL2StandardBridge is TestBase, L2StandardBridge {
         uint256 l2StandardBridgeBal = address(l2StandardBridge).balance;
         require(l2StandardBridgeBal == 1 ether, "l2StandardBridgeBal != 1 ether");
         bytes memory signatureWithData = abi.encodeWithSignature(
-            "finalizeETHDeposit(address,address,uint256,bytes)",
-            sender,
-            toAddr,
-            2 ether,
-            "0x01"
+            "finalizeETHDeposit(address,address,uint256,bytes)", sender, toAddr, 2 ether, "0x01"
         );
         callRelayMessage(2, address(l2StandardBridge), l1MockBridgeAddr, signatureWithData);
     }

@@ -73,9 +73,11 @@ library RLPWriter {
         return encoded;
     }
 
-    /*********************
+    /**
+     *
      * Private Functions *
-     *********************/
+     *
+     */
 
     /**
      * Encode the first byte, followed by the `len` in binary form if `length` is more than 55.
@@ -100,7 +102,7 @@ library RLPWriter {
             encoded = new bytes(lenLen + 1);
             encoded[0] = bytes1(uint8(lenLen) + uint8(_offset) + 55);
             for (i = 1; i <= lenLen; i++) {
-                encoded[i] = bytes1(uint8((_len / (256**(lenLen - i))) % 256));
+                encoded[i] = bytes1(uint8((_len / (256 ** (lenLen - i))) % 256));
             }
         }
 

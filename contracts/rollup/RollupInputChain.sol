@@ -100,20 +100,18 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         bytes memory _rlpTx = RLPWriter.writeList(_rlpList);
         require(_rlpTx.length <= _maxTxSize, "too large tx data size");
         uint64 _now = uint64(block.timestamp);
-        queuedTxInfos.push(QueueTxInfo({ timestamp: _now, transactionHash: keccak256(_rlpTx) }));
+        queuedTxInfos.push(QueueTxInfo({timestamp: _now, transactionHash: keccak256(_rlpTx)}));
 
         emit TransactionEnqueued(uint64(queuedTxInfos.length - 1), sender, _target, _rlpTx, _now);
     }
 
     //encode tx params: sender, to, gasLimit, data, nonce, r,s,v and gasPrice(1 GWEI), value(0), chainId
     //sender used to recognize tx from L1CrossLayerWitness
-    function getRlpList(
-        uint64 _nonce,
-        uint64 _gasLimit,
-        uint256 _gasPrice,
-        address _target,
-        bytes memory _data
-    ) internal view returns (bytes[] memory) {
+    function getRlpList(uint64 _nonce, uint64 _gasLimit, uint256 _gasPrice, address _target, bytes memory _data)
+        internal
+        view
+        returns (bytes[] memory)
+    {
         bytes[] memory list = new bytes[](9);
         list[0] = RLPWriter.writeUint(uint256(_nonce));
         list[1] = RLPWriter.writeUint(_gasPrice);

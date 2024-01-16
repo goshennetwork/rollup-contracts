@@ -12,6 +12,7 @@ import "./CrossLayerCodec.sol";
 
 contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpgradeable {
     using MerkleMountainRange for CompactMerkleTree;
+
     IAddressResolver addressResolver;
 
     CompactMerkleTree compactMerkleTree;
@@ -49,7 +50,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
         require(successRelayedMessages[_hash] == false, "provided message already been relayed");
         require(blockedMessages[_hash] == false, "message blocked");
         crossLayerMsgSender = _sender;
-        (bool success, ) = _target.call(_message);
+        (bool success,) = _target.call(_message);
         crossLayerMsgSender = address(0);
         if (success) {
             successRelayedMessages[_hash] = true;
@@ -66,21 +67,10 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, msg.sender, treeSize, _message);
         bytes32 _mmrRoot = compactMerkleTree.appendLeafHash(_hash);
         bytes memory _crossLayerCalldata = CrossLayerCodec.encodeL1ToL2CallData(
-            _target,
-            msg.sender,
-            _message,
-            treeSize,
-            compactMerkleTree.rootHash,
-            treeSize + 1
+            _target, msg.sender, _message, treeSize, compactMerkleTree.rootHash, treeSize + 1
         );
         addressResolver.rollupInputChain().enqueue(
-            address(addressResolver.l2CrossLayerWitness()),
-            0,
-            _crossLayerCalldata,
-            treeSize,
-            0,
-            0,
-            0
+            address(addressResolver.l2CrossLayerWitness()), 0, _crossLayerCalldata, treeSize, 0, 0, 0
         );
         emit MessageSent(treeSize, _target, msg.sender, _mmrRoot, _message);
     }

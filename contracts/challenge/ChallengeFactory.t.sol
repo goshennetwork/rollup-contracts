@@ -18,11 +18,11 @@ import "../staking/StakingManager.sol";
 import "../dao/Whitelist.sol";
 
 contract MockStateTransition {
-    function generateStartState(
-        bytes32 rollupInputHash,
-        uint64 blockNumber,
-        bytes32 parentBlockHash
-    ) external pure returns (bytes32) {
+    function generateStartState(bytes32 rollupInputHash, uint64 blockNumber, bytes32 parentBlockHash)
+        external
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(rollupInputHash, blockNumber, parentBlockHash));
     }
 }
@@ -93,7 +93,7 @@ contract TestChallengeFactory is ChallengeFactory {
     }
 
     /* Test newChallenge
-   1.Test Fail */
+    1.Test Fail */
 
     // test caller not challenger
     function testNewChallengeNotChallenger() public {

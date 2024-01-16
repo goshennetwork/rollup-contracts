@@ -13,6 +13,7 @@ contract MachineState is IMachineState {
     using Memory for mapping(bytes32 => HashDB.Preimage);
     using Register for mapping(bytes32 => HashDB.Preimage);
     using Syscall for mapping(bytes32 => HashDB.Preimage);
+
     mapping(bytes32 => HashDB.Preimage) hashdb;
 
     function insertPreimage(bytes calldata _node) public {
@@ -39,51 +40,27 @@ contract MachineState is IMachineState {
         return BytesEndian.bytes4ToUint32(bytes4(_data));
     }
 
-    function writeMemory(
-        bytes32 root,
-        uint32 ptr,
-        uint32 value
-    ) public returns (bytes32) {
+    function writeMemory(bytes32 root, uint32 ptr, uint32 value) public returns (bytes32) {
         return hashdb.writeMemory(root, ptr, value);
     }
 
-    function writeMemoryBytes4(
-        bytes32 root,
-        uint32 ptr,
-        bytes4 value
-    ) public returns (bytes32) {
+    function writeMemoryBytes4(bytes32 root, uint32 ptr, bytes4 value) public returns (bytes32) {
         return hashdb.writeMemoryBytes4(root, ptr, value);
     }
 
-    function writeMemoryByte(
-        bytes32 root,
-        uint32 ptr,
-        bytes1 value
-    ) public returns (bytes32) {
+    function writeMemoryByte(bytes32 root, uint32 ptr, bytes1 value) public returns (bytes32) {
         return hashdb.writeMemoryByte(root, ptr, value);
     }
 
-    function writeMemoryBytes2(
-        bytes32 root,
-        uint32 ptr,
-        bytes2 value
-    ) public returns (bytes32) {
+    function writeMemoryBytes2(bytes32 root, uint32 ptr, bytes2 value) public returns (bytes32) {
         return hashdb.writeMemoryBytes2(root, ptr, value);
     }
 
-    function writeMemoryBytes32(
-        bytes32 root,
-        uint32 ptr,
-        bytes32 val
-    ) public returns (bytes32) {
+    function writeMemoryBytes32(bytes32 root, uint32 ptr, bytes32 val) public returns (bytes32) {
         return hashdb.writeMemoryBytes32(root, ptr, val);
     }
 
-    function writeMemoryAddr(
-        bytes32 root,
-        uint32 ptr,
-        address val
-    ) public returns (bytes32) {
+    function writeMemoryAddr(bytes32 root, uint32 ptr, address val) public returns (bytes32) {
         bytes20 data = bytes20(val);
         for (uint32 i; i < 20; i += 4) {
             root = hashdb.writeMemoryBytes4(root, ptr + i, bytes4(data));
@@ -112,19 +89,11 @@ contract MachineState is IMachineState {
         return hashdb.readMemoryBytes32(root, ptr);
     }
 
-    function writeRegisterBytes4(
-        bytes32 root,
-        uint32 regid,
-        bytes4 value
-    ) public returns (bytes32) {
+    function writeRegisterBytes4(bytes32 root, uint32 regid, bytes4 value) public returns (bytes32) {
         return hashdb.writeRegisterBytes4(root, regid, value);
     }
 
-    function writeRegister(
-        bytes32 root,
-        uint32 regid,
-        uint32 value
-    ) public returns (bytes32) {
+    function writeRegister(bytes32 root, uint32 regid, uint32 value) public returns (bytes32) {
         return hashdb.writeRegister(root, regid, value);
     }
 
@@ -136,11 +105,7 @@ contract MachineState is IMachineState {
         return hashdb.readRegister(root, regid);
     }
 
-    function readMemoryString(
-        bytes32 _root,
-        uint32 addr,
-        uint32 len
-    ) public view returns (string memory) {
+    function readMemoryString(bytes32 _root, uint32 addr, uint32 len) public view returns (string memory) {
         return hashdb.readMemoryString(_root, addr, len);
     }
 

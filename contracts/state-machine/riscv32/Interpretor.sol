@@ -20,18 +20,11 @@ contract Interpretor is IInterpretor, Initializable {
     }
 
     //WARNNING: this is only for testing RV32I system.
-    function start(bytes32 _root, uint32 _entrypoint)
-        public
-        returns (
-            bytes32,
-            uint32,
-            uint32
-        )
-    {
+    function start(bytes32 _root, uint32 _entrypoint) public returns (bytes32, uint32, uint32) {
         _root = mstate.writeRegister(_root, Register.REG_PC, _entrypoint);
         uint32 _i;
         uint32 inst;
-        for (bool halted = false; !halted; ) {
+        for (bool halted = false; !halted;) {
             _i++;
             uint32 _pc = mstate.readRegister(_root, Register.REG_PC);
             if (_pc & 3 != 0) {
@@ -124,7 +117,7 @@ contract Interpretor is IInterpretor, Initializable {
         } else if (op == Instruction.OP_I_FENCE_TYPE) {
             // fence: nop
         } else if (op == Instruction.OP_I_CSR_TYPE) {
-            (, , uint8 fn3, , uint32 csr) = Instruction.decodeIType(inst);
+            (,, uint8 fn3,, uint32 csr) = Instruction.decodeIType(inst);
             if (fn3 == 0) {
                 // environment call/break
                 if (csr == 0) {
@@ -258,12 +251,9 @@ contract Interpretor is IInterpretor, Initializable {
             if (_fn3 == 2 || _fn3 == 3) {
                 nextPC = MemoryLayout.HaltMagic;
             } else if (
-                (_fn3 == 0 && vrs1 == vrs2) ||
-                (_fn3 == 1 && vrs1 != vrs2) ||
-                (_fn3 == 4 && int32(vrs1) < int32(vrs2)) ||
-                (_fn3 == 5 && int32(vrs1) >= int32(vrs2)) ||
-                (_fn3 == 6 && vrs1 < vrs2) ||
-                (_fn3 == 7 && vrs1 >= vrs2)
+                (_fn3 == 0 && vrs1 == vrs2) || (_fn3 == 1 && vrs1 != vrs2) || (_fn3 == 4 && int32(vrs1) < int32(vrs2))
+                    || (_fn3 == 5 && int32(vrs1) >= int32(vrs2)) || (_fn3 == 6 && vrs1 < vrs2)
+                    || (_fn3 == 7 && vrs1 >= vrs2)
             ) {
                 unchecked {
                     nextPC = vpc + _offset;
@@ -347,11 +337,7 @@ contract Interpretor is IInterpretor, Initializable {
         return (_root, _nextPC == MemoryLayout.HaltMagic);
     }
 
-    function handleAmo(
-        bytes32 root,
-        uint32 nextPC,
-        uint32 inst
-    ) internal returns (bytes32, uint32) {
+    function handleAmo(bytes32 root, uint32 nextPC, uint32 inst) internal returns (bytes32, uint32) {
         (, uint8 rd, uint8 fn3, uint32 rs1, uint32 rs2, uint8 fn7) = Instruction.decodeRType(inst);
         if (fn3 != 2) {
             nextPC = MemoryLayout.HaltMagic;

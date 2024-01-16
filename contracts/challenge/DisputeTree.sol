@@ -22,11 +22,11 @@ library DisputeTree {
         stepUpper = uint128(nodeKey >> 128);
     }
 
-    function searchNodeWithMidStep(
-        uint128 _stepLower,
-        uint128 _stepUpper,
-        uint256 _midStep
-    ) internal pure returns (uint256) {
+    function searchNodeWithMidStep(uint128 _stepLower, uint128 _stepUpper, uint256 _midStep)
+        internal
+        pure
+        returns (uint256)
+    {
         while (_stepUpper - _stepLower > 1) {
             uint128 _stateStep = middle(_stepLower, _stepUpper);
             if (_midStep < _stateStep) {
@@ -81,11 +81,7 @@ library DisputeTree {
     function getFirstLeafNode(mapping(uint256 => DisputeNode) storage tree, uint256 _rootKey)
         internal
         view
-        returns (
-            uint256,
-            uint64,
-            bool
-        )
+        returns (uint256, uint64, bool)
     {
         uint64 _depth;
         bool _oneBranch = true;
@@ -137,7 +133,7 @@ library DisputeTree {
             assert(parentNode.parent > 0);
 
             (uint128 stepLower, uint128 stepUpper) = decodeNodeKey(_parentKey);
-            (uint128 childStepLower, ) = decodeNodeKey(_leafKey);
+            (uint128 childStepLower,) = decodeNodeKey(_leafKey);
             uint256 _siblingKey;
             if (stepLower == childStepLower) {
                 _siblingKey = encodeNodeKey(middle(stepLower, stepUpper), stepUpper);

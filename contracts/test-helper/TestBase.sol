@@ -21,6 +21,7 @@ contract TestBase {
     ForgeVM public constant vm = ForgeVM(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
     using MerkleMountainRange for CompactMerkleTree;
+
     CompactMerkleTree _trees;
 
     AddressManager addressManager;
@@ -105,11 +106,7 @@ contract TestBase {
             address(rollupInputChainLogic),
             address(proxyAdmin),
             abi.encodeWithSelector(
-                RollupInputChain.initialize.selector,
-                address(addressManager),
-                15000000,
-                3000000,
-                1234
+                RollupInputChain.initialize.selector, address(addressManager), 15000000, 3000000, 1234
             )
         );
         rollupInputChain = RollupInputChain(address(proxy));
@@ -120,9 +117,7 @@ contract TestBase {
             address(stateStorageContainer),
             address(proxyAdmin),
             abi.encodeWithSelector(
-                ChainStorageContainer.initialize.selector,
-                AddressName.ROLLUP_STATE_CHAIN,
-                address(addressManager)
+                ChainStorageContainer.initialize.selector, AddressName.ROLLUP_STATE_CHAIN, address(addressManager)
             )
         );
         address stateStorage = address(address(proxy));
@@ -133,9 +128,7 @@ contract TestBase {
             address(inputStorageContainer),
             address(proxyAdmin),
             abi.encodeWithSelector(
-                ChainStorageContainer.initialize.selector,
-                AddressName.ROLLUP_INPUT_CHAIN,
-                address(addressManager)
+                ChainStorageContainer.initialize.selector, AddressName.ROLLUP_INPUT_CHAIN, address(addressManager)
             )
         );
         address inputStorage = address(address(proxy));
@@ -153,12 +146,9 @@ contract TestBase {
         addressManager.setAddress(AddressName.STAKE_TOKEN, address(stakeToken));
     }
 
-    function callRelayMessage(
-        uint8 witnessType,
-        address target,
-        address sender,
-        bytes memory signatureWithData
-    ) internal {
+    function callRelayMessage(uint8 witnessType, address target, address sender, bytes memory signatureWithData)
+        internal
+    {
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(target, sender, 0, signatureWithData);
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
@@ -178,15 +168,8 @@ contract TestBase {
         vm.stopPrank();
         if (witnessType == 1) {
             vm.startPrank(address(addressManager));
-            bool success = l1CrossLayerWitness.relayMessage(
-                target,
-                sender,
-                signatureWithData,
-                0,
-                rlpData,
-                stateInfo,
-                _proof
-            );
+            bool success =
+                l1CrossLayerWitness.relayMessage(target, sender, signatureWithData, 0, rlpData, stateInfo, _proof);
             require(success, "call l1 relayMessage failed");
         } else if (witnessType == 2) {
             vm.startPrank(Constants.L1_CROSS_LAYER_WITNESS);

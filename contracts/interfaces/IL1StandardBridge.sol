@@ -8,9 +8,11 @@ import "./IL1ERC20Bridge.sol";
  * @title IL1StandardBridge
  */
 interface IL1StandardBridge is IL1ERC20Bridge {
-    /********************
+    /**
+     *
      * Public Functions *
-     ********************/
+     *
+     */
 
     /**
      * @dev Deposit an amount of the ETH to the caller's balance on L2.
@@ -29,9 +31,11 @@ interface IL1StandardBridge is IL1ERC20Bridge {
      */
     function depositETHTo(address _to, bytes calldata _data) external payable;
 
-    /*************************
+    /**
+     *
      * Cross-chain Functions *
-     *************************/
+     *
+     */
 
     /**
      * @dev Complete a withdrawal from L2 to L1, and credit funds to the recipient's balance of the
@@ -44,10 +48,5 @@ interface IL1StandardBridge is IL1ERC20Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function finalizeETHWithdrawal(
-        address _from,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function finalizeETHWithdrawal(address _from, address _to, uint256 _amount, bytes calldata _data) external;
 }

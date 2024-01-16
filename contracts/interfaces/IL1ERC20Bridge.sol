@@ -3,9 +3,11 @@
 pragma solidity ^0.8.0;
 
 interface IL1ERC20Bridge {
-    /**********
+    /**
+     *
      * Events *
-     **********/
+     *
+     */
     event DepositInitiated(
         address indexed _l1Token,
         address indexed _l2Token,
@@ -24,9 +26,11 @@ interface IL1ERC20Bridge {
         bytes _data
     );
 
-    /********************
+    /**
+     *
      * Public Functions *
-     ********************/
+     *
+     */
 
     /**
      * @dev get the address of the corresponding L2 bridge contract.
@@ -43,12 +47,7 @@ interface IL1ERC20Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function depositERC20(
-        address _l1Token,
-        address _l2Token,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function depositERC20(address _l1Token, address _l2Token, uint256 _amount, bytes calldata _data) external;
 
     /**
      * @dev deposit an amount of ERC20 to a recipient's balance on L2.
@@ -60,17 +59,14 @@ interface IL1ERC20Bridge {
      *        solely as a convenience for external contracts. Aside from enforcing a maximum
      *        length, these contracts provide no guarantees about its content.
      */
-    function depositERC20To(
-        address _l1Token,
-        address _l2Token,
-        address _to,
-        uint256 _amount,
-        bytes calldata _data
-    ) external;
+    function depositERC20To(address _l1Token, address _l2Token, address _to, uint256 _amount, bytes calldata _data)
+        external;
 
-    /*************************
+    /**
+     *
      * Cross-chain Functions *
-     *************************/
+     *
+     */
 
     /**
      * @dev Complete a withdrawal from L2 to L1, and credit funds to the recipient's balance of the

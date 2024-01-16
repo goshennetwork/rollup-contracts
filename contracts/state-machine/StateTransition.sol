@@ -13,6 +13,7 @@ import "../libraries/Types.sol";
 
 contract StateTransition is IStateTransition, Initializable {
     using MemoryLayout for IMachineState;
+
     IMachineState public mstate;
     Interpretor interpretor;
     IAddressResolver public resolver;
@@ -22,11 +23,10 @@ contract StateTransition is IStateTransition, Initializable {
 
     event UpgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot);
 
-    function initialize(
-        bytes32 _imageStateRoot,
-        IAddressResolver _resolver,
-        IMachineState _mstate
-    ) public initializer {
+    function initialize(bytes32 _imageStateRoot, IAddressResolver _resolver, IMachineState _mstate)
+        public
+        initializer
+    {
         imageStateRoots.push(_imageStateRoot);
         upgradeBatchIndexes.push(0);
         resolver = _resolver;
@@ -46,11 +46,10 @@ contract StateTransition is IStateTransition, Initializable {
         emit UpgradeToNewRoot(upgradeBatchIndex, newImageStateRoot);
     }
 
-    function generateStartState(
-        bytes32 rollupInputHash,
-        uint64 batchIndex,
-        bytes32 parentBlockHash
-    ) external returns (bytes32) {
+    function generateStartState(bytes32 rollupInputHash, uint64 batchIndex, bytes32 parentBlockHash)
+        external
+        returns (bytes32)
+    {
         require(msg.sender == address(resolver.challengeFactory()), "only challenge factory");
         bytes32 inputHash = keccak256(abi.encodePacked(rollupInputHash, parentBlockHash));
         bytes32 imageStateRoot = getImageRoot(batchIndex);
@@ -63,7 +62,7 @@ contract StateTransition is IStateTransition, Initializable {
     }
 
     function executeNextStep(bytes32 stateHash) external returns (bytes32 nextStateHash) {
-        (nextStateHash, ) = interpretor.step(stateHash);
+        (nextStateHash,) = interpretor.step(stateHash);
         return nextStateHash;
     }
 

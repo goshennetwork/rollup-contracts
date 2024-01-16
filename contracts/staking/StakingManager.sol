@@ -58,11 +58,7 @@ contract StakingManager is IStakingManager, Initializable {
         emit WithdrawFinalized(msg.sender, price);
     }
 
-    function slash(
-        uint64 _chainHeight,
-        bytes32 _blockHash,
-        address _proposer
-    ) external override onlyChallenge {
+    function slash(uint64 _chainHeight, bytes32 _blockHash, address _proposer) external override onlyChallenge {
         StakingInfo storage proposerStake = getStakingInfo[_proposer];
         //unstaked is not allowed
         require(proposerStake.state != StakingState.UNSTAKED, "unStaked unexpected");
@@ -111,11 +107,10 @@ contract StakingManager is IStakingManager, Initializable {
         emit DepositClaimed(_proposer, _dao, price);
     }
 
-    function _assertStateIsConfirmed(
-        IRollupStateChain _stateChain,
-        uint256 _index,
-        Types.StateInfo memory _stateInfo
-    ) internal view {
+    function _assertStateIsConfirmed(IRollupStateChain _stateChain, uint256 _index, Types.StateInfo memory _stateInfo)
+        internal
+        view
+    {
         require(_stateChain.verifyStateInfo(_stateInfo), "incorrect state info");
         require(_stateChain.isStateConfirmed(_stateInfo), "provided state not confirmed");
         require(_stateInfo.index == _index, "should provide wanted state info");

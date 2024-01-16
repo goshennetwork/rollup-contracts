@@ -60,11 +60,7 @@ interface IChallenge {
      * @param _systemEndState End system state, 0 is illegal, and end state must be "correct"(the program is halt, and the output is consistent with outputRoot).
      * @param _midSystemState Mid state root of system,0 is illegal.
      */
-    function initialize(
-        uint64 _endStep,
-        bytes32 _systemEndState,
-        bytes32 _midSystemState
-    ) external;
+    function initialize(uint64 _endStep, bytes32 _systemEndState, bytes32 _midSystemState) external;
 
     event MidStateRevealed(uint256[] nodeKeys, bytes32[] stateRoots);
 
@@ -146,12 +142,7 @@ interface IChallenge {
     function systemInfo()
         external
         view
-        returns (
-            Types.StateInfo memory stateInfo,
-            uint128 endStep,
-            bytes32 systemStartState,
-            bytes32 systemEndState
-        );
+        returns (Types.StateInfo memory stateInfo, uint128 endStep, bytes32 systemStartState, bytes32 systemEndState);
 
     /**
      * @dev get dispute tree of specific node key
@@ -164,12 +155,7 @@ interface IChallenge {
     function disputeTree(uint256 _nodeKey)
         external
         view
-        returns (
-            uint256 parent,
-            address challenger,
-            uint256 expireAfterBlock,
-            bytes32 midStateRoot
-        );
+        returns (uint256 parent, address challenger, uint256 expireAfterBlock, bytes32 midStateRoot);
 
     /// @return stage of this challenge
     function stage() external view returns (ChallengeStage);

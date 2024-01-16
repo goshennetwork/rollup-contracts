@@ -19,10 +19,7 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
 
     function testRelayMessageCallL1System() public {
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(rollupInputChain),
-            sender,
-            0,
-            abi.encodeWithSignature("chainHeight()")
+            address(rollupInputChain), sender, 0, abi.encodeWithSignature("chainHeight()")
         );
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
@@ -44,24 +41,14 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(address(addressManager));
         vm.expectRevert(bytes("can't relay message to l1 system"));
         l1CrossLayerWitness.relayMessage(
-            address(rollupInputChain),
-            sender,
-            abi.encodeWithSignature("chainHeight()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(rollupInputChain), sender, abi.encodeWithSignature("chainHeight()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithWrongStateInfo() public {
         // set wrong sender
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -83,23 +70,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(address(l1CrossLayerWitness));
         vm.expectRevert(bytes("wrong state info"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            failStateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, failStateInfo, _proof
         );
     }
 
     function testRelayMessageWithStateNotConfirmedYed() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -120,23 +97,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(address(l1CrossLayerWitness));
         vm.expectRevert(bytes("state not confirmed yet"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithWrongBlockProvide() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -158,23 +125,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(address(l1CrossLayerWitness));
         vm.expectRevert(bytes("wrong block provide"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithWrongData() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -196,23 +153,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         sender = address(0x9);
         vm.expectRevert(bytes("mmr root differ"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithWrongTreeSize() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            1,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 1, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -233,23 +180,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(sender);
         vm.expectRevert(bytes("leaf index out of bounds"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            1,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 1, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithMessageAlreadyExists() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         l1CrossLayerWitness.mockSetSuccessRelayedMessages(_hash);
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
@@ -271,23 +208,13 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(sender);
         vm.expectRevert(bytes("provided message already been relayed"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithMessageBlocked() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         l1CrossLayerWitness.mockSetBlockedMessages(_hash);
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
@@ -309,23 +236,12 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(sender);
         vm.expectRevert(bytes("message blocked"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 
     function testRelayMessageWithWrongTargetAddr() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(0x9),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(address(0x9), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -348,25 +264,15 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.expectEmit(true, true, true, true, address(l1CrossLayerWitness));
         emit MessageRelayFailed(0, _hash, _mmrSize, _mmrRoot);
         bool success = l1CrossLayerWitness.relayMessage(
-            address(0x9),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(0x9), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
         require(!success, "failed");
         require(!l1CrossLayerWitness.successRelayedMessages(_hash), "failed");
     }
 
     function testRelayMessage() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -388,25 +294,15 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.expectEmit(true, true, true, true, address(l1CrossLayerWitness));
         emit MessageRelayed(0, _hash);
         bool success = l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
         require(success, "failed");
         require(l1CrossLayerWitness.successRelayedMessages(_hash), "failed");
     }
 
     function testRelayMessageWithPaused() public {
-        bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(
-            address(addressManager),
-            sender,
-            0,
-            abi.encodeWithSignature("dao()")
-        );
+        bytes32 _hash =
+            CrossLayerCodec.crossLayerMessageHash(address(addressManager), sender, 0, abi.encodeWithSignature("dao()"));
         MerkleMountainRange.appendLeafHash(_trees, _hash);
         bytes32[] memory _proof;
 
@@ -430,13 +326,7 @@ contract TestL1CrossLayerWitness is TestBase, L1CrossLayerWitness {
         vm.startPrank(sender);
         vm.expectRevert(bytes("Pausable: paused"));
         l1CrossLayerWitness.relayMessage(
-            address(addressManager),
-            sender,
-            abi.encodeWithSignature("dao()"),
-            0,
-            rlpData,
-            stateInfo,
-            _proof
+            address(addressManager), sender, abi.encodeWithSignature("dao()"), 0, rlpData, stateInfo, _proof
         );
     }
 

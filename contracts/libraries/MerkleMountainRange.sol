@@ -40,8 +40,7 @@ library MerkleMountainRange {
     ) internal pure {
         require(_leafIndex < _treeSize, "leaf index out of bounds");
         require(
-            calculateRootHashFromAuditPath(_leafHash, _leafIndex, _proof, _treeSize) == _rootHash,
-            "mmr root differ"
+            calculateRootHashFromAuditPath(_leafHash, _leafIndex, _proof, _treeSize) == _rootHash, "mmr root differ"
         );
     }
 
