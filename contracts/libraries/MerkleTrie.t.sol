@@ -90,7 +90,7 @@ contract MerkleTrieTest {
      *         bytes32 root = trie.update(kvs[i][0], kvs[i][1]);
      *         console.logBytes32(root);
      *     }
-     * 
+     *
      *     for (uint256 i = 0; i < kvs.length; i++) {
      *         (bool exist, bytes memory value) = trie.get(kvs[i][0]);
      *         console.logBool(exist);
