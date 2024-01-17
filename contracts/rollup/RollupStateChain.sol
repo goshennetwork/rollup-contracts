@@ -14,7 +14,7 @@ import "../interfaces/IChainStorageContainer.sol";
 contract RollupStateChain is IRollupStateChain, Initializable {
     using Types for Types.StateInfo;
 
-    IAddressResolver addressResolver;
+    IAddressResolver public addressResolver;
     //the window to fraud proof
     uint256 public fraudProofWindow;
 

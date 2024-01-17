@@ -8,7 +8,6 @@
     "clean": "forge clean",
     "test": "forge test -vvv --root ./",
     "gasnap": "forge snapshot",
-    "format": "prettier --write 'contracts/**/*.sol'",
     "fmt": "forge fmt && js-beautify --r scripts/*.js ",
     "fmt-check": "forge fmt --check",
     "solhint": "solhint 'contracts/**/*.sol'",

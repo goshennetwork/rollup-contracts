@@ -15,11 +15,11 @@ contract StateTransition is IStateTransition, Initializable {
     using MemoryLayout for IMachineState;
 
     IMachineState public mstate;
-    Interpretor interpretor;
+    Interpretor public interpretor;
     IAddressResolver public resolver;
 
-    bytes32[] private imageStateRoots;
-    uint64[] private upgradeBatchIndexes;
+    bytes32[] public imageStateRoots;
+    uint64[] public upgradeBatchIndexes;
 
     event UpgradeToNewRoot(uint64 upgradeBatchIndex, bytes32 newImageStateRoot);
 

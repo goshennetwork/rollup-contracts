@@ -80,6 +80,25 @@ func (_a *Challenge) ClaimStatus(block ...web3.BlockNumber) (retval0 uint8, err 
 	return
 }
 
+// Creator calls the creator method in the solidity contract
+func (_a *Challenge) Creator(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("creator", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // DisputeTree calls the disputeTree method in the solidity contract
 func (_a *Challenge) DisputeTree(val0 *big.Int, block ...web3.BlockNumber) (retval0 *big.Int, retval1 web3.Address, retval2 *big.Int, retval3 [32]byte, err error) {
 	var out map[string]interface{}
@@ -171,6 +190,44 @@ func (_a *Challenge) MinChallengerDeposit(block ...web3.BlockNumber) (retval0 *b
 	_ = out // avoid not used compiler error
 
 	out, err = _a.c.Call("minChallengerDeposit", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// ProposerTimeLimit calls the proposerTimeLimit method in the solidity contract
+func (_a *Challenge) ProposerTimeLimit(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("proposerTimeLimit", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// RewardAmount calls the rewardAmount method in the solidity contract
+func (_a *Challenge) RewardAmount(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("rewardAmount", web3.EncodeBlock(block...))
 	if err != nil {
 		return
 	}

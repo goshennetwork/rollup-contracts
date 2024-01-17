@@ -12,7 +12,7 @@ import "./CrossLayerCodec.sol";
 contract L2CrossLayerWitness is IL2CrossLayerWitness, Initializable {
     using MerkleMountainRange for CompactMerkleTree;
 
-    CompactMerkleTree compactMerkleTree;
+    CompactMerkleTree private compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
     mapping(uint64 => bytes32) public mmrRoots;
     address private crossLayerMsgSender;

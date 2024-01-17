@@ -7,21 +7,20 @@ import "../interfaces/IChainStorageContainer.sol";
 import "../interfaces/IAddressResolver.sol";
 
 contract ChainStorageContainer is IChainStorageContainer, Initializable {
-    IAddressResolver addressResolver;
-    bytes32[] chain;
+    IAddressResolver public resolver;
+    bytes32[] private chain;
 
     //who can change the state of this container
     string public owner;
 
     function initialize(string memory _owner, address _addressResolver) public initializer {
         owner = _owner;
-        addressResolver = IAddressResolver(_addressResolver);
+        resolver = IAddressResolver(_addressResolver);
     }
 
     modifier onlyOwner() {
         require(
-            msg.sender == addressResolver.resolve(owner),
-            "ChainStorageContainer: Function can only be called by the owner."
+            msg.sender == resolver.resolve(owner), "ChainStorageContainer: Function can only be called by the owner."
         );
         _;
     }

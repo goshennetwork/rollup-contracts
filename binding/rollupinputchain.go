@@ -330,6 +330,25 @@ func (_a *RollupInputChain) PendingQueueIndex(block ...web3.BlockNumber) (retval
 	return
 }
 
+// Resolver calls the resolver method in the solidity contract
+func (_a *RollupInputChain) Resolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("resolver", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // TotalQueue calls the totalQueue method in the solidity contract
 func (_a *RollupInputChain) TotalQueue(block ...web3.BlockNumber) (retval0 uint64, err error) {
 	var out map[string]interface{}
