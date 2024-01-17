@@ -63,9 +63,7 @@ contract RollupStateChain is IRollupStateChain, Initializable {
 
     //must check not confirmed yet
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
-        require(
-            resolver.challengeFactory().isChallengeContract(msg.sender), "only permitted by challenge contract"
-        );
+        require(resolver.challengeFactory().isChallengeContract(msg.sender), "only permitted by challenge contract");
         require(verifyStateInfo(_stateInfo), "invalid state info");
         require(!isStateConfirmed(_stateInfo), "state confirmed");
         resolver.rollupStateChainContainer().resize(_stateInfo.index);
