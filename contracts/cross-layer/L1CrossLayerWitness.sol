@@ -13,16 +13,16 @@ import "./CrossLayerCodec.sol";
 contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpgradeable {
     using MerkleMountainRange for CompactMerkleTree;
 
-    IAddressResolver addressResolver;
+    IAddressResolver public resolver;
 
-    CompactMerkleTree compactMerkleTree;
+    CompactMerkleTree private compactMerkleTree;
     mapping(bytes32 => bool) public successRelayedMessages;
     mapping(bytes32 => bool) public blockedMessages;
     address private crossLayerMsgSender;
 
     function initialize(address _addressResolver) public initializer {
         __Pausable_init();
-        addressResolver = IAddressResolver(_addressResolver);
+        resolver = IAddressResolver(_addressResolver);
     }
 
     function crossLayerSender() external view returns (address) {
@@ -40,10 +40,10 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
         bytes32[] memory _proof
     ) public whenNotPaused returns (bool) {
         require(crossLayerMsgSender == address(0), "reentrancy");
-        require(_target != address(addressResolver.rollupInputChain()), "can't relay message to l1 system");
+        require(_target != address(resolver.rollupInputChain()), "can't relay message to l1 system");
         bytes32 _hash = CrossLayerCodec.crossLayerMessageHash(_target, _sender, _messageIndex, _message);
-        require(addressResolver.rollupStateChain().verifyStateInfo(_stateInfo), "wrong state info");
-        require(addressResolver.rollupStateChain().isStateConfirmed(_stateInfo), "state not confirmed yet");
+        require(resolver.rollupStateChain().verifyStateInfo(_stateInfo), "wrong state info");
+        require(resolver.rollupStateChain().isStateConfirmed(_stateInfo), "state not confirmed yet");
         require(keccak256(_rlpHeader) == _stateInfo.blockHash, "wrong block provide");
         (bytes32 _mmrRoot, uint64 _mmrSize) = Types.decodeMMRFromRlpHeader(_rlpHeader);
         MerkleMountainRange.verifyLeafHashInclusion(_hash, _messageIndex, _proof, _mmrRoot, _mmrSize);
@@ -69,8 +69,8 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
         bytes memory _crossLayerCalldata = CrossLayerCodec.encodeL1ToL2CallData(
             _target, msg.sender, _message, treeSize, compactMerkleTree.rootHash, treeSize + 1
         );
-        addressResolver.rollupInputChain().enqueue(
-            address(addressResolver.l2CrossLayerWitness()), 0, _crossLayerCalldata, treeSize, 0, 0, 0
+        resolver.rollupInputChain().enqueue(
+            address(resolver.l2CrossLayerWitness()), 0, _crossLayerCalldata, treeSize, 0, 0, 0
         );
         emit MessageSent(treeSize, _target, msg.sender, _mmrRoot, _message);
     }
@@ -80,7 +80,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
     }
 
     function blockMessage(bytes32[] memory _messageHashes) public {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(resolver.dao()), "only dao allowed");
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = true;
         }
@@ -88,7 +88,7 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
     }
 
     function allowMessage(bytes32[] memory _messageHashes) public {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(resolver.dao()), "only dao allowed");
         for (uint256 i = 0; i < _messageHashes.length; i++) {
             blockedMessages[_messageHashes[i]] = false;
         }
@@ -96,12 +96,12 @@ contract L1CrossLayerWitness is IL1CrossLayerWitness, Initializable, PausableUpg
     }
 
     function pause() public {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(resolver.dao()), "only dao allowed");
         _pause();
     }
 
     function unpause() public {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(resolver.dao()), "only dao allowed");
         _unpause();
     }
 

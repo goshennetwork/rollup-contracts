@@ -137,6 +137,25 @@ func (_a *L1CrossLayerWitness) Paused(block ...web3.BlockNumber) (retval0 bool, 
 	return
 }
 
+// Resolver calls the resolver method in the solidity contract
+func (_a *L1CrossLayerWitness) Resolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("resolver", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // SuccessRelayedMessages calls the successRelayedMessages method in the solidity contract
 func (_a *L1CrossLayerWitness) SuccessRelayedMessages(val0 [32]byte, block ...web3.BlockNumber) (retval0 bool, err error) {
 	var out map[string]interface{}

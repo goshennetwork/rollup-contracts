@@ -14,7 +14,7 @@ contract ChallengeFactory is IChallengeFactory, Initializable {
 
     mapping(address => bool) public override isChallengeContract;
     mapping(bytes32 => address) public override getChallengedContract;
-    IAddressResolver resolver;
+    IAddressResolver public resolver;
     uint256 public blockLimitPerRound;
     address public override challengeBeacon;
     uint256 public challengerDeposit;

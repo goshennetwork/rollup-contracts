@@ -99,6 +99,25 @@ func (_a *ChainStorageContainer) Owner(block ...web3.BlockNumber) (retval0 strin
 	return
 }
 
+// Resolver calls the resolver method in the solidity contract
+func (_a *ChainStorageContainer) Resolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("resolver", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // txns
 
 // Append sends a append transaction in the solidity contract

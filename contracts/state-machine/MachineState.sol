@@ -14,7 +14,7 @@ contract MachineState is IMachineState {
     using Register for mapping(bytes32 => HashDB.Preimage);
     using Syscall for mapping(bytes32 => HashDB.Preimage);
 
-    mapping(bytes32 => HashDB.Preimage) hashdb;
+    mapping(bytes32 => HashDB.Preimage) public hashdb;
 
     function insertPreimage(bytes calldata _node) public {
         hashdb.insertPreimage(_node);

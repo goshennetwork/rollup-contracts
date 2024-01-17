@@ -23,11 +23,11 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     uint64 public maxEnqueueTxGasLimit;
     uint64 public maxWitnessTxExecGasLimit; // ~ 300w
     uint64 public l2ChainID;
-    mapping(address => uint64) nonces;
+    mapping(address => uint64) private nonces;
 
     uint64 public override lastTimestamp;
 
-    IAddressResolver addressResolver;
+    IAddressResolver public resolver;
 
     // store L1 -> L2 tx
     struct QueueTxInfo {
@@ -45,7 +45,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
         uint64 _maxWitnessTxExecGasLimit,
         uint64 _l2ChainID
     ) public initializer {
-        addressResolver = IAddressResolver(_addressResolver);
+        resolver = IAddressResolver(_addressResolver);
         maxEnqueueTxGasLimit = _maxTxGasLimit;
         maxWitnessTxExecGasLimit = _maxWitnessTxExecGasLimit;
         l2ChainID = _l2ChainID;
@@ -73,7 +73,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
             nonces[sender] = _nonce + 1;
         } else {
             sender = Constants.L1_CROSS_LAYER_WITNESS;
-            require(msg.sender == address(addressResolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
+            require(msg.sender == address(resolver.l1CrossLayerWitness()), "contract can not enqueue L2 Tx");
             _maxTxSize = MAX_WITNESS_TX_SIZE;
             _gasLimit = maxWitnessTxExecGasLimit;
             _gasPrice = 0;
@@ -155,10 +155,10 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     // subBatchLeftTimeDiff([]uint32) + batchesData
     // batchesData: version(0) + rlp([][]transaction)
     function appendInputBatch() public {
-        require(addressResolver.whitelist().canSequence(msg.sender), "only sequencer");
-        require(addressResolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
+        require(resolver.whitelist().canSequence(msg.sender), "only sequencer");
+        require(resolver.stakingManager().isStaking(msg.sender), "Sequencer should be staking");
         require(msg.data.length >= 4 + 8 + 8 + 8 + 8, "wrong len");
-        IChainStorageContainer _chain = addressResolver.rollupInputChainContainer();
+        IChainStorageContainer _chain = resolver.rollupInputChainContainer();
         uint64 _batchIndex;
         assembly {
             _batchIndex := shr(192, calldataload(4))
@@ -224,7 +224,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     }
 
     function chainHeight() public view returns (uint64) {
-        return addressResolver.rollupInputChainContainer().chainSize();
+        return resolver.rollupInputChainContainer().chainSize();
     }
 
     function totalQueue() public view returns (uint64) {
@@ -232,7 +232,7 @@ contract RollupInputChain is IRollupInputChain, Initializable {
     }
 
     function getInputHash(uint64 _inputIndex) public view returns (bytes32) {
-        return addressResolver.rollupInputChainContainer().get(_inputIndex);
+        return resolver.rollupInputChainContainer().get(_inputIndex);
     }
 
     function getQueueTxInfo(uint64 _queueIndex) public view returns (bytes32, uint64) {

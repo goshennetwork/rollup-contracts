@@ -175,6 +175,25 @@ func (_a *ChallengeFactory) IsChallengeContract(val0 web3.Address, block ...web3
 	return
 }
 
+// Resolver calls the resolver method in the solidity contract
+func (_a *ChallengeFactory) Resolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("resolver", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
 // RollupStateChain calls the rollupStateChain method in the solidity contract
 func (_a *ChallengeFactory) RollupStateChain(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
 	var out map[string]interface{}
