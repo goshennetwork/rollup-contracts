@@ -42,25 +42,6 @@ func (_a *RollupStateChain) Contract() *contract.Contract {
 
 // calls
 
-// AddressResolver calls the addressResolver method in the solidity contract
-func (_a *RollupStateChain) AddressResolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
-	var out map[string]interface{}
-	_ = out // avoid not used compiler error
-
-	out, err = _a.c.Call("addressResolver", web3.EncodeBlock(block...))
-	if err != nil {
-		return
-	}
-
-	// decode outputs
-
-	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
-		err = fmt.Errorf("failed to encode output at index 0")
-	}
-
-	return
-}
-
 // FraudProofWindow calls the fraudProofWindow method in the solidity contract
 func (_a *RollupStateChain) FraudProofWindow(block ...web3.BlockNumber) (retval0 *big.Int, err error) {
 	var out map[string]interface{}
@@ -93,6 +74,25 @@ func (_a *RollupStateChain) IsStateConfirmed(stateInfo StateInfo, block ...web3.
 	// decode outputs
 
 	if err = mapstructure.Decode(out["_confirmed"], &retval0); err != nil {
+		err = fmt.Errorf("failed to encode output at index 0")
+	}
+
+	return
+}
+
+// Resolver calls the resolver method in the solidity contract
+func (_a *RollupStateChain) Resolver(block ...web3.BlockNumber) (retval0 web3.Address, err error) {
+	var out map[string]interface{}
+	_ = out // avoid not used compiler error
+
+	out, err = _a.c.Call("resolver", web3.EncodeBlock(block...))
+	if err != nil {
+		return
+	}
+
+	// decode outputs
+
+	if err = mapstructure.Decode(out["0"], &retval0); err != nil {
 		err = fmt.Errorf("failed to encode output at index 0")
 	}
 

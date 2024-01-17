@@ -10,15 +10,15 @@ contract Whitelist is IWhitelist, Initializable {
     mapping(address => bool) public override canPropose;
     mapping(address => bool) public override canChallenge;
 
-    IAddressResolver addressResolver;
+    IAddressResolver public resolver;
 
     modifier onlyDAO() {
-        require(msg.sender == address(addressResolver.dao()), "only dao allowed");
+        require(msg.sender == address(resolver.dao()), "only dao allowed");
         _;
     }
 
     function initialize(IAddressResolver _resolver) public initializer {
-        addressResolver = _resolver;
+        resolver = _resolver;
     }
 
     function setSequencer(address sequencer, bool enabled) public onlyDAO {

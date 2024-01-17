@@ -14,12 +14,12 @@ import "../interfaces/IChainStorageContainer.sol";
 contract RollupStateChain is IRollupStateChain, Initializable {
     using Types for Types.StateInfo;
 
-    IAddressResolver public addressResolver;
+    IAddressResolver public resolver;
     //the window to fraud proof
     uint256 public fraudProofWindow;
 
     function initialize(address _addressResolver, uint256 _fraudProofWindow) public initializer {
-        addressResolver = IAddressResolver(_addressResolver);
+        resolver = IAddressResolver(_addressResolver);
         fraudProofWindow = _fraudProofWindow;
     }
 
@@ -28,22 +28,22 @@ contract RollupStateChain is IRollupStateChain, Initializable {
     }
 
     function verifyStateInfo(Types.StateInfo memory _stateInfo) public view returns (bool) {
-        IChainStorageContainer _chain = addressResolver.rollupStateChainContainer();
+        IChainStorageContainer _chain = resolver.rollupStateChainContainer();
         return _stateInfo.index < _chain.chainSize() && _chain.get(_stateInfo.index) == _stateInfo.hash();
     }
 
     function appendStateBatch(bytes32[] memory _blockHashes, uint64 _startAt) public {
-        require(addressResolver.whitelist().canPropose(msg.sender), "only proposer");
-        IChainStorageContainer _chain = addressResolver.rollupStateChainContainer();
+        require(resolver.whitelist().canPropose(msg.sender), "only proposer");
+        IChainStorageContainer _chain = resolver.rollupStateChainContainer();
         // in case of duplicated
         require(_startAt == _chain.chainSize(), "start pos mismatch");
 
         // Proposers must in staking
-        require(addressResolver.stakingManager().isStaking(msg.sender), "unstaked");
+        require(resolver.stakingManager().isStaking(msg.sender), "unstaked");
         require(_blockHashes.length > 0, "no block hashes");
 
         require(
-            _chain.chainSize() + _blockHashes.length <= addressResolver.rollupInputChain().chainHeight(),
+            _chain.chainSize() + _blockHashes.length <= resolver.rollupInputChain().chainHeight(),
             "exceed input chain height"
         );
         uint64 _now = uint64(block.timestamp);
@@ -64,15 +64,15 @@ contract RollupStateChain is IRollupStateChain, Initializable {
     //must check not confirmed yet
     function rollbackStateBefore(Types.StateInfo memory _stateInfo) public {
         require(
-            addressResolver.challengeFactory().isChallengeContract(msg.sender), "only permitted by challenge contract"
+            resolver.challengeFactory().isChallengeContract(msg.sender), "only permitted by challenge contract"
         );
         require(verifyStateInfo(_stateInfo), "invalid state info");
         require(!isStateConfirmed(_stateInfo), "state confirmed");
-        addressResolver.rollupStateChainContainer().resize(_stateInfo.index);
+        resolver.rollupStateChainContainer().resize(_stateInfo.index);
         emit StateRollbacked(_stateInfo.index, _stateInfo.blockHash);
     }
 
     function totalSubmittedState() external view returns (uint64) {
-        return addressResolver.rollupStateChainContainer().chainSize();
+        return resolver.rollupStateChainContainer().chainSize();
     }
 }
